@@ -1,0 +1,530 @@
+{
+  "Comment": "This is a configuration file for Beam", 
+  "Updtime": 4000, 
+  "Configname": "Default Configuration", 
+  "AllModules": [
+    {
+      "Modules": [
+        "Audacious", 
+        "Banshee", 
+        "Clementine", 
+        "Rhythmbox", 
+        "Spotify"
+      ], 
+      "System": "Linux"
+    }, 
+    {
+      "Modules": [
+        "iTunes", 
+        "Foobar2000", 
+        "MediaMonkey", 
+        "JRiver Media Center", 
+        "Spotify", 
+        "Winamp"
+      ], 
+      "System": "Windows"
+    }, 
+    {
+      "Modules": [
+        "iTunes", 
+        "Decibel", 
+        "Vox", 
+        "Spotify"
+      ], 
+      "System": "Mac"
+    }
+  ], 
+  "Author": "Mikael Holber & Horia Uifaleanu - 2015", 
+  "DefaultBackgroundImage": "resources/backgrounds/bg1920x1080px.jpg", 
+  "Module": "", 
+  "Rules": [
+    {
+      "Active": "yes", 
+      "Field2": "%Singer", 
+      "Field1": "%Comment", 
+      "Type": "Copy"
+    }, 
+    {
+      "Active": "yes", 
+      "Field2": "is", 
+      "Field1": "%Artist", 
+      "Type": "Cortina", 
+      "Field3": "-- Cortina"
+    }, 
+    {
+      "Active": "yes", 
+      "Field2": "is", 
+      "Field1": "%Genre", 
+      "Type": "Cortina", 
+      "Field3": "cortina"
+    }, 
+    {
+      "Active": "no", 
+      "Field2": "is not", 
+      "Field1": "%Genre", 
+      "Type": "Cortina", 
+      "Field3": "Tango, Milonga, Vals"
+    }, 
+    {
+      "Field2": "-", 
+      "Field3": "%Title", 
+      "Field1": "%Title", 
+      "Field4": "%Singer", 
+      "Active": "yes", 
+      "Type": "Parse"
+    }, 
+    {
+      "Field2": " - ", 
+      "Field3": "%Artist", 
+      "Field1": "%Artist", 
+      "Field4": "%Singer", 
+      "Active": "yes", 
+      "Type": "Parse"
+    }
+  ], 
+  "DefaultDisplay": [
+    {
+      "Field": "\u266a Previous song: %PreviousTitle", 
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "Position": [
+        7, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "HideControl": "%PreviousTitle", 
+      "Alignment": "Left", 
+      "Size": 5
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "", 
+      "Field": "%Artist", 
+      "Position": [
+        23, 
+        0
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "", 
+      "Field": "%SongsSinceLastCortina - %Title", 
+      "Position": [
+        38, 
+        0
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "%Singer", 
+      "Field": "%Singer", 
+      "Position": [
+        53, 
+        1
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "%NextTandaArtist", 
+      "Field": "Next Tanda: %NextTandaGenre  - %NextTandaArtist \u266a", 
+      "Position": [
+        76, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Right", 
+      "Size": 5
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Light", 
+      "HideControl": "", 
+      "Field": "%Hour:%Min", 
+      "Position": [
+        90, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Right", 
+      "Size": 4
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Light", 
+      "HideControl": "", 
+      "Field": "%LongDate", 
+      "Position": [
+        90, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Left", 
+      "Size": 4
+    }
+  ], 
+  "Moods": [
+    {
+      "PlayState": "Playing", 
+      "Name": "Cortina", 
+      "Field2": "is", 
+      "Field3": "yes", 
+      "Field1": "%IsCortina", 
+      "Background": "resources/backgrounds/bg1920x1080px_darkBlue.jpg", 
+      "Active": "yes", 
+      "Type": "Mood", 
+      "Display": [
+        {
+          "Style": "Italic", 
+          "Weight": "Normal", 
+          "HideControl": "", 
+          "Field": "Cortina", 
+          "Position": [
+            20, 
+            0
+          ], 
+          "Active": "yes", 
+          "FontColor": "(255, 255, 255, 255)", 
+          "Font": "Georgia", 
+          "Alignment": "Center", 
+          "Size": 15
+        }, 
+        {
+          "Style": "Italic", 
+          "Weight": "Normal", 
+          "HideControl": "%NextTandaArtist", 
+          "Field": "Next Tanda:", 
+          "Position": [
+            58, 
+            0
+          ], 
+          "Active": "yes", 
+          "FontColor": "(255, 255, 255, 255)", 
+          "Font": "Georgia", 
+          "Alignment": "Center", 
+          "Size": 8
+        }, 
+        {
+          "Style": "Italic", 
+          "Weight": "Normal", 
+          "HideControl": "%NextTandaArtist", 
+          "Field": "%NextTandaGenre  - %NextTandaArtist", 
+          "Position": [
+            76, 
+            0
+          ], 
+          "Active": "yes", 
+          "FontColor": "(255, 255, 255, 255)", 
+          "Font": "Georgia", 
+          "Alignment": "Center", 
+          "Size": 8
+        }
+      ]
+    },
+      {
+      "PlayState": "Playing", 
+      "Name": "Vals", 
+      "Field2": "is", 
+      "Field3": "Vals", 
+      "Field1": "%Genre", 
+      "Background": "resources/backgrounds/bg1920x1080px_darkBlue.jpg", 
+      "Active": "no", 
+      "Type": "Mood", 
+      "Display": [
+    {
+      "Field": "\u266a Previous song: %PreviousTitle", 
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "Position": [
+        7, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "HideControl": "%PreviousTitle", 
+      "Alignment": "Left", 
+      "Size": 5
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "", 
+      "Field": "%Artist", 
+      "Position": [
+        23, 
+        0
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "", 
+      "Field": "%SongsSinceLastCortina - %Title", 
+      "Position": [
+        38, 
+        0
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "%Singer", 
+      "Field": "%Singer", 
+      "Position": [
+        53, 
+        1
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "%NextTandaArtist", 
+      "Field": "Next Tanda: %NextTandaGenre  - %NextTandaArtist \u266a", 
+      "Position": [
+        76, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Right", 
+      "Size": 5
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Light", 
+      "HideControl": "", 
+      "Field": "%Hour:%Min", 
+      "Position": [
+        90, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Right", 
+      "Size": 4
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Light", 
+      "HideControl": "", 
+      "Field": "%LongDate", 
+      "Position": [
+        90, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Left", 
+      "Size": 4
+    }
+  ]
+    },  
+    {
+      "PlayState": "Playing", 
+      "Name": "Milonga", 
+      "Field2": "is", 
+      "Field3": "Milonga", 
+      "Field1": "%Genre", 
+      "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg", 
+      "Active": "no", 
+      "Type": "Mood", 
+      "Display": [
+    {
+      "Field": "\u266a Previous song: %PreviousTitle", 
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "Position": [
+        7, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "HideControl": "%PreviousTitle", 
+      "Alignment": "Left", 
+      "Size": 5
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "", 
+      "Field": "%Artist", 
+      "Position": [
+        23, 
+        0
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "", 
+      "Field": "%SongsSinceLastCortina - %Title", 
+      "Position": [
+        38, 
+        0
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "%Singer", 
+      "Field": "%Singer", 
+      "Position": [
+        53, 
+        1
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Center", 
+      "Size": 10
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Normal", 
+      "HideControl": "%NextTandaArtist", 
+      "Field": "Next Tanda: %NextTandaGenre  - %NextTandaArtist \u266a", 
+      "Position": [
+        76, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Right", 
+      "Size": 5
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Light", 
+      "HideControl": "", 
+      "Field": "%Hour:%Min", 
+      "Position": [
+        90, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Right", 
+      "Size": 4
+    }, 
+    {
+      "Style": "Italic", 
+      "Weight": "Light", 
+      "HideControl": "", 
+      "Field": "%LongDate", 
+      "Position": [
+        90, 
+        2
+      ], 
+      "Active": "yes", 
+      "FontColor": "(255, 255, 255, 255)", 
+      "Font": "Georgia", 
+      "Alignment": "Left", 
+      "Size": 4
+    }
+  ]
+    }, 
+    {
+      "PlayState": "Not Playing", 
+      "Name": "Paused", 
+      "Field2": "is", 
+      "Field3": "", 
+      "Field1": "%Artist", 
+      "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg", 
+      "Active": "yes", 
+      "Type": "Mood", 
+      "Display": [
+        {
+          "Style": "Italic", 
+          "Weight": "Normal", 
+          "HideControl": "", 
+          "Field": "Beam", 
+          "Size": 10, 
+          "Position": [
+            30, 
+            0
+          ], 
+          "Active": "yes", 
+          "FontColor": "(255,255,255,255)", 
+          "Font": "Georgia", 
+          "Alignment": "Center", 
+          "Row": 1
+        }, 
+        {
+          "Style": "Italic", 
+          "Weight": "Normal", 
+          "HideControl": "", 
+          "Field": "Me Up Scotty", 
+          "Size": 9, 
+          "Position": [
+            50, 
+            0
+          ], 
+          "Active": "yes", 
+          "FontColor": "(255,255,255,255)", 
+          "Font": "Georgia", 
+          "Alignment": "Center", 
+          "Row": 2
+        }
+      ]
+    }
+  ], 
+  "MaxTandaLength": 4
+}
