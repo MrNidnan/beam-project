@@ -41,7 +41,7 @@ from copy import deepcopy
 if platform.system() == 'Linux':
     from Modules.Lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule
 if platform.system() == 'Windows':
-    from Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, jrmcWindowsModule, spotifyWindowsModule, foobar2kWindowsModule
+    from Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
 if platform.system() == 'Darwin':
     from Modules.Mac import itunesMacModule, decibelModule, spotifyMacModule, voxModule, cogModule
 
@@ -101,8 +101,6 @@ class NowPlayingDataModel:
                 self.currentPlaylist, self.PlaybackStatus = itunesWindowsModule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'MediaMonkey':
                 self.currentPlaylist, self.PlaybackStatus = mediamonkeyModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-            if currentSettings._moduleSelected == 'JRiver Media Center':
-                self.currentPlaylist, self.PlaybackStatus = jrmcWindowsModule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Spotify':
                 self.currentPlaylist, self.PlaybackStatus =spotifyWindowsModule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Foobar2000':
