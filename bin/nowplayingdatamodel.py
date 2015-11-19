@@ -43,7 +43,7 @@ if platform.system() == 'Linux':
 if platform.system() == 'Windows':
     from Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
 if platform.system() == 'Darwin':
-    from Modules.Mac import itunesMacModule, decibelModule, spotifyMacModule, voxModule, cogModule
+    from Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule
 
 ###############################################################
 #
@@ -130,6 +130,8 @@ class NowPlayingDataModel:
                 self.currentPlaylist, self.PlaybackStatus  = itunesMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
             if currentSettings._moduleSelected == 'Decibel':
                 self.currentPlaylist, self.PlaybackStatus  = decibelModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Swinsian':
+                self.currentPlaylist, self.PlaybackStatus  = swinsianModule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Spotify':
                 self.currentPlaylist, self.PlaybackStatus  = spotifyMacModule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Vox':
