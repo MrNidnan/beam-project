@@ -71,6 +71,7 @@ class Preferences(wx.Frame):
         self.panel.SetSizerAndFit(self.vbox)
 
 
+
 #
 # First tab - Basic Settings
 #
@@ -92,7 +93,11 @@ class Preferences(wx.Frame):
         wx.StaticText(panel, -1, "Select background image (1920x1080 recommended)", (20,110))
         self.browse = wx.Button(panel, label="Browse", pos=(20,129))
         self.browse.Bind(wx.EVT_BUTTON, self.browseBackgroundImage)
-
+        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+        (path,backgroundfile) = os.path.split(beamSettings._DefaultBackground)
+        self.currentBackground = wx.StaticText(panel, -1, backgroundfile, (125,137))
+        self.currentBackground.SetFont(font)
+        
         # Wait timer
         waittimer = wx.StaticText(panel, -1, "Settings", (10,167))
         font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
@@ -232,13 +237,11 @@ class Preferences(wx.Frame):
 # Preview Tags
 #
     def onPreviewTags(self, e):
-        print "Test!"
         if self.previewTags.GetValue():
-            print "Checked"
             self.PreviewTags = PreviewTags(self)
             self.PreviewTags.Show()
         else:
-            print "Not Checked"
+            pass
 
 
 #
@@ -268,6 +271,8 @@ class Preferences(wx.Frame):
             beamSettings._DefaultBackground = openFileDialog.GetPath()
             # change current background
             self.MainWindowParent._currentBackgroundPath = beamSettings._DefaultBackground
+            (path,backgroundfile) = os.path.split(beamSettings._DefaultBackground)
+            self.currentBackground.SetLabel(backgroundfile)
             self.MainWindowParent.fadeBackground()
             openFileDialog.Destroy()
 

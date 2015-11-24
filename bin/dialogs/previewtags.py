@@ -28,7 +28,6 @@
 
 
 import wx, wx.html
-import os
 
 from bin.beamsettings import *
 
@@ -38,18 +37,16 @@ from bin.beamsettings import *
 #
 class PreviewTags(wx.Frame):
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, title="Last Hand",
-                          style=wx.CAPTION  | wx.FRAME_FLOAT_ON_PARENT)
+        wx.Frame.__init__(self, parent, title="Tags",
+                          style=wx.FRAME_TOOL_WINDOW  | wx.FRAME_FLOAT_ON_PARENT)
             
         parent.Bind(wx.EVT_MOVE, self.OnParentMove)
         parent.Bind(wx.EVT_SHOW, self.OnParentShow)
 
     def SnapToParent(self):
         print "*Snapping to parent"
-        pr = positioning.position(
-                                  self.Rect,
-        my='right_top', at='left_top', of=self.Parent.Rect)
-        self.Move(pr.top_left)
+        pr = positioning.position(self.Rect, my='right_top', at='left_top', of=self.Parent.Rect)
+        self.Move(pr.top_right)
 
     def OnParentMove(self, moveEvent):
         moveEvent.Skip()
