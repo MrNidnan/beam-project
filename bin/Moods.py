@@ -35,10 +35,11 @@ from bin.dialogs.editmooddialog import EditMood
 # Build main preferences Window
 #
 
-class Moods(wx.Dialog):
+class Moods(wx.Frame):
     def __init__(self, parent):
         self.MainWindowParent = parent
-        wx.Dialog.__init__(self, parent, title="Moods", size=(400,400))
+        wx.Frame.__init__(self, parent, title="Moods", size=(400,400),
+                           style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
 
         # Build the panel
         self.panel = wx.Panel(self)

@@ -32,15 +32,17 @@ import os
 from bin.beamsettings import *
 from bin.dialogs.editlayoutdialog import EditLayoutDialog
 from bin.dialogs.editruledialog import EditRuleDialog
+from bin.dialogs.previewtags import PreviewTags
 
 #
 # Build main preferences Window
 #
 
-class Preferences(wx.Dialog):
+class Preferences(wx.Frame):
     def __init__(self, parent):
         self.MainWindowParent = parent
-        wx.Dialog.__init__(self, parent, title="Preferences", size=(400,400))
+        wx.Frame.__init__(self, parent, title="Preferences", size=(400,500),
+                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
 
         # Build the panel
         self.panel = wx.Panel(self)
@@ -52,14 +54,16 @@ class Preferences(wx.Dialog):
         notebook.AddPage(self.LayoutSettings(notebook), "Layout")
         notebook.AddPage(self.RulesSettings(notebook), "Cortinas and Rules")
 
+        self.previewTags  = wx.CheckBox(self.panel, label="Preview Tags")
         self.button_ok = wx.Button(self.panel, label="Apply")
         self.button_cancel = wx.Button(self.panel, label="Close")
+        self.previewTags.Bind(wx.EVT_CHECKBOX, self.onPreviewTags)
         self.button_ok.Bind(wx.EVT_BUTTON, self.onApply)
         self.button_cancel.Bind(wx.EVT_BUTTON, self.onClose)
 
-
         self.vbox.Add(notebook, 1, wx.ALL | wx.EXPAND)
         self.hbox.Add((200, -1), 1, flag=wx.EXPAND | wx.ALIGN_RIGHT)
+        self.hbox.Add(self.previewTags, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         self.hbox.Add(self.button_ok, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
         self.vbox.Add(self.hbox)
@@ -82,7 +86,7 @@ class Preferences(wx.Dialog):
         self.Dropdown = wx.ComboBox(panel,value=beamSettings._moduleSelected, choices=beamSettings._currentModules, pos=(20,50), style=wx.CB_READONLY)
 
         # Background image
-        Background = wx.StaticText(panel, -1, "Background Image", (10,87))
+        Background = wx.StaticText(panel, -1, "Default Background Image", (10,87))
         font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         Background.SetFont(font)
         wx.StaticText(panel, -1, "Select background image (1920x1080 recommended)", (20,110))
@@ -97,8 +101,16 @@ class Preferences(wx.Dialog):
         self.TimerText = wx.TextCtrl(panel, -1, str(beamSettings._updateTimer), (20,210), (140,-1))
 
         # Tanda Length
-        wx.StaticText(panel, -1, "Next tanda preview (number of songs, default 4)", (20,243))
-        self.TandaLength = wx.TextCtrl(panel, -1, str(beamSettings._maxTandaLength), (20,263), (140,-1))
+        wx.StaticText(panel, -1, "Next tanda preview (number of songs, default 4)", (20,240))
+        self.TandaLength = wx.TextCtrl(panel, -1, str(beamSettings._maxTandaLength), (20,260), (140,-1))
+
+        # Mood transition
+        wx.StaticText(panel, -1, "Mood transition (Fading)", (20,290))
+        self.TandaLength = wx.TextCtrl(panel, -1, str(beamSettings._maxTandaLength), (20,310), (140,-1))
+
+        # Mood transition
+        wx.StaticText(panel, -1, "Logging (A log-file will be created)", (20,340))
+        self.TandaLength = wx.TextCtrl(panel, -1, str(beamSettings._maxTandaLength), (20,360), (140,-1))
 
         return panel
 
@@ -215,6 +227,20 @@ class Preferences(wx.Dialog):
                 self.RuleList.Check(i, check=True)
             else:
                 self.RuleList.Check(i, check=False)
+
+#
+# Preview Tags
+#
+    def onPreviewTags(self, e):
+        print "Test!"
+        if self.previewTags.GetValue():
+            print "Checked"
+            self.PreviewTags = PreviewTags(self)
+            self.PreviewTags.Show()
+        else:
+            print "Not Checked"
+
+
 #
 # Apply preferences
 #
