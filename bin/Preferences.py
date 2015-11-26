@@ -32,6 +32,7 @@ import os
 from bin.beamsettings import *
 from bin.dialogs.editlayoutdialog import EditLayoutDialog
 from bin.dialogs.editruledialog import EditRuleDialog
+from bin.dialogs.editmooddialog import EditMood
 
 #
 # Build main preferences Window
@@ -50,8 +51,9 @@ class Preferences(wx.Frame):
         notebook  = fnb.FlatNotebook(self.panel, wx.ID_ANY,agwStyle=fnb.FNB_NODRAG|fnb.FNB_VC8|fnb.FNB_NO_NAV_BUTTONS|fnb.FNB_NO_X_BUTTON|fnb.FNB_NO_TAB_FOCUS)
 
         notebook.AddPage(self.BasicSettings(notebook), "Basic Settings")
-        notebook.AddPage(self.LayoutSettings(notebook), "Layout")
-        notebook.AddPage(self.RulesSettings(notebook), "Cortinas and Rules")
+        notebook.AddPage(self.LayoutSettings(notebook), "Default Layout")
+        notebook.AddPage(self.MoodsSettings(notebook), "Moods")
+        notebook.AddPage(self.RulesSettings(notebook), "Rules")
         notebook.AddPage(self.TagsTab(notebook), "Tags")
 
         self.button_ok = wx.Button(self.panel, label="Apply")
@@ -126,7 +128,7 @@ class Preferences(wx.Frame):
 
 
 #
-# Second tab - Display
+# Second tab - Default Layout
 #
 
     def LayoutSettings(self, notebook):
@@ -175,8 +177,48 @@ class Preferences(wx.Frame):
                 self.LayoutList.Check(i, check=True)
             else:
                 self.LayoutList.Check(i, check=False)
+
 #
-# Third tab - Rules
+# Third tab - Moods
+#
+
+    def MoodsSettings(self, notebook):
+    
+        panel = wx.Panel(self)
+        
+        self.MoodRows = []
+        # Mood buttons
+        self.AddMood    = wx.Button(panel, label="Add")
+        self.DelMood    = wx.Button(panel, label="Delete")
+        self.EditMood   = wx.Button(panel, label="Edit")
+        sizerbuttons    = wx.BoxSizer(wx.HORIZONTAL)
+        sizerbuttons.Add(self.AddMood, flag=wx.RIGHT | wx.TOP, border=10)
+        sizerbuttons.Add(self.DelMood, flag=wx.RIGHT | wx.TOP, border=10)
+        sizerbuttons.Add(self.EditMood, flag=wx.RIGHT | wx.TOP, border=10)
+        
+        self.AddMood.Bind(wx.EVT_BUTTON, self.OnAddMood)
+        self.EditMood.Bind(wx.EVT_BUTTON, self.OnEditMood)
+        self.DelMood.Bind(wx.EVT_BUTTON, self.OnDelMood)
+
+        self.MoodList = wx.CheckListBox(panel,-1, size=wx.DefaultSize, choices=self.MoodRows, style= wx.LB_NEEDED_SB)
+        self.MoodList.SetBackgroundColour(wx.Colour(255, 255, 255))
+        self.MoodList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditMood)
+        self.MoodList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckMood)
+        
+        # Load data in table
+        self.BuildMoodList()
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.MoodList, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
+        panel.SetSizer(sizer)
+        
+        return panel
+    
+    
+    
+#
+# Forth tab - Cortinas and Rules
 #
 
     def RulesSettings(self, notebook):
@@ -215,7 +257,7 @@ class Preferences(wx.Frame):
     
     
 #
-# Forth tab - Basic Settings
+# Fifth tab - Basic Settings
 #
     def TagsTab(self, notebook):
         
@@ -238,6 +280,9 @@ class Preferences(wx.Frame):
 #
 ################################################
 
+#
+# Build Cortinas and Rules
+#
 
     def BuildRuleList(self):
         self.RuleRows = []
@@ -263,12 +308,51 @@ class Preferences(wx.Frame):
             else:
                 self.RuleList.Check(i, check=False)
 
+#
+# BUILD MOODS
+#
+    def BuildMoodList(self):
+        self.MoodRows = []
+        for i in range(0, len(beamSettings._moods)):
+            mood = beamSettings._moods[i]
+            if mood[u'Type'] == "Mood":
+                self.MoodRows.append(str(mood[u'Name']))
+        self.MoodList.Set(self.MoodRows)
+        # Check the rules
+        for i in range(0, len(beamSettings._moods)):
+            moods = beamSettings._moods[i]
+            if moods[u'Active'] == "yes":
+                self.MoodList.Check(i, check=True)
+            else:
+                self.MoodList.Check(i, check=False)
 
 ################################################
 #
 # EVENTS
 #
 ################################################
+#
+# CHECK BOXES
+#
+    def OnCheckRule(self, event):
+        for i in range(0, len(beamSettings._rules)):
+            rule = beamSettings._rules[i]
+            if self.RuleList.IsChecked(i):
+                rule[u'Active'] = "yes"
+            else:
+                rule[u'Active'] = "no"
+        self.BuildRuleList()
+
+    def OnCheckMood(self, event):
+        for i in range(0, len(beamSettings._moods)):
+            mood = beamSettings._moods[i]
+            if self.MoodList.IsChecked(i):
+                mood[u'Active'] = "yes"
+            else:
+                mood[u'Active'] = "no"
+        self.BuildMoodList()
+
+
 
 ############
 # ALL TABS #
@@ -351,8 +435,40 @@ class Preferences(wx.Frame):
                 layout[u'Active'] = "no"
         self.BuildLayoutList()
 
+
 ############
-#  TAB 3   #
+#  TAB 4   #
+############
+#
+# MOODS BUTTONS
+#
+    def OnAddMood(self, event):
+        self.EditMood = EditMood(self, self.MoodList.GetCount(), "Add mood")
+        self.EditMood.Show()
+
+    def OnEditMood(self, event):
+        RowSelected = self.MoodList.GetSelection()
+        if RowSelected>-1:
+            self.MoodRule = EditMood(self, RowSelected, "Edit mood")
+            self.MoodRule.Show()
+
+    def OnDelMood(self, event):
+        RowSelected = self.MoodList.GetSelection()
+        if RowSelected>-1:
+            LineToDelete = self.MoodList.GetString(RowSelected)
+            dlg = wx.MessageDialog(self,
+            "Do you really want to delete '"+LineToDelete+"' ?",
+            "Confirm deletion", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            if result == wx.ID_OK:
+                beamSettings._moods.pop(RowSelected)
+            self.BuildMoodList()
+
+
+
+############
+#  TAB 5   #
 ############
 #
 # RULE BUTTONS
@@ -380,17 +496,9 @@ class Preferences(wx.Frame):
                 beamSettings._rules.pop(RowSelected)
                 self.BuildRuleList()
 
-    def OnCheckRule(self, event):
-        for i in range(0, len(beamSettings._rules)):
-            rule = beamSettings._rules[i]
-            if self.RuleList.IsChecked(i):
-                rule[u'Active'] = "yes"
-            else:
-                rule[u'Active'] = "no"
-        self.BuildRuleList()
 
 ############
-#  TAB 4   #
+#  TAB 6   #
 ############
 
     def onTagDropdown(self, event):
