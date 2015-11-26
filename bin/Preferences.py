@@ -50,7 +50,7 @@ class Preferences(wx.Frame):
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
         notebook  = fnb.FlatNotebook(self.panel, wx.ID_ANY,agwStyle=fnb.FNB_NODRAG|fnb.FNB_VC8|fnb.FNB_NO_NAV_BUTTONS|fnb.FNB_NO_X_BUTTON|fnb.FNB_NO_TAB_FOCUS)
 
-        notebook.AddPage(self.BasicSettings(notebook), "Basic Settings")
+        notebook.AddPage(self.BasicSettings(notebook), "Settings")
         notebook.AddPage(self.LayoutSettings(notebook), "Default Layout")
         notebook.AddPage(self.MoodsSettings(notebook), "Moods")
         notebook.AddPage(self.RulesSettings(notebook), "Rules")
@@ -104,22 +104,29 @@ class Preferences(wx.Frame):
         
         # Refresh time
         wx.StaticText(panel, -1, "Refresh time", (20,190))
-        self.RefreshTime = wx.Slider(panel, -1, int(beamSettings._updateTimer/1000), 0.5, 10, (20,210), (240,-1), wx.SL_HORIZONTAL)
-        self.RefreshTimeLabel = wx.StaticText(panel, -1, "3,5 sec (Medium)", (270,210))
+        self.RefreshTime = wx.Slider(panel, -1, inte(beamSettings._updateTimer), 500, 10000, (20,210), (240,-1), wx.SL_HORIZONTAL)
+        self.RefreshTimeLabel = wx.StaticText(panel, -1, "", (270,210))
+        self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
+        self.updateRefreshTimerLabel()
         
         # Tanda Length
         wx.StaticText(panel, -1, "Tanda Length", (20,240))
         self.TandaLength = wx.Slider(panel, -1, beamSettings._maxTandaLength, 1, 10, (20,260), (240,-1), wx.SL_HORIZONTAL)
-        self.TandaLengthLabel = wx.StaticText(panel, -1, "4 songs", (270,260))
-        
+        self.TandaLengthLabel = wx.StaticText(panel, -1, "", (270,260))
+        self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
+        self.maxTandaLengthLabel()
+
         # Mood transition
         wx.StaticText(panel, -1, "Mood transition", (20,290))
         self.FadeCheckBox = wx.CheckBox(panel, label='Fade', pos=(30, 310))
-        self.FadeCheckBox.SetValue(True)
-        self.FadeSpeed = wx.Slider(panel, -1, 3, 0.1, 5, (90,310), (170,-1), wx.SL_HORIZONTAL)
-        self.TandaLengthLabel = wx.StaticText(panel, -1, "3,0 sec (Medium)", (270,310))
+        self.FadeSpeed = wx.Slider(panel, -1, int(beamSettings._moodTransitionSpeed), 500, 5000, (90,310), (170,-1), wx.SL_HORIZONTAL)
+        self.FadeSpeedLabel = wx.StaticText(panel, -1, "", (270,310))
+        self.FadeCheckBox.Bind(wx.EVT_CHECKBOX, self.OnFadeCheckBox)
+        self.FadeSpeed.Bind(wx.EVT_SCROLL, self.OnFadeSpeedScroll)
 
-        # Mood transition
+        self.updateMoodTransition()
+
+        # Logging
         wx.StaticText(panel, -1, "Logging", (20,340))
         self.LogCheckBox = wx.CheckBox(panel, label='Log to /home/mikael/Beam.log', pos=(30, 360))
         self.LogCheckBox.SetValue(True)
@@ -268,7 +275,7 @@ class Preferences(wx.Frame):
         font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         tagpreview.SetFont(font)
         wx.StaticText(panel, -1, "Here is all available tags and their values displayed for", (20,30))
-        self.TagDropdown = wx.ComboBox(panel,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda"], pos=(20,50), style=wx.CB_READONLY)
+        self.TagDropdown = wx.ComboBox(panel,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda", "Misc"], pos=(20,50), style=wx.CB_READONLY)
         self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.onTagDropdown)
         
         return panel
@@ -331,26 +338,7 @@ class Preferences(wx.Frame):
 # EVENTS
 #
 ################################################
-#
-# CHECK BOXES
-#
-    def OnCheckRule(self, event):
-        for i in range(0, len(beamSettings._rules)):
-            rule = beamSettings._rules[i]
-            if self.RuleList.IsChecked(i):
-                rule[u'Active'] = "yes"
-            else:
-                rule[u'Active'] = "no"
-        self.BuildRuleList()
 
-    def OnCheckMood(self, event):
-        for i in range(0, len(beamSettings._moods)):
-            mood = beamSettings._moods[i]
-            if self.MoodList.IsChecked(i):
-                mood[u'Active'] = "yes"
-            else:
-                mood[u'Active'] = "no"
-        self.BuildMoodList()
 
 
 
@@ -363,7 +351,6 @@ class Preferences(wx.Frame):
     def onApply(self, e):
         # Get Settings
         beamSettings._moduleSelected     = self.Dropdown.GetValue()
-        beamSettings._updateTimer        = int(self.TimerText.GetValue())
         beamSettings._maxTandaLength     =  int(self.TandaLength.GetValue())
         beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
 
@@ -395,7 +382,77 @@ class Preferences(wx.Frame):
             self.MainWindowParent.fadeBackground()
             openFileDialog.Destroy()
 
+#
+# Refresh time slider
+#
+    def OnRefreshTimerScroll(self, e):
+        obj = e.GetEventObject()
+        beamSettings._updateTimer = obj.GetValue()
+        self.updateRefreshTimerLabel()
+    
+    
+    def updateRefreshTimerLabel(self):
+        Timervalue = round(float(beamSettings._updateTimer)/1000,1)
+        if beamSettings._updateTimer < 2000:
+            # Fast
+            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Fast)")
+        elif beamSettings._updateTimer < 5000:
+            # Medium
+            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Medium)")
+        else:
+            # Slow
+            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Slow)")
+    
+#
+# Tanda length slider
+#
+    def OnTandaLengthScroll(self, e):
+        obj = e.GetEventObject()
+        beamSettings._maxTandaLength = obj.GetValue()
+        self.maxTandaLengthLabel()
+    
+    def maxTandaLengthLabel(self):
+        self.TandaLengthLabel.SetLabel(str(beamSettings._maxTandaLength) + " songs")
 
+#
+# Mood transition checkbox and slider
+#
+    def OnFadeCheckBox(self, e):
+        obj = e.GetEventObject()
+        IsChecked = obj.GetValue()
+        if IsChecked:
+            beamSettings._moodTransition = 'Fade'
+        else:
+            beamSettings._moodTransition = 'None'
+        self.updateMoodTransition()
+
+    def OnFadeSpeedScroll(self, e):
+        obj = e.GetEventObject()
+        beamSettings._moodTransitionSpeed = obj.GetValue()
+        self.updateMoodTransition()
+    
+    def updateMoodTransition(self):
+        if beamSettings._moodTransition == 'Fade':
+            self.FadeCheckBox.SetValue(True)
+            self.FadeSpeed.Enable(True)
+        else:
+            self.FadeCheckBox.SetValue(False)
+            self.FadeSpeed.Enable(False)
+
+        Timervalue = round(float(beamSettings._moodTransitionSpeed)/1000,1)
+        if beamSettings._moodTransitionSpeed < 1000:
+            # Fast
+            self.FadeSpeedLabel.SetLabel(str(Timervalue) + " sec (Fast)")
+        elif beamSettings._moodTransitionSpeed < 3000:
+            # Medium
+            self.FadeSpeedLabel.SetLabel(str(Timervalue) + " sec (Medium)")
+        else:
+            # Slow
+            self.FadeSpeedLabel.SetLabel(str(Timervalue) + " sec (Slow)")
+
+#
+# Logging checkbox
+#
 
 ############
 #  TAB 2   #
@@ -426,6 +483,7 @@ class Preferences(wx.Frame):
             if result == wx.ID_OK:
                 beamSettings._DefaultDisplaySettings.pop(RowSelected)
                 self.BuildLayoutList()
+
     def OnCheckLayout(self, event):
         for i in range(0, len(beamSettings._DefaultDisplaySettings)):
             layout = beamSettings._DefaultDisplaySettings[i]
@@ -465,6 +523,14 @@ class Preferences(wx.Frame):
                 beamSettings._moods.pop(RowSelected)
             self.BuildMoodList()
 
+    def OnCheckMood(self, event):
+        for i in range(0, len(beamSettings._moods)):
+            mood = beamSettings._moods[i]
+            if self.MoodList.IsChecked(i):
+                mood[u'Active'] = "yes"
+            else:
+                mood[u'Active'] = "no"
+        self.BuildMoodList()
 
 
 ############
@@ -496,6 +562,14 @@ class Preferences(wx.Frame):
                 beamSettings._rules.pop(RowSelected)
                 self.BuildRuleList()
 
+    def OnCheckRule(self, event):
+        for i in range(0, len(beamSettings._rules)):
+            rule = beamSettings._rules[i]
+            if self.RuleList.IsChecked(i):
+                rule[u'Active'] = "yes"
+            else:
+                rule[u'Active'] = "no"
+        self.BuildRuleList()
 
 ############
 #  TAB 6   #

@@ -78,6 +78,8 @@ class BeamSettings:
         self._maxTandaLength    = ''
         self._updateTimer       = ''
         self._DefaultBackground    = ''
+        self._moodTransition       = ''
+        self._moodTransitionSpeed  = ''
         self._allModulesSettings    = ''
         self._DefaultDisplaySettings     = ''
         self._rules                 = ''
@@ -104,6 +106,8 @@ class BeamSettings:
         self._maxTandaLength        = ConfigData[u'MaxTandaLength'] # Longest tandas, optimize for performance
         self._updateTimer           = ConfigData[u'Updtime']        # mSec between reading
         self._DefaultBackground   = ConfigData[u'DefaultBackgroundImage']# Relative path to background, use 1920x1080 for best performance
+        self._moodTransition = ConfigData[u'MoodTransition']
+        self._moodTransitionSpeed = ConfigData[u'MoodTransitionSpeed']
 
         # Dictionaries
         self._allModulesSettings    = ConfigData[u'AllModules']
@@ -148,6 +152,8 @@ class BeamSettings:
         output[u'MaxTandaLength']   = self._maxTandaLength
         output[u'Updtime']          = self._updateTimer
         output[u'DefaultBackgroundImage']    = self._DefaultBackground
+        output[u'MoodTransition']          = self._moodTransition
+        output[u'MoodTransitionSpeed']    = self._moodTransitionSpeed
 
         # Dictionaries
         output[u'AllModules']           = self._allModulesSettings
