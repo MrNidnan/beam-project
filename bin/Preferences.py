@@ -32,7 +32,6 @@ import os
 from bin.beamsettings import *
 from bin.dialogs.editlayoutdialog import EditLayoutDialog
 from bin.dialogs.editruledialog import EditRuleDialog
-from bin.dialogs.previewtags import PreviewTags
 
 #
 # Build main preferences Window
@@ -53,17 +52,15 @@ class Preferences(wx.Frame):
         notebook.AddPage(self.BasicSettings(notebook), "Basic Settings")
         notebook.AddPage(self.LayoutSettings(notebook), "Layout")
         notebook.AddPage(self.RulesSettings(notebook), "Cortinas and Rules")
+        notebook.AddPage(self.TagsTab(notebook), "Tags")
 
-        self.previewTags  = wx.CheckBox(self.panel, label="Preview Tags")
         self.button_ok = wx.Button(self.panel, label="Apply")
         self.button_cancel = wx.Button(self.panel, label="Close")
-        self.previewTags.Bind(wx.EVT_CHECKBOX, self.onPreviewTags)
         self.button_ok.Bind(wx.EVT_BUTTON, self.onApply)
         self.button_cancel.Bind(wx.EVT_BUTTON, self.onClose)
 
         self.vbox.Add(notebook, 1, wx.ALL | wx.EXPAND)
         self.hbox.Add((200, -1), 1, flag=wx.EXPAND | wx.ALIGN_RIGHT)
-        self.hbox.Add(self.previewTags, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         self.hbox.Add(self.button_ok, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
         self.vbox.Add(self.hbox)
@@ -98,24 +95,32 @@ class Preferences(wx.Frame):
         self.currentBackground = wx.StaticText(panel, -1, backgroundfile, (125,137))
         self.currentBackground.SetFont(font)
         
-        # Wait timer
-        waittimer = wx.StaticText(panel, -1, "Settings", (10,167))
+        # Settings
+        settingslabel = wx.StaticText(panel, -1, "Settings", (10,167))
         font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        waittimer.SetFont(font)
-        wx.StaticText(panel, -1, "Update timer in mSec (default 4000)", (20,190))
-        self.TimerText = wx.TextCtrl(panel, -1, str(beamSettings._updateTimer), (20,210), (140,-1))
-
+        settingslabel.SetFont(font)
+        
+        # Refresh time
+        wx.StaticText(panel, -1, "Refresh time", (20,190))
+        self.RefreshTime = wx.Slider(panel, -1, int(beamSettings._updateTimer/1000), 0.5, 10, (20,210), (240,-1), wx.SL_HORIZONTAL)
+        self.RefreshTimeLabel = wx.StaticText(panel, -1, "3,5 sec (Medium)", (270,210))
+        
         # Tanda Length
-        wx.StaticText(panel, -1, "Next tanda preview (number of songs, default 4)", (20,240))
-        self.TandaLength = wx.TextCtrl(panel, -1, str(beamSettings._maxTandaLength), (20,260), (140,-1))
+        wx.StaticText(panel, -1, "Tanda Length", (20,240))
+        self.TandaLength = wx.Slider(panel, -1, beamSettings._maxTandaLength, 1, 10, (20,260), (240,-1), wx.SL_HORIZONTAL)
+        self.TandaLengthLabel = wx.StaticText(panel, -1, "4 songs", (270,260))
+        
+        # Mood transition
+        wx.StaticText(panel, -1, "Mood transition", (20,290))
+        self.FadeCheckBox = wx.CheckBox(panel, label='Fade', pos=(30, 310))
+        self.FadeCheckBox.SetValue(True)
+        self.FadeSpeed = wx.Slider(panel, -1, 3, 0.1, 5, (90,310), (170,-1), wx.SL_HORIZONTAL)
+        self.TandaLengthLabel = wx.StaticText(panel, -1, "3,0 sec (Medium)", (270,310))
 
         # Mood transition
-        wx.StaticText(panel, -1, "Mood transition (Fading)", (20,290))
-        self.TandaLength = wx.TextCtrl(panel, -1, str(beamSettings._maxTandaLength), (20,310), (140,-1))
-
-        # Mood transition
-        wx.StaticText(panel, -1, "Logging (A log-file will be created)", (20,340))
-        self.TandaLength = wx.TextCtrl(panel, -1, str(beamSettings._maxTandaLength), (20,360), (140,-1))
+        wx.StaticText(panel, -1, "Logging", (20,340))
+        self.LogCheckBox = wx.CheckBox(panel, label='Log to /home/mikael/Beam.log', pos=(30, 360))
+        self.LogCheckBox.SetValue(True)
 
         return panel
 
@@ -207,6 +212,31 @@ class Preferences(wx.Frame):
         panel.SetSizer(sizer)
 
         return panel
+    
+    
+#
+# Forth tab - Basic Settings
+#
+    def TagsTab(self, notebook):
+        
+        panel = wx.Panel(self)
+        
+        # Module dropdown
+        tagpreview = wx.StaticText(panel, -1, "Tags preview", (10,7))
+        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        tagpreview.SetFont(font)
+        wx.StaticText(panel, -1, "Here is all available tags and their values displayed for", (20,30))
+        self.TagDropdown = wx.ComboBox(panel,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda"], pos=(20,50), style=wx.CB_READONLY)
+        self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.onTagDropdown)
+        
+        return panel
+    
+    
+################################################
+#
+# FUNCTIONS
+#
+################################################
 
 
     def BuildRuleList(self):
@@ -233,17 +263,16 @@ class Preferences(wx.Frame):
             else:
                 self.RuleList.Check(i, check=False)
 
-#
-# Preview Tags
-#
-    def onPreviewTags(self, e):
-        if self.previewTags.GetValue():
-            self.PreviewTags = PreviewTags(self)
-            self.PreviewTags.Show()
-        else:
-            pass
 
+################################################
+#
+# EVENTS
+#
+################################################
 
+############
+# ALL TABS #
+############
 #
 # Apply preferences
 #
@@ -262,6 +291,12 @@ class Preferences(wx.Frame):
     def onClose(self, e):
         self.Destroy()
 
+############
+#  TAB 1   #
+############
+#
+# Browse Background
+#
     def browseBackgroundImage(self, event):
         openFileDialog = wx.FileDialog(self, "Set new background image", 
                                        os.path.join(os.getcwd(), 'resources', 'backgrounds'), "",
@@ -278,6 +313,9 @@ class Preferences(wx.Frame):
 
 
 
+############
+#  TAB 2   #
+############
 #
 # LAYOUT BUTTONS
 #
@@ -312,6 +350,10 @@ class Preferences(wx.Frame):
             else:
                 layout[u'Active'] = "no"
         self.BuildLayoutList()
+
+############
+#  TAB 3   #
+############
 #
 # RULE BUTTONS
 #
@@ -346,3 +388,11 @@ class Preferences(wx.Frame):
             else:
                 rule[u'Active'] = "no"
         self.BuildRuleList()
+
+############
+#  TAB 4   #
+############
+
+    def onTagDropdown(self, event):
+        selected = self.TagDropdown.GetValue()
+        print selected
