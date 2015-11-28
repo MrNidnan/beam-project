@@ -120,7 +120,7 @@ class BeamSettings:
             self._logPath = os.path.join(os.path.expanduser("~"), 'BeamLog.txt')
         
         # Dictionaries
-        self._allModulesSettings        = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'AllModules')
+        self._allModulesSettings        = ConfigDataOriginal[u'AllModules']
         self._DefaultDisplaySettings    = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'DefaultDisplay')
         self._rules                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Rules')
         self._moods                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Moods')
