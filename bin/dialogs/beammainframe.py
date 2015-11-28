@@ -165,7 +165,7 @@ class beamMainFrame(wx.Frame):
             if (self.nowPlayingDataModel.BackgroundImage != self._currentBackgroundPath and
                 self.nowPlayingDataModel.BackgroundImage != ""):
                 self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
-                self.changeBackground()
+                self.changeBackground(int(int(beamSettings._moodTransitionSpeed) / 100))
             else:
                 self.textsAreVisible = True
         else:
@@ -389,19 +389,32 @@ class beamMainFrame(wx.Frame):
 
 ####################################################
 #
-# FADE BACKGROND
+# CHANGE BACKGROUND
 #
 
     def changeBackground(self, fadeSpeed = 5):
         self.red = float(1.0)
         self.green = float(1.0)
         self.blue = float(1.0)
-        self.delta = float(0.10)
+        self.delta = float(1/float(fadeSpeed))
         self.fadeSpeed = fadeSpeed
 
+        # Choose transition
+        if beamSettings._moodTransition == 'Fade':
         # start the timer for the fade-out
-        #        if beamSettings._
-        self.timer1.Start(self.fadeSpeed)
+            self.timer1.Start(self.fadeSpeed)
+        else:
+        # No transition
+            self.switchBackground()
+
+    def switchBackground(self):
+        # Change background without any transition
+        self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
+        self.modifiedBitmap = self._currentBackgroundPath
+        self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
+        self.triggerResizeBackground = True
+        self.textsAreVisible = True
+        self.Refresh()
 
     def FadeoutOldImage(self, event):
         self.textsAreVisible = False

@@ -149,7 +149,7 @@ class Preferences(wx.Frame):
         hboxTransition.Add(self.FadeSpeed, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
         hboxTransition.Add(self.FadeSpeedLabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=7)
         vbox.Add(hboxTransition, flag=wx.LEFT, border=20)
-        print "Test1"
+
         # Window decoration
         windowdecoration = wx.StaticText(panel, -1, "Window decoration")
         self.StatusBarCheckBox = wx.CheckBox(panel, label='Show statusbar')
@@ -158,12 +158,11 @@ class Preferences(wx.Frame):
         else:
             self.StatusBarCheckBox.SetValue(False)
         self.StatusBarCheckBox.Bind(wx.EVT_CHECKBOX, self.OnStatusBarCheckBox)
-        print "Test2"
         vbox.Add(windowdecoration, flag=wx.LEFT, border=20)
         hboxDecoration = wx.BoxSizer(wx.HORIZONTAL)
         hboxDecoration.Add(self.StatusBarCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
         vbox.Add(hboxDecoration, flag=wx.LEFT, border=20)
-        print "Test3"
+
         # Logging
         logging = wx.StaticText(panel, -1, "Logging")
         self.LogCheckBox = wx.CheckBox(panel, label='Log to '+beamSettings._logPath)
