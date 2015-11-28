@@ -77,66 +77,101 @@ class Preferences(wx.Frame):
     def BasicSettings(self, notebook):
 
         panel = wx.Panel(self)
+        vbox = wx.BoxSizer(wx.VERTICAL)
 
         # Module dropdown
-        Mediaplayer = wx.StaticText(panel, -1, "Mediaplayer", (10,7))
-        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        Mediaplayer.SetFont(font)
-        wx.StaticText(panel, -1, "Select mediaplayer to display information from", (20,30))
-        self.Dropdown = wx.ComboBox(panel,value=beamSettings._moduleSelected, choices=beamSettings._currentModules, pos=(20,50), style=wx.CB_READONLY)
-
+        mediaplayer = wx.StaticText(panel, -1, "Mediaplayer")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        mediaplayer.SetFont(font)
+        mediadescription = wx.StaticText(panel, -1, "Select mediaplayer to display information from")
+        self.Dropdown = wx.ComboBox(panel,value=beamSettings._moduleSelected, choices=beamSettings._currentModules, style=wx.CB_READONLY)
+        vbox.Add(mediaplayer, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        vbox.Add(mediadescription, flag=wx.LEFT, border=20)
+        vbox.Add(self.Dropdown, flag=wx.LEFT, border=20)
+        
         # Background image
-        Background = wx.StaticText(panel, -1, "Default Background Image", (10,87))
-        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        Background.SetFont(font)
-        wx.StaticText(panel, -1, "Select background image (1920x1080 recommended)", (20,110))
-        self.browse = wx.Button(panel, label="Browse", pos=(20,129))
+        background = wx.StaticText(panel, -1, "Default Background Image")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        background.SetFont(font)
+        backdescription = wx.StaticText(panel, -1, "Select background image (1920x1080 recommended)")
+        self.browse = wx.Button(panel, label="Browse")
         self.browse.Bind(wx.EVT_BUTTON, self.browseBackgroundImage)
-        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
         (path,backgroundfile) = os.path.split(beamSettings._DefaultBackground)
-        self.currentBackground = wx.StaticText(panel, -1, backgroundfile, (125,137))
-        self.currentBackground.SetFont(font)
+        self.currentBackground = wx.StaticText(panel, -1, backgroundfile)
+        vbox.Add(background, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        vbox.Add(backdescription, flag=wx.LEFT, border=20)
+        hboxBackground = wx.BoxSizer(wx.HORIZONTAL)
+        hboxBackground.Add(self.browse, flag=wx.RIGHT | wx.TOP, border=5)
+        hboxBackground.Add(self.currentBackground, flag=wx.LEFT | wx.TOP, border=5)
+        vbox.Add(hboxBackground, flag=wx.LEFT, border=20)
         
         # Settings
-        settingslabel = wx.StaticText(panel, -1, "Settings", (10,167))
-        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        settingslabel = wx.StaticText(panel, -1, "Settings")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         settingslabel.SetFont(font)
+        vbox.Add(settingslabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         
         # Refresh time
-        wx.StaticText(panel, -1, "Refresh time (require restart)", (20,190))
-        self.RefreshTime = wx.Slider(panel, -1, int(beamSettings._updateTimer), 500, 10000, (20,210), (240,-1), wx.SL_HORIZONTAL)
-        self.RefreshTimeLabel = wx.StaticText(panel, -1, "", (270,210))
+        refreshtime = wx.StaticText(panel, -1, "Refresh time (require restart)")
+        self.RefreshTime = wx.Slider(panel, -1, int(beamSettings._updateTimer), 500, 10000,(0,0), (233,-1), wx.SL_HORIZONTAL)
+        self.RefreshTimeLabel = wx.StaticText(panel, -1, "")
         self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
         self.updateRefreshTimerLabel()
+        vbox.Add(refreshtime, flag=wx.LEFT, border=20)
+        hboxRefresh = wx.BoxSizer(wx.HORIZONTAL)
+        hboxRefresh.Add(self.RefreshTime, flag= wx.LEFT | wx.RIGHT | wx.TOP, border=7)
+        hboxRefresh.Add(self.RefreshTimeLabel, flag= wx.RIGHT | wx.TOP, border=7)
+        vbox.Add(hboxRefresh, flag=wx.LEFT, border=20)
         
         # Tanda Length
-        wx.StaticText(panel, -1, "Tanda Length", (20,240))
-        self.TandaLength = wx.Slider(panel, -1, beamSettings._maxTandaLength, 1, 10, (20,260), (240,-1), wx.SL_HORIZONTAL)
-        self.TandaLengthLabel = wx.StaticText(panel, -1, "", (270,260))
+        tandalength = wx.StaticText(panel, -1, "Tanda Length")
+        self.TandaLength = wx.Slider(panel, -1, beamSettings._maxTandaLength, 1, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
+        self.TandaLengthLabel = wx.StaticText(panel, -1, "")
         self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
         self.maxTandaLengthLabel()
+        vbox.Add(tandalength, flag=wx.LEFT, border=20)
+        hboxTanda = wx.BoxSizer(wx.HORIZONTAL)
+        hboxTanda.Add(self.TandaLength, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
+        hboxTanda.Add(self.TandaLengthLabel, flag=wx.LEFT | wx.TOP, border=7)
+        vbox.Add(hboxTanda, flag=wx.LEFT, border=20)
         
         # Mood transition
-        wx.StaticText(panel, -1, "Mood transition", (20,290))
-        self.FadeCheckBox = wx.CheckBox(panel, label='Fade', pos=(30, 310))
-        self.FadeSpeed = wx.Slider(panel, -1, int(beamSettings._moodTransitionSpeed), 500, 5000, (90,310), (170,-1), wx.SL_HORIZONTAL)
-        self.FadeSpeedLabel = wx.StaticText(panel, -1, "", (270,310))
+        moodtransition = wx.StaticText(panel, -1, "Mood transition")
+        self.FadeCheckBox = wx.CheckBox(panel, label='Fade')
+        self.FadeSpeed = wx.Slider(panel, -1, int(beamSettings._moodTransitionSpeed), 500, 5000,(0,0), (167,-1), wx.SL_HORIZONTAL)
+        self.FadeSpeedLabel = wx.StaticText(panel, -1, "")
         self.FadeCheckBox.Bind(wx.EVT_CHECKBOX, self.OnFadeCheckBox)
         self.FadeSpeed.Bind(wx.EVT_SCROLL, self.OnFadeSpeedScroll)
         self.updateMoodTransition()
-        
-        # Logging
-        wx.StaticText(panel, -1, "Window decoration (require restart)", (20,340))
-        self.StatusBarCheckBox = wx.CheckBox(panel, label='Show statusbar', pos=(30, 365))
+        vbox.Add(moodtransition, flag=wx.LEFT, border=20)
+        hboxTransition = wx.BoxSizer(wx.HORIZONTAL)
+        hboxTransition.Add(self.FadeCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
+        hboxTransition.Add(self.FadeSpeed, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
+        hboxTransition.Add(self.FadeSpeedLabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=7)
+        vbox.Add(hboxTransition, flag=wx.LEFT, border=20)
+      
+        # Window decoration
+        windowdecoration = wx.StaticText(panel, -1, "Window decoration (require restart)")
+        self.StatusBarCheckBox = wx.CheckBox(panel, label='Show statusbar')
         self.StatusBarCheckBox.SetValue(True)
-        self.WindowTopCheckBox = wx.CheckBox(panel, label='Show window decorations', pos=(170, 365))
+        self.WindowTopCheckBox = wx.CheckBox(panel, label='Show window decorations')
         self.WindowTopCheckBox.SetValue(True)
+        vbox.Add(windowdecoration, flag=wx.LEFT, border=20)
+        hboxDecoration = wx.BoxSizer(wx.HORIZONTAL)
+        hboxDecoration.Add(self.StatusBarCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
+        hboxDecoration.Add(self.WindowTopCheckBox, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=7)
+        vbox.Add(hboxDecoration, flag=wx.LEFT, border=20)
         
         # Logging
-        wx.StaticText(panel, -1, "Logging", (20,390))
-        self.LogCheckBox = wx.CheckBox(panel, label='Log to /home/mikael/Beam.log', pos=(30, 415))
+        logging = wx.StaticText(panel, -1, "Logging")
+        self.LogCheckBox = wx.CheckBox(panel, label='Log to /home/mikael/Beam.log')
         self.LogCheckBox.SetValue(True)
-
+        hboxLog = wx.BoxSizer(wx.HORIZONTAL)
+        hboxLog.Add(self.LogCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
+        vbox.Add(logging, flag=wx.LEFT, border=20)
+        vbox.Add(hboxLog, flag=wx.LEFT, border=20)
+        
+        panel.SetSizer(vbox)
         return panel
 
 
@@ -287,15 +322,23 @@ class Preferences(wx.Frame):
     def TagsTab(self, notebook):
         
         panel = wx.Panel(self)
+        vbox = wx.BoxSizer(wx.VERTICAL)
         
-        # Module dropdown
-        tagpreview = wx.StaticText(panel, -1, "Tags preview", (10,7))
-        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        # Description
+        tagpreview = wx.StaticText(panel, -1, "Tags preview")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         tagpreview.SetFont(font)
-        wx.StaticText(panel, -1, "Here are all available tags and their values displayed for", (20,30))
-        self.TagDropdown = wx.ComboBox(panel,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda", "Misc"], pos=(20,50), style=wx.CB_READONLY)
+        description = wx.StaticText(panel, -1, "Here are all available tags and their values displayed for")
+        
+        # Tag dropdown
+        self.TagDropdown = wx.ComboBox(panel,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda", "Misc"], style=wx.CB_READONLY)
         self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.onTagDropdown)
         
+        vbox.Add(tagpreview, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        vbox.Add(description, flag=wx.LEFT, border=20)
+        vbox.Add(self.TagDropdown, flag=wx.LEFT, border=20)
+        
+        panel.SetSizer(vbox)
         return panel
     
     

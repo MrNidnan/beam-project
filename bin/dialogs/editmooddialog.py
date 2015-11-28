@@ -88,13 +88,11 @@ class EditMood(wx.Dialog):
         BackgroundText = wx.StaticText(self.panel, -1, "Select background image (1920x1080 recommended)")
         self.MoodBackground = wx.Button(self.panel, label="Browse")
         (path,backgroundfile) = os.path.split(self.Settings[u'Background'])
-        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
         self.currentBackground = wx.StaticText(self.panel, -1, backgroundfile)
-        self.currentBackground.SetFont(font)
 
         BackgroundSizer = wx.BoxSizer(wx.HORIZONTAL)
         BackgroundSizer.Add(self.MoodBackground, flag=wx.RIGHT, border=10)
-        BackgroundSizer.Add(self.currentBackground, flag=wx.TOP, border=3)
+        BackgroundSizer.Add(self.currentBackground)
 
         descriptionSizer = wx.BoxSizer(wx.VERTICAL)
         descriptionSizer.Add(LayoutText, flag= wx.BOTTOM | wx.TOP, border=10)
