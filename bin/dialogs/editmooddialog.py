@@ -87,10 +87,19 @@ class EditMood(wx.Dialog):
         
         BackgroundText = wx.StaticText(self.panel, -1, "Select background image (1920x1080 recommended)")
         self.MoodBackground = wx.Button(self.panel, label="Browse")
+        (path,backgroundfile) = os.path.split(self.Settings[u'Background'])
+        font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
+        self.currentBackground = wx.StaticText(self.panel, -1, backgroundfile)
+        self.currentBackground.SetFont(font)
+
+        BackgroundSizer = wx.BoxSizer(wx.HORIZONTAL)
+        BackgroundSizer.Add(self.MoodBackground, flag=wx.RIGHT, border=10)
+        BackgroundSizer.Add(self.currentBackground, flag=wx.TOP, border=3)
+
         descriptionSizer = wx.BoxSizer(wx.VERTICAL)
         descriptionSizer.Add(LayoutText, flag= wx.BOTTOM | wx.TOP, border=10)
         descriptionSizer.Add(BackgroundText, flag=wx.LEFT, border=10)
-        descriptionSizer.Add(self.MoodBackground, flag=wx.LEFT | wx.TOP, border=10)
+        descriptionSizer.Add(BackgroundSizer, flag=wx.LEFT | wx.TOP, border=10)
         self.vbox.Add(descriptionSizer, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
 
         # Add Layout
@@ -250,13 +259,16 @@ class EditMood(wx.Dialog):
     def onClose(self, e):
         self.Destroy()
 
+#
+# Browse for background
+#
     def BrowseMoodBackground(self, event):
         openFileDialog = wx.FileDialog(self, "Set new background image for mood",
                                        os.path.join(os.getcwd(), 'resources', 'backgrounds'), "",
                                        "Image files(*.png,*.jpg)|*.png;*.jpg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:
-            print self.Settings[u'Background']
             self.Settings[u'Background'] = openFileDialog.GetPath()
-            print self.Settings[u'Background']
+            (path,backgroundfile) = os.path.split(self.Settings[u'Background'])
+            self.currentBackground.SetLabel(backgroundfile)
             openFileDialog.Destroy()
