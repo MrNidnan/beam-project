@@ -41,7 +41,7 @@ from bin.dialogs.editmooddialog import EditMood
 class Preferences(wx.Frame):
     def __init__(self, parent):
         self.MainWindowParent = parent
-        wx.Frame.__init__(self, parent, title="Preferences", size=(400,500),
+        wx.Frame.__init__(self, parent, title="Preferences", size=(400,540),
                           style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
 
         # Build the panel
@@ -103,8 +103,8 @@ class Preferences(wx.Frame):
         settingslabel.SetFont(font)
         
         # Refresh time
-        wx.StaticText(panel, -1, "Refresh time", (20,190))
-        self.RefreshTime = wx.Slider(panel, -1, inte(beamSettings._updateTimer), 500, 10000, (20,210), (240,-1), wx.SL_HORIZONTAL)
+        wx.StaticText(panel, -1, "Refresh time (require restart)", (20,190))
+        self.RefreshTime = wx.Slider(panel, -1, int(beamSettings._updateTimer), 500, 10000, (20,210), (240,-1), wx.SL_HORIZONTAL)
         self.RefreshTimeLabel = wx.StaticText(panel, -1, "", (270,210))
         self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
         self.updateRefreshTimerLabel()
@@ -115,7 +115,7 @@ class Preferences(wx.Frame):
         self.TandaLengthLabel = wx.StaticText(panel, -1, "", (270,260))
         self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
         self.maxTandaLengthLabel()
-
+        
         # Mood transition
         wx.StaticText(panel, -1, "Mood transition", (20,290))
         self.FadeCheckBox = wx.CheckBox(panel, label='Fade', pos=(30, 310))
@@ -123,12 +123,18 @@ class Preferences(wx.Frame):
         self.FadeSpeedLabel = wx.StaticText(panel, -1, "", (270,310))
         self.FadeCheckBox.Bind(wx.EVT_CHECKBOX, self.OnFadeCheckBox)
         self.FadeSpeed.Bind(wx.EVT_SCROLL, self.OnFadeSpeedScroll)
-
         self.updateMoodTransition()
-
+        
         # Logging
-        wx.StaticText(panel, -1, "Logging", (20,340))
-        self.LogCheckBox = wx.CheckBox(panel, label='Log to /home/mikael/Beam.log', pos=(30, 360))
+        wx.StaticText(panel, -1, "Window decoration (require restart)", (20,340))
+        self.StatusBarCheckBox = wx.CheckBox(panel, label='Show statusbar', pos=(30, 365))
+        self.StatusBarCheckBox.SetValue(True)
+        self.WindowTopCheckBox = wx.CheckBox(panel, label='Show window decorations', pos=(170, 365))
+        self.WindowTopCheckBox.SetValue(True)
+        
+        # Logging
+        wx.StaticText(panel, -1, "Logging", (20,390))
+        self.LogCheckBox = wx.CheckBox(panel, label='Log to /home/mikael/Beam.log', pos=(30, 415))
         self.LogCheckBox.SetValue(True)
 
         return panel
@@ -143,6 +149,7 @@ class Preferences(wx.Frame):
         panel = wx.Panel(self)
         self.DisplayRows = []
 
+        # Layout buttons
         self.AddLayout  = wx.Button(panel, label="Add")
         self.DelLayout  = wx.Button(panel, label="Delete")
         self.EditLayout = wx.Button(panel, label="Edit")
@@ -151,7 +158,9 @@ class Preferences(wx.Frame):
         sizerbuttons.Add(self.DelLayout, flag=wx.RIGHT | wx.TOP, border=10)
         sizerbuttons.Add(self.EditLayout, flag=wx.RIGHT | wx.TOP, border=10)
 
-
+        description = wx.StaticText(panel, -1, "The Default Layout is the layout configuration which will be shown when Beam is playing.")
+        description.Wrap(380)
+        
         self.LayoutList = wx.CheckListBox(panel,-1, size=wx.DefaultSize, choices=[], style= wx.LB_NEEDED_SB)
         self.LayoutList.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.LayoutList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditLayout)
@@ -165,6 +174,7 @@ class Preferences(wx.Frame):
         self.DelLayout.Bind(wx.EVT_BUTTON, self.OnDelLayout)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(description, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         sizer.Add(self.LayoutList, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         panel.SetSizer(sizer)
@@ -192,8 +202,8 @@ class Preferences(wx.Frame):
     def MoodsSettings(self, notebook):
     
         panel = wx.Panel(self)
-        
         self.MoodRows = []
+        
         # Mood buttons
         self.AddMood    = wx.Button(panel, label="Add")
         self.DelMood    = wx.Button(panel, label="Delete")
@@ -207,6 +217,9 @@ class Preferences(wx.Frame):
         self.EditMood.Bind(wx.EVT_BUTTON, self.OnEditMood)
         self.DelMood.Bind(wx.EVT_BUTTON, self.OnDelMood)
 
+        description = wx.StaticText(panel, -1, "A Mood changes the layout and background for some songs.\nMoods can be activated and deactivated with the check box.")
+        description.Wrap(380)
+        
         self.MoodList = wx.CheckListBox(panel,-1, size=wx.DefaultSize, choices=self.MoodRows, style= wx.LB_NEEDED_SB)
         self.MoodList.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.MoodList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditMood)
@@ -216,6 +229,7 @@ class Preferences(wx.Frame):
         self.BuildMoodList()
         
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(description, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         sizer.Add(self.MoodList, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         panel.SetSizer(sizer)
@@ -247,6 +261,9 @@ class Preferences(wx.Frame):
         self.EditRule.Bind(wx.EVT_BUTTON, self.OnEditRule)
         self.DelRule.Bind(wx.EVT_BUTTON, self.OnDelRule)
 
+        description = wx.StaticText(panel, -1, "Rules are used to:\n - Copy information from one tag to another.\n - Define Cortinas.\n - Split tags, such tags with both artist and title.\n - Ignore songs completely, such as silent tracks.\n\nRules can be activated and deactivated with the check box.")
+        description.Wrap(380)
+        
         self.RuleList = wx.CheckListBox(panel,-1, size=wx.DefaultSize, choices=self.RuleRows, style= wx.LB_NEEDED_SB)
         self.RuleList.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.RuleList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditRule)
@@ -256,6 +273,7 @@ class Preferences(wx.Frame):
         self.BuildRuleList()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(description, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         sizer.Add(self.RuleList, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         panel.SetSizer(sizer)
@@ -274,7 +292,7 @@ class Preferences(wx.Frame):
         tagpreview = wx.StaticText(panel, -1, "Tags preview", (10,7))
         font = wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         tagpreview.SetFont(font)
-        wx.StaticText(panel, -1, "Here is all available tags and their values displayed for", (20,30))
+        wx.StaticText(panel, -1, "Here are all available tags and their values displayed for", (20,30))
         self.TagDropdown = wx.ComboBox(panel,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda", "Misc"], pos=(20,50), style=wx.CB_READONLY)
         self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.onTagDropdown)
         
