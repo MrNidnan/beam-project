@@ -153,9 +153,15 @@ class Preferences(wx.Frame):
         # Window decoration
         windowdecoration = wx.StaticText(panel, -1, "Window decoration (require restart)")
         self.StatusBarCheckBox = wx.CheckBox(panel, label='Show statusbar')
-        self.StatusBarCheckBox.SetValue(True)
+        if beamSettings._showStatusbar == 'True':
+            self.StatusBarCheckBox.SetValue(True)
+        else:
+            self.StatusBarCheckBox.SetValue(False)
         self.WindowTopCheckBox = wx.CheckBox(panel, label='Show window decorations')
-        self.WindowTopCheckBox.SetValue(True)
+        if beamSettings._showWindowdecoration == 'True':
+            self.WindowTopCheckBox.SetValue(True)
+        else:
+            self.WindowTopCheckBox.SetValue(False)
         vbox.Add(windowdecoration, flag=wx.LEFT, border=20)
         hboxDecoration = wx.BoxSizer(wx.HORIZONTAL)
         hboxDecoration.Add(self.StatusBarCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
@@ -164,8 +170,11 @@ class Preferences(wx.Frame):
         
         # Logging
         logging = wx.StaticText(panel, -1, "Logging")
-        self.LogCheckBox = wx.CheckBox(panel, label='Log to /home/mikael/Beam.log')
-        self.LogCheckBox.SetValue(True)
+        self.LogCheckBox = wx.CheckBox(panel, label='Log to '+beamSettings._logPath)
+        if beamSettings._logging == 'True':
+            self.LogCheckBox.SetValue(True)
+        else:
+            self.LogCheckBox.SetValue(False)
         hboxLog = wx.BoxSizer(wx.HORIZONTAL)
         hboxLog.Add(self.LogCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
         vbox.Add(logging, flag=wx.LEFT, border=20)
@@ -411,8 +420,11 @@ class Preferences(wx.Frame):
 #
     def onApply(self, e):
         # Get Settings
-        beamSettings._moduleSelected     = self.Dropdown.GetValue()
-        beamSettings._maxTandaLength     =  int(self.TandaLength.GetValue())
+        beamSettings._moduleSelected        = self.Dropdown.GetValue()
+        beamSettings._maxTandaLength        =  int(self.TandaLength.GetValue())
+        beamSettings._showStatusbar         = str(self.StatusBarCheckBox.GetValue())
+        beamSettings._showWindowdecoration  = str(self.WindowTopCheckBox.GetValue())
+        beamSettings._logging               = str(self.LogCheckBox.GetValue())
         beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
 
 

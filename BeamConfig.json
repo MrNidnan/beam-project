@@ -39,6 +39,10 @@
   "Module": "",
   "MoodTransition": "Fade",
   "MoodTransitionSpeed": "1500",
+  "Logging": "False",
+  "LogPath": "",
+  "ShowStatusbar": "True",
+  "ShowWindowdecoration": "True",
   "Rules": [
     {
       "Active": "yes", 

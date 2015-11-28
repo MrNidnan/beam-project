@@ -80,6 +80,10 @@ class BeamSettings:
         self._DefaultBackground    = ''
         self._moodTransition       = ''
         self._moodTransitionSpeed  = ''
+        self._logging              = ''
+        self._logPath              = ''
+        self._showStatusbar        = ''
+        self._showWindowdecoration = ''
         self._allModulesSettings    = ''
         self._DefaultDisplaySettings     = ''
         self._rules                 = ''
@@ -105,10 +109,16 @@ class BeamSettings:
         self._moduleSelected        = ConfigData[u'Module']         # Player to read from
         self._maxTandaLength        = ConfigData[u'MaxTandaLength'] # Longest tandas, optimize for performance
         self._updateTimer           = ConfigData[u'Updtime']        # mSec between reading
-        self._DefaultBackground   = ConfigData[u'DefaultBackgroundImage']# Relative path to background, use 1920x1080 for best performance
+        self._DefaultBackground   = ConfigData[u'DefaultBackgroundImage']# Relative path to background
         self._moodTransition = ConfigData[u'MoodTransition']
         self._moodTransitionSpeed = ConfigData[u'MoodTransitionSpeed']
-
+        self._logging              = ConfigData[u'Logging']
+        self._logPath              = ConfigData[u'LogPath']
+        self._showStatusbar        = ConfigData[u'ShowStatusbar']
+        self._showWindowdecoration = ConfigData[u'ShowWindowdecoration']
+        if self._logPath == '':
+            self._logPath = os.path.join(os.path.expanduser("~"), 'BeamLog.txt')
+        
         # Dictionaries
         self._allModulesSettings    = ConfigData[u'AllModules']
         self._DefaultDisplaySettings     = ConfigData[u'DefaultDisplay']
@@ -151,9 +161,13 @@ class BeamSettings:
         output[u'Module']           = self._moduleSelected
         output[u'MaxTandaLength']   = self._maxTandaLength
         output[u'Updtime']          = self._updateTimer
-        output[u'DefaultBackgroundImage']    = self._DefaultBackground
-        output[u'MoodTransition']          = self._moodTransition
-        output[u'MoodTransitionSpeed']    = self._moodTransitionSpeed
+        output[u'DefaultBackgroundImage']   = self._DefaultBackground
+        output[u'MoodTransition']           = self._moodTransition
+        output[u'MoodTransitionSpeed']      = self._moodTransitionSpeed
+        output[u'Logging']              = self._logging
+        output[u'LogPath']              = self._logPath
+        output[u'ShowStatusbar']        = self._showStatusbar
+        output[u'ShowWindowdecoration'] = self._showWindowdecoration
 
         # Dictionaries
         output[u'AllModules']           = self._allModulesSettings
