@@ -42,10 +42,11 @@ app = wx.App(False) # Error messages go to terminal, for debugging purposes
 ########################################################
 beamSettings.LoadConfig(beamSettings.defaultConfigFileName)
 
-#Send error-log to file
-if platform.system() == 'Windows' or platform.system() == 'Darwin':
-    sys.stderr = open(os.path.join(os.path.expanduser("~"), "Beam-log.txt"),"w")
 print (beamSettings.mainFrameTitle)
+#Send messages to file
+if beamSettings._logging == 'True':
+    sys.stdout = open(beamSettings._logPath,"w")
+
 
 ########################################################
 # Start the main window
