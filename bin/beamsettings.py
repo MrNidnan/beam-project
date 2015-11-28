@@ -97,33 +97,33 @@ class BeamSettings:
         try:
             #Try loading in home directory
             ConfigData = self.OpenSetting(os.path.join(os.path.expanduser("~"), inputConfigFile))
-            self.ReadConfig(ConfigData)
         except:
-            #Otherwise read default setting
-            ConfigData = self.OpenSetting(os.path.join(os.getcwd(), inputConfigFile))
-            self.ReadConfig(ConfigData)
+            pass
+        # Also load the original settingsfile
+        ConfigDataOriginal = self.OpenSetting(os.path.join(os.getcwd(), inputConfigFile))
+        self.ReadConfig(ConfigData, ConfigDataOriginal)
         return
 
 
-    def ReadConfig(self, ConfigData):
-        self._moduleSelected        = ConfigData[u'Module']         # Player to read from
-        self._maxTandaLength        = ConfigData[u'MaxTandaLength'] # Longest tandas, optimize for performance
-        self._updateTimer           = ConfigData[u'Updtime']        # mSec between reading
-        self._DefaultBackground   = ConfigData[u'DefaultBackgroundImage']# Relative path to background
-        self._moodTransition = ConfigData[u'MoodTransition']
-        self._moodTransitionSpeed = ConfigData[u'MoodTransitionSpeed']
-        self._logging              = ConfigData[u'Logging']
-        self._logPath              = ConfigData[u'LogPath']
-        self._showStatusbar        = ConfigData[u'ShowStatusbar']
-        self._showWindowdecoration = ConfigData[u'ShowWindowdecoration']
+    def ReadConfig(self, ConfigData, ConfigDataOriginal):
+        self._moduleSelected        = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Module')         # Player to read from
+        self._maxTandaLength        = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'MaxTandaLength') # Longest tandas, optimize for performance
+        self._updateTimer           = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Updtime')        # mSec between reading
+        self._DefaultBackground     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'DefaultBackgroundImage')# Relative path to background
+        self._moodTransition        = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'MoodTransition')
+        self._moodTransitionSpeed   = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'MoodTransitionSpeed')
+        self._logging               = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Logging')
+        self._logPath               = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'LogPath')
+        self._showStatusbar         = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'ShowStatusbar')
+        self._showWindowdecoration  = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'ShowWindowdecoration')
         if self._logPath == '':
             self._logPath = os.path.join(os.path.expanduser("~"), 'BeamLog.txt')
         
         # Dictionaries
-        self._allModulesSettings    = ConfigData[u'AllModules']
-        self._DefaultDisplaySettings     = ConfigData[u'DefaultDisplay']
-        self._rules                 = ConfigData[u'Rules']
-        self._moods                 = ConfigData[u'Moods']
+        self._allModulesSettings        = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'AllModules')
+        self._DefaultDisplaySettings    = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'DefaultDisplay')
+        self._rules                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Rules')
+        self._moods                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Moods')
 
         # Set modules for operating system
         if platform.system() == 'Linux':
@@ -139,6 +139,12 @@ class BeamSettings:
             self._moduleSelected = [s.encode('utf-8') for s in tmp[u'Modules']][0]
         return
 
+    def ExtractSetting(self, ConfigData, ConfigDataOriginal, key):
+        try:
+            output = ConfigData[key]
+        except:
+            output = ConfigDataOriginal[key]
+        return output
 
     def OpenSetting(self, inputConfigFile):
         ConfigFile = open(inputConfigFile, 'r')
