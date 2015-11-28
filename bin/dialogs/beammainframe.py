@@ -120,6 +120,7 @@ class beamMainFrame(wx.Frame):
         
         #visibility switch
         self.textsAreVisible = True
+        self.showStatusBar()
         
         self.currentlyUpdating = False
         self.applyCurrentSettings()
@@ -357,11 +358,17 @@ class beamMainFrame(wx.Frame):
     def fullScreen(self, event):
         # Needed for Mac
         if platform.system() == 'Darwin':
-            if self.IsFullScreen():
-                self.statusbar.Show()
-            else:
-                self.statusbar.Hide()
+            self.showStatusBar()
         self.ShowFullScreen(not self.IsFullScreen())
+
+#
+# Hide/show statusbar
+#
+    def showStatusBar(self):
+        if beamSettings._showStatusbar == 'True':
+            self.statusbar.Show()
+        else:
+            self.statusbar.Hide()
 
 #
 # Show 'Close dialog
