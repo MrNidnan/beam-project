@@ -83,7 +83,6 @@ class BeamSettings:
         self._logging              = ''
         self._logPath              = ''
         self._showStatusbar        = ''
-        self._showWindowdecoration = ''
         self._allModulesSettings    = ''
         self._DefaultDisplaySettings     = ''
         self._rules                 = ''
@@ -115,7 +114,6 @@ class BeamSettings:
         self._logging               = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Logging')
         self._logPath               = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'LogPath')
         self._showStatusbar         = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'ShowStatusbar')
-        self._showWindowdecoration  = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'ShowWindowdecoration')
         if self._logPath == '':
             self._logPath = os.path.join(os.path.expanduser("~"), 'BeamLog.txt')
         
@@ -173,7 +171,6 @@ class BeamSettings:
         output[u'Logging']              = self._logging
         output[u'LogPath']              = self._logPath
         output[u'ShowStatusbar']        = self._showStatusbar
-        output[u'ShowWindowdecoration'] = self._showWindowdecoration
 
         # Dictionaries
         output[u'AllModules']           = self._allModulesSettings

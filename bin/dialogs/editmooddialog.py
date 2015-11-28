@@ -31,6 +31,7 @@ import os
 from bin.beamsettings import *
 from bin.dialogs.editlayoutdialog import EditLayoutDialog
 
+from copy import deepcopy
 #
 # Build Mood Layout Window
 #
@@ -51,11 +52,12 @@ class EditMood(wx.Dialog):
             self.Settings   = beamSettings._moods[self.RowSelected]
         else:
             # Create a new default setting
+            DefaultDisplay = deepcopy(beamSettings._DefaultDisplaySettings)
             self.Settings   = ({"Active": "yes", "Field3": "something","Field2": "contains","Field1": "%Title",
                                "Type": "Mood", "Name": "My Mood",
                                "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg",
                                "PlayState": "Playing",
-                               "Display": beamSettings._DefaultDisplaySettings})
+                               "Display": DefaultDisplay})
 
         # Build the panel
         self.panel = wx.Panel(self)

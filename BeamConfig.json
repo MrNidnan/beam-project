@@ -42,7 +42,6 @@
   "Logging": "False",
   "LogPath": "",
   "ShowStatusbar": "True",
-  "ShowWindowdecoration": "True",
   "Rules": [
     {
       "Active": "yes", 

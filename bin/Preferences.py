@@ -120,7 +120,7 @@ class Preferences(wx.Frame):
         vbox.Add(refreshtime, flag=wx.LEFT, border=20)
         hboxRefresh = wx.BoxSizer(wx.HORIZONTAL)
         hboxRefresh.Add(self.RefreshTime, flag= wx.LEFT | wx.RIGHT | wx.TOP, border=7)
-        hboxRefresh.Add(self.RefreshTimeLabel, flag= wx.RIGHT | wx.TOP, border=7)
+        hboxRefresh.Add(self.RefreshTimeLabel, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
         vbox.Add(hboxRefresh, flag=wx.LEFT, border=20)
         
         # Tanda Length
@@ -149,25 +149,21 @@ class Preferences(wx.Frame):
         hboxTransition.Add(self.FadeSpeed, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
         hboxTransition.Add(self.FadeSpeedLabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=7)
         vbox.Add(hboxTransition, flag=wx.LEFT, border=20)
-      
+        print "Test1"
         # Window decoration
-        windowdecoration = wx.StaticText(panel, -1, "Window decoration (require restart)")
+        windowdecoration = wx.StaticText(panel, -1, "Window decoration")
         self.StatusBarCheckBox = wx.CheckBox(panel, label='Show statusbar')
         if beamSettings._showStatusbar == 'True':
             self.StatusBarCheckBox.SetValue(True)
         else:
             self.StatusBarCheckBox.SetValue(False)
-        self.WindowTopCheckBox = wx.CheckBox(panel, label='Show window decorations')
-        if beamSettings._showWindowdecoration == 'True':
-            self.WindowTopCheckBox.SetValue(True)
-        else:
-            self.WindowTopCheckBox.SetValue(False)
+        self.StatusBarCheckBox.Bind(wx.EVT_CHECKBOX, self.OnStatusBarCheckBox)
+        print "Test2"
         vbox.Add(windowdecoration, flag=wx.LEFT, border=20)
         hboxDecoration = wx.BoxSizer(wx.HORIZONTAL)
         hboxDecoration.Add(self.StatusBarCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
-        hboxDecoration.Add(self.WindowTopCheckBox, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=7)
         vbox.Add(hboxDecoration, flag=wx.LEFT, border=20)
-        
+        print "Test3"
         # Logging
         logging = wx.StaticText(panel, -1, "Logging")
         self.LogCheckBox = wx.CheckBox(panel, label='Log to '+beamSettings._logPath)
@@ -422,8 +418,6 @@ class Preferences(wx.Frame):
         # Get Settings
         beamSettings._moduleSelected        = self.Dropdown.GetValue()
         beamSettings._maxTandaLength        =  int(self.TandaLength.GetValue())
-        beamSettings._showStatusbar         = str(self.StatusBarCheckBox.GetValue())
-        beamSettings._showWindowdecoration  = str(self.WindowTopCheckBox.GetValue())
         beamSettings._logging               = str(self.LogCheckBox.GetValue())
         beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
 
@@ -452,7 +446,7 @@ class Preferences(wx.Frame):
             self.MainWindowParent._currentBackgroundPath = beamSettings._DefaultBackground
             (path,backgroundfile) = os.path.split(beamSettings._DefaultBackground)
             self.currentBackground.SetLabel(backgroundfile)
-            self.MainWindowParent.fadeBackground()
+            self.MainWindowParent.changeBackground()
             openFileDialog.Destroy()
 
 #
@@ -475,7 +469,12 @@ class Preferences(wx.Frame):
         else:
             # Slow
             self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Slow)")
-    
+
+
+    def OnStatusBarCheckBox(self, e):
+        beamSettings._showStatusbar = str(self.StatusBarCheckBox.GetValue())
+        self.MainWindowParent.showStatusBar()
+        self.MainWindowParent.Refresh()
 #
 # Tanda length slider
 #
