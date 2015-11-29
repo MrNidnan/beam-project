@@ -133,7 +133,7 @@ class Preferences(wx.Frame):
         
         # Tanda Length
         tandalength = wx.StaticText(panel, -1, "Tanda Length")
-        self.TandaLength = wx.Slider(panel, -1, beamSettings._maxTandaLength, 1, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
+        self.TandaLength = wx.Slider(panel, -1, beamSettings._maxTandaLength, 0, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
         self.TandaLengthLabel = wx.StaticText(panel, -1, "")
         self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
         self.maxTandaLengthLabel()
@@ -491,8 +491,10 @@ class Preferences(wx.Frame):
         self.maxTandaLengthLabel()
     
     def maxTandaLengthLabel(self):
-        self.TandaLengthLabel.SetLabel(str(beamSettings._maxTandaLength) + " songs")
-
+        if beamSettings._maxTandaLength > 0:
+            self.TandaLengthLabel.SetLabel(str(beamSettings._maxTandaLength) + " songs")
+        else:
+            self.TandaLengthLabel.SetLabel("No preview")
 #
 # Mood transition checkbox and slider
 #
