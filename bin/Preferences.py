@@ -41,7 +41,14 @@ from bin.dialogs.editmooddialog import EditMood
 class Preferences(wx.Frame):
     def __init__(self, parent):
         self.MainWindowParent = parent
-        wx.Frame.__init__(self, parent, title="Preferences", size=(400,540),
+        if self.MainWindowParent.IsFullScreen() or self.MainWindowParent.IsMaximized():
+            x,y = wx.GetMousePosition()
+            y = 300 # Only way to get it to work on MAC
+        else:
+            x_tmp, y_tmp = self.MainWindowParent.GetPosition()
+            x = x_tmp+50
+            y = y_tmp+50
+        wx.Frame.__init__(self, parent, title="Preferences", pos=(x,y), size=(400,540),
                           style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
 
         # Build the panel

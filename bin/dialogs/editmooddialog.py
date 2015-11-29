@@ -39,7 +39,8 @@ from copy import deepcopy
 class EditMood(wx.Frame):
     def __init__(self, parent, RowSelected, mode):
         self.MainWindowParent = parent
-        wx.Frame.__init__(self, parent, title=mode, size=(400,500))
+        x,y = self.MainWindowParent.GetPosition()
+        wx.Frame.__init__(self, parent, title=mode, pos = (x+50, y+50), size=(400,500))
         self.RowSelected = RowSelected
         self.mode = mode
         self.Settings = {}

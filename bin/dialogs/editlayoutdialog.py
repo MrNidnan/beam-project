@@ -38,9 +38,10 @@ import os
 #
 class EditLayoutDialog(wx.Dialog):
     def __init__(self, parent, RowSelected, mode, LayoutList):
-        self.EditLayoutDialog   = wx.Dialog.__init__(self, parent, title=mode)
-        self.EditLayoutPanel    = wx.Panel(self)
         self.parent             = parent
+        x, y = self.parent.GetPosition()
+        self.EditLayoutDialog   = wx.Dialog.__init__(self, parent, title=mode, pos = (x+50, y+50))
+        self.EditLayoutPanel    = wx.Panel(self)
         self.RowSelected        = RowSelected
         self.mode               = mode
         self.LayoutList         = LayoutList
