@@ -122,7 +122,7 @@ class EditMood(wx.Frame):
         
         self.InputID3Field = wx.ComboBox(self.panel, size=(120,-1), value=self.Settings[u'Field1'], choices=self.Fields, style=wx.CB_READONLY)
         self.IsIsNot       = wx.ComboBox(self.panel,value=self.Settings[u'Field2'], choices=["is", "is not", "contains"], style=wx.CB_READONLY)
-        self.MoodOrder     = wx.TextCtrl(self.panel, value=str(self.RowSelected+1))
+        self.MoodOrder     = wx.SpinCtrl(self.panel, value=str(self.RowSelected+1), min=1, max=99)
         self.OutputField   = wx.TextCtrl(self.panel, value=self.Settings[u'Field3'], size=(120,-1))
         self.MoodNameField = wx.TextCtrl(self.panel, value=self.Settings[u'Name'], size=(120,-1))
         self.MoodState     = wx.ComboBox(self.panel,value=self.Settings[u'PlayState'], choices=["Playing", "Not Playing"], size=(120,-1), style=wx.CB_READONLY)
