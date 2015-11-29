@@ -45,10 +45,9 @@ class Preferences(wx.Frame):
             x,y = wx.GetMousePosition()
             y = 300 # Only way to get it to work on MAC
         else:
-            x_tmp, y_tmp = self.MainWindowParent.GetPosition()
-            x = x_tmp+50
-            y = y_tmp+50
-        wx.Frame.__init__(self, parent, title="Preferences", pos=(x,y), size=(400,540),
+            x,y = (self.MainWindowParent.GetPosition()+(50,50))
+        
+        wx.Frame.__init__(self, parent, title="Preferences", pos=(x,y),
                           style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
 
         # Build the panel
@@ -68,13 +67,15 @@ class Preferences(wx.Frame):
         self.button_ok.Bind(wx.EVT_BUTTON, self.onApply)
         self.button_cancel.Bind(wx.EVT_BUTTON, self.onClose)
 
-        self.vbox.Add(notebook, 1, wx.ALL | wx.EXPAND)
+        self.vbox.Add(notebook,1)
         self.hbox.Add((200, -1), 1, flag=wx.EXPAND | wx.ALIGN_RIGHT)
         self.hbox.Add(self.button_ok, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
         self.vbox.Add(self.hbox)
-
+        
         self.panel.SetSizerAndFit(self.vbox)
+        # Fix size (bug)
+        self.SetSize((self.panel.GetSize()+(0,60)))
 
 
 
@@ -177,9 +178,9 @@ class Preferences(wx.Frame):
             self.LogCheckBox.SetValue(True)
         else:
             self.LogCheckBox.SetValue(False)
+        vbox.Add(logging, flag=wx.LEFT, border=20)
         hboxLog = wx.BoxSizer(wx.HORIZONTAL)
         hboxLog.Add(self.LogCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
-        vbox.Add(logging, flag=wx.LEFT, border=20)
         vbox.Add(hboxLog, flag=wx.LEFT, border=20)
         
         panel.SetSizer(vbox)
