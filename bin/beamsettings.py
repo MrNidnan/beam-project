@@ -97,7 +97,8 @@ class BeamSettings:
             #Try loading in home directory
             ConfigData = self.OpenSetting(os.path.join(os.path.expanduser("~"), inputConfigFile))
         except:
-            pass
+            #Use original config
+            ConfigData = self.OpenSetting(os.path.join(os.getcwd(), inputConfigFile))
         # Also load the original settingsfile
         ConfigDataOriginal = self.OpenSetting(os.path.join(os.getcwd(), inputConfigFile))
         self.ReadConfig(ConfigData, ConfigDataOriginal)

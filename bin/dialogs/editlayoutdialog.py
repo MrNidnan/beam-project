@@ -61,6 +61,7 @@ class EditLayoutDialog(wx.Dialog):
         Weights     = ["Bold","Light","Normal"]
         Styles  = ["Italic","Normal","Slant"]
         Align = ["Left","Center","Right"]
+        TextFlow = ["Cut","Scale"]
         
         HideLayoutTags = [  '','%Artist','%Album','%Title','%Genre','%Comment','%Composer',
                             '%Year','%Singer','%AlbumArtist','%Performer','%IsCortina',
@@ -77,63 +78,68 @@ class EditLayoutDialog(wx.Dialog):
             self.Settings   = LayoutList[self.RowSelected]
         else:
             # Create a new default setting
-            self.Settings   = ({"Field": "%Artist", "Font": "Default","Style": "Normal", "Weight": "Bold", "Size": 20, "FontColor": "(255,255,255,255)", "HideControl": "", "Position": [50,50], "Alignment": "Center", "Active": "yes"})
+            self.Settings   = ({"Field": "%Artist", "Font": "Default","Style": "Normal", "Weight": "Bold", "Size": 20, "FontColor": "(255,255,255,255)", "HideControl": "", "Position": [50,50], "Alignment": "Center", "Active": "yes", "TextFlow": "Cut"})
 
         
         # Define fields
         self.LabelText          = wx.TextCtrl(self.EditLayoutPanel, size=(250,-1), value=self.Settings[u'Field'])
-        self.FontDropdown       = wx.ComboBox(self.EditLayoutPanel, size=(150,-1), value=self.Settings[u'Font'], choices=elist, style=wx.CB_READONLY)
-        self.StyleDropdown      = wx.ComboBox(self.EditLayoutPanel, size=(80,-1), value=self.Settings[u'Style'], choices=Styles, style=wx.CB_READONLY)
-        self.WeightDropdown     = wx.ComboBox(self.EditLayoutPanel, size=(80,-1), value=self.Settings[u'Weight'], choices=Weights, style=wx.CB_READONLY)
-        self.SizeText           = wx.TextCtrl(self.EditLayoutPanel, size=(80,-1), value=str(self.Settings[u'Size']))
-        self.ColorField         = wx.ColourPickerCtrl(self.EditLayoutPanel, size=(80,-1))
+        self.FontDropdown       = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'Font'], choices=elist, style=wx.CB_READONLY)
+        self.StyleDropdown      = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'Style'], choices=Styles, style=wx.CB_READONLY)
+        self.WeightDropdown     = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'Weight'], choices=Weights, style=wx.CB_READONLY)
+        self.SizeText           = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings[u'Size']), min=1, max=99)
+        self.ColorField         = wx.ColourPickerCtrl(self.EditLayoutPanel, size=(100,-1))
         self.HideText           = wx.ComboBox(self.EditLayoutPanel, size=(250,-1), value=self.Settings[u'HideControl'], choices=HideLayoutTags, style=wx.CB_READONLY)
-        self.VerticalPos        = wx.TextCtrl(self.EditLayoutPanel, size=(80,-1), value=str(self.Settings[u'Position'][0]))
-        self.HorizontalPos      = wx.TextCtrl(self.EditLayoutPanel, size=(80,-1), value=str(self.Settings[u'Position'][1]))
-        self.Alignment          = wx.ComboBox(self.EditLayoutPanel, size=(150,-1), value=self.Settings[u'Alignment'], choices=Align, style=wx.CB_READONLY)
+        self.VerticalPos        = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings[u'Position'][0]), min=1, max=99)
+        self.HorizontalPos      = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings[u'Position'][1]), min=1, max=99)
+        self.Alignment          = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'Alignment'], choices=Align, style=wx.CB_READONLY)
+        self.TextFlow           = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'TextFlow'], choices=TextFlow, style=wx.CB_READONLY)
         self.ColorField.SetColour(eval(self.Settings[u'FontColor']))
         
         if self.Settings[u'Alignment']=="Center":
             self.HorizontalPos.Enable(False)
         self.Alignment.Bind(wx.EVT_COMBOBOX, self.DisableHorizontalBox)
+        
         # Information area
-        InfoGrid    =   wx.FlexGridSizer(4, 5, 5, 5)
-        InfoGrid.AddMany ( [(wx.StaticText(self.EditLayoutPanel, label="Label"), 0, wx.EXPAND),
-                        (wx.StaticText(self.EditLayoutPanel, label="Font"), 0, wx.EXPAND),
+        InfoGrid    =   wx.FlexGridSizer(10, 2, 5, 5)
+        InfoGrid.AddMany ( [(wx.StaticText(self.EditLayoutPanel, label="Font"), 0, wx.EXPAND),
+                        (wx.StaticText(self.EditLayoutPanel, label="Alignment"), 0, wx.EXPAND),
+                        (self.FontDropdown, 0),
+                        (self.Alignment, 0),
                         (wx.StaticText(self.EditLayoutPanel, label="Style"), 0, wx.EXPAND),
                         (wx.StaticText(self.EditLayoutPanel, label="Weight"), 0, wx.EXPAND),
-                        (wx.StaticText(self.EditLayoutPanel, label="Size"), 0,wx.EXPAND),
-                        (self.LabelText, 0),
-                        (self.FontDropdown, 0),
                         (self.StyleDropdown, 0),
                         (self.WeightDropdown, 0),
-                        (self.SizeText, 0, wx.EXPAND),
-                        (wx.StaticText(self.EditLayoutPanel, label="Hide if following tag is empty:"), 0, wx.EXPAND),
-                        (wx.StaticText(self.EditLayoutPanel, label="Alignment"), 0, wx.EXPAND),
-                        (wx.StaticText(self.EditLayoutPanel, label="Vertical"), 0, wx.EXPAND),
-                        (wx.StaticText(self.EditLayoutPanel, label="Horizontal"), 0, wx.EXPAND),
-                        (wx.StaticText(self.EditLayoutPanel, label="Color"), 0, wx.EXPAND),
-                        (self.HideText, 0),
-                        (self.Alignment, 0),
+                        (wx.StaticText(self.EditLayoutPanel, label="Vertical position"), 0, wx.EXPAND),
+                        (wx.StaticText(self.EditLayoutPanel, label="Horizontal position"), 0, wx.EXPAND),
                         (self.VerticalPos, 0),
                         (self.HorizontalPos, 0),
-                        (self.ColorField, 0)
+                        (wx.StaticText(self.EditLayoutPanel, label="Text size"), 0,wx.EXPAND),
+                        (wx.StaticText(self.EditLayoutPanel, label="Text flow"), 0,wx.EXPAND),
+                        (self.SizeText, 0),
+                        (self.TextFlow, 0)
                         ])
 
         self.vboxLayout = wx.BoxSizer(wx.VERTICAL)
         self.hboxLayout = wx.BoxSizer(wx.HORIZONTAL)
         
-        self.hboxLayout.Add(self.ButtonSaveLayout, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
+        self.hboxLayout.Add(self.ButtonSaveLayout, 0, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.ALIGN_RIGHT, border=10)
         self.hboxLayout.Add(self.ButtonCancelLayout, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
         
-        self.vboxLayout.Add(InfoGrid, 0, flag=wx.ALL, border=10)
-        self.vboxLayout.Add(self.hboxLayout, 0, flag=wx.ALL | wx.ALIGN_RIGHT)
+        self.vboxLayout.Add(wx.StaticText(self.EditLayoutPanel, label="Label"), 0, flag=wx.ALL, border=10)
+        self.vboxLayout.Add(self.LabelText, 0, flag=wx.LEFT | wx.RIGHT, border=10)
 
+        self.vboxLayout.Add(InfoGrid, 0, flag=wx.ALL, border=10)
+
+        self.vboxLayout.Add(wx.StaticText(self.EditLayoutPanel, label="Hide if following tag is empty:"), 0, flag=wx.LEFT | wx.RIGHT, border=10)
+        self.vboxLayout.Add(self.HideText, 0, flag=wx.ALL, border=10)
+        self.vboxLayout.Add(wx.StaticText(self.EditLayoutPanel, label="Font color"), 0, flag=wx.LEFT | wx.RIGHT, border=10)
+        self.vboxLayout.Add(self.ColorField, 0, flag=wx.ALL, border=10)
+
+        self.vboxLayout.Add(self.hboxLayout, 0, flag=wx.ALL | wx.ALIGN_RIGHT)
         self.EditLayoutPanel.SetSizer(self.vboxLayout)
         self.vboxLayout.SetSizeHints(self)
         
     def DisableHorizontalBox(self, event):
-        print "TEST"
         if self.Alignment.GetValue()=="Center":
             self.HorizontalPos.Enable(False)
         else:
@@ -152,6 +158,7 @@ class EditLayoutDialog(wx.Dialog):
         self.Settings[u'FontColor']     = str(self.ColorField.GetColour())
         self.Settings[u'Position']  = [int(self.VerticalPos.GetValue()), int(self.HorizontalPos.GetValue())]
         self.Settings[u'Alignment'] = self.Alignment.GetValue()
+        self.Settings[u'TextFlow'] = self.TextFlow.GetValue()
 
         # Remove old item from dictionary
         if self.mode == "Edit layout item":

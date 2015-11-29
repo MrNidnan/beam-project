@@ -101,7 +101,8 @@
       "Font": "Georgia", 
       "HideControl": "%PreviousTitle", 
       "Alignment": "Left", 
-      "Size": 5
+      "Size": 5,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -116,7 +117,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -131,7 +133,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -146,7 +149,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -161,7 +165,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Right", 
-      "Size": 5
+      "Size": 5,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -176,7 +181,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Right", 
-      "Size": 4
+      "Size": 4,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -191,7 +197,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Left", 
-      "Size": 4
+      "Size": 4,
+      "TextFlow": "Cut"
     }
   ], 
   "Moods": [
@@ -218,7 +225,8 @@
           "FontColor": "(255, 255, 255, 255)", 
           "Font": "Georgia", 
           "Alignment": "Center", 
-          "Size": 15
+          "Size": 15,
+          "TextFlow": "Cut"
         }, 
         {
           "Style": "Italic", 
@@ -233,7 +241,8 @@
           "FontColor": "(255, 255, 255, 255)", 
           "Font": "Georgia", 
           "Alignment": "Center", 
-          "Size": 8
+          "Size": 8,
+          "TextFlow": "Cut"
         }, 
         {
           "Style": "Italic", 
@@ -248,7 +257,8 @@
           "FontColor": "(255, 255, 255, 255)", 
           "Font": "Georgia", 
           "Alignment": "Center", 
-          "Size": 8
+          "Size": 8,
+          "TextFlow": "Cut"
         }
       ]
     },
@@ -275,7 +285,8 @@
       "Font": "Georgia", 
       "HideControl": "%PreviousTitle", 
       "Alignment": "Left", 
-      "Size": 5
+      "Size": 5,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -290,7 +301,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -305,7 +317,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -320,7 +333,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -335,7 +349,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Right", 
-      "Size": 5
+      "Size": 5,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -350,7 +365,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Right", 
-      "Size": 4
+      "Size": 4,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -365,7 +381,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Left", 
-      "Size": 4
+      "Size": 4,
+      "TextFlow": "Cut"
     }
   ]
     },  
@@ -392,7 +409,8 @@
       "Font": "Georgia", 
       "HideControl": "%PreviousTitle", 
       "Alignment": "Left", 
-      "Size": 5
+      "Size": 5,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -407,7 +425,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -422,7 +441,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -437,7 +457,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Center", 
-      "Size": 10
+      "Size": 10,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -452,7 +473,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Right", 
-      "Size": 5
+      "Size": 5,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -467,7 +489,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Right", 
-      "Size": 4
+      "Size": 4,
+      "TextFlow": "Cut"
     }, 
     {
       "Style": "Italic", 
@@ -482,7 +505,8 @@
       "FontColor": "(255, 255, 255, 255)", 
       "Font": "Georgia", 
       "Alignment": "Left", 
-      "Size": 4
+      "Size": 4,
+      "TextFlow": "Cut"
     }
   ]
     }, 
@@ -510,7 +534,8 @@
           "FontColor": "(255,255,255,255)", 
           "Font": "Georgia", 
           "Alignment": "Center", 
-          "Row": 1
+          "Row": 1,
+          "TextFlow": "Cut"
         }, 
         {
           "Style": "Italic", 
@@ -526,7 +551,8 @@
           "FontColor": "(255,255,255,255)", 
           "Font": "Georgia", 
           "Alignment": "Center", 
-          "Row": 2
+          "Row": 2,
+          "TextFlow": "Cut"
         }
       ]
     }

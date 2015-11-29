@@ -274,33 +274,19 @@ class beamMainFrame(wx.Frame):
                     pass
             TextWidth, TextHeight   = dc.GetTextExtent(text)
 
-            # Find length and position of text
-
-
-            # Centered
+#
+# Find length and position of text
+#
+#
             if Settings['Alignment'] == 'Center':
-                while TextWidth > cliWidth:
-                    try:
-                        text = text[:-1]
-                        TextWidth, TextHeight = dc.GetTextExtent(text)
-                    except:
-                        text = text[:-2]
-                        TextWidth, TextHeight = dc.GetTextExtent(text)
-                    if TextWidth < cliWidth:
-                        try:
-                            text = text[:-2]
-                            TextWidth, TextHeight = dc.GetTextExtent(text)
-                        except:
-                            text = text[:-3]
-                            TextWidth, TextHeight = dc.GetTextExtent(text)
-                        text = text + '...'
-                TextWidth, TextHeight = dc.GetTextExtent(text)
-            # Position
-                WidthPosition = (cliWidth-TextWidth)/2
-
-            # Left and Right alignment
+                TextSpaceAvailable = cliWidth
             else:
                 TextSpaceAvailable = int((100-Settings['Position'][1])*cliWidth)
+
+#
+# TEXT FLOW = CUT
+#
+            if Settings['TextFlow'] == 'Cut':
                 while TextWidth > TextSpaceAvailable:
                     try:
                         text = text[:-1]
@@ -317,13 +303,40 @@ class beamMainFrame(wx.Frame):
                             TextWidth, TextHeight = dc.GetTextExtent(text)
                         text = text + '...'
                 TextWidth, TextHeight = dc.GetTextExtent(text)
-                # Alignment
-                if Settings['Alignment'] == 'Left':
-                    WidthPosition = int(Settings['Position'][1]*cliWidth/100)
-                elif Settings['Alignment'] == 'Right':
-                    WidthPosition = cliWidth - (int(Settings['Position'][1]*cliWidth/100)+TextWidth)
-                else:
-                    return
+#
+# TEXT FLOW = SCALE
+#
+
+            if Settings['TextFlow'] == 'Scale':
+
+                while TextWidth > int(TextSpaceAvailable*0.95):
+                    # 10% Scaling each time
+                    Size = int(Size*0.9)
+                    try:
+                       dc.SetFont(wx.Font(Size,
+                                    wx.ROMAN,
+                                    beamSettings.FontStyleDictionary[Settings['Style']],
+                                    beamSettings.FontWeightDictionary[Settings['Weight']],
+                                    False,
+                                    face))
+                    except:
+                        dc.SetFont(wx.Font(Size,
+                               wx.ROMAN,
+                               beamSettings.FontStyleDictionary[Settings['Style']],
+                               beamSettings.FontWeightDictionary[Settings['Weight']],
+                               False,
+                               "Liberation Sans"))
+                    TextWidth, TextHeight = dc.GetTextExtent(text)
+
+# Alignment position
+            if Settings['Alignment'] == 'Left':
+                WidthPosition = int(Settings['Position'][1]*cliWidth/100)
+            elif Settings['Alignment'] == 'Right':
+                WidthPosition = cliWidth - (int(Settings['Position'][1]*cliWidth/100)+TextWidth)
+            elif Settings['Alignment'] == 'Center':
+                WidthPosition = (cliWidth-TextWidth)/2
+            else:
+                return
                         
             # Draw the text
             dc.DrawText(text, WidthPosition,  HeightPosition)
