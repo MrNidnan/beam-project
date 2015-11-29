@@ -86,6 +86,7 @@ class BeamSettings:
         self._allModulesSettings    = ''
         self._DefaultDisplaySettings     = ''
         self._rules                 = ''
+        self._beamVersion = BeamSettings.beamVersion
 
 ###############################################################
 #
@@ -96,6 +97,9 @@ class BeamSettings:
         try:
             #Try loading in home directory
             ConfigData = self.OpenSetting(os.path.join(os.path.expanduser("~"), inputConfigFile))
+            # Validate config
+            if not ConfigData[u'ConfigVersion'] == self._beamVersion:
+                raise Exception('Config Version error, loading default')
         except:
             #Use original config
             ConfigData = self.OpenSetting(os.path.join(os.getcwd(), inputConfigFile))
@@ -137,7 +141,9 @@ class BeamSettings:
         if self._moduleSelected == '':
             self._moduleSelected = [s.encode('utf-8') for s in tmp[u'Modules']][0]
         return
-
+#
+# SUPPORTING FUNCTIONS
+#
     def ExtractSetting(self, ConfigData, ConfigDataOriginal, key):
         try:
             output = ConfigData[key]
@@ -150,6 +156,7 @@ class BeamSettings:
         ConfigData = json.load(ConfigFile)
         ConfigFile.close()
         return ConfigData
+
 
 ###############################################################
 #
@@ -172,6 +179,7 @@ class BeamSettings:
         output[u'Logging']              = self._logging
         output[u'LogPath']              = self._logPath
         output[u'ShowStatusbar']        = self._showStatusbar
+        output[u'ConfigVersion']        = self._beamVersion
 
         # Dictionaries
         output[u'AllModules']           = self._allModulesSettings
