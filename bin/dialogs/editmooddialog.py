@@ -36,10 +36,10 @@ from copy import deepcopy
 # Build Mood Layout Window
 #
 
-class EditMood(wx.Dialog):
+class EditMood(wx.Frame):
     def __init__(self, parent, RowSelected, mode):
         self.MainWindowParent = parent
-        wx.Dialog.__init__(self, parent, title=mode, size=(400,500))
+        wx.Frame.__init__(self, parent, title=mode, size=(400,500))
         self.RowSelected = RowSelected
         self.mode = mode
         self.Settings = {}
