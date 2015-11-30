@@ -375,6 +375,7 @@ class beamMainFrame(wx.Frame):
 # Hide/show statusbar
 #
     def showStatusBar(self):
+        self.triggerResizeBackground = True
         if beamSettings._showStatusbar == 'True':
             self.statusbar.Show()
         else:
