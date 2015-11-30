@@ -63,7 +63,7 @@ class EditRuleDialog(wx.Dialog):
 
         # Build the static elements
         self.InputID3Field      = wx.ComboBox(self.EditRulePanel, size=(150,-1), value=self.Settings[u'Field1'], choices=self.InputFields, style=wx.CB_READONLY)
-        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(100,-1), value=self.Settings[u'Type'], choices=['Copy','Cortina','Parse'], style=wx.CB_READONLY)
+        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(100,-1), value=self.Settings[u'Type'], choices=['Copy','Cortina','Parse', 'Ignore'], style=wx.CB_READONLY)
         self.RuleSelectDropdown.Bind(wx.EVT_COMBOBOX, self.ChangeRuleType)
         self.RuleOrder          = wx.SpinCtrl(self.EditRulePanel, value=str(self.RowSelected+1), min=1, max=99)
 
@@ -129,7 +129,7 @@ class EditRuleDialog(wx.Dialog):
             self.OutputField3.Hide()
 
             #Add correct fields
-            self.OutputField1       = wx.ComboBox(self.EditRulePanel, size=(150,-1), value="%Artist", choices=self.OutputFields, style=wx.CB_READONLY)
+            self.OutputField1 = wx.ComboBox(self.EditRulePanel, size=(150,-1), value="%Artist", choices=self.OutputFields, style=wx.CB_READONLY)
             self.sizer1.Add(self.OutputField1)
 
             if self.Settings[u'Type'] == 'Copy':
@@ -189,6 +189,31 @@ class EditRuleDialog(wx.Dialog):
             else:
                 self.IsIsNot.SetStringSelection("is")
                 self.OutputField2.SetValue("")
+##############################################
+        if RuleSelected == 'Ignore':
+            self.DynamicFieldLabel1.SetLabel('')
+            self.DynamicFieldLabel2.SetLabel('Value(s)')
+            self.DynamicFieldLabel3.SetLabel('')
+            self.DynamicFieldLabel4.SetLabel('')
+            
+            # Remove fields that are not to be shown
+            self.RemoveDynamicElements()
+            
+            self.DynamicFieldLabel3.Hide()
+            self.OutputField3.Hide()
+            
+            #Add correct fields
+            self.IsIsNot    = wx.ComboBox(self.EditRulePanel,value="is", choices=["is", "is not","contains"], style=wx.CB_READONLY)
+            self.sizer1.Add(self.IsIsNot)
+            self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="", size=(165,-1))
+            self.sizer2.Add(self.OutputField2)
+            
+            if self.Settings[u'Type'] == 'Cortina':
+                self.IsIsNot.SetStringSelection(self.Settings[u'Field2'])
+                self.OutputField2.SetValue(self.Settings[u'Field3'])
+            else:
+                self.IsIsNot.SetStringSelection("is")
+                self.OutputField2.SetValue("")
 
         self.vbox.SetSizeHints(self)  
         self.EditRulePanel.SetSizer(self.vbox)
@@ -239,6 +264,9 @@ class EditRuleDialog(wx.Dialog):
             NewRule[u'Field3']      = self.OutputField1.GetValue()
             NewRule[u'Field4']      = self.OutputField2.GetValue()
         if RuleSelected == 'Cortina':
+            NewRule[u'Field2']      = self.IsIsNot.GetValue()
+            NewRule[u'Field3']      = self.OutputField2.GetValue()
+        if RuleSelected == 'Ignore':
             NewRule[u'Field2']      = self.IsIsNot.GetValue()
             NewRule[u'Field3']      = self.OutputField2.GetValue()
 

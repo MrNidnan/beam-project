@@ -32,9 +32,7 @@ import wx.lib.delayedresult
 
 from bin.beamsettings import *
 from bin.nowplayingdatamodel import *
-
 from bin.Preferences import Preferences
-
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
 from bin.dialogs import closedialog
@@ -135,9 +133,9 @@ class beamMainFrame(wx.Frame):
         self.triggerResizeBackground = True
         self.Refresh()
 
-#
-# UPDATE THE DATA
-#
+########################################################
+# Update data
+########################################################
     def updateData(self, event = wx.EVT_TIMER):
         self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
         self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
@@ -175,9 +173,9 @@ class beamMainFrame(wx.Frame):
         self.nowPlayingDataModel.PreviousMood = self.currentMood
         self.SetStatusText(self.currentPlaybackStatus) 
 
-#####################################################
-# BACKGROUND resize and repaint
-#
+########################################################
+# Painter
+########################################################
     def OnSize(self, size):
         self.triggerResizeBackground = True
         self.Refresh()
@@ -187,6 +185,9 @@ class beamMainFrame(wx.Frame):
         dc = wx.BufferedPaintDC(self)
         self.Draw(dc)
 
+########################################################
+# Draw background
+########################################################
     def drawBackgroundBitmap(self, dc):
         cliWidth, cliHeight = self.GetClientSize()
         if not cliWidth or not cliHeight:
@@ -224,8 +225,9 @@ class beamMainFrame(wx.Frame):
         self.yPosResized = (cliHeight - resizedHeight)/2
         dc.DrawBitmap(self.modifiedBitmap, self.xPosResized, self.yPosResized)
 
-    # DRAW TEXT
-    #
+########################################################
+# DRAW TEXT
+########################################################
     def drawTexts(self, dc):
         
         if self.textsAreVisible == False:
@@ -307,7 +309,6 @@ class beamMainFrame(wx.Frame):
 #
 
             if Settings['TextFlow'] == 'Scale':
-
                 while TextWidth > int(TextSpaceAvailable*0.95):
                     # 10% Scaling each time
                     Size = int(Size*0.9)
@@ -340,9 +341,9 @@ class beamMainFrame(wx.Frame):
             # Draw the text
             dc.DrawText(text, WidthPosition,  HeightPosition)
 
-#
-# This is where the scaling of the image takes place
-#
+########################################################
+# DRAW
+########################################################
     def Draw(self, dc):
     # Get width and height of window
         cliWidth, cliHeight = self.GetClientSize()
@@ -353,10 +354,9 @@ class beamMainFrame(wx.Frame):
         self.drawTexts(dc)
 
 
-#####################################################
-#
-# OPEN/IMPORT SETTINGS
-#
+########################################################
+# Buttons and menues
+########################################################
     def OnPreferences(self, event):
         PreferencesDialog = Preferences(self)
         PreferencesDialog.Show()
@@ -397,11 +397,10 @@ class beamMainFrame(wx.Frame):
         help_dialog = HelpDialog(self)
         help_dialog.Show()
 
-####################################################
-#
-# CHANGE BACKGROUND
-#
-####################################################
+
+########################################################
+# Change background
+########################################################
     def changeBackground(self, fadeSpeed = 5):
         self.red = float(1.0)
         self.green = float(1.0)
@@ -454,8 +453,6 @@ class beamMainFrame(wx.Frame):
             self.blue = float(0.0)
             self.timer2.Start(self.fadeSpeed)
 
-
-# -----------------------------------------------------------------------------------
     def FadeinNewImage(self, event):
 
         self.red += self.delta
@@ -470,9 +467,9 @@ class beamMainFrame(wx.Frame):
         
         self.Refresh()
             
-#
-#
-#
+########################################################
+# Data timer
+########################################################
     def DataTimer(self):
     # If the configuration have a timer on how often to update the data
         try:

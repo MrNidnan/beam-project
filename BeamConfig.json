@@ -85,6 +85,13 @@
       "Field4": "%Singer", 
       "Active": "yes", 
       "Type": "Parse"
+    },    
+    {
+      "Active": "yes", 
+      "Field2": "is", 
+      "Field1": "%Title", 
+      "Type": "Ignore", 
+      "Field3": "silent"
     }
   ], 
   "DefaultDisplay": [
