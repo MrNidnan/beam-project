@@ -170,38 +170,40 @@ class NowPlayingDataModel:
         self.DisplaySettings = currentSettings._DefaultDisplaySettings
         self.BackgroundImage = currentSettings._DefaultBackground
 
-        #
-        # Apply rules, for every song in list.
-        # Rules can change without changing song so run this every time!
-        #
+########################################################
+# APPLY RULES, for every song in list.
+# Rules can change without changing song so run this every time!
+########################################################
         for i in range(0, len(self.currentPlaylist)):
             self.currentPlaylist[i].applySongRules(currentSettings._rules)
 
+########################################################
+# IGNORE SONGS, remove ignored songs
+########################################################
+        for item in self.currentPlaylist[:]:
+            if item.IgnoreSong == "yes":
+                self.currentPlaylist.remove(item)
 
-#
-# Previous song analysis
-#
+########################################################
+# PREVIOUS SONG ANALYSIS
+########################################################
         try:
             if LastRead[0] == self.currentPlaylist[0]:
-                #print "Same song, do nothing"
                 pass 
             else:
-                #
                 # Calculate the number of songs that were payed since last cortina
-                #
                 if self.currentPlaylist[0].IsCortina == "yes":                   
                     self.SinceLastCortinaCount = 0
                 else:
                     self.SinceLastCortinaCount = self.SinceLastCortinaCount + 1
 
                 self.prevPlayedSong = LastRead[0]
-                #print "Different song, copy"
         except:
-            #print "Empty"
             pass
-#
+        
+########################################################
 # MOOD RULES - apply only to current song
-#
+########################################################
         try:
             currentSong = self.currentPlaylist[0]
         except:
@@ -233,9 +235,9 @@ class NowPlayingDataModel:
                         self.DisplaySettings = currentRule[u'Display']
                         self.BackgroundImage = currentRule[u'Background']
 
-#
+########################################################
 # Create NextTanda
-#
+########################################################
         self.nextTandaSong = None
         self.TillNextCortinaCount = 0
         
@@ -246,10 +248,10 @@ class NowPlayingDataModel:
                 break
             else:
                 self.TillNextCortinaCount = self.TillNextCortinaCount + 1
-#
-# Create Display Strings
-#
 
+########################################################
+# Create Display Strings
+########################################################
         # The display lines
         for i in range(0, len(self.DisplaySettings)): self.DisplayRow.append('')
         
@@ -285,11 +287,9 @@ class NowPlayingDataModel:
         print "...data filtered: ", time.strftime("%H:%M:%S")
         return
             
-###############################################################
-#
+########################################################
 # Conversion dictionary
-#
-###############################################################
+########################################################
 
     def updateConversionDisctionary(self):
         self.convDict = dict()

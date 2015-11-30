@@ -40,7 +40,7 @@ class SongObject(object):
     def __init__(self, p_artist=u"", p_album=u"", p_title=u"", p_genre=u"",
                  p_comment=u"", p_composer=u"", p_year=u"", p_singer=u"",
                  p_albumArtist=u"", p_performer = u"", p_isCortina = u"no",
-                 p_fileUrl=u"", p_moduleMessage=u""):
+                 p_fileUrl=u"", p_moduleMessage=u"", p_ignoreSong=u"no"):
         self.Artist        = p_artist
         self.Album         = p_album
         self.Title         = p_title
@@ -54,6 +54,7 @@ class SongObject(object):
         self.IsCortina     = p_isCortina
         self.fileUrl       = p_fileUrl
         self.ModuleMessage = p_moduleMessage
+        self.IgnoreSong    = p_ignoreSong
         
     def __eq__(self, other):
         if isinstance(other, SongObject):
@@ -168,6 +169,22 @@ class SongObject(object):
         for i in range(0, len(rulesArray)):
             currentRule = rulesArray[i]
             try:
+                #
+                # IGNORE
+                #
+                if currentRule[u'Type'] == 'Ignore' and currentRule[u'Active'] == 'yes':
+                    # Rule[u'Field2'] == is: IgnoreSong[j] shall be 'yes' if Rule[u'Field1'] is Rule[u'Field3']
+                    if currentRule[u'Field2'] == 'is':
+                        if getattr(self, currentRule[u'Field1'].replace("%","")).lower() == str(currentRule[u'Field3']).lower():
+                            self.IgnoreSong = "yes"
+                    # Rule[u'Field2'] == is not: IgnoreSong[j] shall be 1 if Rule[u'Field1'] not in Rule[u'Field3']
+                    if currentRule[u'Field2'] == 'is not':
+                        if getattr(self, currentRule[u'Field1'].replace("%","")).lower() not in str("["+currentRule[u'Field3'].lower()+"]"):
+                            self.IgnoreSong = "yes"
+                    # Rule[u'Field2'] == contains: IgnoreSong[j] shall be 1 if Rule[u'Field1'] contains any of Rule[u'Field3']
+                    if currentRule[u'Field2'] == 'contains':
+                        if str(currentRule[u'Field3']).lower() in getattr(self, currentRule[u'Field1'].replace("%","")).lower():
+                            self.IgnoreSong = "yes"
                 #
                 # PARSE
                 #

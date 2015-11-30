@@ -208,7 +208,7 @@ class EditRuleDialog(wx.Dialog):
             self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="", size=(165,-1))
             self.sizer2.Add(self.OutputField2)
             
-            if self.Settings[u'Type'] == 'Cortina':
+            if self.Settings[u'Type'] == 'Ignore':
                 self.IsIsNot.SetStringSelection(self.Settings[u'Field2'])
                 self.OutputField2.SetValue(self.Settings[u'Field3'])
             else:
