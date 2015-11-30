@@ -48,22 +48,22 @@ class beamMainFrame(wx.Frame):
     def __init__(self, settings = None):
     # Size and position of the main window
         wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle, pos=(150,150), size=(800,600))
-
         self.SetDoubleBuffered(True)
-
+        
+    # Start the timer reading data
+        self.DataTimer()
+        
     # Initialize DataObject - the model - 
-        self.nowPlayingDataModel = NowPlayingDataModel()   # Create the data model object
+        self.nowPlayingDataModel = NowPlayingDataModel()
     
     # Set Icon
         iconFilename = os.path.join(os.getcwd(),'resources','icons','icon_square','icon_square_256px.png')
-        
         self.favicon = wx.Icon(iconFilename, wx.BITMAP_TYPE_ANY, 256, 256)
         self.SetIcon(self.favicon)
 
     # faders
         self.timer1 = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.FadeoutOldImage, self.timer1)
-
         self.timer2 = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.FadeinNewImage, self.timer2)
 
@@ -94,11 +94,11 @@ class beamMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
+        
     # Background
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-        
         self.backgroundImage = wx.EmptyBitmap(800,600)
         self._currentBackgroundPath = []
         self.modifiedBitmap = self._currentBackgroundPath
@@ -121,7 +121,6 @@ class beamMainFrame(wx.Frame):
         #visibility switch
         self.textsAreVisible = True
         self.showStatusBar()
-        
         self.currentlyUpdating = False
         self.applyCurrentSettings()
         self.updateData()
@@ -148,6 +147,7 @@ class beamMainFrame(wx.Frame):
             self.currentlyUpdating = True
             tmpSettings = deepcopy(beamSettings)
             wx.lib.delayedresult.startWorker(self.getDataFinished, self.nowPlayingDataModel.ExtractPlaylistInfo( tmpSettings ) )
+        self.DataTimer() # Reset the timer
 
     def getDataFinished(self, result):
         
@@ -277,7 +277,6 @@ class beamMainFrame(wx.Frame):
 #
 # Find length and position of text
 #
-#
             if Settings['Alignment'] == 'Center':
                 TextSpaceAvailable = cliWidth
             else:
@@ -350,9 +349,7 @@ class beamMainFrame(wx.Frame):
         if not cliWidth or not cliHeight:
             return
         dc.Clear()
-
         self.drawBackgroundBitmap(dc)
-        
         self.drawTexts(dc)
 
 
@@ -404,7 +401,7 @@ class beamMainFrame(wx.Frame):
 #
 # CHANGE BACKGROUND
 #
-
+####################################################
     def changeBackground(self, fadeSpeed = 5):
         self.red = float(1.0)
         self.green = float(1.0)
@@ -472,4 +469,19 @@ class beamMainFrame(wx.Frame):
             self.timer2.Stop()
         
         self.Refresh()
+            
+#
+#
+#
+    def DataTimer(self):
+    # If the configuration have a timer on how often to update the data
+        try:
+        # There is not timer, so create and start it
+            self.timer = wx.Timer(self)
+            self.Bind(wx.EVT_TIMER, self.updateData, self.timer)
+            self.timer.Start(beamSettings._updateTimer)
+        except:
+        # There is already a timer restart with new update timing
+            self.timer.Stop()
+            self.timer.Start(beamSettings._updateTimer)
 

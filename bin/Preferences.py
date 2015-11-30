@@ -120,7 +120,7 @@ class Preferences(wx.Frame):
         vbox.Add(settingslabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         
         # Refresh time
-        refreshtime = wx.StaticText(panel, -1, "Refresh time (require restart)")
+        refreshtime = wx.StaticText(panel, -1, "Refresh time")
         self.RefreshTime = wx.Slider(panel, -1, int(beamSettings._updateTimer), 500, 10000,(0,0), (233,-1), wx.SL_HORIZONTAL)
         self.RefreshTimeLabel = wx.StaticText(panel, -1, "")
         self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
@@ -172,7 +172,7 @@ class Preferences(wx.Frame):
         vbox.Add(hboxDecoration, flag=wx.LEFT, border=20)
 
         # Logging
-        logging = wx.StaticText(panel, -1, "Logging")
+        logging = wx.StaticText(panel, -1, "Logging (require restart)")
         self.LogCheckBox = wx.CheckBox(panel, label='Log to '+beamSettings._logPath)
         if beamSettings._logging == 'True':
             self.LogCheckBox.SetValue(True)

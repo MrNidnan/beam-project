@@ -34,8 +34,7 @@ import sys
 from bin.beamsettings import *
 from bin.dialogs.beammainframe import beamMainFrame
 
-#app = wx.App(redirect=True)    # Error messages go to popup window
-app = wx.App(False) # Error messages go to terminal, for debugging purposes
+app = wx.App(False) # Error messages go to terminal
 
 ########################################################
 # Load Settings (global object)
@@ -43,30 +42,21 @@ app = wx.App(False) # Error messages go to terminal, for debugging purposes
 beamSettings.LoadConfig(beamSettings.defaultConfigFileName)
 
 print (beamSettings.mainFrameTitle)
-#Send messages to file
+
+########################################################
+# Select logging method (terminal or file)
+########################################################
 if beamSettings._logging == 'True':
     sys.stdout = open(beamSettings._logPath,"w")
-
 
 ########################################################
 # Start the main window
 ########################################################
 top = beamMainFrame()       # Creates the main frame
-top.Show()                      # Shows the main frame
+top.Show()                  # Shows the main frame
 
 ########################################################
-# Start the timer used to update the displayed data
+# Start the main loop
 ########################################################
 
-    # If the configuration have a timer on how often to update the data
-try:
-    # There is not timer, so create and start it
-    timer = wx.Timer(top)
-    top.Bind(wx.EVT_TIMER, top.updateData, timer)
-    timer.Start(beamSettings._updateTimer)
-except:
-    # There is already a timer restart with new update timing
-    timer.Stop()
-    timer.Start(beamSettings._updateTimer)
-
-app.MainLoop()                  # Start the main loop which handles events
+app.MainLoop()              # Start the main loop which handles events
