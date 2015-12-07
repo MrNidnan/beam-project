@@ -229,19 +229,6 @@ class Preferences(wx.Frame):
         return panel
     
 
-    def BuildLayoutList(self):
-        self.DisplayRows = []
-        for i in range(0, len(beamSettings._DefaultDisplaySettings)):
-            Settings = beamSettings._DefaultDisplaySettings[i]
-            self.DisplayRows.append(Settings[u'Field'])
-        self.LayoutList.Set(self.DisplayRows)
-        for i in range(0, len(beamSettings._DefaultDisplaySettings)):
-            Settings = beamSettings._DefaultDisplaySettings[i]
-            if Settings['Active'] == "yes":
-                self.LayoutList.Check(i, check=True)
-            else:
-                self.LayoutList.Check(i, check=False)
-
 #
 # Third tab - Moods
 #
@@ -360,6 +347,20 @@ class Preferences(wx.Frame):
 #
 ################################################
 
+    def BuildLayoutList(self):
+        self.DisplayRows = []
+        for i in range(0, len(beamSettings._DefaultDisplaySettings)):
+            Settings = beamSettings._DefaultDisplaySettings[i]
+            self.DisplayRows.append(Settings[u'Field'])
+        self.LayoutList.Set(self.DisplayRows)
+        for i in range(0, len(beamSettings._DefaultDisplaySettings)):
+            Settings = beamSettings._DefaultDisplaySettings[i]
+            if Settings['Active'] == "yes":
+                self.LayoutList.Check(i, check=True)
+            else:
+                self.LayoutList.Check(i, check=False)
+        # Update Main window
+        self.MainWindowParent.processData()
 #
 # Build Cortinas and Rules
 #
@@ -397,6 +398,8 @@ class Preferences(wx.Frame):
                 self.RuleList.Check(i, check=True)
             else:
                 self.RuleList.Check(i, check=False)
+        # Update Main window
+        self.MainWindowParent.processData()
 
 #
 # BUILD MOODS
@@ -415,6 +418,8 @@ class Preferences(wx.Frame):
                 self.MoodList.Check(i, check=True)
             else:
                 self.MoodList.Check(i, check=False)
+        # Update Main window
+        self.MainWindowParent.processData()
 
 ################################################
 #
