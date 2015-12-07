@@ -134,28 +134,39 @@ class beamMainFrame(wx.Frame):
         self.Refresh()
 
 ########################################################
-# Update data
+# Update data - Executed from top to bottom with exception if preferences changed
 ########################################################
     def updateData(self, event = wx.EVT_TIMER):
         self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
         self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
         self.previousPlaybackStatus = self.nowPlayingDataModel.PreviousPlaybackStatus
-                
+        
         if not self.currentlyUpdating:
             self.currentlyUpdating = True
             tmpSettings = deepcopy(beamSettings)
             wx.lib.delayedresult.startWorker(self.getDataFinished, self.nowPlayingDataModel.ExtractPlaylistInfo( tmpSettings ) )
+    
         self.DataTimer() # Reset the timer
 
     def getDataFinished(self, result):
+        self.currentlyUpdating = False
         
+        if self.nowPlayingDataModel.playlistChanged:
+            self.processData()
+
+    def processData(self):
+        self.nowPlayingDataModel.applyRules(beamSettings)
+        self.nowPlayingDataModel.applyMood(beamSettings)
+        self.nowPlayingDataModel.buildDisplayLines(beamSettings)
+        self.updateMood()
+
+    def updateMood(self):
         self.textsAreVisible = False
         self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
         self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
         self.currentMood = self.nowPlayingDataModel.CurrentMood
         self.previousMood = self.nowPlayingDataModel.PreviousMood
         self.currentDisplaySettings = self.nowPlayingDataModel.DisplaySettings
-        self.currentlyUpdating = False
         
         if self.previousMood != self.currentMood:
             print "New mood: ", self.currentMood
