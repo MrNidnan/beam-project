@@ -152,7 +152,7 @@ class beamMainFrame(wx.Frame):
         self.currentlyUpdating = False
         
         if self.nowPlayingDataModel.playlistChanged:
-            self.processData()
+            self.processData() #Only update if playlist has changed
 
     def processData(self):
         self.nowPlayingDataModel.applyRules(beamSettings)
@@ -369,8 +369,11 @@ class beamMainFrame(wx.Frame):
 # Buttons and menues
 ########################################################
     def OnPreferences(self, event):
-        PreferencesDialog = Preferences(self)
-        PreferencesDialog.Show()
+        try:
+            self.PreferencesDialog.Raise()
+        except:
+            self.PreferencesDialog = Preferences(self)
+            self.PreferencesDialog.Show()
 
 
 #
