@@ -60,10 +60,8 @@ class beamMainFrame(wx.Frame):
         self.SetIcon(self.favicon)
 
     # faders
-        self.timer1 = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.FadeoutOldImage, self.timer1)
-        self.timer2 = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.FadeinNewImage, self.timer2)
+        self.TransitionTimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.transition, self.TransitionTimer)
 
     # Statusbar
         self.statusbar = self.CreateStatusBar(style=0)
@@ -93,45 +91,43 @@ class beamMainFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
         
-    # Background
+        # Background
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+        
         self.backgroundImage = wx.EmptyBitmap(800,600)
+        self.SetBackgroundColour(wx.BLACK)
         self._currentBackgroundPath = []
         self.modifiedBitmap = self._currentBackgroundPath
         self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
 
+        self.alpha = float(1.0)
         self.red = float(1.0)
-        self.green = float(1.0)
         self.blue = float(1.0)
-
+        self.green = float(1.0)
+        
         self.currentDisplayRows = []
         self.currentDisplaySettings = []
         self.currentPlaybackStatus = ""
         self.previousMood = ""
         self.currentMood = ""      
+        
 
-        #triggers
-        self.triggerAdjustBackgroundRGB = True
+        #trigger
         self.triggerResizeBackground = True
+        self.textsAreVisible = False
+        self.FadeDirection = 'In'
         
         #visibility switch
-        self.textsAreVisible = True
         self.showStatusBar()
         self.currentlyUpdating = False
-        self.applyCurrentSettings()
         self.updateData()
 
 
 
-        
-
 ########################## END FRAME INITIALIZATION #########################
 
-    def applyCurrentSettings(self):
-        self.triggerResizeBackground = True
-        self.Refresh()
 
 ########################################################
 # Update data - Executed from top to bottom with exception if preferences changed
@@ -174,15 +170,15 @@ class beamMainFrame(wx.Frame):
             if (self.nowPlayingDataModel.BackgroundImage != self._currentBackgroundPath and
                 self.nowPlayingDataModel.BackgroundImage != ""):
                 self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
-                self.changeBackground(int(int(beamSettings._moodTransitionSpeed) / 100))
+                self.changeBackground()
             else:
                 self.textsAreVisible = True
         else:
             self.textsAreVisible = True
-
-        self.Refresh()
+    
         self.nowPlayingDataModel.PreviousMood = self.currentMood
-        self.SetStatusText(self.currentPlaybackStatus) 
+        self.SetStatusText(self.currentPlaybackStatus)
+        self.Refresh()
 
 ########################################################
 # Painter
@@ -193,7 +189,11 @@ class beamMainFrame(wx.Frame):
     def OnEraseBackground(self, evt):
         pass
     def OnPaint(self, event):
-        dc = wx.BufferedPaintDC(self)
+        pdc = wx.BufferedPaintDC(self)
+        try:
+            dc = wx.GCDC(pdc)
+        except:
+            dc = pdc
         self.Draw(dc)
 
 ########################################################
@@ -204,37 +204,33 @@ class beamMainFrame(wx.Frame):
         if not cliWidth or not cliHeight:
             return
 
-        if self.triggerResizeBackground or self.triggerAdjustBackgroundRGB:
-            try:
-                Image = wx.ImageFromBitmap(self.backgroundImage)
-                #adjust BackgroundChannels - currently used for fading effect
-                if self.triggerAdjustBackgroundRGB:
-                    Image = Image.AdjustChannels(self.red, self.green, self.blue, 1.0)
-                    self.triggerAdjustBackgroundRGB = False
-                #resize current background picture - currently used at main frame resizing    
-                if self.triggerResizeBackground:
-                    # Figure out how to scale the background image and position it
-                    aspectRatioWindow = float(cliHeight) / float(cliWidth)
-                    aspectRatioBackground = float(self.BackgroundImageHeight) / float(self.BackgroundImageWidth)
-                    if aspectRatioWindow >= aspectRatioBackground:
-                        # Window is too tall, scale to height
-                        Image = Image.Scale(cliHeight*self.BackgroundImageWidth / self.BackgroundImageHeight, cliHeight, wx.IMAGE_QUALITY_NORMAL)
-                    else:
-                        # Window is too wide, scale to width
-                        Image = Image.Scale(cliWidth, cliWidth*self.BackgroundImageHeight / self.BackgroundImageWidth, wx.IMAGE_QUALITY_NORMAL)
-                        Image = Image.AdjustChannels(self.red, self.green, self.blue, 1.0)
-                    self.triggerResizeBackground = False
-                #
-                self.modifiedBitmap = wx.BitmapFromImage(Image)
-            except:
-                self.modifiedBitmap = self.backgroundImage
+        try:
+            Image = wx.ImageFromBitmap(self.backgroundImage)
+            #resize current background picture - currently used at main frame resizing
+
+            aspectRatioWindow = float(cliHeight) / float(cliWidth)
+            aspectRatioBackground = float(self.BackgroundImageHeight) / float(self.BackgroundImageWidth)
+            if aspectRatioWindow >= aspectRatioBackground:
+                # Window is too tall, scale to height
+                Image = Image.Scale(cliHeight*self.BackgroundImageWidth / self.BackgroundImageHeight, cliHeight, wx.IMAGE_QUALITY_NORMAL)
+            else:
+                # Window is too wide, scale to width
+                Image = Image.Scale(cliWidth, cliWidth*self.BackgroundImageHeight / self.BackgroundImageWidth, wx.IMAGE_QUALITY_NORMAL)
+            # Fader
+            if self.alpha <1 or self.red <1 or self.blue <1 or self.green <1:
+                Image = Image.AdjustChannels(self.red, self.green, self.blue, self.alpha)
+            
+            self.triggerResizeBackground = False
+            self.modifiedBitmap = wx.BitmapFromImage(Image)
+        except:
+            self.modifiedBitmap = self.backgroundImage
 
             
         # Position the image and draw it
         resizedWidth, resizedHeight = self.modifiedBitmap.GetSize()
         self.xPosResized = (cliWidth - resizedWidth)/2
         self.yPosResized = (cliHeight - resizedHeight)/2
-        dc.DrawBitmap(self.modifiedBitmap, self.xPosResized, self.yPosResized)
+        dc.DrawBitmap(self.modifiedBitmap, self.xPosResized, self.yPosResized, True)
 
 ########################################################
 # DRAW TEXT
@@ -416,72 +412,137 @@ class beamMainFrame(wx.Frame):
 ########################################################
 # Change background
 ########################################################
-    def changeBackground(self, fadeSpeed = 5):
-        self.red = float(1.0)
-        self.green = float(1.0)
-        self.blue = float(1.0)
-        self.delta = float(1/float(fadeSpeed))
-        self.fadeSpeed = fadeSpeed
+    def changeBackground(self):
+        
+        self.transitionSpeed = int(int(beamSettings._moodTransitionSpeed) / 100)
+        self.delta = float(1/float(self.transitionSpeed))
+                                   
+        #####################
+        # Choose transition #
+        #####################
+        
+        # Fade directly
+        if beamSettings._moodTransition == 'Fade directly':
 
-        # Choose transition
-        if beamSettings._moodTransition == 'Fade':
-        # start the timer for the fade-out
-            self.timer1.Start(self.fadeSpeed)
+            self.alpha = float(0.0)
+            
+            # Load the new background image
+            self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
+            self.modifiedBitmap = self._currentBackgroundPath
+            # Set triggers
+            self.triggerResizeBackground = True
+            self.textsAreVisible = True
+            
+            # start the timer for the transition
+            self.TransitionTimer.Start(self.transitionSpeed)
+        
+        
+        # Fade to black
+        if  beamSettings._moodTransition == 'Fade to black':
+            if self.FadeDirection == 'Out':
+                self.textsAreVisible = False
+            
+                self.red = float(1.0)
+                self.green = float(1.0)
+                self.blue = float(1.0)
+                self.alpha = float(1.0)
+                # Fade out
+                self.TransitionTimer.Start(self.transitionSpeed)
+        
+            else:
+                # Load the new background image
+                self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
+                self.modifiedBitmap = self._currentBackgroundPath
+                # Set triggers
+                self.triggerResizeBackground = True
+                self.textsAreVisible = True
+            
+                self.red = float(0.0)
+                self.green = float(0.0)
+                self.blue = float(0.0)
+                self.alpha = float(1.0)
+        
+                self.TransitionTimer.Start(self.transitionSpeed)
+        
         else:
-        # No transition
+        # Change background without any transition
             self.switchBackground()
 
+
+########################################################
+# No transition
+########################################################
     def switchBackground(self):
-        # Change background without any transition
+        
+        self.triggerResizeBackground = True
         self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
         self.modifiedBitmap = self._currentBackgroundPath
         self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
-        self.triggerResizeBackground = True
         self.textsAreVisible = True
         self.Refresh()
 
-    def FadeoutOldImage(self, event):
-        self.textsAreVisible = False
-        self.red -= 2 * self.delta
-        self.green -= 2 * self.delta
-        self.blue -= 2 * self.delta
-        if self.red >= 0 and self.red <= 1:
-            # re-fire the OnPaint event using self.Refresh
-            self.triggerAdjustBackgroundRGB = True
+########################################################
+# TIMER - USED for Fade directly and Fade to black
+########################################################
+    def transition(self, event):
+        if beamSettings._moodTransition == 'Fade directly':
+            self.FadeImage()
+        if beamSettings._moodTransition == 'Fade to black' and self.FadeDirection == 'Out':
+            self.FadeToBlackImage()
+        if beamSettings._moodTransition == 'Fade to black'and self.FadeDirection == 'In':
+            self.FadeBackImage()
+
+
+########################################################
+# Fade directly
+########################################################
+    def FadeImage(self):
+        self.alpha += self.delta
+        if self.alpha >=1:
+            self.alpha = 1.0
+            self.TransitionTimer.Stop()
+        self.Refresh()
+
+########################################################
+# Fade To black - 2 functions (IN and OUT)
+########################################################
+    def FadeToBlackImage(self):
+    
+        self.red -= 2* self.delta
+        self.green -= 2* self.delta
+        self.blue -= 2* self.delta
+        
+        if self.red >=0 and self.red <=1:
             self.triggerResizeBackground = True
+            self.textsAreVisible = False
             self.Refresh()
         else:
-            #stop the fade-out timer
-            self.timer1.Stop()
-
-            #load the new background image
-            self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
-            self.modifiedBitmap = self._currentBackgroundPath
-            self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
-            self.triggerResizeBackground = True
-            
-            #start fading it in
-            self.textsAreVisible = True
-
             self.red = float(0.0)
             self.green = float(0.0)
             self.blue = float(0.0)
-            self.timer2.Start(self.fadeSpeed)
+            self.direction = 'in' # Change fading direction
+            self.TransitionTimer.Stop()
+            self.Refresh()
 
-    def FadeinNewImage(self, event):
-
-        self.red += self.delta
-        self.green += self.delta
-        self.blue += self.delta
-
-        if self.red >= 0 and self.red <= 1:
-            self.triggerAdjustBackgroundRGB = True
-            self.triggerResizeBackground = True
-        else:
-            self.timer2.Stop()
+            self.FadeDirection = 'In'
+            self.changeBackground()
+    
+    def FadeBackImage(self):
+        self.red +=  self.delta
+        self.green +=  self.delta
+        self.blue +=  self.delta
         
-        self.Refresh()
-            
+        if self.red >=0 and self.red <=1:
+            self.triggerResizeBackground = True
+            self.Refresh()
+        else:
+            self.red = float(1.0)
+            self.green = float(1.0)
+            self.blue = float(1.0)
+            self.FadeDirection = 'Out'
+            self.TransitionTimer.Stop()
+            self.Refresh()
+
 ########################################################
 # Data timer
 ########################################################

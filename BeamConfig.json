@@ -37,7 +37,7 @@
   "Author": "Mikael Holber & Horia Uifaleanu - 2015", 
   "DefaultBackgroundImage": "resources/backgrounds/bg1920x1080px.jpg", 
   "Module": "",
-  "MoodTransition": "Fade",
+  "MoodTransition": "Fade to black",
   "MoodTransitionSpeed": "1500",
   "Logging": "False",
   "LogPath": "",

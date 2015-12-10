@@ -92,10 +92,11 @@ class Preferences(wx.Frame):
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         mediaplayer.SetFont(font)
         mediadescription = wx.StaticText(panel, -1, "Select mediaplayer to display information from")
-        self.Dropdown = wx.ComboBox(panel,value=beamSettings._moduleSelected, choices=beamSettings._currentModules, style=wx.CB_READONLY)
+        self.ModuleSelectorDropdown = wx.ComboBox(panel,value=beamSettings._moduleSelected, choices=beamSettings._currentModules, style=wx.CB_READONLY)
+        self.ModuleSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectModule)
         vbox.Add(mediaplayer, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         vbox.Add(mediadescription, flag=wx.LEFT, border=20)
-        vbox.Add(self.Dropdown, flag=wx.LEFT, border=20)
+        vbox.Add(self.ModuleSelectorDropdown, flag=wx.LEFT, border=20)
         
         # Background image
         background = wx.StaticText(panel, -1, "Default Background Image")
@@ -145,17 +146,19 @@ class Preferences(wx.Frame):
         
         # Mood transition
         moodtransition = wx.StaticText(panel, -1, "Mood transition")
-        self.FadeCheckBox = wx.CheckBox(panel, label='Fade')
-        self.FadeSpeed = wx.Slider(panel, -1, int(beamSettings._moodTransitionSpeed), 500, 5000,(0,0), (167,-1), wx.SL_HORIZONTAL)
-        self.FadeSpeedLabel = wx.StaticText(panel, -1, "")
-        self.FadeCheckBox.Bind(wx.EVT_CHECKBOX, self.OnFadeCheckBox)
-        self.FadeSpeed.Bind(wx.EVT_SCROLL, self.OnFadeSpeedScroll)
+        self.TransitionDropdown = wx.ComboBox(panel,value=beamSettings._moodTransition, choices=['No transition', 'Fade directly','Fade to black'], style=wx.CB_READONLY)
+        self.TransitionSpeed = wx.Slider(panel, -1, int(beamSettings._moodTransitionSpeed), 500, 5000,(0,0), (233,-1), wx.SL_HORIZONTAL)
+        self.TransitionSpeedLabel = wx.StaticText(panel, -1, "")
+        self.TransitionDropdown.Bind(wx.EVT_COMBOBOX, self.OnTransitionDropdown)
+        self.TransitionSpeed.Bind(wx.EVT_SCROLL, self.OnTransitionSpeedScroll)
         self.updateMoodTransition()
         vbox.Add(moodtransition, flag=wx.LEFT, border=20)
-        hboxTransition = wx.BoxSizer(wx.HORIZONTAL)
-        hboxTransition.Add(self.FadeCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
-        hboxTransition.Add(self.FadeSpeed, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
-        hboxTransition.Add(self.FadeSpeedLabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=7)
+        hboxTransition = wx.BoxSizer(wx.VERTICAL)
+        hboxTransition2 = wx.BoxSizer(wx.HORIZONTAL)
+        hboxTransition.Add(self.TransitionDropdown, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
+        hboxTransition2.Add(self.TransitionSpeed, flag= wx.RIGHT | wx.BOTTOM, border=7)
+        hboxTransition2.Add(self.TransitionSpeedLabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=7)
+        hboxTransition.Add(hboxTransition2, flag=wx.LEFT | wx.TOP, border=7)
         vbox.Add(hboxTransition, flag=wx.LEFT, border=20)
 
         # Window decoration
@@ -438,7 +441,7 @@ class Preferences(wx.Frame):
 #
     def onApply(self, e):
         # Get Settings
-        beamSettings._moduleSelected        = self.Dropdown.GetValue()
+        beamSettings._moduleSelected        = self.ModuleSelectorDropdown.GetValue()
         beamSettings._maxTandaLength        =  int(self.TandaLength.GetValue())
         beamSettings._logging               = str(self.LogCheckBox.GetValue())
         beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
@@ -457,6 +460,10 @@ class Preferences(wx.Frame):
 #
 # Browse Background
 #
+
+    def OnSelectModule(self, event):
+        beamSettings._moduleSelected        = self.ModuleSelectorDropdown.GetValue()
+    
     def browseBackgroundImage(self, event):
         openFileDialog = wx.FileDialog(self, "Set new background image", 
                                        os.path.join(os.getcwd(), 'resources', 'backgrounds'), "",
@@ -478,7 +485,6 @@ class Preferences(wx.Frame):
         obj = e.GetEventObject()
         beamSettings._updateTimer = obj.GetValue()
         self.updateRefreshTimerLabel()
-    
     
     def updateRefreshTimerLabel(self):
         Timervalue = round(float(beamSettings._updateTimer)/1000,1)
@@ -511,40 +517,36 @@ class Preferences(wx.Frame):
         else:
             self.TandaLengthLabel.SetLabel("No preview")
 #
-# Mood transition checkbox and slider
+# Mood transition dropdown and slider
 #
-    def OnFadeCheckBox(self, e):
-        obj = e.GetEventObject()
-        IsChecked = obj.GetValue()
-        if IsChecked:
-            beamSettings._moodTransition = 'Fade'
-        else:
-            beamSettings._moodTransition = 'None'
-        self.updateMoodTransition()
 
-    def OnFadeSpeedScroll(self, e):
+
+    def OnTransitionSpeedScroll(self, e):
         obj = e.GetEventObject()
         beamSettings._moodTransitionSpeed = obj.GetValue()
         self.updateMoodTransition()
     
-    def updateMoodTransition(self):
-        if beamSettings._moodTransition == 'Fade':
-            self.FadeCheckBox.SetValue(True)
-            self.FadeSpeed.Enable(True)
-        else:
-            self.FadeCheckBox.SetValue(False)
-            self.FadeSpeed.Enable(False)
+    def OnTransitionDropdown(self, e):
+        obj = e.GetEventObject()
+        beamSettings._moodTransition = obj.GetValue()
+        self.updateMoodTransition()
 
+    def updateMoodTransition(self):
+        if beamSettings._moodTransition == "No transition":
+            self.TransitionSpeed.Enable(False)
+        else:
+            self.TransitionSpeed.Enable(True)
+        
         Timervalue = round(float(beamSettings._moodTransitionSpeed)/1000,1)
         if beamSettings._moodTransitionSpeed < 1000:
             # Fast
-            self.FadeSpeedLabel.SetLabel(str(Timervalue) + " sec (Fast)")
+            self.TransitionSpeedLabel.SetLabel(str(Timervalue) + " sec (Fast)")
         elif beamSettings._moodTransitionSpeed < 3000:
             # Medium
-            self.FadeSpeedLabel.SetLabel(str(Timervalue) + " sec (Medium)")
+            self.TransitionSpeedLabel.SetLabel(str(Timervalue) + " sec (Medium)")
         else:
             # Slow
-            self.FadeSpeedLabel.SetLabel(str(Timervalue) + " sec (Slow)")
+            self.TransitionSpeedLabel.SetLabel(str(Timervalue) + " sec (Slow)")
 
 #
 # Logging checkbox
