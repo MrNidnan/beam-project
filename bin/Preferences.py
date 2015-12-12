@@ -52,37 +52,53 @@ class Preferences(wx.Frame):
 
         # Build the panel
         self.panel = wx.Panel(self)
+        self.MainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.panelbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
-        notebook  = fnb.FlatNotebook(self.panel, wx.ID_ANY,agwStyle=fnb.FNB_NODRAG|fnb.FNB_VC8|fnb.FNB_NO_NAV_BUTTONS|fnb.FNB_NO_X_BUTTON|fnb.FNB_NO_TAB_FOCUS)
 
-        notebook.AddPage(self.BasicSettings(notebook), "Settings")
-        notebook.AddPage(self.LayoutSettings(notebook), "Default Layout")
-        notebook.AddPage(self.MoodsSettings(notebook), "Moods")
-        notebook.AddPage(self.RulesSettings(notebook), "Rules")
-        notebook.AddPage(self.TagsTab(notebook), "Tags")
-
-        self.button_ok = wx.Button(self.panel, label="Apply")
+        self.menu = wx.ListCtrl(self.panel, size=(180,450),style=wx.LC_REPORT | wx.LC_ALIGN_LEFT | wx.LC_SINGLE_SEL| wx.LC_NO_HEADER)
+        self.menu.InsertColumn(0, 'Menu')
+        menulist = ['Basic Settings','Default Layout','Moods','Rules','Tags']
+        for item in xrange(len(menulist)):
+            self.menu.InsertStringItem(item, menulist[item])
+        self.menu.Select(0)
+        self.menu.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectMenu)
+        
+        self.SettingsTabs = []
+        self.SettingsTabs.append(self.BasicSettings())
+        self.SettingsTabs.append(self.LayoutSettings())
+        self.SettingsTabs.append(self.MoodsSettings())
+        self.SettingsTabs.append(self.RulesSettings())
+        self.SettingsTabs.append(self.TagsTab())
+        for item in self.SettingsTabs:
+            self.panelbox.Add(item,0, flag=wx.EXPAND)
+        
+        self.button_ok = wx.Button(self.panel, label="Save")
         self.button_cancel = wx.Button(self.panel, label="Close")
         self.button_ok.Bind(wx.EVT_BUTTON, self.onApply)
         self.button_cancel.Bind(wx.EVT_BUTTON, self.onClose)
 
-        self.vbox.Add(notebook,1)
-        self.hbox.Add((200, -1), 1, flag=wx.EXPAND | wx.ALIGN_RIGHT)
-        self.hbox.Add(self.button_ok, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
+        self.hbox.Add(self.button_ok,  flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
+        self.vbox.Add(self.menu, flag=wx.EXPAND |wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
         self.vbox.Add(self.hbox)
+        self.MainSizer.Add(self.vbox, flag=wx.FIXED_MINSIZE)
+        #self.MainSizer.Add(wx.StaticLine(self.panel, style=wx.LI_VERTICAL), flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
+        self.MainSizer.Add(self.panelbox,  flag=wx.FIXED_MINSIZE)
         
-        self.panel.SetSizerAndFit(self.vbox)
+        self.changePanel(0)
+        
+        self.panel.SetSizerAndFit(self.MainSizer)
         # Fix size (bug)
-        self.SetSize((self.panel.GetSize()+(0,60)))
+        self.SetSize((self.MainSizer.GetSize()+(0,35)))
 
 
 
 #
 # First tab - Basic Settings
 #
-    def BasicSettings(self, notebook):
+    def BasicSettings(self):
 
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -194,7 +210,7 @@ class Preferences(wx.Frame):
 # Second tab - Default Layout
 #
 
-    def LayoutSettings(self, notebook):
+    def LayoutSettings(self):
 
         panel = wx.Panel(self)
         self.DisplayRows = []
@@ -224,8 +240,8 @@ class Preferences(wx.Frame):
         self.DelLayout.Bind(wx.EVT_BUTTON, self.OnDelLayout)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(description, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
-        sizer.Add(self.LayoutList, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        sizer.Add(description, flag= wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        sizer.Add(self.LayoutList, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         panel.SetSizer(sizer)
 
@@ -236,7 +252,7 @@ class Preferences(wx.Frame):
 # Third tab - Moods
 #
 
-    def MoodsSettings(self, notebook):
+    def MoodsSettings(self):
     
         panel = wx.Panel(self)
         self.MoodRows = []
@@ -279,7 +295,7 @@ class Preferences(wx.Frame):
 # Forth tab - Cortinas and Rules
 #
 
-    def RulesSettings(self, notebook):
+    def RulesSettings(self):
 
         panel = wx.Panel(self)
 
@@ -321,7 +337,7 @@ class Preferences(wx.Frame):
 #
 # Fifth tab - Basic Settings
 #
-    def TagsTab(self, notebook):
+    def TagsTab(self):
         
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -424,13 +440,24 @@ class Preferences(wx.Frame):
         # Update Main window
         self.MainWindowParent.processData()
 
+#
+# CHANGE PANEL
+#
+    def changePanel(self, selectedPanel):
+        for item in self.SettingsTabs:
+            item.Hide()
+        self.SettingsTabs[selectedPanel].Show()
+        self.panel.Layout()
+
 ################################################
 #
 # EVENTS
 #
 ################################################
 
-
+    def onSelectMenu(self, e):
+        # Change panel
+       self.changePanel(self.menu.GetFirstSelected(self))
 
 
 ############
