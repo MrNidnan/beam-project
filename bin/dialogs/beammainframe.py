@@ -437,7 +437,6 @@ class beamMainFrame(wx.Frame):
             self.textsAreVisible = True
             
             # start the timer for the transition
-            print self.transitionSpeed
             self.TransitionTimer.Start(self.transitionSpeed)
         
         

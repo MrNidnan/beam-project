@@ -128,7 +128,6 @@ class Preferences(wx.Frame):
         backdescription = wx.StaticText(panel, -1, "Select background image (1920x1080 recommended)")
         self.browse = wx.Button(panel, label="Browse")
         self.browse.Bind(wx.EVT_BUTTON, self.browseBackgroundImage)
-        print beamSettings._moods[0][u'Background']
         (path,backgroundfile) = os.path.split(beamSettings._moods[0][u'Background'])
         self.currentBackground = wx.StaticText(panel, -1, backgroundfile)
         vbox.Add(background, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
@@ -504,10 +503,10 @@ class Preferences(wx.Frame):
                                        "Image files(*.png,*.jpg)|*.png;*.jpg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:
-            beamSettings._DefaultBackground = openFileDialog.GetPath()
+            beamSettings._moods[0][u'Background'] = openFileDialog.GetPath()
             # change current background
-            self.MainWindowParent._currentBackgroundPath = beamSettings._DefaultBackground
-            (path,backgroundfile) = os.path.split(beamSettings._DefaultBackground)
+            self.MainWindowParent._currentBackgroundPath = beamSettings._moods[0][u'Background']
+            (path,backgroundfile) = os.path.split(beamSettings._moods[0][u'Background'])
             self.currentBackground.SetLabel(backgroundfile)
             self.MainWindowParent.changeBackground()
             openFileDialog.Destroy()
