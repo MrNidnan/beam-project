@@ -223,12 +223,6 @@ class NowPlayingDataModel:
 ###############################################################
 
     def applyMood(self, currentSettings):
-    #
-    # Apply default layout and background, then change it if mood is applied
-    #
-        self.CurrentMood = 'Default'
-        self.DisplaySettings = currentSettings._DefaultDisplaySettings
-        self.BackgroundImage = currentSettings._DefaultBackground
         
         try:
             currentSong = self.currentPlaylist[0]
@@ -241,27 +235,41 @@ class NowPlayingDataModel:
         else:
             MoodStatus = "Not Playing"
         
-        for i in range(0, len(currentSettings._moods)):
+        applyMood = []
+        for i in range(1, len(currentSettings._moods)):
             currentRule = currentSettings._moods[i]
             if currentRule[u'Type'] == 'Mood' and currentRule[u'Active'] == 'yes' and str(currentRule[u'PlayState']) == str(MoodStatus):
+                
+                
                 # Only apply Mood for current song
                 if currentRule[u'Field2'] == 'is':
                     if eval(str(currentRule[u'Field1']).replace("%"," currentSong.")).lower() == str(currentRule[u'Field3']).lower():
-                        self.CurrentMood = currentRule[u'Name']
-                        self.DisplaySettings = currentRule[u'Display']
-                        self.BackgroundImage = currentRule[u'Background']
+                        applyMood = i
                 if currentRule[u'Field2'] == 'is not':
                     if eval(str(currentRule[u'Field1']).replace("%"," currentSong.")).lower() not in str("["+currentRule[u'Field3'].lower()+"]"):
-                        self.CurrentMood = currentRule[u'Name']
-                        self.DisplaySettings = currentRule[u'Display']
-                        self.BackgroundImage = currentRule[u'Background']
+                        applyMood = i
                 if currentRule[u'Field2'] == 'contains':
                     if str(currentRule[u'Field3']).lower() in eval(str(currentRule[u'Field1']).replace("%"," currentSong.")).lower():
-                        self.CurrentMood = currentRule[u'Name']
-                        self.DisplaySettings = currentRule[u'Display']
-                        self.BackgroundImage = currentRule[u'Background']
+                        applyMood = i
 
-
+                
+#
+# Apply default layout and background, then change it if mood is applied
+#
+        if not applyMood == []:
+            currentRule = currentSettings._moods[applyMood]
+            self.CurrentMood = currentRule[u'Name']
+            self.DisplaySettings = currentRule[u'Display']
+            self.BackgroundImage = currentRule[u'Background']
+            self.RotateBackground = currentRule[u'RotateBackground']
+            self.RotateTimer = currentRule[u'RotateTimer']
+        else:
+            defaultMood = currentSettings._moods[0]
+            self.CurrentMood = defaultMood[u'Name']
+            self.DisplaySettings = defaultMood[u'Display']
+            self.BackgroundImage = defaultMood[u'Background']
+            self.RotateBackground = defaultMood[u'RotateBackground']
+            self.RotateTimer = defaultMood[u'RotateTimer']
 
 
 ###############################################################

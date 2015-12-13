@@ -35,7 +35,6 @@
     }
   ], 
   "Author": "Mikael Holber & Horia Uifaleanu - 2015", 
-  "DefaultBackgroundImage": "resources/backgrounds/bg1920x1080px.jpg", 
   "Module": "",
   "MoodTransition": "Fade to black",
   "MoodTransitionSpeed": "1500",
@@ -94,7 +93,19 @@
       "Field3": "silent"
     }
   ], 
-  "DefaultDisplay": [
+  "Moods": [
+    {
+      "PlayState": "-", 
+      "Name": "Default", 
+      "Field2": "-", 
+      "Field3": "-", 
+      "Field1": "-", 
+      "Background": "resources/backgrounds/bg1920x1080px.jpg", 
+      "Active": "yes", 
+      "Type": "Default",
+      "RotateBackground": "no",
+      "RotateTimer": 30,
+      "Display": [
     {
       "Field": "\u266a Previous song: %PreviousTitle", 
       "Style": "Italic", 
@@ -207,9 +218,9 @@
       "Size": 4,
       "TextFlow": "Cut"
     }
-  ], 
-  "Moods": [
-    {
+  ]
+    },
+      {
       "PlayState": "Playing", 
       "Name": "Cortina", 
       "Field2": "is", 
@@ -217,7 +228,9 @@
       "Field1": "%IsCortina", 
       "Background": "resources/backgrounds/bg1920x1080px_darkBlue.jpg", 
       "Active": "yes", 
-      "Type": "Mood", 
+      "Type": "Mood",
+      "RotateBackground": "no",
+      "RotateTimer": 30,
       "Display": [
         {
           "Style": "Italic", 
@@ -277,6 +290,8 @@
       "Field1": "%Genre", 
       "Background": "resources/backgrounds/bg1920x1080px_darkBlue.jpg", 
       "Active": "no", 
+      "RotateBackground": "no",
+      "RotateTimer": 30,
       "Type": "Mood", 
       "Display": [
     {
@@ -400,7 +415,9 @@
       "Field3": "Milonga", 
       "Field1": "%Genre", 
       "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg", 
-      "Active": "no", 
+      "Active": "no",
+      "RotateBackground": "no",
+      "RotateTimer": 30,
       "Type": "Mood", 
       "Display": [
     {
@@ -525,6 +542,8 @@
       "Field1": "%Artist", 
       "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg", 
       "Active": "yes", 
+      "RotateBackground": "no",
+      "RotateTimer": 30,
       "Type": "Mood", 
       "Display": [
         {

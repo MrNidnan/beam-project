@@ -53,9 +53,9 @@ class EditMood(wx.Frame):
             self.Settings   = beamSettings._moods[self.RowSelected]
         else:
             # Create a new default setting
-            DefaultDisplay = deepcopy(beamSettings._DefaultDisplaySettings)
+            DefaultDisplay = deepcopy(beamSettings._moods[0][u'Display'])
             self.Settings   = ({"Active": "yes", "Field3": "something","Field2": "contains","Field1": "%Title",
-                               "Type": "Mood", "Name": "My Mood",
+                               "Type": "Mood", "Name": "My Mood", "RotateBackground": "no", "RotateTimer": 30,
                                "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg",
                                "PlayState": "Playing",
                                "Display": DefaultDisplay})
@@ -238,7 +238,7 @@ class EditMood(wx.Frame):
         self.Settings[u'Field1'] = self.InputID3Field.GetValue()
         self.Settings[u'Field2'] = self.IsIsNot.GetValue()
         self.Settings[u'Field3'] = self.OutputField.GetValue()
-        MoodOrderBox = int(self.MoodOrder.GetValue())-1
+        MoodOrderBox = int(self.MoodOrder.GetValue())
         # Place settings in moods
         if self.mode == "Add mood":
             if MoodOrderBox < self.RowSelected:

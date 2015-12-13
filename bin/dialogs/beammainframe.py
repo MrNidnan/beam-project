@@ -62,6 +62,8 @@ class beamMainFrame(wx.Frame):
     # faders
         self.TransitionTimer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.transition, self.TransitionTimer)
+        self.RotateBackgroundTimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
 
     # Statusbar
         self.statusbar = self.CreateStatusBar(style=0)
@@ -118,6 +120,7 @@ class beamMainFrame(wx.Frame):
         self.triggerResizeBackground = True
         self.textsAreVisible = False
         self.FadeDirection = 'In'
+        self.RotateBackground = False
         
         #visibility switch
         self.showStatusBar()
@@ -434,6 +437,7 @@ class beamMainFrame(wx.Frame):
             self.textsAreVisible = True
             
             # start the timer for the transition
+            print self.transitionSpeed
             self.TransitionTimer.Start(self.transitionSpeed)
         
         
@@ -485,12 +489,12 @@ class beamMainFrame(wx.Frame):
 # TIMER - USED for Fade directly and Fade to black
 ########################################################
     def transition(self, event):
-        if beamSettings._moodTransition == 'Fade directly':
-            self.FadeImage()
         if beamSettings._moodTransition == 'Fade to black' and self.FadeDirection == 'Out':
             self.FadeToBlackImage()
         if beamSettings._moodTransition == 'Fade to black'and self.FadeDirection == 'In':
             self.FadeBackImage()
+        if beamSettings._moodTransition == 'Fade directly' or self.RotateBackground == True:
+            self.FadeImage()
 
 
 ########################################################
@@ -542,6 +546,32 @@ class beamMainFrame(wx.Frame):
             self.FadeDirection = 'Out'
             self.TransitionTimer.Stop()
             self.Refresh()
+
+########################################################
+# Rotate Background
+########################################################
+    def rotateBackground(self):
+        return
+        # Starts, stops and executes the rotate-background function.
+        
+        # Start the rotation
+        if beamSettings._rotateBackground == 'linear':
+            # Find the files
+            self._currentBackgroundPath
+            self.RotateBackground == True
+        # Start the rotation in random
+        
+        if beamSettings._rotateBackground == 'random':
+            pass
+        # Stop the rotation
+        if beamSettings._rotateBackground == 'no':
+            self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
+            self.RotateBackground == False
+        
+        # Update the background if it's suppose to be a different one
+        if (self.nowPlayingDataModel.BackgroundImage != self._currentBackgroundPath and
+            self.nowPlayingDataModel.BackgroundImage != ""):
+            self.changeBackground()
 
 ########################################################
 # Data timer

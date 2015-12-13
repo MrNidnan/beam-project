@@ -56,11 +56,11 @@ class Preferences(wx.Frame):
         self.panelbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
-
+        
         # Needed for layout style
         listWidth = 180
         listHeight= 200
-        self.menu = wx.ListCtrl(self.panel,size=(listWidth,listHeight), style=wx.LC_REPORT | wx.LC_ALIGN_LEFT | wx.LC_SINGLE_SEL| wx.LC_NO_HEADER)
+        self.menu = wx.ListCtrl(self.panel,size=(listWidth,listHeight), style=wx.LC_REPORT | wx.LC_ALIGN_LEFT | wx.LC_SINGLE_SEL| wx.LC_NO_HEADER | wx.NO_BORDER)
         
         self.menu.SetBackgroundColour(self.panel.GetBackgroundColour())
         self.menu.InsertColumn(0, 'Menu', width=-1)
@@ -79,7 +79,7 @@ class Preferences(wx.Frame):
         self.SettingsTabs.append(self.RulesSettings())
         self.SettingsTabs.append(self.TagsTab())
         for item in self.SettingsTabs:
-            self.panelbox.Add(item)
+            self.panelbox.Add(item, flag=wx.EXPAND)
         
         self.button_ok = wx.Button(self.panel, label="Save")
         self.button_cancel = wx.Button(self.panel, label="Close")
@@ -88,11 +88,11 @@ class Preferences(wx.Frame):
 
         self.hbox.Add(self.button_ok,  flag=wx.LEFT | wx.TOP, border=10)
         self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.TOP | wx.RIGHT, border=10)
-        self.vbox.Add(self.menu, flag=wx.EXPAND |wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
+        self.vbox.Add(self.menu, flag= wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
         self.vbox.Add((200,-1),1,flag=wx.EXPAND |wx.ALIGN_CENTER)
         self.vbox.Add(self.hbox, flag= wx.BOTTOM, border=5)
         self.MainSizer.Add(self.vbox, flag=wx.EXPAND)
-        self.MainSizer.Add(self.panelbox,  flag=wx.EXPAND)
+        self.MainSizer.Add(self.panelbox,  flag=wx.GROW)
         
         self.changePanel(0)
         
@@ -128,7 +128,8 @@ class Preferences(wx.Frame):
         backdescription = wx.StaticText(panel, -1, "Select background image (1920x1080 recommended)")
         self.browse = wx.Button(panel, label="Browse")
         self.browse.Bind(wx.EVT_BUTTON, self.browseBackgroundImage)
-        (path,backgroundfile) = os.path.split(beamSettings._DefaultBackground)
+        print beamSettings._moods[0][u'Background']
+        (path,backgroundfile) = os.path.split(beamSettings._moods[0][u'Background'])
         self.currentBackground = wx.StaticText(panel, -1, backgroundfile)
         vbox.Add(background, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         vbox.Add(backdescription, flag=wx.LEFT, border=20)
@@ -227,14 +228,14 @@ class Preferences(wx.Frame):
         self.DelLayout  = wx.Button(panel, label="Delete")
         self.EditLayout = wx.Button(panel, label="Edit")
         sizerbuttons    = wx.BoxSizer(wx.HORIZONTAL)
-        sizerbuttons.Add(self.AddLayout, flag=wx.RIGHT | wx.TOP, border=10)
-        sizerbuttons.Add(self.DelLayout, flag=wx.RIGHT | wx.TOP, border=10)
-        sizerbuttons.Add(self.EditLayout, flag=wx.RIGHT | wx.TOP, border=10)
+        sizerbuttons.Add(self.AddLayout, flag=wx.RIGHT, border=10)
+        sizerbuttons.Add(self.DelLayout, flag=wx.RIGHT, border=10)
+        sizerbuttons.Add(self.EditLayout, flag=wx.RIGHT, border=10)
 
         description = wx.StaticText(panel, -1, "The Default Layout is the layout configuration which will be shown when Beam is playing.")
         description.Wrap(380)
         
-        self.LayoutList = wx.CheckListBox(panel,-1, size=wx.DefaultSize, choices=[], style= wx.LB_NEEDED_SB)
+        self.LayoutList = wx.CheckListBox(panel,-1, choices=[], style= wx.LB_NEEDED_SB)
         self.LayoutList.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.LayoutList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditLayout)
         self.LayoutList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckLayout)
@@ -247,9 +248,9 @@ class Preferences(wx.Frame):
         self.DelLayout.Bind(wx.EVT_BUTTON, self.OnDelLayout)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(description, flag=wx.ALIGN_TOP | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
-        sizer.Add(self.LayoutList, flag=wx.ALIGN_CENTER | wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
-        sizer.Add(sizerbuttons, flag=wx.ALIGN_BOTTOM | wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
+        sizer.Add(description, flag=wx.ALIGN_TOP | wx.ALL, border=10)
+        sizer.Add(self.LayoutList, flag= wx.EXPAND| wx.ALL, border=10 )
+        sizer.Add(sizerbuttons, flag=wx.ALIGN_BOTTOM | wx.ALL, border=10)
         panel.SetSizerAndFit(sizer)
 
         return panel
@@ -375,12 +376,12 @@ class Preferences(wx.Frame):
 
     def BuildLayoutList(self):
         self.DisplayRows = []
-        for i in range(0, len(beamSettings._DefaultDisplaySettings)):
-            Settings = beamSettings._DefaultDisplaySettings[i]
+        for i in range(0, len(beamSettings._moods[0][u'Display'])):
+            Settings = beamSettings._moods[0][u'Display'][i]
             self.DisplayRows.append(Settings[u'Field'])
         self.LayoutList.Set(self.DisplayRows)
-        for i in range(0, len(beamSettings._DefaultDisplaySettings)):
-            Settings = beamSettings._DefaultDisplaySettings[i]
+        for i in range(0, len(beamSettings._moods[0][u'Display'])):
+            Settings = beamSettings._moods[0][u'Display'][i]
             if Settings['Active'] == "yes":
                 self.LayoutList.Check(i, check=True)
             else:
@@ -432,14 +433,13 @@ class Preferences(wx.Frame):
 #
     def BuildMoodList(self):
         self.MoodRows = []
-        for i in range(0, len(beamSettings._moods)):
-            mood = beamSettings._moods[i]
-            if mood[u'Type'] == "Mood":
-                self.MoodRows.append(str(mood[u'Name']))
+        for i in range(0, len(beamSettings._moods)-1):
+            mood = beamSettings._moods[i+1]
+            self.MoodRows.append(str(mood[u'Name']))
         self.MoodList.Set(self.MoodRows)
         # Check the rules
-        for i in range(0, len(beamSettings._moods)):
-            moods = beamSettings._moods[i]
+        for i in range(0, len(beamSettings._moods)-1):
+            moods = beamSettings._moods[i+1]
             if moods[u'Active'] == "yes":
                 self.MoodList.Check(i, check=True)
             else:
@@ -594,13 +594,13 @@ class Preferences(wx.Frame):
 #
 #
     def OnAddLayout(self, event):
-        self.EditLayout = EditLayoutDialog(self, len(self.DisplayRows), "Add layout item", beamSettings._DefaultDisplaySettings)
+        self.EditLayout = EditLayoutDialog(self, len(self.DisplayRows), "Add layout item", beamSettings._moods[0][u'Display'])
         self.EditLayout.Show()
 
     def OnEditLayout(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected>-1:
-            self.EditLayout = EditLayoutDialog(self, RowSelected, "Edit layout item", beamSettings._DefaultDisplaySettings)
+            self.EditLayout = EditLayoutDialog(self, RowSelected, "Edit layout item", beamSettings._moods[0][u'Display'])
             self.EditLayout.Show()
 
     def OnDelLayout(self, event):
@@ -613,12 +613,12 @@ class Preferences(wx.Frame):
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_OK:
-                beamSettings._DefaultDisplaySettings.pop(RowSelected)
+                beamSettings._moods[0][u'Display'].pop(RowSelected)
                 self.BuildLayoutList()
 
     def OnCheckLayout(self, event):
-        for i in range(0, len(beamSettings._DefaultDisplaySettings)):
-            layout = beamSettings._DefaultDisplaySettings[i]
+        for i in range(0, len(beamSettings._moods[0][u'Display'])):
+            layout = beamSettings._moods[0][u'Display'][i]
             if self.LayoutList.IsChecked(i):
                 layout[u'Active'] = "yes"
             else:
@@ -633,11 +633,11 @@ class Preferences(wx.Frame):
 # MOODS BUTTONS
 #
     def OnAddMood(self, event):
-        self.EditMood = EditMood(self, self.MoodList.GetCount(), "Add mood")
+        self.EditMood = EditMood(self, self.MoodList.GetCount()+1, "Add mood")
         self.EditMood.Show()
 
     def OnEditMood(self, event):
-        RowSelected = self.MoodList.GetSelection()
+        RowSelected = self.MoodList.GetSelection()+1
         if RowSelected>-1:
             self.MoodRule = EditMood(self, RowSelected, "Edit mood")
             self.MoodRule.Show()
@@ -652,12 +652,12 @@ class Preferences(wx.Frame):
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_OK:
-                beamSettings._moods.pop(RowSelected)
+                beamSettings._moods.pop(RowSelected+1)
             self.BuildMoodList()
 
     def OnCheckMood(self, event):
-        for i in range(0, len(beamSettings._moods)):
-            mood = beamSettings._moods[i]
+        for i in range(0, len(beamSettings._moods)-1):
+            mood = beamSettings._moods[i+1]
             if self.MoodList.IsChecked(i):
                 mood[u'Active'] = "yes"
             else:

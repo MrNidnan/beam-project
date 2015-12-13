@@ -77,14 +77,12 @@ class BeamSettings:
         self._moduleSelected    = ''
         self._maxTandaLength    = ''
         self._updateTimer       = ''
-        self._DefaultBackground    = ''
         self._moodTransition       = ''
         self._moodTransitionSpeed  = ''
         self._logging              = ''
         self._logPath              = ''
         self._showStatusbar        = ''
         self._allModulesSettings    = ''
-        self._DefaultDisplaySettings     = ''
         self._rules                 = ''
         self._beamVersion = BeamSettings.beamVersion
 
@@ -113,7 +111,6 @@ class BeamSettings:
         self._moduleSelected        = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Module')         # Player to read from
         self._maxTandaLength        = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'MaxTandaLength') # Longest tandas, optimize for performance
         self._updateTimer           = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Updtime')        # mSec between reading
-        self._DefaultBackground     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'DefaultBackgroundImage')# Relative path to background
         self._moodTransition        = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'MoodTransition')
         self._moodTransitionSpeed   = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'MoodTransitionSpeed')
         self._logging               = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Logging')
@@ -124,7 +121,6 @@ class BeamSettings:
         
         # Dictionaries
         self._allModulesSettings        = ConfigDataOriginal[u'AllModules']
-        self._DefaultDisplaySettings    = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'DefaultDisplay')
         self._rules                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Rules')
         self._moods                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Moods')
 
@@ -173,7 +169,6 @@ class BeamSettings:
         output[u'Module']           = self._moduleSelected
         output[u'MaxTandaLength']   = self._maxTandaLength
         output[u'Updtime']          = self._updateTimer
-        output[u'DefaultBackgroundImage']   = self._DefaultBackground
         output[u'MoodTransition']           = self._moodTransition
         output[u'MoodTransitionSpeed']      = self._moodTransitionSpeed
         output[u'Logging']              = self._logging
@@ -183,7 +178,6 @@ class BeamSettings:
 
         # Dictionaries
         output[u'AllModules']           = self._allModulesSettings
-        output[u'DefaultDisplay']              = self._DefaultDisplaySettings
         output[u'Rules']                = self._rules
         output[u'Moods']                = self._moods
 
