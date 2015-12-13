@@ -57,11 +57,18 @@ class Preferences(wx.Frame):
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.menu = wx.ListCtrl(self.panel, size=(180,450),style=wx.LC_REPORT | wx.LC_ALIGN_LEFT | wx.LC_SINGLE_SEL| wx.LC_NO_HEADER)
-        self.menu.InsertColumn(0, 'Menu')
+        # Needed for layout style
+        listWidth = 180
+        listHeight= 200
+        self.menu = wx.ListCtrl(self.panel,size=(listWidth,listHeight), style=wx.LC_REPORT | wx.LC_ALIGN_LEFT | wx.LC_SINGLE_SEL| wx.LC_NO_HEADER)
+        
+        self.menu.SetBackgroundColour(self.panel.GetBackgroundColour())
+        self.menu.InsertColumn(0, 'Menu', width=-1)
         menulist = ['Basic Settings','Default Layout','Moods','Rules','Tags']
         for item in xrange(len(menulist)):
             self.menu.InsertStringItem(item, menulist[item])
+        self.menu.SetColumnWidth(0,listWidth)
+        
         self.menu.Select(0)
         self.menu.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectMenu)
         
@@ -72,20 +79,20 @@ class Preferences(wx.Frame):
         self.SettingsTabs.append(self.RulesSettings())
         self.SettingsTabs.append(self.TagsTab())
         for item in self.SettingsTabs:
-            self.panelbox.Add(item,0, flag=wx.EXPAND)
+            self.panelbox.Add(item)
         
         self.button_ok = wx.Button(self.panel, label="Save")
         self.button_cancel = wx.Button(self.panel, label="Close")
         self.button_ok.Bind(wx.EVT_BUTTON, self.onApply)
         self.button_cancel.Bind(wx.EVT_BUTTON, self.onClose)
 
-        self.hbox.Add(self.button_ok,  flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
-        self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
+        self.hbox.Add(self.button_ok,  flag=wx.LEFT | wx.TOP, border=10)
+        self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.TOP | wx.RIGHT, border=10)
         self.vbox.Add(self.menu, flag=wx.EXPAND |wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
-        self.vbox.Add(self.hbox)
-        self.MainSizer.Add(self.vbox, flag=wx.FIXED_MINSIZE)
-        #self.MainSizer.Add(wx.StaticLine(self.panel, style=wx.LI_VERTICAL), flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
-        self.MainSizer.Add(self.panelbox,  flag=wx.FIXED_MINSIZE)
+        self.vbox.Add((200,-1),1,flag=wx.EXPAND |wx.ALIGN_CENTER)
+        self.vbox.Add(self.hbox, flag= wx.BOTTOM, border=5)
+        self.MainSizer.Add(self.vbox, flag=wx.EXPAND)
+        self.MainSizer.Add(self.panelbox,  flag=wx.EXPAND)
         
         self.changePanel(0)
         
@@ -240,10 +247,10 @@ class Preferences(wx.Frame):
         self.DelLayout.Bind(wx.EVT_BUTTON, self.OnDelLayout)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(description, flag= wx.LEFT | wx.RIGHT | wx.TOP, border=10)
-        sizer.Add(self.LayoutList, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
-        sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
-        panel.SetSizer(sizer)
+        sizer.Add(description, flag=wx.ALIGN_TOP | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        sizer.Add(self.LayoutList, flag=wx.ALIGN_CENTER | wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        sizer.Add(sizerbuttons, flag=wx.ALIGN_BOTTOM | wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
+        panel.SetSizerAndFit(sizer)
 
         return panel
     
