@@ -475,9 +475,10 @@ class Preferences(wx.Frame):
     def onApply(self, e):
         # Get Settings
         beamSettings._moduleSelected        = self.ModuleSelectorDropdown.GetValue()
-        beamSettings._maxTandaLength        =  int(self.TandaLength.GetValue())
+        beamSettings._maxTandaLength        = int(self.TandaLength.GetValue())
         beamSettings._logging               = str(self.LogCheckBox.GetValue())
         beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
+        self.MainWindowParent.rotateBackground()
 
 
 
