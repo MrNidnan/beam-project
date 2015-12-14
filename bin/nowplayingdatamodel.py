@@ -73,6 +73,8 @@ class NowPlayingDataModel:
         self.CurrentMood =""
         self.PreviousMood = ""
         self.BackgroundImage = ""
+        self.RotateBackground = ""
+        self.RotateTimer = []
         self.DisplayRow = []
         self.DisplaySettings = {}
 

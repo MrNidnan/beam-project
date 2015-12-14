@@ -120,7 +120,7 @@ class beamMainFrame(wx.Frame):
         self.triggerResizeBackground = True
         self.textsAreVisible = False
         self.FadeDirection = 'In'
-        self.RotateBackground = False
+        self.RotateBackgroundTrigger = False
         
         #visibility switch
         self.showStatusBar()
@@ -166,6 +166,8 @@ class beamMainFrame(wx.Frame):
         self.currentMood = self.nowPlayingDataModel.CurrentMood
         self.previousMood = self.nowPlayingDataModel.PreviousMood
         self.currentDisplaySettings = self.nowPlayingDataModel.DisplaySettings
+        self.RotateBackground = self.nowPlayingDataModel.RotateBackground
+        self.RotateTimer = self.nowPlayingDataModel.RotateTimer
         
         if self.previousMood != self.currentMood:
             print "New mood: ", self.currentMood
@@ -173,7 +175,7 @@ class beamMainFrame(wx.Frame):
             if (self.nowPlayingDataModel.BackgroundImage != self._currentBackgroundPath and
                 self.nowPlayingDataModel.BackgroundImage != ""):
                 self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
-                self.changeBackground()
+                self.rotateBackground()
             else:
                 self.textsAreVisible = True
         else:
@@ -419,25 +421,27 @@ class beamMainFrame(wx.Frame):
         
         self.transitionSpeed = int(int(beamSettings._moodTransitionSpeed) / 100)
         self.delta = float(1/float(self.transitionSpeed))
-                                   
+
         #####################
         # Choose transition #
         #####################
         
         # Fade directly
-        if beamSettings._moodTransition == 'Fade directly':
+        if beamSettings._moodTransition == 'Fade directly' or self.RotateBackgroundTrigger == True:
 
             self.alpha = float(0.0)
             
             # Load the new background image
             self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
             self.modifiedBitmap = self._currentBackgroundPath
+            
             # Set triggers
             self.triggerResizeBackground = True
             self.textsAreVisible = True
             
             # start the timer for the transition
             self.TransitionTimer.Start(self.transitionSpeed)
+            return
         
         
         # Fade to black
@@ -466,6 +470,7 @@ class beamMainFrame(wx.Frame):
                 self.alpha = float(1.0)
         
                 self.TransitionTimer.Start(self.transitionSpeed)
+                return
         
         else:
         # Change background without any transition
@@ -488,12 +493,15 @@ class beamMainFrame(wx.Frame):
 # TIMER - USED for Fade directly and Fade to black
 ########################################################
     def transition(self, event):
+        if beamSettings._moodTransition == 'Fade directly' or self.RotateBackgroundTrigger == True:
+            self.FadeImage()
+            return
         if beamSettings._moodTransition == 'Fade to black' and self.FadeDirection == 'Out':
             self.FadeToBlackImage()
+            return
         if beamSettings._moodTransition == 'Fade to black'and self.FadeDirection == 'In':
             self.FadeBackImage()
-        if beamSettings._moodTransition == 'Fade directly' or self.RotateBackground == True:
-            self.FadeImage()
+            return
 
 
 ########################################################
@@ -549,28 +557,50 @@ class beamMainFrame(wx.Frame):
 ########################################################
 # Rotate Background
 ########################################################
-    def rotateBackground(self):
-        return
+    def rotateBackground(self , event = wx.EVT_TIMER):
         # Starts, stops and executes the rotate-background function.
-        
+
         # Start the rotation
-        if beamSettings._rotateBackground == 'linear':
+        if self.RotateBackground == 'linear' or self.RotateBackground == 'random':
+            # Start the timer
+            try:
+                self.RotateBackgroundTimer = wx.Timer(self)
+                self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
+                self.RotateBackgroundTimer.Start(int(self.RotateTimer)*1000)
+            except:
+                self.RotateBackgroundTimer.Stop()
+                self.RotateBackgroundTimer.Start(self.RotateTimer)
             # Find the files
-            self._currentBackgroundPath
-            self.RotateBackground == True
-        # Start the rotation in random
-        
-        if beamSettings._rotateBackground == 'random':
-            pass
+            (path, file) = os.path.split(self._currentBackgroundPath)
+            backgrounds = os.listdir(path)
+            # Find our index
+            position = backgrounds.index(file)
+            
+            # Linear in the folder
+            if self.RotateBackground == 'linear':
+                try:
+                    self._currentBackgroundPath = os.path.join(path,backgrounds[position+1])
+                except:
+                    self._currentBackgroundPath = os.path.join(path,backgrounds[0])
+                self.RotateBackgroundTrigger = True
+            # Random
+            else:
+                self.RotateBackgroundTrigger = True
+
         # Stop the rotation
-        if beamSettings._rotateBackground == 'no':
+        if self.RotateBackground == 'no':
             self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
-            self.RotateBackground == False
-        
-        # Update the background if it's suppose to be a different one
-        if (self.nowPlayingDataModel.BackgroundImage != self._currentBackgroundPath and
-            self.nowPlayingDataModel.BackgroundImage != ""):
-            self.changeBackground()
+            self.RotateBackgroundTrigger = False
+            try:
+                self.RotateBackgroundTimer.Stop()
+            except:
+                pass
+
+
+        # Update the background
+        self.changeBackground()
+    
+
 
 ########################################################
 # Data timer
