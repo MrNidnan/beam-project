@@ -250,7 +250,7 @@ class Preferences(wx.Frame):
             self.BackgroundTimerBox.Disable()
         self.rotateBackgroundFunction()
         RandomSizer = wx.BoxSizer(wx.HORIZONTAL)
-        RandomSizer.Add(self.ChangeBackgroundBox, flag=wx.RIGHT, border=10)
+        RandomSizer.Add(self.ChangeBackgroundBox, flag=wx.RIGHT | wx.LEFT, border=10)
         RandomSizer.Add(self.BackgroundTimerBox)
         
         
@@ -273,7 +273,7 @@ class Preferences(wx.Frame):
         sizer.Add(backdescription, flag=wx.LEFT, border=20)
         sizer.Add(hboxBackground, flag=wx.LEFT, border=20)
         sizer.Add(RandomSizer, flag=wx.LEFT | wx.TOP, border=10)
-        sizer.Add(self.RandomBackgroundBox, flag=wx.LEFT, border=10)
+        sizer.Add(self.RandomBackgroundBox, flag=wx.LEFT, border=20)
         sizer.Add(self.LayoutList, flag= wx.EXPAND| wx.ALL, border=10 )
         sizer.Add(sizerbuttons, flag=wx.ALIGN_BOTTOM | wx.ALL, border=10)
         panel.SetSizerAndFit(sizer)

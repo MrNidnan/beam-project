@@ -29,6 +29,7 @@
 import wx, wx.html
 import os, sys
 import wx.lib.delayedresult
+from random import randint
 
 from bin.beamsettings import *
 from bin.nowplayingdatamodel import *
@@ -586,6 +587,14 @@ class beamMainFrame(wx.Frame):
                 self.RotateBackgroundTrigger = True
             # Random
             else:
+                newposition = randint(0, len(backgrounds))
+                if newposition == position:
+                    try:
+                        self._currentBackgroundPath = os.path.join(path,backgrounds[position+1])
+                    except:
+                        self._currentBackgroundPath = os.path.join(path,backgrounds[0])
+                else:
+                    self._currentBackgroundPath = os.path.join(path,backgrounds[newposition])
                 self.RotateBackgroundTrigger = True
 
         # Stop the rotation
