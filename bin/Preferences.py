@@ -121,21 +121,6 @@ class Preferences(wx.Frame):
         vbox.Add(mediadescription, flag=wx.LEFT, border=20)
         vbox.Add(self.ModuleSelectorDropdown, flag=wx.LEFT, border=20)
         
-        # Background image
-        background = wx.StaticText(panel, -1, "Default Background Image")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        background.SetFont(font)
-        backdescription = wx.StaticText(panel, -1, "Select background image (1920x1080 recommended)")
-        self.browse = wx.Button(panel, label="Browse")
-        self.browse.Bind(wx.EVT_BUTTON, self.browseBackgroundImage)
-        (path,backgroundfile) = os.path.split(beamSettings._moods[0][u'Background'])
-        self.currentBackground = wx.StaticText(panel, -1, backgroundfile)
-        vbox.Add(background, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
-        vbox.Add(backdescription, flag=wx.LEFT, border=20)
-        hboxBackground = wx.BoxSizer(wx.HORIZONTAL)
-        hboxBackground.Add(self.browse, flag=wx.RIGHT | wx.TOP, border=5)
-        hboxBackground.Add(self.currentBackground, flag=wx.LEFT | wx.TOP, border=5)
-        vbox.Add(hboxBackground, flag=wx.LEFT, border=20)
         
         # Settings
         settingslabel = wx.StaticText(panel, -1, "Settings")
@@ -234,6 +219,42 @@ class Preferences(wx.Frame):
         description = wx.StaticText(panel, -1, "The Default Layout is the layout configuration which will be shown when Beam is playing.")
         description.Wrap(380)
         
+        # Background image
+        background = wx.StaticText(panel, -1, "Default Background Image")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        background.SetFont(font)
+        backdescription = wx.StaticText(panel, -1, "Select background image (1920x1080 recommended)")
+        self.browse = wx.Button(panel, label="Browse")
+        self.browse.Bind(wx.EVT_BUTTON, self.browseBackgroundImage)
+        (path,backgroundfile) = os.path.split(beamSettings._moods[0][u'Background'])
+        self.currentBackground = wx.StaticText(panel, -1, backgroundfile)
+        hboxBackground = wx.BoxSizer(wx.HORIZONTAL)
+        hboxBackground.Add(self.browse, flag=wx.RIGHT | wx.TOP, border=5)
+        hboxBackground.Add(self.currentBackground, flag=wx.LEFT | wx.TOP, border=5)
+        self.ChangeBackgroundBox = wx.CheckBox(panel, label='Change Background: ')
+        self.BackgroundTimerBox = wx.ComboBox(panel, choices=['Every 30 seconds', 'Every 1 minute', 'Every 2 minutes', 'Every 3 minutes', 'Every 5 minutes','Every 10 minutes','Every 20 minutes'], style=wx.CB_READONLY)
+        self.RandomBackgroundBox = wx.CheckBox(panel, label='Random order')
+        self.ChangeBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
+        self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
+        self.BackgroundTimerBox.Bind(wx.EVT_COMBOBOX, self.OnRotateBackground)
+        if beamSettings._moods[0][u'RotateBackground'] == "linear":
+            self.ChangeBackgroundBox.SetValue(True)
+            self.RandomBackgroundBox.SetValue(False)
+        elif beamSettings._moods[0][u'RotateBackground'] == "random":
+            self.ChangeBackgroundBox.SetValue(True)
+            self.RandomBackgroundBox.SetValue(True)
+        else:
+            self.ChangeBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
+        self.rotateBackgroundFunction()
+        RandomSizer = wx.BoxSizer(wx.HORIZONTAL)
+        RandomSizer.Add(self.ChangeBackgroundBox, flag=wx.RIGHT, border=10)
+        RandomSizer.Add(self.BackgroundTimerBox)
+        
+        
+        # Layout list
         self.LayoutList = wx.CheckListBox(panel,-1, choices=[], style= wx.LB_NEEDED_SB)
         self.LayoutList.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.LayoutList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditLayout)
@@ -248,6 +269,11 @@ class Preferences(wx.Frame):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(description, flag=wx.ALIGN_TOP | wx.ALL, border=10)
+        sizer.Add(background, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        sizer.Add(backdescription, flag=wx.LEFT, border=20)
+        sizer.Add(hboxBackground, flag=wx.LEFT, border=20)
+        sizer.Add(RandomSizer, flag=wx.LEFT | wx.TOP, border=10)
+        sizer.Add(self.RandomBackgroundBox, flag=wx.LEFT, border=10)
         sizer.Add(self.LayoutList, flag= wx.EXPAND| wx.ALL, border=10 )
         sizer.Add(sizerbuttons, flag=wx.ALIGN_BOTTOM | wx.ALL, border=10)
         panel.SetSizerAndFit(sizer)
@@ -624,7 +650,50 @@ class Preferences(wx.Frame):
             else:
                 layout[u'Active'] = "no"
         self.BuildLayoutList()
-
+#
+# ROTATE/RANDOM BACKGROUND
+#
+    def OnRotateBackground(self, event):
+        if self.ChangeBackgroundBox.IsChecked() and not self.RandomBackgroundBox.IsChecked():
+            beamSettings._moods[0][u'RotateBackground'] = "linear"
+            self.RandomBackgroundBox.Enable()
+            self.BackgroundTimerBox.Enable()
+        elif self.ChangeBackgroundBox.IsChecked() and self.RandomBackgroundBox.IsChecked():
+            beamSettings._moods[0][u'RotateBackground'] = "random"
+            self.RandomBackgroundBox.Enable()
+            self.BackgroundTimerBox.Enable()
+        else:
+            beamSettings._moods[0][u'RotateBackground'] = "no"
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
+        timerVector = [30, 60, 120, 180, 300, 600, 1200]
+        beamSettings._moods[0][u'RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
+        self.rotateBackgroundFunction()
+    
+    
+    def rotateBackgroundFunction(self):
+        if int(beamSettings._moods[0][u'RotateTimer']) == 30:
+            self.BackgroundTimerBox.SetSelection(0)
+        elif int(beamSettings._moods[0][u'RotateTimer']) == 60:
+            self.BackgroundTimerBox.SetSelection(1)
+        elif int(beamSettings._moods[0][u'RotateTimer']) == 120:
+            self.BackgroundTimerBox.SetSelection(2)
+        elif int(beamSettings._moods[0][u'RotateTimer']) == 180:
+            self.BackgroundTimerBox.SetSelection(3)
+        elif int(beamSettings._moods[0][u'RotateTimer']) == 300:
+            self.BackgroundTimerBox.SetSelection(4)
+        elif int(beamSettings._moods[0][u'RotateTimer']) == 600:
+            self.BackgroundTimerBox.SetSelection(5)
+        elif int(beamSettings._moods[0][u'RotateTimer']) == 1200:
+            self.BackgroundTimerBox.SetSelection(6)
+        else:
+            self.BackgroundTimerBox.SetSelection(2)
+        
+        (path,backgroundfile) = os.path.split(beamSettings._moods[0][u'Background'])
+        if beamSettings._moods[0][u'RotateBackground'] == "no":
+            self.currentBackground.SetLabel("Image: " + backgroundfile)
+        else:
+            self.currentBackground.SetLabel("Images from folder: " + os.path.dirname(path))
 
 ############
 #  TAB 4   #
