@@ -570,9 +570,10 @@ class beamMainFrame(wx.Frame):
             except:
                 self.RotateBackgroundTimer.Stop()
                 self.RotateBackgroundTimer.Start(self.RotateTimer)
-            # Find the files
+            # Find the files and remove other then images
             (path, file) = os.path.split(self._currentBackgroundPath)
-            backgrounds = os.listdir(path)
+            backgrounds_tmp = os.listdir(path)
+            backgrounds = [s for s in backgrounds_tmp if ".jpg" in s or ".png" in s or ".jpg" in s]
             # Find our index
             position = backgrounds.index(file)
             
@@ -595,7 +596,6 @@ class beamMainFrame(wx.Frame):
                 self.RotateBackgroundTimer.Stop()
             except:
                 pass
-
 
         # Update the background
         self.changeBackground()

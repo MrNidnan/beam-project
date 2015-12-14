@@ -90,17 +90,41 @@ class EditMood(wx.Frame):
         
         BackgroundText = wx.StaticText(self.panel, -1, "Select background image (1920x1080 recommended)")
         self.MoodBackground = wx.Button(self.panel, label="Browse")
-        (path,backgroundfile) = os.path.split(self.Settings[u'Background'])
-        self.currentBackground = wx.StaticText(self.panel, -1, backgroundfile)
+        self.currentBackground = wx.StaticText(self.panel, -1, "")
+ 
 
+        self.ChangeBackgroundBox = wx.CheckBox(self.panel, label='Change Background: ')
+        self.BackgroundTimerBox = wx.ComboBox(self.panel, choices=['Every 30 seconds', 'Every 1 minute', 'Every 2 minutes', 'Every 3 minutes', 'Every 5 minutes','Every 10 minutes','Every 20 minutes'], style=wx.CB_READONLY)
+        self.RandomBackgroundBox = wx.CheckBox(self.panel, label='Random order')
+        self.ChangeBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
+        self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
+        self.BackgroundTimerBox.Bind(wx.EVT_COMBOBOX, self.OnRotateBackground)
+        if self.Settings[u'RotateBackground'] == "linear":
+            self.ChangeBackgroundBox.SetValue(True)
+            self.RandomBackgroundBox.SetValue(False)
+        elif self.Settings[u'RotateBackground'] == "random":
+            self.ChangeBackgroundBox.SetValue(True)
+            self.RandomBackgroundBox.SetValue(True)
+        else:
+            self.ChangeBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
+        self.rotateBackgroundFunction()
         BackgroundSizer = wx.BoxSizer(wx.HORIZONTAL)
+        RandomSizer = wx.BoxSizer(wx.HORIZONTAL)
         BackgroundSizer.Add(self.MoodBackground, flag=wx.RIGHT, border=10)
         BackgroundSizer.Add(self.currentBackground)
+        RandomSizer.Add(self.ChangeBackgroundBox, flag=wx.RIGHT, border=10)
+        RandomSizer.Add(self.BackgroundTimerBox)
+        
 
         descriptionSizer = wx.BoxSizer(wx.VERTICAL)
         descriptionSizer.Add(LayoutText, flag= wx.BOTTOM | wx.TOP, border=10)
         descriptionSizer.Add(BackgroundText, flag=wx.LEFT, border=10)
         descriptionSizer.Add(BackgroundSizer, flag=wx.LEFT | wx.TOP, border=10)
+        descriptionSizer.Add(RandomSizer, flag=wx.LEFT | wx.TOP, border=10)
+        descriptionSizer.Add(self.RandomBackgroundBox, flag=wx.LEFT, border=10)
         self.vbox.Add(descriptionSizer, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
 
         # Add Layout
@@ -203,6 +227,50 @@ class EditMood(wx.Frame):
         self.BuildLayoutList()
 
 #
+# ROTATE/RANDOM BACKGROUND
+#
+    def OnRotateBackground(self, event):
+        if self.ChangeBackgroundBox.IsChecked() and not self.RandomBackgroundBox.IsChecked():
+            self.Settings[u'RotateBackground'] = "linear"
+            self.RandomBackgroundBox.Enable()
+            self.BackgroundTimerBox.Enable()
+        elif self.ChangeBackgroundBox.IsChecked() and self.RandomBackgroundBox.IsChecked():
+            self.Settings[u'RotateBackground'] = "random"
+            self.RandomBackgroundBox.Enable()
+            self.BackgroundTimerBox.Enable()
+        else:
+            self.Settings[u'RotateBackground'] = "no"
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
+        timerVector = [30, 60, 120, 180, 300, 600, 1200]
+        self.Settings[u'RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
+        self.rotateBackgroundFunction()
+    
+    
+    def rotateBackgroundFunction(self):
+        if int(self.Settings[u'RotateTimer']) == 30:
+            self.BackgroundTimerBox.SetSelection(0)
+        elif int(self.Settings[u'RotateTimer']) == 60:
+            self.BackgroundTimerBox.SetSelection(1)
+        elif int(self.Settings[u'RotateTimer']) == 120:
+            self.BackgroundTimerBox.SetSelection(2)
+        elif int(self.Settings[u'RotateTimer']) == 180:
+            self.BackgroundTimerBox.SetSelection(3)
+        elif int(self.Settings[u'RotateTimer']) == 300:
+            self.BackgroundTimerBox.SetSelection(4)
+        elif int(self.Settings[u'RotateTimer']) == 600:
+            self.BackgroundTimerBox.SetSelection(5)
+        elif int(self.Settings[u'RotateTimer']) == 1200:
+            self.BackgroundTimerBox.SetSelection(6)
+        else:
+            self.BackgroundTimerBox.SetSelection(2)
+
+        (path,backgroundfile) = os.path.split(self.Settings[u'Background'])
+        if self.Settings[u'RotateBackground'] == "no":
+            self.currentBackground.SetLabel("Image: " + backgroundfile)
+        else:
+            self.currentBackground.SetLabel("Images from folder: " + os.path.dirname(path))
+#
 # LAYOUT BUTTONS
 #
     def OnAddLayout(self, event):
@@ -271,5 +339,5 @@ class EditMood(wx.Frame):
         if openFileDialog.ShowModal() == wx.ID_OK:
             self.Settings[u'Background'] = openFileDialog.GetPath()
             (path,backgroundfile) = os.path.split(self.Settings[u'Background'])
-            self.currentBackground.SetLabel(backgroundfile)
+            self.rotateBackgroundFunction()
             openFileDialog.Destroy()
