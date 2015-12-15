@@ -1,0 +1,141 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2014 Mikael Holber http://http://www.beam-project.com
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#    or download it from http://www.gnu.org/licenses/gpl.txt
+#
+#
+#    Revision History:
+#
+#    XX/XX/2014 Version 1.0
+#       - Initial release
+#
+# This Python file uses the following encoding: utf-8
+
+import wx
+
+from bin.beamsettings import *
+from bin.dialogs.editlayoutdialog import EditLayoutDialog
+from bin.dialogs.editruledialog import EditRuleDialog
+from bin.dialogs.editmooddialog import EditMood
+
+from bin.dialogs.preferencespanels.basicsettings import BasicSettings
+#from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
+#from bin.dialogs.preferencespanels.moods import Moods
+#from bin.dialogs.preferencespanels.tagspreview import TagsPreview
+
+
+###################################################################
+#                Build main preferences Window                    #
+###################################################################
+
+class Preferences(wx.Frame):
+    def __init__(self, parent, BeamSettings):
+        
+        ###################
+        # CLASS VARIABLES #
+        ###################
+        self.BeamSettings = BeamSettings
+        # Do not use parent for threading
+        self.MainWindowParent = parent
+        
+        ###############
+        # SETPOSITION #
+        ###############
+        if self.MainWindowParent.IsFullScreen() or self.MainWindowParent.IsMaximized():
+            x,y = wx.GetMousePosition()
+            y = 300 # Only way to get it to work on MAC
+        else:
+            x,y = (self.MainWindowParent.GetPosition()+(50,50))
+        
+        wx.Frame.__init__(self, parent, title="Preferences", pos=(x,y), size=(400,600),
+                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
+
+        ####################
+        # PANEL AND SIZERS #
+        ####################
+        panel = wx.Panel(self)
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL) # For buttons
+
+        #################
+        # LISTBOOK MENU #
+        #################
+        menu = ListBookMenu(panel, self.BeamSettings)
+
+        ###########
+        # BUTTONS #
+        ###########
+        self.button_apply = wx.Button(panel, label="Apply")
+        self.button_close = wx.Button(panel, label="Close")
+        self.button_apply.Bind(wx.EVT_BUTTON, self.onApply)
+        self.button_close.Bind(wx.EVT_BUTTON, self.onClose)
+
+        ###########
+        # ARRANGE #
+        ###########
+        hbox.Add((200,-1),1,flag=wx.EXPAND)
+        hbox.Add(self.button_apply,flag=wx.LEFT | wx.TOP, border=10)
+        hbox.Add(self.button_close, flag=wx.ALL, border=10)
+        
+        vbox.Add(menu, 1,wx.ALL | wx.EXPAND, 5)
+        vbox.Add(hbox)
+        
+        ###########
+        # DISPLAY #
+        ###########
+        panel.SetSizer(vbox)
+        self.Layout()
+        self.Show()
+
+#----------------------------------------------------------------------
+    def onApply(self, event):
+        # Send the message back to BeamInFrame
+        # if event:
+        beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
+        self.MainWindowParent.rotateBackground()
+
+    def onClose(self, event):
+        self.Destroy()
+
+    def RecieveUpdatedTags(self):
+        # New Tags from BeamInFrame
+        print "TEST"
+
+
+
+
+
+
+
+
+
+
+###################################################################
+#                The ListBookMenu                                 #
+###################################################################
+
+class ListBookMenu(wx.Listbook):
+    def __init__(self, parent, BeamSettings):
+        wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
+        
+        pages = [(BasicSettings(self, BeamSettings), "Basic Settings")]
+        
+        for page, label in pages:
+            self.AddPage(page,label)
+
+#----------------------------------------------------------------------
+
