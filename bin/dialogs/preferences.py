@@ -33,7 +33,7 @@ from bin.dialogs.editruledialog import EditRuleDialog
 from bin.dialogs.editmooddialog import EditMood
 
 from bin.dialogs.preferencespanels.basicsettings import BasicSettings
-#from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
+from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
 #from bin.dialogs.preferencespanels.moods import Moods
 #from bin.dialogs.preferencespanels.tagspreview import TagsPreview
 
@@ -111,17 +111,6 @@ class Preferences(wx.Frame):
     def onClose(self, event):
         self.Destroy()
 
-    def RecieveUpdatedTags(self):
-        # New Tags from BeamInFrame
-        print "TEST"
-
-
-
-
-
-
-
-
 
 
 ###################################################################
@@ -131,8 +120,9 @@ class Preferences(wx.Frame):
 class ListBookMenu(wx.Listbook):
     def __init__(self, parent, BeamSettings):
         wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
-        
-        pages = [(BasicSettings(self, BeamSettings), "Basic Settings")]
+
+        pages = [(BasicSettings(self, BeamSettings), "Basic Settings"),
+                 (DefaultLayout(self, BeamSettings), "Default Layout")]
         
         for page, label in pages:
             self.AddPage(page,label)

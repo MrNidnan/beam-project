@@ -542,7 +542,7 @@
       "Field1": "%Artist", 
       "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg", 
       "Active": "yes", 
-      "RotateBackground": "no",
+      "RotateBackground": "linear",
       "RotateTimer": 30,
       "Type": "Mood", 
       "Display": [

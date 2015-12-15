@@ -33,6 +33,10 @@ import wx
 class BasicSettings(wx.Panel):
     def __init__(self, parent, BeamSettings):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
+        
+        #############
+        # VARIABLES #
+        #############
         self.BeamSettings = BeamSettings
         self.parent = parent
         
@@ -104,7 +108,6 @@ class BasicSettings(wx.Panel):
             self.LogCheckBox.SetValue(True)
         else:
             self.LogCheckBox.SetValue(False)
-        print self.BeamSettings._logging
         self.LogCheckBox.Bind(wx.EVT_CHECKBOX, self.OnLoggingBox)
         vbox.Add(logging, flag=wx.LEFT, border=20)
         hboxLog = wx.BoxSizer(wx.HORIZONTAL)
@@ -131,7 +134,6 @@ class BasicSettings(wx.Panel):
     #########################
     def OnSelectMediaPlayer(self, event):
         self.BeamSettings._moduleSelected = self.ModuleSelectorDropdown.GetValue()
-        # This is where callback to mainwindow should take place.
 
     ################
     # REFRESH TIME #
@@ -149,7 +151,6 @@ class BasicSettings(wx.Panel):
         else:
             # Slow
             self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Slow)")
-        # This is where callback to mainwindow should take place.
 
     ################
     # TANDA LENGTH #
@@ -169,6 +170,7 @@ class BasicSettings(wx.Panel):
             self.BeamSettings._logging = 'True'
         else:
             self.BeamSettings._logging = 'False'
+
 
 ###################################################################
 #                             EOF                                 #
