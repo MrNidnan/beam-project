@@ -33,7 +33,7 @@ from random import randint
 
 from bin.beamsettings import *
 from bin.nowplayingdatamodel import *
-from bin.Preferences import Preferences
+from bin.dialogs.preferences import Preferences
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
 from bin.dialogs import closedialog
@@ -374,7 +374,7 @@ class beamMainFrame(wx.Frame):
         try:
             self.PreferencesDialog.Raise()
         except:
-            self.PreferencesDialog = Preferences(self)
+            self.PreferencesDialog = Preferences(self, beamSettings)
             self.PreferencesDialog.Show()
 
 
