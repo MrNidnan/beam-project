@@ -29,7 +29,7 @@ import wx, os
 from bin.dialogs.editlayoutdialog import EditLayoutDialog
 
 ###################################################################
-#                      DefaultLayout                           #
+#                      DefaultLayout                              #
 ###################################################################
 class DefaultLayout(wx.Panel):
     def __init__(self, parent, BeamSettings):
@@ -41,11 +41,7 @@ class DefaultLayout(wx.Panel):
         self.BeamSettings = BeamSettings
         self.parent = parent
         self.DisplayRows = []
-        
-        ##########
-        # SIZERS #
-        ##########
-        vbox = wx.BoxSizer(wx.VERTICAL)
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         
         ###############
         # Description #
@@ -56,8 +52,7 @@ class DefaultLayout(wx.Panel):
         ####################
         # BACKGROUND IMAGE #
         ####################
-        background = wx.StaticText(self, -1, "Default Background Image")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        background = wx.StaticText(self, -1, "Background")
         background.SetFont(font)
         backdescription = wx.StaticText(self, -1, "Select background image (1920x1080 recommended)")
         self.browse = wx.Button(self, label="Browse")
@@ -96,22 +91,23 @@ class DefaultLayout(wx.Panel):
         ###############
         # LAYOUT LIST #
         ###############
+        LayoutText = wx.StaticText(self, -1, "Layout")
+        LayoutText.SetFont(font)
         self.LayoutList = wx.CheckListBox(self,-1, choices=[], style= wx.LB_NEEDED_SB)
         self.LayoutList.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.LayoutList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditLayout)
         self.LayoutList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckLayout)
         self.BuildLayoutList()
 
+        ##################
+        # LAYOUT BUTTONS #
+        ##################
         self.AddLayout  = wx.Button(self, label="Add")
         self.DelLayout  = wx.Button(self, label="Delete")
         self.EditLayout = wx.Button(self, label="Edit")
         self.AddLayout.Bind(wx.EVT_BUTTON, self.OnAddLayout)
         self.EditLayout.Bind(wx.EVT_BUTTON, self.OnEditLayout)
         self.DelLayout.Bind(wx.EVT_BUTTON, self.OnDelLayout)
-
-        ##############
-        # SET SIZERS #
-        ##############
         sizerbuttons    = wx.BoxSizer(wx.HORIZONTAL)
         sizerbuttons.Add(self.AddLayout, flag=wx.RIGHT, border=10)
         sizerbuttons.Add(self.DelLayout, flag=wx.RIGHT, border=10)
@@ -127,8 +123,9 @@ class DefaultLayout(wx.Panel):
         sizer.Add(hboxBackground, flag=wx.LEFT, border=20)
         sizer.Add(RandomSizer, flag=wx.LEFT | wx.TOP, border=10)
         sizer.Add(self.RandomBackgroundBox, flag=wx.LEFT, border=20)
-        sizer.Add(self.LayoutList, flag= wx.EXPAND| wx.ALL, border=10 )
-        sizer.Add(sizerbuttons, flag=wx.ALIGN_BOTTOM | wx.ALL, border=10)
+        sizer.Add(LayoutText, flag= wx.LEFT| wx.TOP, border=10)
+        sizer.Add(self.LayoutList, proportion=1, flag= wx.EXPAND| wx.ALL, border=10 )
+        sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM, border=10)
         self.SetSizer(sizer)
 
 

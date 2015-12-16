@@ -25,7 +25,7 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import wx, platform, os, sys
+import platform, os, sys
 import time
 import datetime
 

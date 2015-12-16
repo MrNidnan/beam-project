@@ -64,6 +64,7 @@ class EditMood(wx.Frame):
         self.panel = wx.Panel(self)
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
 
         # Save/Close-buttons
         self.button_ok = wx.Button(self.panel, label="Save")
@@ -76,7 +77,6 @@ class EditMood(wx.Frame):
         
         # Description Settings
         PropertiesText = wx.StaticText(self.panel, -1, "Properties")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         PropertiesText.SetFont(font)
         self.vbox.Add(PropertiesText, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         
@@ -84,11 +84,10 @@ class EditMood(wx.Frame):
         self.vbox.Add(self.MoodSettings(), flag=wx.LEFT, border=20)
 
         # Description Layout and background
-        LayoutText = wx.StaticText(self.panel, -1, "Layout")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        LayoutText.SetFont(font)
+        BackgroundText = wx.StaticText(self.panel, -1, "Background")
+        BackgroundText.SetFont(font)
         
-        BackgroundText = wx.StaticText(self.panel, -1, "Select background image (1920x1080 recommended)")
+        BackgroundDesc = wx.StaticText(self.panel, -1, "Select background image (1920x1080 recommended)")
         self.MoodBackground = wx.Button(self.panel, label="Browse")
         self.currentBackground = wx.StaticText(self.panel, -1, "")
  
@@ -120,16 +119,19 @@ class EditMood(wx.Frame):
         
 
         descriptionSizer = wx.BoxSizer(wx.VERTICAL)
-        descriptionSizer.Add(LayoutText, flag= wx.BOTTOM | wx.TOP, border=10)
-        descriptionSizer.Add(BackgroundText, flag=wx.LEFT, border=10)
+        descriptionSizer.Add(BackgroundText, flag= wx.BOTTOM, border=10)
+        descriptionSizer.Add(BackgroundDesc, flag=wx.LEFT, border=10)
         descriptionSizer.Add(BackgroundSizer, flag=wx.LEFT | wx.TOP, border=10)
         descriptionSizer.Add(RandomSizer, flag=wx.LEFT | wx.TOP, border=10)
         descriptionSizer.Add(self.RandomBackgroundBox, flag=wx.LEFT, border=10)
         self.vbox.Add(descriptionSizer, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
 
         # Add Layout
+        LayoutText = wx.StaticText(self.panel, -1, "Layout")
+        LayoutText.SetFont(font)
         self.LayoutSettings()
-        self.vbox.Add(self.LayoutList, 1, flag=wx.EXPAND | wx.LEFT | wx.TOP | wx.RIGHT, border=10)
+        self.vbox.Add(LayoutText, flag= wx.LEFT | wx.BOTTOM, border=10)
+        self.vbox.Add(self.LayoutList, 1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=10)
         self.vbox.Add(self.sizerbuttons, flag=wx.LEFT | wx.BOTTOM , border=10)
 
         # Set sizers

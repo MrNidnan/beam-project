@@ -34,7 +34,8 @@ from bin.dialogs.editmooddialog import EditMood
 
 from bin.dialogs.preferencespanels.basicsettings import BasicSettings
 from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
-#from bin.dialogs.preferencespanels.moods import Moods
+from bin.dialogs.preferencespanels.moods import Moods
+from bin.dialogs.preferencespanels.rules import Rules
 #from bin.dialogs.preferencespanels.tagspreview import TagsPreview
 
 
@@ -122,7 +123,8 @@ class ListBookMenu(wx.Listbook):
         wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
 
         pages = [(BasicSettings(self, BeamSettings), "Basic Settings"),
-                 (DefaultLayout(self, BeamSettings), "Default Layout")]
+                 (DefaultLayout(self, BeamSettings), "Default Layout"),
+                 (Moods(self, BeamSettings), "Moods")]
         
         for page, label in pages:
             self.AddPage(page,label)
