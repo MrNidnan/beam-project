@@ -44,7 +44,7 @@ from bin.dialogs.preferencespanels.tagspreview import TagsPreview
 ###################################################################
 
 class Preferences(wx.Frame):
-    def __init__(self, parent, BeamSettings):
+    def __init__(self, parent, BeamSettings, nowPlayingDataModel):
         
         ###################
         # CLASS VARIABLES #
@@ -52,6 +52,7 @@ class Preferences(wx.Frame):
         self.BeamSettings = BeamSettings
         # Do not use parent for threading
         self.MainWindowParent = parent
+        self.nowPlayingDataModel = nowPlayingDataModel
         
         ###############
         # SETPOSITION #
@@ -75,8 +76,8 @@ class Preferences(wx.Frame):
         #################
         # LISTBOOK MENU #
         #################
-        menu = ListBookMenu(panel, self.BeamSettings)
-
+        menu = ListBookMenu(panel, self.BeamSettings, self.nowPlayingDataModel)
+        
         ###########
         # BUTTONS #
         ###########
@@ -107,10 +108,13 @@ class Preferences(wx.Frame):
         # Save settings
         beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
         # Reload settings in main-window
-        self.MainWindowParent.rotateBackground()
+        self.settingsUpdated()
 
     def onClose(self, event):
         self.Destroy()
+
+    def settingsUpdated(self):
+        print "UPDATE"
 
 
 
@@ -119,7 +123,7 @@ class Preferences(wx.Frame):
 ###################################################################
 
 class ListBookMenu(wx.Listbook):
-    def __init__(self, parent, BeamSettings):
+    def __init__(self, parent, BeamSettings, nowPlayingDataModel):
         wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
         
         ##########
@@ -140,7 +144,7 @@ class ListBookMenu(wx.Listbook):
                  (DefaultLayout(self, BeamSettings), "Layout"),
                  (Moods(self, BeamSettings), "Moods"),
                  (Rules(self, BeamSettings), "Rules"),
-                 (TagsPreview(self, BeamSettings), "Tags")]
+                 (TagsPreview(self, BeamSettings, nowPlayingDataModel), "Tags")]
         ImId=0
         for page, label in pages:
             self.AddPage(page,label,imageId=ImId)

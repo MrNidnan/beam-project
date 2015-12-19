@@ -31,38 +31,53 @@ import wx, os
 #                   TagsPreview                        #
 ########################################################
 class TagsPreview(wx.Panel):
-    def __init__(self, parent, BeamSettings):
+    def __init__(self, parent, BeamSettings, nowPlayingDataModel):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
 
         #############
         # VARIABLES #
         #############
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        Tags = []
+        self.nowPlayingDataModel = nowPlayingDataModel
 
         ###############
         # DESCRIPTION #
         ###############
         tagpreview = wx.StaticText(self, -1, "Tags preview")
         tagpreview.SetFont(font)
-        description = wx.StaticText(self, -1, "Here are all available tags and their values displayed for")
+        description = wx.StaticText(self, -1, "Here are all available tags and their values displayed.")
+        description.Wrap(380)
+        
+        ##################
+        # REFRESH BUTTON #
+        ##################
+        self.refreshButton = wx.Button(self, label="Refresh")
+        self.refreshButton.Bind(wx.EVT_BUTTON, self.OnTagDropdown)
         
         #################
         # TAGS SELECTOR #
         #################
         self.TagDropdown = wx.ComboBox(self,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda", "Misc"], style=wx.CB_READONLY)
-        self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.onTagDropdown)
+        self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.OnTagDropdown)
         
         #############
         # TAGS LIST #
         #############
+        self.TagsList = wx.ListBox(self, -1, size=wx.DefaultSize, choices=Tags, style= wx.LB_NEEDED_SB)
+        self.OnTagDropdown()
         
         ##############
         # SET SIZERS #
         ##############
         vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
         vbox.Add(tagpreview, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         vbox.Add(description, flag=wx.LEFT, border=20)
-        vbox.Add(self.TagDropdown, flag=wx.LEFT, border=20)
+        hbox.Add(self.TagDropdown)
+        hbox.Add(self.refreshButton, flag=wx.LEFT, border=20)
+        vbox.Add(hbox, flag=wx.LEFT, border=20)
+        vbox.Add(self.TagsList, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=20)
 
         self.SetSizer(vbox)
     
@@ -71,6 +86,44 @@ class TagsPreview(wx.Panel):
 #                           EVENTS                                #
 ###################################################################
 
-    def onTagDropdown(self, event):
-        selected = self.TagDropdown.GetValue()
-        print selected
+        #################
+        # TAGS DROPDOWN #
+        #################
+    def OnTagDropdown(self, event = wx.EVT_COMBOBOX):
+        TagsSelected = self.TagDropdown.GetValue()
+        self.BuildTagsList(TagsSelected)
+    
+        ###################
+        # BUILD TAGS LIST #
+        ###################
+    def BuildTagsList(self, TagsSelected):
+        attributes = ['Artist', 'Album', 'AlbumArtist','Title','Genre','Comment','Composer','Year', 'Singer'
+                      ,'Performer','IsCortina']
+        additionalTags = ['%Hour','%Min','%DateDay','%DateMonth','%DateYear','%LongDate','%SongsSinceLastCortina','%CurrentTandaSongsRemaining','%CurrentTandaLength']
+        displayList = []
+        
+        if TagsSelected == "Current Song":
+            preTag = '%'
+        elif TagsSelected == "Previous Song":
+            preTag = '%Previous'
+        elif TagsSelected == "Next Song":
+            preTag = '%Next'
+        elif TagsSelected == "Next Tanda":
+            preTag = '%NextTanda'
+        else:
+            for i in range(0, len(additionalTags)):
+                displayList.append(additionalTags[i]+ ":  " + str(self.nowPlayingDataModel.convDict[additionalTags[i]]))
+            
+        if not TagsSelected == 'Misc':
+            try:
+                for i in range(0,len(attributes)):
+                    displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
+            except:
+                for i in range(0,len(attributes)):
+                    displayList.append(preTag+attributes[i]+ ": ")
+
+        self.TagsList.Set(displayList)
+
+
+
+

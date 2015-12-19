@@ -374,7 +374,7 @@ class beamMainFrame(wx.Frame):
         try:
             self.PreferencesDialog.Raise()
         except:
-            self.PreferencesDialog = Preferences(self, beamSettings)
+            self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingDataModel)
             self.PreferencesDialog.Show()
 
 
