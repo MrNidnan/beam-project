@@ -93,7 +93,7 @@ class EditMood(wx.Frame):
  
 
         self.ChangeBackgroundBox = wx.CheckBox(self.panel, label='Change Background: ')
-        self.BackgroundTimerBox = wx.ComboBox(self.panel, choices=['Every 30 seconds', 'Every 1 minute', 'Every 2 minutes', 'Every 3 minutes', 'Every 5 minutes','Every 10 minutes','Every 20 minutes'], style=wx.CB_READONLY)
+        self.BackgroundTimerBox = wx.ComboBox(self.panel, choices=['Every 15 seconds','Every 30 seconds', 'Every 1 minute', 'Every 2 minutes', 'Every 3 minutes', 'Every 5 minutes','Every 10 minutes','Every 20 minutes'], style=wx.CB_READONLY)
         self.RandomBackgroundBox = wx.CheckBox(self.panel, label='Random order')
         self.ChangeBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
         self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
@@ -244,26 +244,28 @@ class EditMood(wx.Frame):
             self.Settings[u'RotateBackground'] = "no"
             self.RandomBackgroundBox.Disable()
             self.BackgroundTimerBox.Disable()
-        timerVector = [30, 60, 120, 180, 300, 600, 1200]
+        timerVector = [15, 30, 60, 120, 180, 300, 600, 1200]
         self.Settings[u'RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
         self.rotateBackgroundFunction()
     
     
     def rotateBackgroundFunction(self):
-        if int(self.Settings[u'RotateTimer']) == 30:
+        if int(self.Settings[u'RotateTimer']) == 15:
             self.BackgroundTimerBox.SetSelection(0)
-        elif int(self.Settings[u'RotateTimer']) == 60:
+        elif int(self.Settings[u'RotateTimer']) == 30:
             self.BackgroundTimerBox.SetSelection(1)
-        elif int(self.Settings[u'RotateTimer']) == 120:
+        elif int(self.Settings[u'RotateTimer']) == 60:
             self.BackgroundTimerBox.SetSelection(2)
-        elif int(self.Settings[u'RotateTimer']) == 180:
+        elif int(self.Settings[u'RotateTimer']) == 120:
             self.BackgroundTimerBox.SetSelection(3)
-        elif int(self.Settings[u'RotateTimer']) == 300:
+        elif int(self.Settings[u'RotateTimer']) == 180:
             self.BackgroundTimerBox.SetSelection(4)
-        elif int(self.Settings[u'RotateTimer']) == 600:
+        elif int(self.Settings[u'RotateTimer']) == 300:
             self.BackgroundTimerBox.SetSelection(5)
-        elif int(self.Settings[u'RotateTimer']) == 1200:
+        elif int(self.Settings[u'RotateTimer']) == 600:
             self.BackgroundTimerBox.SetSelection(6)
+        elif int(self.Settings[u'RotateTimer']) == 1200:
+            self.BackgroundTimerBox.SetSelection(7)
         else:
             self.BackgroundTimerBox.SetSelection(2)
 

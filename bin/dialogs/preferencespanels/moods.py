@@ -64,7 +64,7 @@ class Moods(wx.Panel):
         hboxTransition2 = wx.BoxSizer(wx.HORIZONTAL)
         hboxTransition.Add(self.TransitionDropdown, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
         hboxTransition2.Add(self.TransitionSpeed, flag= wx.RIGHT | wx.BOTTOM, border=7)
-        hboxTransition2.Add(self.TransitionSpeedLabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=7)
+        hboxTransition2.Add(self.TransitionSpeedLabel, flag=wx.LEFT | wx.BOTTOM, border=7)
         hboxTransition.Add(hboxTransition2, flag=wx.LEFT | wx.TOP, border=7)
         
         #############
@@ -132,10 +132,10 @@ class Moods(wx.Panel):
             self.TransitionSpeed.Enable(True)
 
         Timervalue = round(float(self.BeamSettings._moodTransitionSpeed)/1000,1)
-        if self.BeamSettings._moodTransitionSpeed < 1000:
+        if Timervalue < float(1.5):
             # Fast
             self.TransitionSpeedLabel.SetLabel(str(Timervalue) + " sec (Fast)")
-        elif self.BeamSettings._moodTransitionSpeed < 3000:
+        elif Timervalue < float(3):
             # Medium
             self.TransitionSpeedLabel.SetLabel(str(Timervalue) + " sec (Medium)")
         else:
@@ -182,9 +182,9 @@ class Moods(wx.Panel):
                 mood[u'Active'] = "no"
         self.BuildMoodList()
 
-        #####################
+        ####################
         # BUILD LAYOUTLIST #
-        #####################
+        ####################
     def BuildMoodList(self):
         self.MoodRows = []
         for i in range(0, len(self.BeamSettings._moods)-1):

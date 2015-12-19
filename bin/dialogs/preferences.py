@@ -121,13 +121,30 @@ class Preferences(wx.Frame):
 class ListBookMenu(wx.Listbook):
     def __init__(self, parent, BeamSettings):
         wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
-
-        pages = [(BasicSettings(self, BeamSettings), "Basic Settings"),
-                 (DefaultLayout(self, BeamSettings), "Default Layout"),
-                 (Moods(self, BeamSettings), "Moods")]
         
+        ##########
+        # IMAGES #
+        ##########
+        imagelist = wx.ImageList(32,32)
+        urllist = ["1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        for urls in urllist:
+            bmp = wx.Bitmap(os.path.join(os.getcwd(), 'resources', 'icons', 'preferences', urls), wx.BITMAP_TYPE_PNG)
+            imagelist.Add(bmp)
+        
+        self.AssignImageList(imagelist)
+        
+        ###########
+        # CONTENT #
+        ###########
+        pages = [(BasicSettings(self, BeamSettings), "Settings"),
+                 (DefaultLayout(self, BeamSettings), "Layout"),
+                 (Moods(self, BeamSettings), "Moods"),
+                 (Rules(self, BeamSettings), "Rules"),
+                 (Moods(self, BeamSettings), "Tags")]
+        ImId=0
         for page, label in pages:
-            self.AddPage(page,label)
+            self.AddPage(page,label,imageId=ImId)
+            ImId +=1
 
 #----------------------------------------------------------------------
 

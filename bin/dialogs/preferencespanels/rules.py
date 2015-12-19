@@ -40,5 +40,123 @@ class Rules(wx.Panel):
         #############
         self.BeamSettings = BeamSettings
         self.parent = parent
-        self.DisplayRows = []
+        self.RuleRows = []
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+
+        ###############
+        # Description #
+        ###############
+        description = wx.StaticText(self, -1, "Rules are used to:\n - Copy information from one tag to another.\n - Define Cortinas.\n - Split tags, such tags with both artist and title.\n - Ignore songs completely, such as silent tracks.\n\nRules can be activated and deactivated with the check box.")
+        description.Wrap(380)
+
+        #############
+        # RULE LIST #
+        #############
+        self.RuleList = wx.CheckListBox(self,-1, size=wx.DefaultSize, choices=self.RuleRows, style= wx.LB_NEEDED_SB)
+        self.RuleList.SetBackgroundColour(wx.Colour(255, 255, 255))
+        self.RuleList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditRule)
+        self.RuleList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckRule)
+        self.BuildRuleList()
+
+        ################
+        # RULE BUTTONS #
+        ################
+        self.AddRule    = wx.Button(self, label="Add")
+        self.DelRule    = wx.Button(self, label="Delete")
+        self.EditRule   = wx.Button(self, label="Edit")
+        self.AddRule.Bind(wx.EVT_BUTTON, self.OnAddRule)
+        self.EditRule.Bind(wx.EVT_BUTTON, self.OnEditRule)
+        self.DelRule.Bind(wx.EVT_BUTTON, self.OnDelRule)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizerbuttons    = wx.BoxSizer(wx.HORIZONTAL)
+        sizerbuttons.Add(self.AddRule, flag=wx.RIGHT | wx.TOP, border=10)
+        sizerbuttons.Add(self.DelRule, flag=wx.RIGHT | wx.TOP, border=10)
+        sizerbuttons.Add(self.EditRule, flag=wx.RIGHT | wx.TOP, border=10)
+        sizer.Add(description, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        sizer.Add(self.RuleList, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
+        self.SetSizer(sizer)
+
+
+###################################################################
+#                           EVENTS                                #
+###################################################################
+
+    ################
+    # RULE BUTTONS #
+    ################
+    def OnAddRule(self, event):
+        self.EditRule = EditRuleDialog(self, self.RuleList.GetCount(), "Add rule")
+        self.EditRule.Show()
+    
+    def OnEditRule(self, event):
+        RowSelected = self.RuleList.GetSelection()
+        if RowSelected>-1:
+            self.EditRule = EditRuleDialog(self, RowSelected, "Edit rule")
+            self.EditRule.Show()
+
+    def OnDelRule(self, event):
+        RowSelected = self.RuleList.GetSelection()
+        if RowSelected>-1:
+            LineToDelete = self.RuleList.GetString(RowSelected)
+            dlg = wx.MessageDialog(self,
+                    "Do you really want to delete '"+LineToDelete+"' ?",
+                    "Confirm deletion", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            if result == wx.ID_OK:
+                self.BeamSettings._rules.pop(RowSelected)
+                self.BuildRuleList()
+
+
+    #####################
+    # LAYOUT CHECKBOXES #
+    #####################
+    def OnCheckRule(self, event):
+        for i in range(0, len(self.BeamSettings._rules)):
+            rule = self.BeamSettings._rules[i]
+            if self.RuleList.IsChecked(i):
+                rule[u'Active'] = "yes"
+            else:
+                rule[u'Active'] = "no"
+        self.BuildRuleList()
+
+    #####################
+    # BUILD RULELIST #
+    #####################
+    def BuildRuleList(self):
+        self.RuleRows = []
+        for i in range(0, len(self.BeamSettings._rules)):
+            rule = self.BeamSettings._rules[i]
+            if rule[u'Type'] == "Copy":
+                self.RuleRows.append(str('Copy '+rule[u'Field1']+' to '+rule[u'Field2']))
+            
+            if rule[u'Type'] == "Cortina":
+                if rule[u'Field2'] =="is":
+                    self.RuleRows.append(str("It's a Cortina when: "+rule[u'Field1']+' is '+rule[u'Field3']))
+                if rule[u'Field2'] =="is not":
+                    self.RuleRows.append(str("It's a Cortina when: "+rule[u'Field1']+' is not '+rule[u'Field3']))
+                if rule[u'Field2'] =="contains":
+                    self.RuleRows.append(str("It's a Cortina when: "+rule[u'Field1']+' contains '+rule[u'Field3']))
+        
+            if rule[u'Type'] == "Parse":
+                self.RuleRows.append(str('Parse/split '+rule[u'Field1']+' containing '+rule[u'Field2']+' into '+rule[u'Field3']+' and '+rule[u'Field4']))
+    
+            if rule[u'Type'] == "Ignore":
+                if rule[u'Field2'] =="is":
+                    self.RuleRows.append(str("Ignore song if "+rule[u'Field1']+' is '+rule[u'Field3']))
+                if rule[u'Field2'] =="is not":
+                    self.RuleRows.append(str("Ignore song if "+rule[u'Field1']+' is not '+rule[u'Field3']))
+                if rule[u'Field2'] =="contains":
+                    self.RuleRows.append(str("Ignore song if "+rule[u'Field1']+' contains '+rule[u'Field3']))
+        self.RuleList.Set(self.RuleRows)
+        # Check the rules
+        for i in range(0, len(self.BeamSettings._rules)):
+            rule = self.BeamSettings._rules[i]
+            if rule[u'Active'] == "yes":
+                self.RuleList.Check(i, check=True)
+            else:
+                self.RuleList.Check(i, check=False)
+
+

@@ -435,6 +435,7 @@ class beamMainFrame(wx.Frame):
             # Load the new background image
             self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
             self.modifiedBitmap = self._currentBackgroundPath
+            self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
             
             # Set triggers
             self.triggerResizeBackground = True
@@ -461,6 +462,7 @@ class beamMainFrame(wx.Frame):
                 # Load the new background image
                 self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
                 self.modifiedBitmap = self._currentBackgroundPath
+                self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
                 # Set triggers
                 self.triggerResizeBackground = True
                 self.textsAreVisible = True
@@ -576,7 +578,10 @@ class beamMainFrame(wx.Frame):
             backgrounds_tmp = os.listdir(path)
             backgrounds = [s for s in backgrounds_tmp if ".jpg" in s or ".png" in s or ".jpg" in s]
             # Find our index
-            position = backgrounds.index(file)
+            try:
+                position = backgrounds.index(file)
+            except:
+                position = 0
             
             # Linear in the folder
             if self.RotateBackground == 'linear':
