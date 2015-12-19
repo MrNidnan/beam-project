@@ -36,7 +36,7 @@ from bin.dialogs.preferencespanels.basicsettings import BasicSettings
 from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
 from bin.dialogs.preferencespanels.moods import Moods
 from bin.dialogs.preferencespanels.rules import Rules
-#from bin.dialogs.preferencespanels.tagspreview import TagsPreview
+from bin.dialogs.preferencespanels.tagspreview import TagsPreview
 
 
 ###################################################################
@@ -104,9 +104,9 @@ class Preferences(wx.Frame):
 
 #----------------------------------------------------------------------
     def onApply(self, event):
-        # Send the message back to BeamInFrame
-        # if event:
+        # Save settings
         beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
+        # Reload settings in main-window
         self.MainWindowParent.rotateBackground()
 
     def onClose(self, event):
@@ -140,7 +140,7 @@ class ListBookMenu(wx.Listbook):
                  (DefaultLayout(self, BeamSettings), "Layout"),
                  (Moods(self, BeamSettings), "Moods"),
                  (Rules(self, BeamSettings), "Rules"),
-                 (Moods(self, BeamSettings), "Tags")]
+                 (TagsPreview(self, BeamSettings), "Tags")]
         ImId=0
         for page, label in pages:
             self.AddPage(page,label,imageId=ImId)
