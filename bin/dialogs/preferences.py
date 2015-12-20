@@ -89,9 +89,9 @@ class Preferences(wx.Frame):
         ###########
         # ARRANGE #
         ###########
-        hbox.Add((200,-1),1,flag=wx.EXPAND)
-        hbox.Add(self.button_apply,flag=wx.LEFT | wx.TOP, border=10)
-        hbox.Add(self.button_close, flag=wx.ALL, border=10)
+        hbox.Add((500,-1),1,flag=wx.EXPAND)
+        hbox.Add(self.button_apply,flag= wx.LEFT | wx.TOP, border=10)
+        hbox.Add(self.button_close, flag= wx.ALL, border=10)
         
         vbox.Add(menu, 1,wx.ALL | wx.EXPAND, 5)
         vbox.Add(hbox)
