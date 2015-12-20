@@ -148,8 +148,7 @@ class DefaultLayout(wx.Panel):
         if openFileDialog.ShowModal() == wx.ID_OK:
             self.BeamSettings._moods[0][u'Background'] = openFileDialog.GetPath()
             # change current background
-            (path,backgroundfile) = os.path.split(self.BeamSettings._moods[0][u'Background'])
-            self.currentBackground.SetLabel(backgroundfile)
+            self.OnRotateBackground()
             openFileDialog.Destroy()
 
         #####################
@@ -194,7 +193,7 @@ class DefaultLayout(wx.Panel):
         if self.BeamSettings._moods[0][u'RotateBackground'] == "no":
             self.currentBackground.SetLabel("Image: " + backgroundfile)
         else:
-            self.currentBackground.SetLabel("Images from folder: " + os.path.dirname(path))
+            self.currentBackground.SetLabel("Images from folder: " + os.path.split(path)[1])
 
         ##################
         # LAYOUT BUTTONS #

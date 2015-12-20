@@ -274,7 +274,7 @@ class EditMood(wx.Frame):
         if self.Settings[u'RotateBackground'] == "no":
             self.currentBackground.SetLabel("Image: " + backgroundfile)
         else:
-            self.currentBackground.SetLabel("Images from folder: " + os.path.dirname(path))
+            self.currentBackground.SetLabel("Images from folder: " + os.path.split(path)[1])
 #
 # LAYOUT BUTTONS
 #
