@@ -250,7 +250,7 @@ class beamMainFrame(wx.Frame):
         self.showStatusBar()
         self.processData()
         # Starts and stops rotation if it has changed.
-        if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and not self.RotateBackground == 'no'):
+        if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and not self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no'):
             self.rotateBackground()
     
 

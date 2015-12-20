@@ -148,9 +148,8 @@ class DefaultLayout(wx.Panel):
         if openFileDialog.ShowModal() == wx.ID_OK:
             self.BeamSettings._moods[0][u'Background'] = openFileDialog.GetPath()
             # change current background
-            (path,backgroundfile) = os.path.split(beamSettings._moods[0][u'Background'])
+            (path,backgroundfile) = os.path.split(self.BeamSettings._moods[0][u'Background'])
             self.currentBackground.SetLabel(backgroundfile)
-            self.parent.settingsUpdated()
             openFileDialog.Destroy()
 
         #####################
