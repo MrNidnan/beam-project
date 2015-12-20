@@ -114,7 +114,7 @@ class Preferences(wx.Frame):
         self.Destroy()
 
     def settingsUpdated(self):
-        print "UPDATE"
+        self.MainWindowParent.updateSettings()
 
 
 

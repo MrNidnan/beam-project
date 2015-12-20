@@ -38,7 +38,6 @@ class BasicSettings(wx.Panel):
         # VARIABLES #
         #############
         self.BeamSettings = BeamSettings
-        self.parent = parent
         
         ##########
         # SIZERS #

@@ -134,6 +134,67 @@ class beamMainFrame(wx.Frame):
 
 
 ########################################################
+# Buttons and menues
+########################################################
+    def OnPreferences(self, event):
+        try:
+            self.PreferencesDialog.Raise()
+        except:
+            self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingDataModel)
+            self.PreferencesDialog.Show()
+                
+                
+    #
+    # FULLSCREEN
+    #
+    def fullScreen(self, event):
+        # Needed for Mac
+        if platform.system() == 'Darwin':
+            self.showStatusBar()
+        self.ShowFullScreen(not self.IsFullScreen())
+    
+    #
+    # Hide/show statusbar
+    #
+    def showStatusBar(self):
+        self.triggerResizeBackground = True
+        if beamSettings._showStatusbar == 'True':
+            self.statusbar.Show()
+        else:
+            self.statusbar.Hide()
+
+    #
+    # Show 'Close dialog
+    #
+    def OnClose(self, event):
+        closedialog.ShowCloseDialog(self)
+    #
+    # Show 'About Dialog'
+    #
+    def OnAbout(self, event):
+        aboutdialog.ShowAboutDialog(self)
+    #
+    # Show 'Help'
+    #
+    def OnHelp(self, event):
+        help_dialog = HelpDialog(self)
+        help_dialog.Show()
+    
+    
+    
+    
+    
+    
+    
+########################################################
+#                                                      #
+#                                                      #
+#                 DATA FUNCTIONS                       #
+#                                                      #
+#                                                      #
+########################################################
+
+########################################################
 # Update data - Executed from top to bottom with exception if preferences changed
 ########################################################
     def updateData(self, event = wx.EVT_TIMER):
@@ -171,8 +232,7 @@ class beamMainFrame(wx.Frame):
         self.RotateTimer = self.nowPlayingDataModel.RotateTimer
         
         if self.previousMood != self.currentMood:
-            print "New mood: ", self.currentMood
-            # If background changed, fade it
+            print "New mood: ", self.currentMood # If background changed, fade it
             if (self.nowPlayingDataModel.BackgroundImage != self._currentBackgroundPath and
                 self.nowPlayingDataModel.BackgroundImage != ""):
                 self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
@@ -185,6 +245,22 @@ class beamMainFrame(wx.Frame):
         self.nowPlayingDataModel.PreviousMood = self.currentMood
         self.SetStatusText(self.currentPlaybackStatus)
         self.Refresh()
+
+    def updateSettings(self): # Updated from preferences
+        self.showStatusBar()
+        self.processData()
+        # Starts and stops rotation if it has changed.
+        if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and not self.RotateBackground == 'no'):
+            self.rotateBackground()
+    
+
+########################################################
+#                                                      #
+#                                                      #
+#                 WINDOW DRAWING                       #
+#                                                      #
+#                                                      #
+########################################################
 
 ########################################################
 # Painter
@@ -365,55 +441,15 @@ class beamMainFrame(wx.Frame):
         dc.Clear()
         self.drawBackgroundBitmap(dc)
         self.drawTexts(dc)
-
-
+    
+    
 ########################################################
-# Buttons and menues
+#                                                      #
+#                                                      #
+#                  TRANSITIONS                         #
+#                                                      #
+#                                                      #
 ########################################################
-    def OnPreferences(self, event):
-        try:
-            self.PreferencesDialog.Raise()
-        except:
-            self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingDataModel)
-            self.PreferencesDialog.Show()
-
-
-#
-# FULLSCREEN
-#
-    def fullScreen(self, event):
-        # Needed for Mac
-        if platform.system() == 'Darwin':
-            self.showStatusBar()
-        self.ShowFullScreen(not self.IsFullScreen())
-
-#
-# Hide/show statusbar
-#
-    def showStatusBar(self):
-        self.triggerResizeBackground = True
-        if beamSettings._showStatusbar == 'True':
-            self.statusbar.Show()
-        else:
-            self.statusbar.Hide()
-
-#
-# Show 'Close dialog
-#
-    def OnClose(self, event):
-        closedialog.ShowCloseDialog(self)
-#
-# Show 'About Dialog'
-#
-    def OnAbout(self, event):
-        aboutdialog.ShowAboutDialog(self)
-#
-# Show 'Help'
-#
-    def OnHelp(self, event):
-        help_dialog = HelpDialog(self)
-        help_dialog.Show()
-
 
 ########################################################
 # Change background
@@ -476,9 +512,8 @@ class beamMainFrame(wx.Frame):
                 return
         
         else:
-        # Change background without any transition
+            # Change background without any transition
             self.switchBackground()
-
 
 ########################################################
 # No transition
@@ -505,7 +540,6 @@ class beamMainFrame(wx.Frame):
         if beamSettings._moodTransition == 'Fade to black'and self.FadeDirection == 'In':
             self.FadeBackImage()
             return
-
 
 ########################################################
 # Fade directly
@@ -563,9 +597,7 @@ class beamMainFrame(wx.Frame):
     def rotateBackground(self , event = wx.EVT_TIMER):
         # Starts, stops and executes the rotate-background function.
 
-        # Start the rotation
         if self.RotateBackground == 'linear' or self.RotateBackground == 'random':
-            # Start the timer
             try:
                 self.RotateBackgroundTimer = wx.Timer(self)
                 self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
@@ -573,11 +605,9 @@ class beamMainFrame(wx.Frame):
             except:
                 self.RotateBackgroundTimer.Stop()
                 self.RotateBackgroundTimer.Start(self.RotateTimer)
-            # Find the files and remove other then images
             (path, file) = os.path.split(self._currentBackgroundPath)
             backgrounds_tmp = os.listdir(path)
             backgrounds = [s for s in backgrounds_tmp if ".jpg" in s or ".png" in s or ".jpg" in s]
-            # Find our index
             try:
                 position = backgrounds.index(file)
             except:
@@ -599,7 +629,10 @@ class beamMainFrame(wx.Frame):
                     except:
                         self._currentBackgroundPath = os.path.join(path,backgrounds[0])
                 else:
-                    self._currentBackgroundPath = os.path.join(path,backgrounds[newposition])
+                    try:
+                        self._currentBackgroundPath = os.path.join(path,backgrounds[newposition])
+                    except:
+                        self._currentBackgroundPath = os.path.join(path,backgrounds[0])
                 self.RotateBackgroundTrigger = True
 
         # Stop the rotation
@@ -614,7 +647,16 @@ class beamMainFrame(wx.Frame):
         # Update the background
         self.changeBackground()
     
+    
+    
 
+########################################################
+#                                                      #
+#                                                      #
+#                     TIMERS                           #
+#                                                      #
+#                                                      #
+########################################################
 
 ########################################################
 # Data timer
