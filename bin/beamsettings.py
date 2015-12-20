@@ -59,6 +59,7 @@ class BeamSettings:
     stringResources = json.load(open(filename, "r"))
 
     defaultConfigFileName = stringResources["defaultConfigFileName"]
+    defaultLogFileName = stringResources["defaultLogFileName"]
     mainFrameTitle = stringResources["mainFrameTitle"]
     aboutDialogDescription = stringResources["aboutDialogDescription"]
     aboutDialogLicense = stringResources["aboutDialogLicense"]
@@ -117,7 +118,7 @@ class BeamSettings:
         self._logPath               = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'LogPath')
         self._showStatusbar         = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'ShowStatusbar')
         if self._logPath == '':
-            self._logPath = os.path.join(os.path.expanduser("~"), 'BeamLog.txt')
+            self._logPath = os.path.join(os.path.expanduser("~"), BeamSettings.defaultLogFileName)
         
         # Dictionaries
         self._allModulesSettings        = ConfigDataOriginal[u'AllModules']
