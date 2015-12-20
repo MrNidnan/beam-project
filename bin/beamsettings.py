@@ -124,13 +124,19 @@ class BeamSettings:
         self._rules                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Rules')
         self._moods                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,u'Moods')
 
-        # Set modules for operating system
+        # Set OS-specific variables
         if platform.system() == 'Linux':
             tmp = self._allModulesSettings[0]
+            self._preferencesSize = (400, 600)
+            self._moodSize = (400,550)
         if platform.system() == 'Windows':
             tmp = self._allModulesSettings[1]
+            self._preferencesSize = (400, 600)
+            self._moodSize = (400,550)
         if platform.system() == 'Darwin':
             tmp = self._allModulesSettings[2]
+            self._preferencesSize = (400, 600)
+            self._moodSize = (400,550)
 
         self._currentModules = [s.encode('utf-8') for s in tmp[u'Modules']]
 

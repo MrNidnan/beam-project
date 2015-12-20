@@ -39,7 +39,7 @@ from bin.beamsettings import *
 class EditRuleDialog(wx.Dialog):
     def __init__(self, parent, RowSelected, mode):
         self.parent             = parent
-        x,y                     = self.parent.GetPosition()
+        x,y                     = self.parent.GetScreenPosition()
         self.EditRuleDialog     = wx.Dialog.__init__(self, parent, title=mode, pos = (x+50, y+50))
         self.EditRulePanel  = wx.Panel(self)
         self.RowSelected    = RowSelected
