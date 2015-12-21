@@ -133,7 +133,7 @@ class BeamSettings:
         if platform.system() == 'Windows':
             tmp = self._allModulesSettings[1]
             self._preferencesSize = (500, 500)
-            self._moodSize = (400,550)
+            self._moodSize = (420,550)
         if platform.system() == 'Darwin':
             tmp = self._allModulesSettings[2]
             self._preferencesSize = (400, 600)
