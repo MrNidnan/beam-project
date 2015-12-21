@@ -28,6 +28,7 @@
 import platform, os, sys
 import time
 import datetime
+import wx.lib.delayedresult
 
 from bin.songclass import SongObject
 from copy import deepcopy
@@ -83,14 +84,12 @@ class NowPlayingDataModel:
     def ExtractPlaylistInfo(self, currentSettings):
         print "Start updating data... ", time.strftime("%H:%M:%S")
         self.PreviousPlaybackStatus = self.PlaybackStatus
-        
         # Save previous state
         try:
             self.LastRead = deepcopy(self.currentPlaylist)
         except:
             self.LastRead = SongObject()
-
-
+        
 
 
 ###############################################################
@@ -167,7 +166,7 @@ class NowPlayingDataModel:
             self.PreviousPlaybackStatus = self.PlaybackStatus
 
 
-
+        return self
 
 ###############################################################
 #
@@ -175,7 +174,7 @@ class NowPlayingDataModel:
 #
 ###############################################################
 
-    def applyRules(self, currentSettings):
+    def processInformation(self, currentSettings):
         for i in range(0, len(self.currentPlaylist)):
             self.currentPlaylist[i].applySongRules(currentSettings._rules)
 
@@ -224,7 +223,6 @@ class NowPlayingDataModel:
 #
 ###############################################################
 
-    def applyMood(self, currentSettings):
         
         try:
             currentSong = self.currentPlaylist[0]
@@ -280,7 +278,6 @@ class NowPlayingDataModel:
 #
 ###############################################################
 
-    def buildDisplayLines(self, currentSettings):
         # The display lines
         for i in range(0, len(self.DisplaySettings)): self.DisplayRow.append('')
         

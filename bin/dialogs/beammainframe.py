@@ -204,24 +204,24 @@ class beamMainFrame(wx.Frame):
         
         if not self.currentlyUpdating:
             self.currentlyUpdating = True
-            tmpSettings = deepcopy(beamSettings)
-            wx.lib.delayedresult.startWorker(self.getDataFinished, self.nowPlayingDataModel.ExtractPlaylistInfo( tmpSettings ) )
-    
+            wx.lib.delayedresult.startWorker(self.getDataFinished, self.extractDataThread)
         self.DataTimer() # Reset the timer
 
+    def extractDataThread(self):
+        self.nowPlayingDataModel.ExtractPlaylistInfo(beamSettings)
+    
     def getDataFinished(self, result):
         self.currentlyUpdating = False
-        
         if self.nowPlayingDataModel.playlistChanged:
             self.processData() #Only update if playlist has changed
 
     def processData(self):
-        self.nowPlayingDataModel.applyRules(beamSettings)
-        self.nowPlayingDataModel.applyMood(beamSettings)
-        self.nowPlayingDataModel.buildDisplayLines(beamSettings)
-        self.updateMood()
+        wx.lib.delayedresult.startWorker(self.updateMood, self.processDataThread)
+        
+    def processDataThread(self):
+        self.nowPlayingDataModel.processInformation(beamSettings)
 
-    def updateMood(self):
+    def updateMood(self, result):
         self.textsAreVisible = False
         self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
         self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
