@@ -232,7 +232,7 @@ class beamMainFrame(wx.Frame):
         self.RotateTimer = self.nowPlayingDataModel.RotateTimer
         
         if self.previousMood != self.currentMood:
-            print "New mood: ", self.currentMood # If background changed, fade it
+            #print "New mood: ", self.currentMood # If background changed, fade it
             if (self.nowPlayingDataModel.BackgroundImage != self._currentBackgroundPath and
                 self.nowPlayingDataModel.BackgroundImage != ""):
                 self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
@@ -243,7 +243,7 @@ class beamMainFrame(wx.Frame):
             self.textsAreVisible = True
     
         self.nowPlayingDataModel.PreviousMood = self.currentMood
-        self.SetStatusText(self.currentPlaybackStatus)
+        self.SetStatusText("Player: "+self.currentPlaybackStatus+" - Mood: "+self.currentMood)
         self.Refresh()
 
     def updateSettings(self): # Updated from preferences
