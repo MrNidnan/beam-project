@@ -72,7 +72,6 @@ class EditMood(wx.Frame):
         self.button_cancel = wx.Button(self.panel, label="Close")
         self.button_ok.Bind(wx.EVT_BUTTON, self.onSave)
         self.button_cancel.Bind(wx.EVT_BUTTON, self.onClose)
-        self.hbox.Add((200, -1), 1, flag=wx.EXPAND | wx.ALIGN_RIGHT)
         self.hbox.Add(self.button_ok, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
         
@@ -136,7 +135,7 @@ class EditMood(wx.Frame):
         self.vbox.Add(self.sizerbuttons, flag=wx.LEFT | wx.BOTTOM , border=10)
 
         # Set sizers
-        self.vbox.Add(self.hbox)
+        self.vbox.Add(self.hbox, flag=wx.ALIGN_RIGHT)
         self.panel.SetSizer(self.vbox)
     
     

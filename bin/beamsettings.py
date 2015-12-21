@@ -128,8 +128,8 @@ class BeamSettings:
         # Set OS-specific variables
         if platform.system() == 'Linux':
             tmp = self._allModulesSettings[0]
-            self._preferencesSize = (400, 600)
-            self._moodSize = (400,550)
+            self._preferencesSize = (500, 500)
+            self._moodSize = (500,600)
         if platform.system() == 'Windows':
             tmp = self._allModulesSettings[1]
             self._preferencesSize = (500, 500)
