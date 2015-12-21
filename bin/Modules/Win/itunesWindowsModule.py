@@ -28,6 +28,7 @@
 from bin.songclass import SongObject
 
 try:
+    import pythoncom
     import win32com.client
 except ImportError:
     pass
@@ -47,9 +48,11 @@ def run(MaxTandaLength):
     #
     if ApplicationRunning("iTunes.exe"):
         try:
+            pythoncom.CoInitialize()
             itunes = win32com.client.gencache.EnsureDispatch ("iTunes.Application")
         except:
             playbackStatus = 'PlayerNotRunning'
+            pythoncom.CoUninitialize()
             return playlist, playbackStatus
     else:
         playbackStatus = 'PlayerNotRunning'
@@ -81,6 +84,7 @@ def run(MaxTandaLength):
         except:
             break
         searchsong = searchsong+1
+    pythoncom.CoUninitialize()
     return playlist, playbackStatus
 
 ###############################################################

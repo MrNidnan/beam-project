@@ -26,6 +26,7 @@
 from bin.songclass import SongObject
 import subprocess
 try:
+    import pythoncom
 	import win32com.client
 except ImportError:
 	pass
@@ -46,9 +47,11 @@ def run(MaxTandaLength, LastPlaylist):
     #
     if ApplicationRunning("MediaMonkey.exe"):
         try:
+            pythoncom.CoInitialize()
             MediaMonkey = win32com.client.Dispatch("SongsDB.SDBApplication")
         except:
             playbackStatus = 'PlayerNotRunning'
+            pythoncom.CoUninitialize()
             return playlist, playbackStatus
     else:
         playbackStatus = 'PlayerNotRunning'
@@ -92,6 +95,7 @@ def run(MaxTandaLength, LastPlaylist):
         except:
             break
         searchsong = searchsong+1
+    pythoncom.CoUninitialize()
     return playlist, playbackStatus
 ###############################################################
 #

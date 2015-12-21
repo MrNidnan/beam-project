@@ -28,6 +28,7 @@
 from bin.songclass import SongObject
 import subprocess
 try:
+    import pythoncom
     import win32com.client
 except ImportError:
     pass
@@ -47,9 +48,11 @@ def run(MaxTandaLength):
     #
     if ApplicationRunning("foobar2000.exe"):
         try:
+            pythoncom.CoInitialize()
             Foobar = win32com.client.Dispatch("Foobar2000.Application.0.7")
         except:
             playbackStatus = 'PlayerNotRunning'
+            pythoncom.CoUninitialize()
             return playlist, playbackStatus
     else:
         playbackStatus = 'PlayerNotRunning'
@@ -60,10 +63,10 @@ def run(MaxTandaLength):
     #
     if not Foobar.Playback.IsPlaying:
         playbackStatus = 'Stopped'
-        return playlist, playbackStatus
+
     elif Foobar.Playback.IsPlaying and Foobar.Playback.IsPaused:
         playbackStatus = 'Paused'
-        return playlist, playbackStatus
+
     #
     # Playback = Playing
     #
@@ -74,7 +77,8 @@ def run(MaxTandaLength):
         except:
             pass
 
-        return playlist, playbackStatus
+    pythoncom.CoUninitialize()
+    return playlist, playbackStatus
 
 ###############################################################
 #
