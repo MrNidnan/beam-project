@@ -41,7 +41,7 @@ class EditMood(wx.Frame):
         
         self.MainWindowParent = parent
         
-        wx.Frame.__init__(self, parent, title=mode, pos =(self.MainWindowParent.GetScreenPosition()+(50,50)), size=self.MainWindowParent.BeamSettings._moodSize)
+        wx.Frame.__init__(self, parent, title=mode, pos =(self.MainWindowParent.GetScreenPosition()+(50,50)), size=self.MainWindowParent.BeamSettings._moodSize, style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
         self.RowSelected = RowSelected
         self.mode = mode
         self.Settings = {}
