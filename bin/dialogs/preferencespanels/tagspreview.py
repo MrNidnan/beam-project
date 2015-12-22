@@ -112,12 +112,15 @@ class TagsPreview(wx.Panel):
             preTag = '%NextTanda'
         else:
             for i in range(0, len(additionalTags)):
-                displayList.append(additionalTags[i]+ ":  " + self.nowPlayingDataModel.convDict[additionalTags[i]])
+                try:
+                    displayList.append(additionalTags[i]+ ":  " + str(self.nowPlayingDataModel.convDict[additionalTags[i]]))
+                except:
+                    displayList.append(additionalTags[i]+ ":  " + self.nowPlayingDataModel.convDict[additionalTags[i]].decode('utf-8'))
             
         if not TagsSelected == 'Misc':
             try:
                 for i in range(0,len(attributes)):
-                    displayList.append(preTag+attributes[i]+ ": " + self.nowPlayingDataModel.convDict[preTag+attributes[i]])
+                    displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
             except:
                 for i in range(0,len(attributes)):
                     displayList.append(preTag+attributes[i]+ ": ")
