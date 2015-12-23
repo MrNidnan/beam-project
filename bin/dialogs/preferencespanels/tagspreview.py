@@ -121,7 +121,7 @@ class TagsPreview(wx.Panel):
                         dkhbdj
                         displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
                     except:
-                        print "Testing"
+                        # Cuts away signs not ascii
                         displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8').encode('ascii','ignore')))
             except:
                 for i in range(0,len(attributes)):

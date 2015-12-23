@@ -197,6 +197,8 @@ class beamMainFrame(wx.Frame):
 ########################################################
 # Update data - Executed from top to bottom with exception if preferences changed
 ########################################################
+
+        # READ FROM MEDIA PLAYER
     def updateData(self, event = wx.EVT_TIMER):
         self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
         self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
@@ -206,47 +208,47 @@ class beamMainFrame(wx.Frame):
             self.currentlyUpdating = True
             wx.lib.delayedresult.startWorker(self.getDataFinished, self.extractDataThread)
         self.DataTimer() # Reset the timer
-
+    
+        # MEDIA READER WORKER
     def extractDataThread(self):
         self.nowPlayingDataModel.ExtractPlaylistInfo(beamSettings)
     
+        # INFO FROM MEDIA PLAYER RECIEVED
     def getDataFinished(self, result):
         self.currentlyUpdating = False
         if self.nowPlayingDataModel.playlistChanged:
             self.processData() #Only update if playlist has changed
 
+        # PROCESS INFO FROM MEDIA PLAYER
     def processData(self):
         wx.lib.delayedresult.startWorker(self.updateMood, self.processDataThread)
-        
+    
+        # PROCESS DATA WORKER
     def processDataThread(self):
         self.nowPlayingDataModel.processInformation(beamSettings)
 
+        # AFTER PROCESSING DATA
     def updateMood(self, result):
-        self.textsAreVisible = False
         self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
         self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
+        self.previousMood = deepcopy(self.currentMood)
         self.currentMood = self.nowPlayingDataModel.CurrentMood
-        self.previousMood = self.nowPlayingDataModel.PreviousMood
         self.currentDisplaySettings = self.nowPlayingDataModel.DisplaySettings
         self.RotateBackground = self.nowPlayingDataModel.RotateBackground
         self.RotateTimer = self.nowPlayingDataModel.RotateTimer
-        
-        if self.previousMood != self.currentMood:
-            #print "New mood: ", self.currentMood # If background changed, fade it
-            if (self.nowPlayingDataModel.BackgroundImage != self._currentBackgroundPath and
-                self.nowPlayingDataModel.BackgroundImage != ""):
-                self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
-                self.rotateBackground()
-            else:
-                self.textsAreVisible = True
-        else:
-            self.textsAreVisible = True
-    
-        self.nowPlayingDataModel.PreviousMood = self.currentMood
+
         self.SetStatusText("Player: "+self.currentPlaybackStatus+" - Mood: "+self.currentMood)
+        
+        if (self.previousMood != self.currentMood):
+            self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
+            self.startTransition('MoodChange')
+        else:
+            self.startTransition('SongChange')
+
         self.Refresh()
 
-    def updateSettings(self): # Updated from preferences
+        # UPDATE INFO FROM PREFERENCES WINDOW
+    def updateSettings(self):
         self.showStatusBar()
         self.processData()
         # Starts and stops rotation if it has changed.
@@ -450,25 +452,68 @@ class beamMainFrame(wx.Frame):
 #                                                      #
 #                                                      #
 ########################################################
+#
+# TransitionType:
+#    MoodChange -> Change the mood and song (mood transition type)
+#    SongChange -> change text (direct fade or no transition
+
+    def startTransition(self, TransitionType):
+
+        if TransitionType == 'MoodChange':
+        # LOAD NEW SETTINGS FOR NEW MOOD
+        # Stop RotateBackground timer if it is running
+            try:
+                self.RotateBackgroundTimer.Stop()
+            except:
+                pass
+        
+            # If there is a RotateBackground timer to be set. Initialize it.
+            if not self.RotateBackground == 'no':
+                try:
+                    self.RotateBackgroundTimer = wx.Timer(self)
+                    self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
+                    self.RotateBackgroundTimer.Start(int(self.RotateTimer)*1000)
+                except:
+                    self.RotateBackgroundTimer.Stop()
+                    self.RotateBackgroundTimer.Start(self.RotateTimer)
+                        # Select Mood transition and start changing
+
+            if beamSettings._moodTransition == 'Fade directly':
+                self.currentTransition = 'FadeDirect'
+                self.initiateTransition()
+            elif beamSettings._moodTransition == 'Fade to black':
+                self.currentTransition = 'FadeToBlack'
+                self.initiateTransition()
+            else:
+                self.currentTransition = ''
+                self.initiateTransition()
+
+            return
+    
+        if TransitionType == 'SongChange':
+            if beamSettings._moodTransition == 'No transition':
+                self.currentTransition = ''
+                self.initiateTransition()
+            else:
+                self.currentTransition = 'FadeDirect'
+                self.initiateTransition()
+
+            return
+
 
 ########################################################
-# Change background
+# INITIATE TRANSITION
 ########################################################
-    def changeBackground(self):
+    def initiateTransition(self):
         
         self.transitionSpeed = int(int(beamSettings._moodTransitionSpeed) / 100)
         self.delta = float(1/float(self.transitionSpeed))
 
-        #####################
-        # Choose transition #
-        #####################
-        
-        # Fade directly
-        if beamSettings._moodTransition == 'Fade directly' or self.RotateBackgroundTrigger == True:
+        # FADE DIRECTLY
+        if self.currentTransition == 'FadeDirect':
 
             self.alpha = float(0.0)
-            
-            # Load the new background image
+            # Load the background image
             self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
             self.modifiedBitmap = self._currentBackgroundPath
             self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
@@ -482,11 +527,10 @@ class beamMainFrame(wx.Frame):
             return
         
         
-        # Fade to black
-        if  beamSettings._moodTransition == 'Fade to black':
+        # FADE TO BLACK
+        if self.currentTransition == 'FadeToBlack':
             if self.FadeDirection == 'Out':
                 self.textsAreVisible = False
-            
                 self.red = float(1.0)
                 self.green = float(1.0)
                 self.blue = float(1.0)
@@ -512,7 +556,7 @@ class beamMainFrame(wx.Frame):
                 return
         
         else:
-            # Change background without any transition
+            self.currentTransition = ''
             self.switchBackground()
 
 ########################################################
@@ -531,13 +575,13 @@ class beamMainFrame(wx.Frame):
 # TIMER - USED for Fade directly and Fade to black
 ########################################################
     def transition(self, event):
-        if beamSettings._moodTransition == 'Fade directly' or self.RotateBackgroundTrigger == True:
+        if self.currentTransition == 'FadeDirect':
             self.FadeImage()
             return
-        if beamSettings._moodTransition == 'Fade to black' and self.FadeDirection == 'Out':
+        if self.currentTransition == 'FadeToBlack' and self.FadeDirection == 'Out':
             self.FadeToBlackImage()
             return
-        if beamSettings._moodTransition == 'Fade to black'and self.FadeDirection == 'In':
+        if self.currentTransition == 'FadeToBlack' and self.FadeDirection == 'In':
             self.FadeBackImage()
             return
 
@@ -549,6 +593,7 @@ class beamMainFrame(wx.Frame):
         if self.alpha >=1:
             self.alpha = 1.0
             self.TransitionTimer.Stop()
+            self.RotateBackgroundTrigger = False
         self.Refresh()
 
 ########################################################
@@ -573,7 +618,8 @@ class beamMainFrame(wx.Frame):
             self.Refresh()
 
             self.FadeDirection = 'In'
-            self.changeBackground()
+            self.currentTransition = 'FadeToBlack'
+            self.initiateTransition()
     
     def FadeBackImage(self):
         self.red +=  self.delta
@@ -598,13 +644,6 @@ class beamMainFrame(wx.Frame):
         # Starts, stops and executes the rotate-background function.
 
         if self.RotateBackground == 'linear' or self.RotateBackground == 'random':
-            try:
-                self.RotateBackgroundTimer = wx.Timer(self)
-                self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
-                self.RotateBackgroundTimer.Start(int(self.RotateTimer)*1000)
-            except:
-                self.RotateBackgroundTimer.Stop()
-                self.RotateBackgroundTimer.Start(self.RotateTimer)
             (path, file) = os.path.split(self._currentBackgroundPath)
             backgrounds_tmp = os.listdir(path)
             backgrounds = [s for s in backgrounds_tmp if ".jpg" in s or ".png" in s or ".jpg" in s]
@@ -612,14 +651,12 @@ class beamMainFrame(wx.Frame):
                 position = backgrounds.index(file)
             except:
                 position = 0
-            
             # Linear in the folder
             if self.RotateBackground == 'linear':
                 try:
                     self._currentBackgroundPath = os.path.join(path,backgrounds[position+1])
                 except:
                     self._currentBackgroundPath = os.path.join(path,backgrounds[0])
-                self.RotateBackgroundTrigger = True
             # Random
             else:
                 newposition = randint(0, len(backgrounds))
@@ -633,20 +670,23 @@ class beamMainFrame(wx.Frame):
                         self._currentBackgroundPath = os.path.join(path,backgrounds[newposition])
                     except:
                         self._currentBackgroundPath = os.path.join(path,backgrounds[0])
-                self.RotateBackgroundTrigger = True
-
         # Stop the rotation
         if self.RotateBackground == 'no':
             self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
-            self.RotateBackgroundTrigger = False
             try:
                 self.RotateBackgroundTimer.Stop()
+                return
             except:
                 pass
 
-        # Update the background
-        self.changeBackground()
-    
+        # Start the transition
+        if beamSettings._moodTransition == 'No transition':
+            self.currentTransition = ''
+            self.initiateTransition()
+        else:
+            self.currentTransition = 'FadeDirect'
+            self.initiateTransition()
+
     
     
 
