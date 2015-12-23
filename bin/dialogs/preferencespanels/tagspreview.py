@@ -25,7 +25,7 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import wx, os
+import wx, os, platform
 
 ########################################################
 #                   TagsPreview                        #
@@ -48,25 +48,25 @@ class TagsPreview(wx.Panel):
         tagpreview.SetFont(font)
         description = wx.StaticText(self, -1, "Here are all available tags and their values displayed.")
         description.Wrap(380)
-        
+
         ##################
         # REFRESH BUTTON #
         ##################
         self.refreshButton = wx.Button(self, label="Refresh")
         self.refreshButton.Bind(wx.EVT_BUTTON, self.OnTagDropdown)
-        
+
         #################
         # TAGS SELECTOR #
         #################
         self.TagDropdown = wx.ComboBox(self,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda", "Misc"], style=wx.CB_READONLY)
         self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.OnTagDropdown)
-        
+
         #############
         # TAGS LIST #
         #############
         self.TagsList = wx.ListBox(self, -1, size=wx.DefaultSize, choices=Tags, style= wx.LB_NEEDED_SB)
         self.OnTagDropdown()
-        
+
         ##############
         # SET SIZERS #
         ##############
@@ -80,8 +80,8 @@ class TagsPreview(wx.Panel):
         vbox.Add(self.TagsList, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=20)
 
         self.SetSizer(vbox)
-    
-    
+
+
 ###################################################################
 #                           EVENTS                                #
 ###################################################################
@@ -92,7 +92,7 @@ class TagsPreview(wx.Panel):
     def OnTagDropdown(self, event = wx.EVT_COMBOBOX):
         TagsSelected = self.TagDropdown.GetValue()
         self.BuildTagsList(TagsSelected)
-    
+
         ###################
         # BUILD TAGS LIST #
         ###################
@@ -101,7 +101,7 @@ class TagsPreview(wx.Panel):
                       ,'Performer','IsCortina']
         additionalTags = ['%Hour','%Min','%DateDay','%DateMonth','%DateYear','%LongDate','%SongsSinceLastCortina','%CurrentTandaSongsRemaining','%CurrentTandaLength']
         displayList = []
-        
+
         if TagsSelected == "Current Song":
             preTag = '%'
         elif TagsSelected == "Previous Song":
@@ -113,22 +113,16 @@ class TagsPreview(wx.Panel):
         else:
             for i in range(0, len(additionalTags)):
                 displayList.append(additionalTags[i]+ ":  " + str(self.nowPlayingDataModel.convDict[additionalTags[i]]))
-            
+
         if not TagsSelected == 'Misc':
             try:
                 for i in range(0,len(attributes)):
-                    try:
-                        dkhbdj
+                    if platform.system() == 'Darwin':
+                        displayList.append((preTag+attributes[i]+": ").decode('utf-8') + self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
+                    else:
                         displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
-                    except:
-                        # Cuts away signs not ascii
-                        displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8').encode('ascii','ignore')))
             except:
                 for i in range(0,len(attributes)):
                     displayList.append(preTag+attributes[i]+ ": ")
 
         self.TagsList.Set(displayList)
-
-
-
-
