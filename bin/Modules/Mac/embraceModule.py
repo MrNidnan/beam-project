@@ -29,6 +29,8 @@ from bin.songclass import SongObject
 import sys, time
 from subprocess import Popen, PIPE
 from copy import deepcopy
+import time
+
 
 ###############################################################
 #
@@ -36,44 +38,40 @@ from copy import deepcopy
 #
 ###############################################################
 
-GetPosition = '''tell application "Embrace" 
-                 return current index
-                 end tell'''
-GetChangeIDPosition = '''tell application "Embrace" 
-                 return current index
-                 end tell'''
-GetAllInfo    = '''on run argv
-                    tell application "Embrace"
-                       set theAggregate to aggregate of track argv
-                       set theYear to year of track argv
-                    end tell
-                    set AppleScript's text item delimiters to tab
-                    return {theYear, theAggregate} as string
-                 end run'''
-QuickRead     =  '''on run {argv, argw}
-                        set the artistlist to {}
-                        set the titlelist to {}
-                        set startvalue to argv
-                        set stopvalue to argw
-                        tell application "Embrace"
-                            repeat with trackx from startvalue to stopvalue
-                                try
-                                    set the end of the artistlist to artist of track trackx
-                                    set the end of the titlelist to title of track trackx
-                                on error
-                                    set the end of the artistlist to ""
-                                    set the end of the titlelist to ""
-                                end try
-                            end repeat
-                        end tell
-                        set AppleScript's text item delimiters to ASCII character 0
-                        return {artistlist, titlelist} as string
-                    end run'''
+EmbraceScript = '''
+    on run {songCount}
+    tell application "System Events"
+        if (count of (every process whose name is "Embrace")) = 0 then
+            return "PlayerNotRunning"
+        end if
+    end tell
 
-
-CheckRunning = '''tell application "System Events"
-                    count (every process whose name is "Embrace")
-                  end tell'''
+    tell application "Embrace"
+        set startvalue to current index
+        if startvalue = 0 then
+            return "Stopped"
+        end if
+        
+        set stopvalue to (startvalue + songCount)
+        if stopvalue > (count of tracks) then
+            set stopvalue to (count of tracks)
+        end if
+        
+        set AppleScript's text item delimiters to tab
+        
+        set theResult to {"Running"}
+        
+        repeat with trackx from startvalue to stopvalue
+            set theAggregate to aggregate of track trackx
+            set theYear to year of track trackx
+            set theResult to theResult & ({theYear, theAggregate} as string)
+        end repeat
+        
+        set AppleScript's text item delimiters to ASCII character 10
+        return (theResult as string)
+    end tell
+    end run
+    '''
 
 ###############################################################
 #
@@ -82,104 +80,33 @@ CheckRunning = '''tell application "System Events"
 ###############################################################
 
 def run(MaxTandaLength, LastPlaylist):
-    playlist = []
+    start = time.time()
+
+    # The first line is the playbackStatus.  Additional lines are tab-delimited song data
+    lines = AppleScript(EmbraceScript, [str(MaxTandaLength+2)]).rstrip('\n').split("\n")
+
+    # Show timing result in ms
+    print "Embrace run() took", (time.time() - start) * 1000, "ms"
+
+    playbackStatus = lines.pop(0)
+
+
+    return map(makeSong, lines), playbackStatus
+
     
-    #
-    # Player Status
-    #
-    if int(AppleScript(CheckRunning, []).strip()) == 0:
-        playbackStatus = 'PlayerNotRunning'
-        return playlist, playbackStatus
-
-    # Declare our position
-    currentsong     = int(AppleScript(GetPosition, []))
-    if currentsong == 0:
-        playbackStatus = 'Stopped'
-        return playlist, playbackStatus
-
-    playbackStatus = 'Playing'
-    playlistlength  = currentsong+MaxTandaLength+2
-    searchsong = currentsong
-
-    #
-    # Quick-read
-    #
-    if quickRead(currentsong, LastPlaylist, MaxTandaLength):
-        print "Quick-read"
-        playlist = deepcopy(LastPlaylist)
-        print currentsong
-
-        return playlist, playbackStatus
-
-    #
-    # Full-read
-    #
-    print "Full-read"
-    while searchsong < playlistlength and searchsong < currentsong+MaxTandaLength+2:
-        try:
-            playlist.append(getSongAt( searchsong))
-        except:
-            break
-        searchsong = searchsong+1
-    return playlist, playbackStatus
-
-###############################################################
-#
-# Quick read - Player specific
-#
-###############################################################
-
-def quickRead(songPosition = 1, LastRead = [], MaxTandaLength = 1):
-    try:
-        if len(LastRead) < MaxTandaLength + 2:
-            var = AppleScript(QuickRead, [str(songPosition), str(songPosition+len(LastRead))]).rstrip('\n')
-        else:
-            var = AppleScript(QuickRead, [str(songPosition), str(songPosition+len(LastRead)-1)]).rstrip('\n')
-        ArtistsAndTitles =  var.split(chr(0))
-        #print "Quick:",ArtistsAndTitles
-        Last = []
-        try:
-            for i in range(0,len(LastRead)):
-                Song = LastRead[i]
-                Last.append(str(Song.Artist))
-            for i in range(0,len(LastRead)):
-                Song = LastRead[i]
-                Last.append(str(Song.Title))
-        except:
-            pass
-        #print "Previous:",Last
-        if Last == ArtistsAndTitles:
-            return True
-    except:
-        pass
-
-    #print "New!"
-    return False
-
-###############################################################
-#
-# Full read - Player specific
-#
-###############################################################
-
-def getSongAt(songPosition = 1):
+def makeSong(line):
     retSong = SongObject()
+
     try:
-        var = AppleScript(GetAllInfo, [str(songPosition)]).rstrip('\n')
-        retSong.Year, retSong.Title, retSong.Artist, retSong.Album, retSong.Genre, retSong.Comment, retSong.AlbumArtist, retSong.Composer = var.split('\t')[:8]
+        retSong.Year, retSong.Title, retSong.Artist, retSong.Album, retSong.Genre, retSong.Comment, retSong.AlbumArtist, retSong.Composer = line.split('\t')[:8]
     except: 
         # Embrace guarantees that 'aggregate' will contain sanitized fields in the above order
         pass
     
     return retSong
 
-###############################################################
-#
-# AppleScript-function - MacOSX-specific
-#
-###############################################################
 
 def AppleScript(scpt, args=[]):
-     p = Popen(['osascript', '-'] + args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-     stdout, stderr = p.communicate(scpt)
-     return stdout
+    p = Popen(['osascript', '-'] + args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = p.communicate(scpt)
+    return stdout
