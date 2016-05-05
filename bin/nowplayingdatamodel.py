@@ -44,7 +44,7 @@ if platform.system() == 'Linux':
 if platform.system() == 'Windows':
     from Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
 if platform.system() == 'Darwin':
-    from Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule
+    from Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule
 
 ###############################################################
 #
@@ -140,6 +140,8 @@ class NowPlayingDataModel:
                     self.currentPlaylist, self.PlaybackStatus  = voxModule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Cog':
                     self.currentPlaylist, self.PlaybackStatus  = cogModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Embrace':
+                    self.currentPlaylist, self.PlaybackStatus  = embraceModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         #
         # Set status message
