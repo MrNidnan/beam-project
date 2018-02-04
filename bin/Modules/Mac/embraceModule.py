@@ -107,7 +107,6 @@ def run(MaxTandaLength, LastPlaylist):
     if quickRead(currentsong, LastPlaylist, MaxTandaLength):
         print "Quick-read"
         playlist = deepcopy(LastPlaylist)
-        print currentsong
 
         return playlist, playbackStatus
 
@@ -170,6 +169,9 @@ def getSongAt(songPosition = 1):
     except: 
         # Embrace guarantees that 'aggregate' will contain sanitized fields in the above order
         pass
+    # ONLY FOR ITUNES AND EMBRACE
+    if retSong.Year == '0':
+        retSong.Year =''
     
     return retSong
 

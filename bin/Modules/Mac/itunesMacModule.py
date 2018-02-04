@@ -254,7 +254,9 @@ def getSongAt(songPosition = 1):
         #retSong.Performer   Does not exist for itunes
         #retSong.IsCortina   Defined by beam
         #retSong.fileUrl     Does not exist for itunes
-    
+    # ONLY FOR ITUNES AND EMBRACE
+    if retSong.Year == '0':
+        retSong.Year =''
     return retSong
 
 ###############################################################
