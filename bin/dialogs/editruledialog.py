@@ -62,8 +62,8 @@ class EditRuleDialog(wx.Dialog):
             self.Settings   = ({"Type": "Copy", "Field1": "%Comment","Field2": "%Singer", "Active": "yes"})
 
         # Build the static elements
-        self.InputID3Field      = wx.ComboBox(self.EditRulePanel, size=(150,-1), value=self.Settings[u'Field1'], choices=self.InputFields, style=wx.CB_READONLY)
-        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(100,-1), value=self.Settings[u'Type'], choices=['Copy','Cortina','Parse', 'Ignore'], style=wx.CB_READONLY)
+        self.InputID3Field      = wx.ComboBox(self.EditRulePanel, size=(150,-1), value=self.Settings['Field1'], choices=self.InputFields, style=wx.CB_READONLY)
+        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(100,-1), value=self.Settings['Type'], choices=['Copy','Cortina','Parse', 'Ignore'], style=wx.CB_READONLY)
         self.RuleSelectDropdown.Bind(wx.EVT_COMBOBOX, self.ChangeRuleType)
         self.RuleOrder          = wx.SpinCtrl(self.EditRulePanel, value=str(self.RowSelected+1), min=1, max=99)
 
@@ -100,8 +100,10 @@ class EditRuleDialog(wx.Dialog):
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
-        self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
+        # self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
+        self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL, border=10)
+        # self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
+        self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL, border=10)
 
         self.vbox.Add(InfoGrid, flag=wx.ALL, border=10)
         self.vbox.Add(self.hbox, flag=wx.ALL | wx.ALIGN_RIGHT)
@@ -132,8 +134,8 @@ class EditRuleDialog(wx.Dialog):
             self.OutputField1 = wx.ComboBox(self.EditRulePanel, size=(150,-1), value="%Artist", choices=self.OutputFields, style=wx.CB_READONLY)
             self.sizer1.Add(self.OutputField1)
 
-            if self.Settings[u'Type'] == 'Copy':
-                self.OutputField1.SetStringSelection(self.Settings[u'Field2'])
+            if self.Settings['Type'] == 'Copy':
+                self.OutputField1.SetStringSelection(self.Settings['Field2'])
             else:
                 self.OutputField1.SetStringSelection("%Artist")
 
@@ -152,10 +154,10 @@ class EditRuleDialog(wx.Dialog):
             self.OutputField2       = wx.ComboBox(self.EditRulePanel,value="%Artist", size=(150,-1), choices=self.OutputFields,style=wx.CB_READONLY)
             self.sizer2.Add(self.OutputField2)
 
-            if self.Settings[u'Type'] == 'Parse':
-                self.OutputField1.SetStringSelection(self.Settings[u'Field3'])
-                self.OutputField2.SetStringSelection(self.Settings[u'Field4'])
-                self.OutputField3.SetValue(self.Settings[u'Field2'])
+            if self.Settings['Type'] == 'Parse':
+                self.OutputField1.SetStringSelection(self.Settings['Field3'])
+                self.OutputField2.SetStringSelection(self.Settings['Field4'])
+                self.OutputField3.SetValue(self.Settings['Field2'])
             else:
                 self.OutputField1.SetStringSelection("%Artist")
                 self.OutputField2.SetStringSelection("%Title")
@@ -183,9 +185,9 @@ class EditRuleDialog(wx.Dialog):
             self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="", size=(165,-1))
             self.sizer2.Add(self.OutputField2)
 
-            if self.Settings[u'Type'] == 'Cortina':
-                self.IsIsNot.SetStringSelection(self.Settings[u'Field2'])
-                self.OutputField2.SetValue(self.Settings[u'Field3'])
+            if self.Settings['Type'] == 'Cortina':
+                self.IsIsNot.SetStringSelection(self.Settings['Field2'])
+                self.OutputField2.SetValue(self.Settings['Field3'])
             else:
                 self.IsIsNot.SetStringSelection("is")
                 self.OutputField2.SetValue("")
@@ -208,9 +210,9 @@ class EditRuleDialog(wx.Dialog):
             self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="", size=(165,-1))
             self.sizer2.Add(self.OutputField2)
             
-            if self.Settings[u'Type'] == 'Ignore':
-                self.IsIsNot.SetStringSelection(self.Settings[u'Field2'])
-                self.OutputField2.SetValue(self.Settings[u'Field3'])
+            if self.Settings['Type'] == 'Ignore':
+                self.IsIsNot.SetStringSelection(self.Settings['Field2'])
+                self.OutputField2.SetValue(self.Settings['Field3'])
             else:
                 self.IsIsNot.SetStringSelection("is")
                 self.OutputField2.SetValue("")
@@ -253,24 +255,24 @@ class EditRuleDialog(wx.Dialog):
 
         # Build NewRule
         NewRule = {}
-        NewRule[u'Type']        = RuleSelected
-        NewRule[u'Field1']      = self.InputID3Field.GetValue()
-        NewRule[u'Active']      = self.Settings[u'Active']
+        NewRule['Type']        = RuleSelected
+        NewRule['Field1']      = self.InputID3Field.GetValue()
+        NewRule['Active']      = self.Settings['Active']
 
         if RuleSelected == 'Copy':
-            NewRule[u'Field2']      = self.OutputField1.GetValue()
+            NewRule['Field2']      = self.OutputField1.GetValue()
         if RuleSelected == 'Parse':
-            NewRule[u'Field2']      = self.OutputField3.GetValue()
-            NewRule[u'Field3']      = self.OutputField1.GetValue()
-            NewRule[u'Field4']      = self.OutputField2.GetValue()
+            NewRule['Field2']      = self.OutputField3.GetValue()
+            NewRule['Field3']      = self.OutputField1.GetValue()
+            NewRule['Field4']      = self.OutputField2.GetValue()
         if RuleSelected == 'Cortina':
-            NewRule[u'Field2']      = self.IsIsNot.GetValue()
-            NewRule[u'Field3']      = self.OutputField2.GetValue()
+            NewRule['Field2']      = self.IsIsNot.GetValue()
+            NewRule['Field3']      = self.OutputField2.GetValue()
         if RuleSelected == 'Ignore':
-            NewRule[u'Field2']      = self.IsIsNot.GetValue()
-            NewRule[u'Field3']      = self.OutputField2.GetValue()
+            NewRule['Field2']      = self.IsIsNot.GetValue()
+            NewRule['Field3']      = self.OutputField2.GetValue()
 
-        NewRule[u'Field1']      = self.InputID3Field.GetValue()
+        NewRule['Field1']      = self.InputID3Field.GetValue()
         # Decide where NewRule goes into the vector self.Settings
         if self.mode == "Add rule":
             if RuleOrderBox < self.RowSelected:

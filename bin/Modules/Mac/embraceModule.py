@@ -105,7 +105,7 @@ def run(MaxTandaLength, LastPlaylist):
     # Quick-read
     #
     if quickRead(currentsong, LastPlaylist, MaxTandaLength):
-        print "Quick-read"
+        print("Quick-read")
         playlist = deepcopy(LastPlaylist)
 
         return playlist, playbackStatus
@@ -113,7 +113,7 @@ def run(MaxTandaLength, LastPlaylist):
     #
     # Full-read
     #
-    print "Full-read"
+    print("Full-read")
     while searchsong < playlistlength and searchsong < currentsong+MaxTandaLength+2:
         try:
             playlist.append(getSongAt( searchsong))

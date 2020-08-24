@@ -210,7 +210,7 @@ class BaseDescriptor(object):
         """May raise ValueError"""
 
         value = 0
-        for i in xrange(4):
+        for i in range(4):
             try:
                 b = cdata.uint8(fileobj.read(1))
             except cdata.error as e:
@@ -317,10 +317,10 @@ class DecoderConfigDescriptor(BaseDescriptor):
     def codec_param(self):
         """string"""
 
-        param = u".%X" % self.objectTypeIndication
+        param = ".%X" % self.objectTypeIndication
         info = self.decSpecificInfo
         if info is not None:
-            param += u".%d" % info.audioObjectType
+            param += ".%d" % info.audioObjectType
         return param
 
     @property

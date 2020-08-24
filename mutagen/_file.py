@@ -86,7 +86,7 @@ class FileType(DictMixin):
         if self.tags is None:
             return []
         else:
-            return self.tags.keys()
+            return list(self.tags.keys())
 
     def delete(self, filename=None):
         """Remove tags from a file.
@@ -244,7 +244,7 @@ def File(filename, options=None, easy=False):
         results = [(Kind.score(filename, fileobj, header), Kind.__name__)
                    for Kind in options]
 
-    results = list(izip(results, options))
+    results = list(zip(results, options))
     results.sort()
     (score, name), Kind = results[-1]
     if score > 0:

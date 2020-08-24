@@ -62,7 +62,7 @@ def getSongObjectFromTrack(metadata):
     retSong = SongObject()
 
     try:
-        retSong.Artist      = (metadata[u'xesam:artist'])[0].encode('utf-8')
+        retSong.Artist      = (metadata['xesam:artist'])[0].encode('utf-8')
     except:
         pass
         
@@ -87,7 +87,7 @@ def getSongObjectFromTrack(metadata):
         pass
         
     try:
-        retSong.Composer    = (Track[u'composer']).encode('utf-8')
+        retSong.Composer    = (Track['composer']).encode('utf-8')
     except:
         pass
         

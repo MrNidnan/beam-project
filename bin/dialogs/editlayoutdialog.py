@@ -83,20 +83,20 @@ class EditLayoutDialog(wx.Dialog):
 
         
         # Define fields
-        self.LabelText          = wx.TextCtrl(self.EditLayoutPanel, size=(250,-1), value=self.Settings[u'Field'])
-        self.FontDropdown       = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'Font'], choices=elist, style=wx.CB_READONLY)
-        self.StyleDropdown      = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'Style'], choices=Styles, style=wx.CB_READONLY)
-        self.WeightDropdown     = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'Weight'], choices=Weights, style=wx.CB_READONLY)
-        self.SizeText           = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings[u'Size']), min=1, max=99)
+        self.LabelText          = wx.TextCtrl(self.EditLayoutPanel, size=(250,-1), value=self.Settings['Field'])
+        self.FontDropdown       = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Font'], choices=elist, style=wx.CB_READONLY)
+        self.StyleDropdown      = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Style'], choices=Styles, style=wx.CB_READONLY)
+        self.WeightDropdown     = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Weight'], choices=Weights, style=wx.CB_READONLY)
+        self.SizeText           = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings['Size']), min=1, max=99)
         self.ColorField         = wx.ColourPickerCtrl(self.EditLayoutPanel, size=(100,-1))
-        self.HideText           = wx.ComboBox(self.EditLayoutPanel, size=(250,-1), value=self.Settings[u'HideControl'], choices=HideLayoutTags, style=wx.CB_READONLY)
-        self.VerticalPos        = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings[u'Position'][0]), min=1, max=99)
-        self.HorizontalPos      = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings[u'Position'][1]), min=1, max=99)
-        self.Alignment          = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'Alignment'], choices=Align, style=wx.CB_READONLY)
-        self.TextFlow           = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings[u'TextFlow'], choices=TextFlow, style=wx.CB_READONLY)
-        self.ColorField.SetColour(eval(self.Settings[u'FontColor']))
+        self.HideText           = wx.ComboBox(self.EditLayoutPanel, size=(250,-1), value=self.Settings['HideControl'], choices=HideLayoutTags, style=wx.CB_READONLY)
+        self.VerticalPos        = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings['Position'][0]), min=1, max=99)
+        self.HorizontalPos      = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings['Position'][1]), min=1, max=99)
+        self.Alignment          = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Alignment'], choices=Align, style=wx.CB_READONLY)
+        self.TextFlow           = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['TextFlow'], choices=TextFlow, style=wx.CB_READONLY)
+        self.ColorField.SetColour(eval(self.Settings['FontColor']))
         
-        if self.Settings[u'Alignment']=="Center":
+        if self.Settings['Alignment']=="Center":
             self.HorizontalPos.Enable(False)
         self.Alignment.Bind(wx.EVT_COMBOBOX, self.DisableHorizontalBox)
         
@@ -123,9 +123,11 @@ class EditLayoutDialog(wx.Dialog):
         self.vboxLayout = wx.BoxSizer(wx.VERTICAL)
         self.hboxLayout = wx.BoxSizer(wx.HORIZONTAL)
         
-        self.hboxLayout.Add(self.ButtonSaveLayout, 0, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.ALIGN_RIGHT, border=10)
-        self.hboxLayout.Add(self.ButtonCancelLayout, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
-        
+        # self.hboxLayout.Add(self.ButtonSaveLayout, 0, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.ALIGN_RIGHT, border=10)
+        self.hboxLayout.Add(self.ButtonSaveLayout, 0, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
+        # self.hboxLayout.Add(self.ButtonCancelLayout, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
+        self.hboxLayout.Add(self.ButtonCancelLayout, 0, flag=wx.ALL, border=10)
+
         self.vboxLayout.Add(wx.StaticText(self.EditLayoutPanel, label="Label"), 0, flag=wx.ALL, border=10)
         self.vboxLayout.Add(self.LabelText, 0, flag=wx.LEFT | wx.RIGHT, border=10)
 
@@ -150,16 +152,16 @@ class EditLayoutDialog(wx.Dialog):
 # SAVE
 #
     def OnSaveLayoutItem(self, event):
-        self.Settings[u'Field']         = self.LabelText.GetValue()
-        self.Settings[u'Font']      = self.FontDropdown.GetValue()
-        self.Settings[u'Style']         = self.StyleDropdown.GetValue()
-        self.Settings[u'Weight']        = self.WeightDropdown.GetValue()
-        self.Settings[u'Size']      = int(self.SizeText.GetValue())
-        self.Settings[u'HideControl']   = self.HideText.GetValue()
-        self.Settings[u'FontColor']     = str(self.ColorField.GetColour())
-        self.Settings[u'Position']  = [int(self.VerticalPos.GetValue()), int(self.HorizontalPos.GetValue())]
-        self.Settings[u'Alignment'] = self.Alignment.GetValue()
-        self.Settings[u'TextFlow'] = self.TextFlow.GetValue()
+        self.Settings['Field']         = self.LabelText.GetValue()
+        self.Settings['Font']      = self.FontDropdown.GetValue()
+        self.Settings['Style']         = self.StyleDropdown.GetValue()
+        self.Settings['Weight']        = self.WeightDropdown.GetValue()
+        self.Settings['Size']      = int(self.SizeText.GetValue())
+        self.Settings['HideControl']   = self.HideText.GetValue()
+        self.Settings['FontColor']     = str(self.ColorField.GetColour())
+        self.Settings['Position']  = [int(self.VerticalPos.GetValue()), int(self.HorizontalPos.GetValue())]
+        self.Settings['Alignment'] = self.Alignment.GetValue()
+        self.Settings['TextFlow'] = self.TextFlow.GetValue()
 
         # Remove old item from dictionary
         if self.mode == "Edit layout item":

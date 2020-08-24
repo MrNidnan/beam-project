@@ -57,7 +57,7 @@ class DefaultLayout(wx.Panel):
         backdescription = wx.StaticText(self, -1, "Select background image (1920x1080 recommended)")
         self.browse = wx.Button(self, label="Browse")
         self.browse.Bind(wx.EVT_BUTTON, self.BrowseBackgroundImage)
-        (path,backgroundfile) = os.path.split(self.BeamSettings._moods[0][u'Background'])
+        (path,backgroundfile) = os.path.split(self.BeamSettings._moods[0]['Background'])
         self.currentBackground = wx.StaticText(self, -1, "")
         hboxBackground = wx.BoxSizer(wx.HORIZONTAL)
         hboxBackground.Add(self.browse, flag=wx.RIGHT | wx.TOP, border=5)
@@ -72,10 +72,10 @@ class DefaultLayout(wx.Panel):
         self.ChangeBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
         self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
         self.BackgroundTimerBox.Bind(wx.EVT_COMBOBOX, self.OnRotateBackground)
-        if self.BeamSettings._moods[0][u'RotateBackground'] == "linear":
+        if self.BeamSettings._moods[0]['RotateBackground'] == "linear":
             self.ChangeBackgroundBox.SetValue(True)
             self.RandomBackgroundBox.SetValue(False)
-        elif self.BeamSettings._moods[0][u'RotateBackground'] == "random":
+        elif self.BeamSettings._moods[0]['RotateBackground'] == "random":
             self.ChangeBackgroundBox.SetValue(True)
             self.RandomBackgroundBox.SetValue(True)
         else:
@@ -146,7 +146,7 @@ class DefaultLayout(wx.Panel):
                                        "Image files(*.png,*.jpg)|*.png;*.jpg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:
-            self.BeamSettings._moods[0][u'Background'] = openFileDialog.GetPath()
+            self.BeamSettings._moods[0]['Background'] = openFileDialog.GetPath()
             # change current background
             self.OnRotateBackground()
             openFileDialog.Destroy()
@@ -156,41 +156,41 @@ class DefaultLayout(wx.Panel):
         #####################
     def OnRotateBackground(self, event=wx.EVT_CHECKBOX):
         if self.ChangeBackgroundBox.IsChecked() and not self.RandomBackgroundBox.IsChecked():
-            self.BeamSettings._moods[0][u'RotateBackground'] = "linear"
+            self.BeamSettings._moods[0]['RotateBackground'] = "linear"
             self.RandomBackgroundBox.Enable()
             self.BackgroundTimerBox.Enable()
         elif self.ChangeBackgroundBox.IsChecked() and self.RandomBackgroundBox.IsChecked():
-            self.BeamSettings._moods[0][u'RotateBackground'] = "random"
+            self.BeamSettings._moods[0]['RotateBackground'] = "random"
             self.RandomBackgroundBox.Enable()
             self.BackgroundTimerBox.Enable()
         else:
-            self.BeamSettings._moods[0][u'RotateBackground'] = "no"
+            self.BeamSettings._moods[0]['RotateBackground'] = "no"
             self.RandomBackgroundBox.Disable()
             self.BackgroundTimerBox.Disable()
         timerVector = [15, 30, 60, 120, 180, 300, 600, 1200]
-        self.BeamSettings._moods[0][u'RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
+        self.BeamSettings._moods[0]['RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
         
-        if int(self.BeamSettings._moods[0][u'RotateTimer']) == 15:
+        if int(self.BeamSettings._moods[0]['RotateTimer']) == 15:
             self.BackgroundTimerBox.SetSelection(0)
-        elif int(self.BeamSettings._moods[0][u'RotateTimer']) == 30:
+        elif int(self.BeamSettings._moods[0]['RotateTimer']) == 30:
             self.BackgroundTimerBox.SetSelection(1)
-        elif int(self.BeamSettings._moods[0][u'RotateTimer']) == 60:
+        elif int(self.BeamSettings._moods[0]['RotateTimer']) == 60:
             self.BackgroundTimerBox.SetSelection(2)
-        elif int(self.BeamSettings._moods[0][u'RotateTimer']) == 120:
+        elif int(self.BeamSettings._moods[0]['RotateTimer']) == 120:
             self.BackgroundTimerBox.SetSelection(3)
-        elif int(self.BeamSettings._moods[0][u'RotateTimer']) == 180:
+        elif int(self.BeamSettings._moods[0]['RotateTimer']) == 180:
             self.BackgroundTimerBox.SetSelection(4)
-        elif int(self.BeamSettings._moods[0][u'RotateTimer']) == 300:
+        elif int(self.BeamSettings._moods[0]['RotateTimer']) == 300:
             self.BackgroundTimerBox.SetSelection(5)
-        elif int(self.BeamSettings._moods[0][u'RotateTimer']) == 600:
+        elif int(self.BeamSettings._moods[0]['RotateTimer']) == 600:
             self.BackgroundTimerBox.SetSelection(6)
-        elif int(self.BeamSettings._moods[0][u'RotateTimer']) == 1200:
+        elif int(self.BeamSettings._moods[0]['RotateTimer']) == 1200:
             self.BackgroundTimerBox.SetSelection(7)
         else:
             self.BackgroundTimerBox.SetSelection(2)
         
-        (path,backgroundfile) = os.path.split(self.BeamSettings._moods[0][u'Background'])
-        if self.BeamSettings._moods[0][u'RotateBackground'] == "no":
+        (path,backgroundfile) = os.path.split(self.BeamSettings._moods[0]['Background'])
+        if self.BeamSettings._moods[0]['RotateBackground'] == "no":
             self.currentBackground.SetLabel("Image: " + backgroundfile)
         else:
             self.currentBackground.SetLabel("Images from folder: " + os.path.split(path)[1])
@@ -199,13 +199,13 @@ class DefaultLayout(wx.Panel):
         # LAYOUT BUTTONS #
         ##################
     def OnAddLayout(self, event):
-        self.EditLayout = EditLayoutDialog(self, len(self.DisplayRows), "Add layout item", self.BeamSettings._moods[0][u'Display'])
+        self.EditLayout = EditLayoutDialog(self, len(self.DisplayRows), "Add layout item", self.BeamSettings._moods[0]['Display'])
         self.EditLayout.Show()
     
     def OnEditLayout(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected>-1:
-            self.EditLayout = EditLayoutDialog(self, RowSelected, "Edit layout item", self.BeamSettings._moods[0][u'Display'])
+            self.EditLayout = EditLayoutDialog(self, RowSelected, "Edit layout item", self.BeamSettings._moods[0]['Display'])
             self.EditLayout.Show()
     def OnDelLayout(self, event):
         RowSelected = self.LayoutList.GetSelection()
@@ -217,19 +217,19 @@ class DefaultLayout(wx.Panel):
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_OK:
-                self.BeamSettings._moods[0][u'Display'].pop(RowSelected)
+                self.BeamSettings._moods[0]['Display'].pop(RowSelected)
                 self.BuildLayoutList()
 
         #####################
         # LAYOUT CHECKBOXES #
         #####################
     def OnCheckLayout(self, event):
-        for i in range(0, len(self.BeamSettings._moods[0][u'Display'])):
-            layout = self.BeamSettings._moods[0][u'Display'][i]
+        for i in range(0, len(self.BeamSettings._moods[0]['Display'])):
+            layout = self.BeamSettings._moods[0]['Display'][i]
             if self.LayoutList.IsChecked(i):
-                layout[u'Active'] = "yes"
+                layout['Active'] = "yes"
             else:
-                layout[u'Active'] = "no"
+                layout['Active'] = "no"
         self.BuildLayoutList()
 
         ####################
@@ -237,12 +237,12 @@ class DefaultLayout(wx.Panel):
         ####################
     def BuildLayoutList(self):
         self.DisplayRows = []
-        for i in range(0, len(self.BeamSettings._moods[0][u'Display'])):
-            Settings = self.BeamSettings._moods[0][u'Display'][i]
-            self.DisplayRows.append(Settings[u'Field'])
+        for i in range(0, len(self.BeamSettings._moods[0]['Display'])):
+            Settings = self.BeamSettings._moods[0]['Display'][i]
+            self.DisplayRows.append(Settings['Field'])
         self.LayoutList.Set(self.DisplayRows)
-        for i in range(0, len(self.BeamSettings._moods[0][u'Display'])):
-            Settings = self.BeamSettings._moods[0][u'Display'][i]
+        for i in range(0, len(self.BeamSettings._moods[0]['Display'])):
+            Settings = self.BeamSettings._moods[0]['Display'][i]
             if Settings['Active'] == "yes":
                 self.LayoutList.Check(i, check=True)
             else:

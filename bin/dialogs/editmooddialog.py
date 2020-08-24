@@ -41,7 +41,8 @@ class EditMood(wx.Frame):
         
         self.MainWindowParent = parent
         
-        wx.Frame.__init__(self, parent, title=mode, pos =(self.MainWindowParent.GetScreenPosition()+(50,50)), size=self.MainWindowParent.BeamSettings._moodSize, style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
+        # wx.Frame.__init__(self, parent, title=mode, pos =(self.MainWindowParent.GetScreenPosition()+(50,50)), size=self.MainWindowParent.BeamSettings._moodSize, style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
+        wx.Frame.__init__(self, parent, title=mode, pos =(self.MainWindowParent.GetScreenPosition()+(50,50)), size=self.MainWindowParent.BeamSettings._moodSize, style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.RowSelected = RowSelected
         self.mode = mode
         self.Settings = {}
@@ -54,7 +55,7 @@ class EditMood(wx.Frame):
             self.Settings   = beamSettings._moods[self.RowSelected]
         else:
             # Create a new default setting
-            DefaultDisplay = deepcopy(beamSettings._moods[0][u'Display'])
+            DefaultDisplay = deepcopy(beamSettings._moods[0]['Display'])
             self.Settings   = ({"Active": "yes", "Field3": "something","Field2": "contains","Field1": "%Title",
                                "Type": "Mood", "Name": "My Mood", "RotateBackground": "no", "RotateTimer": 30,
                                "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg",
@@ -98,10 +99,10 @@ class EditMood(wx.Frame):
         self.ChangeBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
         self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
         self.BackgroundTimerBox.Bind(wx.EVT_COMBOBOX, self.OnRotateBackground)
-        if self.Settings[u'RotateBackground'] == "linear":
+        if self.Settings['RotateBackground'] == "linear":
             self.ChangeBackgroundBox.SetValue(True)
             self.RandomBackgroundBox.SetValue(False)
-        elif self.Settings[u'RotateBackground'] == "random":
+        elif self.Settings['RotateBackground'] == "random":
             self.ChangeBackgroundBox.SetValue(True)
             self.RandomBackgroundBox.SetValue(True)
         else:
@@ -146,12 +147,12 @@ class EditMood(wx.Frame):
 
         # Create the fields
         
-        self.InputID3Field = wx.ComboBox(self.panel, size=(120,-1), value=self.Settings[u'Field1'], choices=self.Fields, style=wx.CB_READONLY)
-        self.IsIsNot       = wx.ComboBox(self.panel,value=self.Settings[u'Field2'], choices=["is", "is not", "contains"], style=wx.CB_READONLY)
+        self.InputID3Field = wx.ComboBox(self.panel, size=(120,-1), value=self.Settings['Field1'], choices=self.Fields, style=wx.CB_READONLY)
+        self.IsIsNot       = wx.ComboBox(self.panel,value=self.Settings['Field2'], choices=["is", "is not", "contains"], style=wx.CB_READONLY)
         self.MoodOrder     = wx.SpinCtrl(self.panel, value=str(self.RowSelected), min=1, max=99)
-        self.OutputField   = wx.TextCtrl(self.panel, value=self.Settings[u'Field3'], size=(120,-1))
-        self.MoodNameField = wx.TextCtrl(self.panel, value=self.Settings[u'Name'], size=(120,-1))
-        self.MoodState     = wx.ComboBox(self.panel,value=self.Settings[u'PlayState'], choices=["Playing", "Not Playing"], size=(120,-1), style=wx.CB_READONLY)
+        self.OutputField   = wx.TextCtrl(self.panel, value=self.Settings['Field3'], size=(120,-1))
+        self.MoodNameField = wx.TextCtrl(self.panel, value=self.Settings['Name'], size=(120,-1))
+        self.MoodState     = wx.ComboBox(self.panel,value=self.Settings['PlayState'], choices=["Playing", "Not Playing"], size=(120,-1), style=wx.CB_READONLY)
 
         InfoGrid    =   wx.FlexGridSizer(6, 3, 5, 5)
         InfoGrid.AddMany ( [(wx.StaticText(self.panel, label="Name"), 0, wx.EXPAND),
@@ -206,10 +207,10 @@ class EditMood(wx.Frame):
 #
     def BuildLayoutList(self):
         self.DisplayRows = []
-        MoodLayout = self.Settings[u'Display']
+        MoodLayout = self.Settings['Display']
         for i in range(0, len(MoodLayout)):
             Settings = MoodLayout[i]
-            self.DisplayRows.append(Settings[u'Field'])
+            self.DisplayRows.append(Settings['Field'])
         self.LayoutList.Set(self.DisplayRows)
         for i in range(0, len(MoodLayout)):
             Settings = MoodLayout[i]
@@ -219,13 +220,13 @@ class EditMood(wx.Frame):
                 self.LayoutList.Check(i, check=False)
 
     def OnCheckLayout(self, event):
-        MoodLayout = self.Settings[u'Display']
+        MoodLayout = self.Settings['Display']
         for i in range(0, len(MoodLayout)):
             layout = MoodLayout[i]
             if self.LayoutList.IsChecked(i):
-                layout[u'Active'] = "yes"
+                layout['Active'] = "yes"
             else:
-                layout[u'Active'] = "no"
+                layout['Active'] = "no"
         self.BuildLayoutList()
 
 #
@@ -233,44 +234,44 @@ class EditMood(wx.Frame):
 #
     def OnRotateBackground(self, event):
         if self.ChangeBackgroundBox.IsChecked() and not self.RandomBackgroundBox.IsChecked():
-            self.Settings[u'RotateBackground'] = "linear"
+            self.Settings['RotateBackground'] = "linear"
             self.RandomBackgroundBox.Enable()
             self.BackgroundTimerBox.Enable()
         elif self.ChangeBackgroundBox.IsChecked() and self.RandomBackgroundBox.IsChecked():
-            self.Settings[u'RotateBackground'] = "random"
+            self.Settings['RotateBackground'] = "random"
             self.RandomBackgroundBox.Enable()
             self.BackgroundTimerBox.Enable()
         else:
-            self.Settings[u'RotateBackground'] = "no"
+            self.Settings['RotateBackground'] = "no"
             self.RandomBackgroundBox.Disable()
             self.BackgroundTimerBox.Disable()
         timerVector = [15, 30, 60, 120, 180, 300, 600, 1200]
-        self.Settings[u'RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
+        self.Settings['RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
         self.rotateBackgroundFunction()
     
     
     def rotateBackgroundFunction(self):
-        if int(self.Settings[u'RotateTimer']) == 15:
+        if int(self.Settings['RotateTimer']) == 15:
             self.BackgroundTimerBox.SetSelection(0)
-        elif int(self.Settings[u'RotateTimer']) == 30:
+        elif int(self.Settings['RotateTimer']) == 30:
             self.BackgroundTimerBox.SetSelection(1)
-        elif int(self.Settings[u'RotateTimer']) == 60:
+        elif int(self.Settings['RotateTimer']) == 60:
             self.BackgroundTimerBox.SetSelection(2)
-        elif int(self.Settings[u'RotateTimer']) == 120:
+        elif int(self.Settings['RotateTimer']) == 120:
             self.BackgroundTimerBox.SetSelection(3)
-        elif int(self.Settings[u'RotateTimer']) == 180:
+        elif int(self.Settings['RotateTimer']) == 180:
             self.BackgroundTimerBox.SetSelection(4)
-        elif int(self.Settings[u'RotateTimer']) == 300:
+        elif int(self.Settings['RotateTimer']) == 300:
             self.BackgroundTimerBox.SetSelection(5)
-        elif int(self.Settings[u'RotateTimer']) == 600:
+        elif int(self.Settings['RotateTimer']) == 600:
             self.BackgroundTimerBox.SetSelection(6)
-        elif int(self.Settings[u'RotateTimer']) == 1200:
+        elif int(self.Settings['RotateTimer']) == 1200:
             self.BackgroundTimerBox.SetSelection(7)
         else:
             self.BackgroundTimerBox.SetSelection(2)
 
-        (path,backgroundfile) = os.path.split(self.Settings[u'Background'])
-        if self.Settings[u'RotateBackground'] == "no":
+        (path,backgroundfile) = os.path.split(self.Settings['Background'])
+        if self.Settings['RotateBackground'] == "no":
             self.currentBackground.SetLabel("Image: " + backgroundfile)
         else:
             self.currentBackground.SetLabel("Images from folder: " + os.path.split(path)[1])
@@ -278,13 +279,13 @@ class EditMood(wx.Frame):
 # LAYOUT BUTTONS
 #
     def OnAddLayout(self, event):
-        self.EditLayout = EditLayoutDialog(self, len(self.DisplayRows), "Add layout item", self.Settings[u'Display'])
+        self.EditLayout = EditLayoutDialog(self, len(self.DisplayRows), "Add layout item", self.Settings['Display'])
         self.EditLayout.Show()
 
     def OnEditLayout(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected>-1:
-            self.EditLayout = EditLayoutDialog(self, RowSelected, "Edit layout item", self.Settings[u'Display'])
+            self.EditLayout = EditLayoutDialog(self, RowSelected, "Edit layout item", self.Settings['Display'])
             self.EditLayout.Show()
 
     def OnDelLayout(self, event):
@@ -297,7 +298,7 @@ class EditMood(wx.Frame):
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_OK:
-                self.Settings[u'Display'].pop(RowSelected)
+                self.Settings['Display'].pop(RowSelected)
                 self.BuildLayoutList()
 
 #
@@ -305,11 +306,11 @@ class EditMood(wx.Frame):
 #
     def onSave(self, e):
         # Get Settings
-        self.Settings[u'Name'] = self.MoodNameField.GetValue()
-        self.Settings[u'PlayState'] = self.MoodState.GetValue()
-        self.Settings[u'Field1'] = self.InputID3Field.GetValue()
-        self.Settings[u'Field2'] = self.IsIsNot.GetValue()
-        self.Settings[u'Field3'] = self.OutputField.GetValue()
+        self.Settings['Name'] = self.MoodNameField.GetValue()
+        self.Settings['PlayState'] = self.MoodState.GetValue()
+        self.Settings['Field1'] = self.InputID3Field.GetValue()
+        self.Settings['Field2'] = self.IsIsNot.GetValue()
+        self.Settings['Field3'] = self.OutputField.GetValue()
         MoodOrderBox = int(self.MoodOrder.GetValue())
         # Place settings in moods
         if self.mode == "Add mood":
@@ -341,7 +342,7 @@ class EditMood(wx.Frame):
                                        "Image files(*.png,*.jpg)|*.png;*.jpg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:
-            self.Settings[u'Background'] = openFileDialog.GetPath()
-            (path,backgroundfile) = os.path.split(self.Settings[u'Background'])
+            self.Settings['Background'] = openFileDialog.GetPath()
+            (path,backgroundfile) = os.path.split(self.Settings['Background'])
             self.rotateBackgroundFunction()
             openFileDialog.Destroy()

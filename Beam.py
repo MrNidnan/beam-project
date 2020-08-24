@@ -41,7 +41,7 @@ app = wx.App(False) # Error messages go to terminal
 ########################################################
 beamSettings.LoadConfig(beamSettings.defaultConfigFileName)
 
-print (beamSettings.mainFrameTitle)
+print((beamSettings.mainFrameTitle))
 
 ########################################################
 # Select logging method (terminal or file)

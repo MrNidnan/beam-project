@@ -29,6 +29,7 @@ try:
 	import win32gui
 except:
 	pass
+from bin.Modules.winutils import applicationrunning
 
 ###############################################################
 #
@@ -44,7 +45,7 @@ def run(MaxTandaLength):
     #
     # Player Status
     #
-    if ApplicationRunning("spotify.exe"):
+    if applicationrunning("spotify.exe"):
         try:
             spotify = win32gui.FindWindow("SpotifyMainWindow", None)
             Track = win32gui.GetWindowText(spotify)
@@ -55,9 +56,9 @@ def run(MaxTandaLength):
         playbackStatus = 'PlayerNotRunning'
         return playlist, playbackStatus
 
-	if Track == "":
-		playbackStatus = 'PlayerNotRunning'
-		return playlist, playbackStatus
+    if Track == "":
+        playbackStatus = 'PlayerNotRunning'
+        return playlist, playbackStatus
 
     #
     # Playback

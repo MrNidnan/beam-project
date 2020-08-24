@@ -32,6 +32,7 @@ try:
     import win32com.client
 except ImportError:
     pass
+from bin.Modules.winutils import applicationrunning
 
 ###############################################################
 #
@@ -46,7 +47,7 @@ def run(MaxTandaLength):
     #
     # Player Status
     #
-    if ApplicationRunning("foobar2000.exe"):
+    if applicationrunning("foobar2000.exe"):
         try:
             pythoncom.CoInitialize()
             Foobar = win32com.client.Dispatch("Foobar2000.Application.0.7")
@@ -103,20 +104,3 @@ def getSongAt(Foobar, songPosition):
     retSong.fileUrl     = Foobar.Playback.FormatTitle("[%path%]").encode('latin-1')
     
     return retSong
-
-###############################################################
-#
-# Application running Windows-specific
-#
-###############################################################
-
-def ApplicationRunning(AppName):
-    import subprocess
-    cmd = 'WMIC PROCESS get Caption,Commandline,Processid'
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    for line in proc.stdout:
-        if AppName in line:
-            proc.kill()
-            return True
-    proc.kill()
-    return False

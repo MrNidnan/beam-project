@@ -119,7 +119,7 @@ class EasyMP4Tags(DictMixin, Metadata):
             ret = []
             for (track, total) in tags[atomid]:
                 if total:
-                    ret.append(u"%d/%d" % (track, total))
+                    ret.append("%d/%d" % (track, total))
                 else:
                     ret.append(text_type(track))
             return ret
@@ -186,7 +186,7 @@ class EasyMP4Tags(DictMixin, Metadata):
         key = key.lower()
 
         if PY2:
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 value = [value]
         else:
             if isinstance(value, text_type):
@@ -208,7 +208,7 @@ class EasyMP4Tags(DictMixin, Metadata):
 
     def keys(self):
         keys = []
-        for key in self.Get.keys():
+        for key in list(self.Get.keys()):
             if key in self.List:
                 keys.extend(self.List[key](self.__mp4, key))
             elif key in self:
@@ -224,7 +224,7 @@ class EasyMP4Tags(DictMixin, Metadata):
                 strings.append("%s=%s" % (key, value))
         return "\n".join(strings)
 
-for atomid, key in {
+for atomid, key in list({
     '\xa9nam': 'title',
     '\xa9alb': 'album',
     '\xa9ART': 'artist',
@@ -240,10 +240,10 @@ for atomid, key in {
     'soar': 'artistsort',
     'sonm': 'titlesort',
     'soco': 'composersort',
-}.items():
+}.items()):
     EasyMP4Tags.RegisterTextKey(key, atomid)
 
-for name, key in {
+for name, key in list({
     'MusicBrainz Artist Id': 'musicbrainz_artistid',
     'MusicBrainz Track Id': 'musicbrainz_trackid',
     'MusicBrainz Album Id': 'musicbrainz_albumid',
@@ -252,18 +252,18 @@ for name, key in {
     'MusicBrainz Album Status': 'musicbrainz_albumstatus',
     'MusicBrainz Album Type': 'musicbrainz_albumtype',
     'MusicBrainz Release Country': 'releasecountry',
-}.items():
+}.items()):
     EasyMP4Tags.RegisterFreeformKey(key, name)
 
-for name, key in {
+for name, key in list({
     "tmpo": "bpm",
-}.items():
+}.items()):
     EasyMP4Tags.RegisterIntKey(key, name)
 
-for name, key in {
+for name, key in list({
     "trkn": "tracknumber",
     "disk": "discnumber",
-}.items():
+}.items()):
     EasyMP4Tags.RegisterIntPairKey(key, name)
 
 

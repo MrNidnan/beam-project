@@ -32,6 +32,7 @@ try:
     import win32com.client
 except ImportError:
     pass
+from bin.Modules.winutils import applicationrunning
 
 ###############################################################
 #
@@ -46,7 +47,7 @@ def run(MaxTandaLength):
     #
     # Player Status
     #
-    if ApplicationRunning("iTunes.exe"):
+    if  applicationrunning("iTunes.exe"):
         try:
             pythoncom.CoInitialize()
             itunes = win32com.client.gencache.EnsureDispatch ("iTunes.Application")

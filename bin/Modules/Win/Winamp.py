@@ -186,7 +186,7 @@ class Winamp(object):
 			self.__mediaLibraryHWND = self.__findWindow([("BaseWindow_RootWnd", None), 
 			("BaseWindow_RootWnd", "Winamp Library"), 
 			("Winamp Gen", "Winamp Library"), (None, None)])
-		except pywintypes.error, e:
+		except pywintypes.error as e:
 			raise RuntimeError("Cannot find Winamp windows. Is winamp started?")
 
 		self.__processID = win32process.GetWindowThreadProcessId(self.__mainWindowHWND)[1]
@@ -215,7 +215,7 @@ class Winamp(object):
 		"""
 		currentWindow = None
 
-		for i in xrange(len(windowList)):
+		for i in range(len(windowList)):
 			if currentWindow is None:
 				currentWindow = win32gui.FindWindow(windowList[i][0], windowList[i][1])
 			else:
@@ -238,7 +238,7 @@ class Winamp(object):
 			try:
 				return object.__getattr__(self, attr)
 			except AttributeError:
-				raise AttributeError, attr
+				raise AttributeError(attr)
 
 	def __readStringFromMemory(self, address, isUnicode = False):
 		"""Reads a string from Winamp's memory address space."""
@@ -305,7 +305,7 @@ class Winamp(object):
 		buf = create_string_buffer(sizeof(self.itemRecord) * receivedQuery.itemRecordList.Size)
 		windll.kernel32.ReadProcessMemory(self.__hProcess, receivedQuery.itemRecordList.Items, buf, sizeof(buf), 0)
 
-		for i in xrange(receivedQuery.itemRecordList.Size):
+		for i in range(receivedQuery.itemRecordList.Size):
 			item = self.__readDataFromWinamp(receivedQuery.itemRecordList.Items + (sizeof(self.itemRecord) * i), self.itemRecord)
 
 			self.__fixRemoteStruct(item)
@@ -362,7 +362,7 @@ class Winamp(object):
 	def __fixRemoteStruct(self, structure):
 		offset = 0
 
-		for i in xrange(len(structure._fields_)):
+		for i in range(len(structure._fields_)):
 			(field_name, field_type) = structure._fields_[i]
 
 			if field_type is c_char_p or field_type is c_void_p:
@@ -454,7 +454,7 @@ class Winamp(object):
 		"""Retrieves a list of the current playlist song titles."""
 		return [self.getPlaylistTitle(position) for position in range(self.getListLength())]
 	
-	def next(self):
+	def __next__(self):
 		"""Sets playlist marker to next song."""
 		self.__sendCommandMessage(self.BUTTON_COMMAND_NEXT, 0)
 	
@@ -487,15 +487,15 @@ class Winamp(object):
 		self.play()
 
 def printMediaLibraryItem(item):
-	print "Filename: %s\nTrack: %s, Album: %s, Artist: %s\nComment: %s, Genre: %s" % (item.filename, item.track, item.album, item.artist, item.comment, item.genre)
+	print("Filename: %s\nTrack: %s, Album: %s, Artist: %s\nComment: %s, Genre: %s" % (item.filename, item.track, item.album, item.artist, item.comment, item.genre))
 
 if __name__ == "__main__":
 	# little demonstration...
 	
 	w = Winamp()
 
-	print "Current playlist:"
-	print w.getPlaylistTitles()
+	print("Current playlist:")
+	print(w.getPlaylistTitles())
 
 	items = w.query("artist has \"opeth\"")
 	[printMediaLibraryItem(item) for item in items]
@@ -503,7 +503,7 @@ if __name__ == "__main__":
 	w.playlist = w.query("artist has \"jane's\"")
 	w.sortPlaylist()
 
-	print w.playlist
+	print(w.playlist)
 
 	"Playing album..."
 	w.playAlbum("Red")

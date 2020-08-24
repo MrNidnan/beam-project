@@ -352,7 +352,7 @@ class MP4Tags(DictProxy, Metadata):
                  "\xa9gen", "gnre", "trkn", "disk",
                  "\xa9day", "cpil", "pgap", "pcst", "tmpo",
                  "\xa9too", "----", "covr", "\xa9lyr"]
-        order = dict(izip(order, xrange(len(order))))
+        order = dict(zip(order, range(len(order))))
         last = len(order)
         # If there's no key-based way to distinguish, order by length.
         # If there's still no way, go by string comparison on the
@@ -363,7 +363,7 @@ class MP4Tags(DictProxy, Metadata):
         """Save the metadata to the given filename."""
 
         values = []
-        items = sorted(self.items(), key=self._key_sort)
+        items = sorted(list(self.items()), key=self._key_sort)
         for key, value in items:
             atom_name = _key2name(key)[:4]
             if atom_name in self.__atoms:
@@ -800,22 +800,22 @@ class MP4Tags(DictProxy, Metadata):
         def to_line(key, value):
             assert isinstance(key, text_type)
             if isinstance(value, text_type):
-                return u"%s=%s" % (key, value)
-            return u"%s=%r" % (key, value)
+                return "%s=%s" % (key, value)
+            return "%s=%r" % (key, value)
 
         values = []
         for key, value in sorted(iteritems(self)):
             if not isinstance(key, text_type):
                 key = key.decode("latin-1")
             if key == "covr":
-                values.append(u"%s=%s" % (key, u", ".join(
-                    [u"[%d bytes of data]" % len(data) for data in value])))
+                values.append("%s=%s" % (key, ", ".join(
+                    ["[%d bytes of data]" % len(data) for data in value])))
             elif isinstance(value, list):
                 for v in value:
                     values.append(to_line(key, v))
             else:
                 values.append(to_line(key, value))
-        return u"\n".join(values)
+        return "\n".join(values)
 
 
 class MP4Info(StreamInfo):
@@ -844,8 +844,8 @@ class MP4Info(StreamInfo):
     channels = 0
     sample_rate = 0
     bits_per_sample = 0
-    codec = u""
-    codec_name = u""
+    codec = ""
+    codec_name = ""
 
     def __init__(self, atoms, fileobj):
         try:

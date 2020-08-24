@@ -37,10 +37,10 @@ import platform
 
 class SongObject(object):
 
-    def __init__(self, p_artist=u"", p_album=u"", p_title=u"", p_genre=u"",
-                 p_comment=u"", p_composer=u"", p_year=u"", p_singer=u"",
-                 p_albumArtist=u"", p_performer = u"", p_isCortina = u"no",
-                 p_fileUrl=u"", p_moduleMessage=u"", p_ignoreSong=u"no"):
+    def __init__(self, p_artist="", p_album="", p_title="", p_genre="",
+                 p_comment="", p_composer="", p_year="", p_singer="",
+                 p_albumArtist="", p_performer = "", p_isCortina = "no",
+                 p_fileUrl="", p_moduleMessage="", p_ignoreSong="no"):
         self.Artist        = p_artist
         self.Album         = p_album
         self.Title         = p_title
@@ -108,54 +108,54 @@ class SongObject(object):
         try:
             self.Artist     = audio["artist"][0].encode(Formating)
         except:
-            self.Artist     = u""
+            self.Artist     = ""
 
         try:    
             self.Album      = audio["album"][0].encode(Formating)
         except:
-            self.Album      = u""
+            self.Album      = ""
         
         try:
             self.Title      = audio["title"][0].encode(Formating)
         except:
-            self.Title      = u""
+            self.Title      = ""
 
         try:
             self.Genre      = audio["genre"][0].encode(Formating)
         except:
-            self.Genre      = u""
+            self.Genre      = ""
 
         try:
             self.Comment    = audio["comment"][0].encode(Formating)
         except:
             try:
-                self.Comment    = audioRaw[u'COMM::eng'][0].encode(Formating)
+                self.Comment    = audioRaw['COMM::eng'][0].encode(Formating)
             except:
-                self.Comment    = u""
+                self.Comment    = ""
 
         try:
             self.Composer   = audio["composer"][0].encode(Formating)
         except:
-            self.Composer   = u""
+            self.Composer   = ""
 
         try:
             self.Year       = audio["date"][0]
         except:
-            self.Year       = u""
+            self.Year       = ""
 
-        self.Singer      = u""
+        self.Singer      = ""
         
         try:    
             self.AlbumArtist    = audio["albumartist"][0].encode(Formating)
         except:
-            self.AlbumArtist    = u""
+            self.AlbumArtist    = ""
 
         try:
             self.Performer  = audio["performer"][0].encode(Formating)
         except:
-            self.Performer  = u""
+            self.Performer  = ""
 
-        self.IsCortina   = u"no"
+        self.IsCortina   = "no"
         self.fileUrl     = url
         return
 
@@ -172,55 +172,55 @@ class SongObject(object):
                 #
                 # IGNORE
                 #
-                if currentRule[u'Type'] == 'Ignore' and currentRule[u'Active'] == 'yes':
+                if currentRule['Type'] == 'Ignore' and currentRule['Active'] == 'yes':
                     # Rule[u'Field2'] == is: IgnoreSong[j] shall be 'yes' if Rule[u'Field1'] is Rule[u'Field3']
-                    if currentRule[u'Field2'] == 'is':
-                        if getattr(self, currentRule[u'Field1'].replace("%","")).lower() == str(currentRule[u'Field3']).lower():
+                    if currentRule['Field2'] == 'is':
+                        if getattr(self, currentRule['Field1'].replace("%","")).lower() == str(currentRule['Field3']).lower():
                             self.IgnoreSong = "yes"
                     # Rule[u'Field2'] == is not: IgnoreSong[j] shall be 1 if Rule[u'Field1'] not in Rule[u'Field3']
-                    if currentRule[u'Field2'] == 'is not':
-                        if getattr(self, currentRule[u'Field1'].replace("%","")).lower() not in str("["+currentRule[u'Field3'].lower()+"]"):
+                    if currentRule['Field2'] == 'is not':
+                        if getattr(self, currentRule['Field1'].replace("%","")).lower() not in str("["+currentRule['Field3'].lower()+"]"):
                             self.IgnoreSong = "yes"
                     # Rule[u'Field2'] == contains: IgnoreSong[j] shall be 1 if Rule[u'Field1'] contains any of Rule[u'Field3']
-                    if currentRule[u'Field2'] == 'contains':
-                        if str(currentRule[u'Field3']).lower() in getattr(self, currentRule[u'Field1'].replace("%","")).lower():
+                    if currentRule['Field2'] == 'contains':
+                        if str(currentRule['Field3']).lower() in getattr(self, currentRule['Field1'].replace("%","")).lower():
                             self.IgnoreSong = "yes"
                 #
                 # PARSE
                 #
-                if currentRule[u'Type'] == 'Parse' and currentRule[u'Active'] == 'yes':
+                if currentRule['Type'] == 'Parse' and currentRule['Active'] == 'yes':
                     # Find currentRule[u'Field2'] in currentRule[u'Field1'],
                     # split currentRule[u'Field1'] and save into Rule[u'Field3 and 4]
-                    if str(currentRule[u'Field2'].replace("%"," self.")) in eval(str(currentRule[u'Field1'].replace("%"," self."))):
-                        splitStrings = eval(str(currentRule[u'Field1']).replace("%"," self.")).split(str(currentRule[u'Field2']))
-                        setattr(self, currentRule[u'Field3'].replace("%",""), splitStrings[0])
-                        setattr(self, currentRule[u'Field4'].replace("%",""), splitStrings[1])
+                    if str(currentRule['Field2'].replace("%"," self.")) in eval(str(currentRule['Field1'].replace("%"," self."))):
+                        splitStrings = eval(str(currentRule['Field1']).replace("%"," self.")).split(str(currentRule['Field2']))
+                        setattr(self, currentRule['Field3'].replace("%",""), splitStrings[0])
+                        setattr(self, currentRule['Field4'].replace("%",""), splitStrings[1])
                 #
                 # CORTINA
                 #
-                if currentRule[u'Type'] == 'Cortina' and currentRule[u'Active'] == 'yes':
+                if currentRule['Type'] == 'Cortina' and currentRule['Active'] == 'yes':
                     # Rule[u'Field2'] == is: IsCortina[j] shall be 1 if Rule[u'Field1'] is Rule[u'Field3']
-                    if currentRule[u'Field2'] == 'is':
-                        if getattr(self, currentRule[u'Field1'].replace("%","")).lower() == str(currentRule[u'Field3']).lower():
+                    if currentRule['Field2'] == 'is':
+                        if getattr(self, currentRule['Field1'].replace("%","")).lower() == str(currentRule['Field3']).lower():
                             self.IsCortina = "yes"
                     # Rule[u'Field2'] == is not: IsCortina[j] shall be 1 if Rule[u'Field1'] not in Rule[u'Field3']
-                    if currentRule[u'Field2'] == 'is not':
-                        if getattr(self, currentRule[u'Field1'].replace("%","")).lower() not in str("["+currentRule[u'Field3'].lower()+"]"):
+                    if currentRule['Field2'] == 'is not':
+                        if getattr(self, currentRule['Field1'].replace("%","")).lower() not in str("["+currentRule['Field3'].lower()+"]"):
                             self.IsCortina = "yes"
                     # Rule[u'Field2'] == contains: IsCortina[j] shall be 1 if Rule[u'Field1'] contains any of Rule[u'Field3']
-                    if currentRule[u'Field2'] == 'contains':
-                        if str(currentRule[u'Field3']).lower() in getattr(self, currentRule[u'Field1'].replace("%","")).lower():
+                    if currentRule['Field2'] == 'contains':
+                        if str(currentRule['Field3']).lower() in getattr(self, currentRule['Field1'].replace("%","")).lower():
                             self.IsCortina = "yes"
                 #
                 # COPY
                 #
-                if currentRule[u'Type'] == 'Copy' and currentRule[u'Active'] == 'yes':
+                if currentRule['Type'] == 'Copy' and currentRule['Active'] == 'yes':
                     # Rule[u'Field1'] shall be Rule[u'Field2']
                     # Example:
                     # Singer(j) = Comment(j)
-                    setattr(self, currentRule[u'Field2'].replace("%",""), getattr(self, currentRule[u'Field1'].replace("%","")) )
+                    setattr(self, currentRule['Field2'].replace("%",""), getattr(self, currentRule['Field1'].replace("%","")) )
             except:
-                print "Error at Rule:", i,".Type:", currentRule[u'Type'], ". First Field", currentRule[u'Field1']
+                print("Error at Rule:", i,".Type:", currentRule['Type'], ". First Field", currentRule['Field1'])
                 break
     
     

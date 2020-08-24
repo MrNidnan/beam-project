@@ -45,92 +45,96 @@ from copy import deepcopy
 ##################################################
 class beamMainFrame(wx.Frame):
     def __init__(self, settings = None):
-    # Size and position of the main window
-        wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle, pos=(150,150), size=(800,600))
-        self.SetDoubleBuffered(True)
-        
-    # Start the timer reading data
-        self.DataTimer()
-        
-    # Initialize DataObject - the model - 
-        self.nowPlayingDataModel = NowPlayingDataModel()
-    
-    # Set Icon
-        iconFilename = os.path.join(os.getcwd(),'resources','icons','icon_square','icon_square_256px.png')
-        self.favicon = wx.Icon(iconFilename, wx.BITMAP_TYPE_ANY, 256, 256)
-        self.SetIcon(self.favicon)
+        try:
+            # Size and position of the main window
+            wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle, pos=(150,150), size=(800,600))
+            self.SetDoubleBuffered(True)
 
-    # faders
-        self.TransitionTimer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.transition, self.TransitionTimer)
-        self.RotateBackgroundTimer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
+        # Start the timer reading data
+            self.DataTimer()
 
-    # Statusbar
-        self.statusbar = self.CreateStatusBar(style=0)
-        self.SetStatusText('Initializing...')
+        # Initialize DataObject - the model -
+            self.nowPlayingDataModel = NowPlayingDataModel()
 
-    # Setting up the menu.
-        self.filemenu    = wx.Menu()
-        self.Aboutmenu   = wx.Menu()
-        self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl+P"," Configuration tool")
-        self.menuFullScreen  = self.filemenu.Append(wx.ID_ANY, "&Fullscreen\tF11", "Set fullscreen")
-        self.menuExit    = self.filemenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
-        self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
-        self.menuHelp    = self.Aboutmenu.Append(wx.ID_ANY, "&Help"," Getting started")
+        # Set Icon
+            iconFilename = os.path.join(os.getcwd(),'resources','icons','icon_square','icon_square_256px.png')
+            self.favicon = wx.Icon(iconFilename, wx.BITMAP_TYPE_ANY, 256, 256)
+            self.SetIcon(self.favicon)
 
-    # Creating the menubar.
-        self.menuBar = wx.MenuBar()
-        self.menuBar.Append(self.filemenu,"&File")    # Adding the "file menu" to the MenuBar
-        self.menuBar.Append(self.Aboutmenu,"&About")  # Adding the "About menu" to the MenuBar
-        self.SetMenuBar(self.menuBar)  # Adding the MenuBar to the Frame content.
-        
-        # Events.
-        self.Bind(wx.EVT_MENU, self.OnPreferences, self.menuPreferences)
-        self.Bind(wx.EVT_MENU, self.OnClose, self.menuExit)
-        self.Bind(wx.EVT_MENU, self.OnAbout, self.menuAbout)
-        self.Bind(wx.EVT_MENU, self.OnHelp, self.menuHelp)
-        self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
-        self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
-        
-        # Background
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-        
-        self.backgroundImage = wx.EmptyBitmap(800,600)
-        self.SetBackgroundColour(wx.BLACK)
-        self._currentBackgroundPath = []
-        self.modifiedBitmap = self._currentBackgroundPath
-        self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
+        # faders
+            self.TransitionTimer = wx.Timer(self)
+            self.Bind(wx.EVT_TIMER, self.transition, self.TransitionTimer)
+            self.RotateBackgroundTimer = wx.Timer(self)
+            self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
 
-        self.alpha = float(1.0)
-        self.red = float(1.0)
-        self.blue = float(1.0)
-        self.green = float(1.0)
-        
-        self.currentDisplayRows = []
-        self.currentDisplaySettings = []
-        self.currentPlaybackStatus = ""
-        self.previousMood = ""
-        self.currentMood = ""      
-        
+        # Statusbar
+            self.statusbar = self.CreateStatusBar(style=0)
+            self.SetStatusText('Initializing...')
 
-        #trigger
-        self.triggerResizeBackground = True
-        self.textsAreVisible = False
-        self.FadeDirection = 'In'
-        self.RotateBackgroundTrigger = False
-        
-        #visibility switch
-        self.showStatusBar()
-        self.currentlyUpdating = False
-        self.updateData()
+        # Setting up the menu.
+            self.filemenu    = wx.Menu()
+            self.Aboutmenu   = wx.Menu()
+            self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl+P"," Configuration tool")
+            self.menuFullScreen  = self.filemenu.Append(wx.ID_ANY, "&Fullscreen\tF11", "Set fullscreen")
+            self.menuExit    = self.filemenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
+            self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
+            self.menuHelp    = self.Aboutmenu.Append(wx.ID_ANY, "&Help"," Getting started")
+
+        # Creating the menubar.
+            self.menuBar = wx.MenuBar()
+            self.menuBar.Append(self.filemenu,"&File")    # Adding the "file menu" to the MenuBar
+            self.menuBar.Append(self.Aboutmenu,"&About")  # Adding the "About menu" to the MenuBar
+            self.SetMenuBar(self.menuBar)  # Adding the MenuBar to the Frame content.
+
+            # Events.
+            self.Bind(wx.EVT_MENU, self.OnPreferences, self.menuPreferences)
+            self.Bind(wx.EVT_MENU, self.OnClose, self.menuExit)
+            self.Bind(wx.EVT_MENU, self.OnAbout, self.menuAbout)
+            self.Bind(wx.EVT_MENU, self.OnHelp, self.menuHelp)
+            self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
+            self.Bind(wx.EVT_CLOSE, self.OnClose)
+            self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
+
+            # Background
+            self.Bind(wx.EVT_SIZE, self.OnSize)
+            self.Bind(wx.EVT_PAINT, self.OnPaint)
+            self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+            # self.backgroundImage = wx.EmptyBitmap(800,600)
+            self.backgroundImage = wx.Bitmap(800,600)
+            self.SetBackgroundColour(wx.BLACK)
+            self._currentBackgroundPath = []
+            self.modifiedBitmap = self._currentBackgroundPath
+            self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
+
+            self.alpha = float(1.0)
+            self.red = float(1.0)
+            self.blue = float(1.0)
+            self.green = float(1.0)
+
+            self.currentDisplayRows = []
+            self.currentDisplaySettings = []
+            self.currentPlaybackStatus = ""
+            self.previousMood = ""
+            self.currentMood = ""
 
 
+            #trigger
+            self.triggerResizeBackground = True
+            self.textsAreVisible = False
+            self.FadeDirection = 'In'
+            self.RotateBackgroundTrigger = False
 
-########################## END FRAME INITIALIZATION #########################
+            #visibility switch
+            self.showStatusBar()
+            self.currentlyUpdating = False
+            self.updateData()
+        except Exception as e:
+            print("Exception beamMainFrame()")
+            print(e)
+            raise (e)
+
+    ########################## END FRAME INITIALIZATION #########################
 
 
 ########################################################
@@ -139,7 +143,9 @@ class beamMainFrame(wx.Frame):
     def OnPreferences(self, event):
         try:
             self.PreferencesDialog.Raise()
-        except:
+        except Exception as e:
+            print("Exception beamMainFrame.OnPreferences()")
+            print(e)
             self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingDataModel)
             self.PreferencesDialog.Show()
                 
@@ -148,37 +154,65 @@ class beamMainFrame(wx.Frame):
     # FULLSCREEN
     #
     def fullScreen(self, event):
-        # Needed for Mac
-        if platform.system() == 'Darwin':
-            self.showStatusBar()
-        self.ShowFullScreen(not self.IsFullScreen())
-    
+        try:
+            # Needed for Mac
+            if platform.system() == 'Darwin':
+                self.showStatusBar()
+            self.ShowFullScreen(not self.IsFullScreen())
+        except Exception as e:
+            print("Exception beamMainFrame.fullScreen()")
+            print(e)
+            raise (e)
+
     #
     # Hide/show statusbar
     #
     def showStatusBar(self):
-        self.triggerResizeBackground = True
-        if beamSettings._showStatusbar == 'True':
-            self.statusbar.Show()
-        else:
-            self.statusbar.Hide()
+        try:
+            self.triggerResizeBackground = True
+            if beamSettings._showStatusbar == 'True':
+                self.statusbar.Show()
+            else:
+                self.statusbar.Hide()
+        except Exception as e:
+            print("Exception beamMainFrame.showStatusBar()")
+            print(e)
+            raise (e)
 
     #
     # Show 'Close dialog
     #
     def OnClose(self, event):
-        closedialog.ShowCloseDialog(self)
+        try:
+            closedialog.ShowCloseDialog(self)
+        except Exception as e:
+            print("Exception beamMainFrame.OnClose()")
+            print(e)
+            raise (e)
+
     #
     # Show 'About Dialog'
     #
     def OnAbout(self, event):
-        aboutdialog.ShowAboutDialog(self)
+        try:
+            aboutdialog.ShowAboutDialog(self)
+        except Exception as e:
+            print("Exception beamMainFrame.OnClose()")
+            print(e)
+            raise (e)
+
     #
     # Show 'Help'
     #
     def OnHelp(self, event):
-        help_dialog = HelpDialog(self)
-        help_dialog.Show()
+        try:
+            help_dialog = HelpDialog(self)
+            help_dialog.Show()
+        except Exception as e:
+            print("Exception beamMainFrame.OnHelp()")
+            print(e)
+            raise (e)
+
     
     
     
@@ -200,61 +234,98 @@ class beamMainFrame(wx.Frame):
 
         # READ FROM MEDIA PLAYER
     def updateData(self, event = wx.EVT_TIMER):
-        self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
-        self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
-        self.previousPlaybackStatus = self.nowPlayingDataModel.PreviousPlaybackStatus
-        
-        if not self.currentlyUpdating:
-            self.currentlyUpdating = True
-            wx.lib.delayedresult.startWorker(self.getDataFinished, self.extractDataThread)
-        self.DataTimer() # Reset the timer
-    
+        try:
+            self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
+            self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
+            self.previousPlaybackStatus = self.nowPlayingDataModel.PreviousPlaybackStatus
+
+            if not self.currentlyUpdating:
+                self.currentlyUpdating = True
+                wx.lib.delayedresult.startWorker(self.getDataFinished, self.extractDataThread)
+            self.DataTimer() # Reset the timer
+        except Exception as e:
+            print("Error beammainframe.updateData()")
+            print(e)
+            raise(e)
+
         # MEDIA READER WORKER
     def extractDataThread(self):
-        self.nowPlayingDataModel.ExtractPlaylistInfo(beamSettings)
+        try:
+          self.nowPlayingDataModel.ExtractPlaylistInfo(beamSettings)
+        except Exception as e:
+            print("Error beammainframe.extractDataThread()")
+            print(e)
+            raise(e)
+
     
         # INFO FROM MEDIA PLAYER RECIEVED
     def getDataFinished(self, result):
-        self.currentlyUpdating = False
-        if self.nowPlayingDataModel.playlistChanged:
-            self.processData() #Only update if playlist has changed
+        try:
+            self.currentlyUpdating = False
+            if self.nowPlayingDataModel.playlistChanged:
+                self.processData() #Only update if playlist has changed
+        except Exception as e:
+            print("Error beammainframe.getDataFinished()")
+            print(e)
+            raise(e)
 
         # PROCESS INFO FROM MEDIA PLAYER
     def processData(self):
-        wx.lib.delayedresult.startWorker(self.updateMood, self.processDataThread)
+        try:
+            wx.lib.delayedresult.startWorker(self.updateMood, self.processDataThread)
+        except Exception as e:
+            print("Error beammainframe.startWorker()")
+            print(e)
+            raise(e)
     
         # PROCESS DATA WORKER
     def processDataThread(self):
-        self.nowPlayingDataModel.processInformation(beamSettings)
+        try:
+            self.nowPlayingDataModel.processInformation(beamSettings)
+        except Exception as e:
+            print("Error beammainframe.processInformation()")
+            print(e)
+            raise(e)
 
         # AFTER PROCESSING DATA
     def updateMood(self, result):
-        self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
-        self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
-        self.previousMood = deepcopy(self.currentMood)
-        self.currentMood = self.nowPlayingDataModel.CurrentMood
-        self.currentDisplaySettings = self.nowPlayingDataModel.DisplaySettings
-        self.RotateBackground = self.nowPlayingDataModel.RotateBackground
-        self.RotateTimer = self.nowPlayingDataModel.RotateTimer
+        try:
+            self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
+            self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
+            self.previousMood = deepcopy(self.currentMood)
+            self.currentMood = self.nowPlayingDataModel.CurrentMood
+            self.currentDisplaySettings = self.nowPlayingDataModel.DisplaySettings
+            self.RotateBackground = self.nowPlayingDataModel.RotateBackground
+            self.RotateTimer = self.nowPlayingDataModel.RotateTimer
 
-        self.SetStatusText("Player: "+self.currentPlaybackStatus+" - Mood: "+self.currentMood)
-        
-        if (self.previousMood != self.currentMood):
-            self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
-            self.startTransition('MoodChange')
-        else:
-            self.startTransition('SongChange')
+            self.SetStatusText("Player: "+self.currentPlaybackStatus+" - Mood: "+self.currentMood)
 
-        self.Refresh()
+            if (self.previousMood != self.currentMood):
+                self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
+                self.startTransition('MoodChange')
+            else:
+                self.startTransition('SongChange')
+
+            self.Refresh()
+        except Exception as e:
+            print("Error beammainframe.updateMood()")
+            print(e)
+            raise(e)
+
 
         # UPDATE INFO FROM PREFERENCES WINDOW
     def updateSettings(self):
-        self.showStatusBar()
-        self.processData()
-        # Starts and stops rotation if it has changed.
-        if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and not self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no'):
-            self.rotateBackground()
-    
+        try:
+            self.showStatusBar()
+            self.processData()
+            # Starts and stops rotation if it has changed.
+            if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and not self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no'):
+                self.rotateBackground()
+        except Exception as e:
+            print("Error beammainframe.updateSettings()")
+            print(e)
+            raise(e)
+
 
 ########################################################
 #                                                      #
@@ -289,7 +360,8 @@ class beamMainFrame(wx.Frame):
             return
 
         try:
-            Image = wx.ImageFromBitmap(self.backgroundImage)
+            # Image = wx.ImageFromBitmap(self.backgroundImage)
+            Image = wx.bitmap.ConvertToImage(self.backgroundImage)
             #resize current background picture - currently used at main frame resizing
 
             aspectRatioWindow = float(cliHeight) / float(cliWidth)

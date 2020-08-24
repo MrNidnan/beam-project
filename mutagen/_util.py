@@ -106,7 +106,7 @@ class DictMixin(object):
     """
 
     def __iter__(self):
-        return iter(self.keys())
+        return iter(list(self.keys()))
 
     def __has_key(self, key):
         try:
@@ -122,19 +122,19 @@ class DictMixin(object):
     __contains__ = __has_key
 
     if PY2:
-        iterkeys = lambda self: iter(self.keys())
+        iterkeys = lambda self: iter(list(self.keys()))
 
     def values(self):
-        return [self[k] for k in self.keys()]
+        return [self[k] for k in list(self.keys())]
 
     if PY2:
-        itervalues = lambda self: iter(self.values())
+        itervalues = lambda self: iter(list(self.values()))
 
     def items(self):
-        return list(izip(self.keys(), self.values()))
+        return list(zip(list(self.keys()), list(self.values())))
 
     if PY2:
-        iteritems = lambda s: iter(s.items())
+        iteritems = lambda s: iter(list(s.items()))
 
     def clear(self):
         for key in list(self.keys()):
@@ -154,7 +154,7 @@ class DictMixin(object):
         return value
 
     def popitem(self):
-        for key in self.keys():
+        for key in list(self.keys()):
             break
         else:
             raise KeyError("dictionary is empty")
@@ -166,7 +166,7 @@ class DictMixin(object):
             other = {}
 
         try:
-            for key, value in other.items():
+            for key, value in list(other.items()):
                 self.__setitem__(key, value)
         except AttributeError:
             for key, value in other:
@@ -186,18 +186,18 @@ class DictMixin(object):
             return default
 
     def __repr__(self):
-        return repr(dict(self.items()))
+        return repr(dict(list(self.items())))
 
     def __eq__(self, other):
-        return dict(self.items()) == other
+        return dict(list(self.items())) == other
 
     def __lt__(self, other):
-        return dict(self.items()) < other
+        return dict(list(self.items())) < other
 
     __hash__ = object.__hash__
 
     def __len__(self):
-        return len(self.keys())
+        return len(list(self.keys()))
 
 
 class DictProxy(DictMixin):
@@ -215,7 +215,7 @@ class DictProxy(DictMixin):
         del(self.__dict[key])
 
     def keys(self):
-        return self.__dict.keys()
+        return list(self.__dict.keys())
 
 
 def _fill_cdata(cls):
@@ -266,8 +266,8 @@ class cdata(object):
     error = error
 
     bitswap = b''.join(
-        chr_(sum(((val >> i) & 1) << (7 - i) for i in xrange(8)))
-        for val in xrange(256))
+        chr_(sum(((val >> i) & 1) << (7 - i) for i in range(8)))
+        for val in range(256))
 
     test_bit = staticmethod(lambda value, n: bool((value >> n) & 1))
 
@@ -449,15 +449,15 @@ def decode_terminated(data, encoding, strict=True):
     r = []
     for i, b in enumerate(iterbytes(data)):
         c = decoder.decode(b)
-        if c == u"\x00":
-            return u"".join(r), data[i + 1:]
+        if c == "\x00":
+            return "".join(r), data[i + 1:]
         r.append(c)
     else:
         # make sure the decoder is finished
         r.append(decoder.decode(b"", True))
         if strict:
             raise ValueError("not null terminated")
-        return u"".join(r), b""
+        return "".join(r), b""
 
 
 class BitReaderError(Exception):
@@ -510,7 +510,7 @@ class BitReader(object):
                 raise BitReaderError("not enough data")
             return data
 
-        return bytes(bytearray(self.bits(8) for _ in xrange(count)))
+        return bytes(bytearray(self.bits(8) for _ in range(count)))
 
     def skip(self, count):
         """Skip `count` bits.

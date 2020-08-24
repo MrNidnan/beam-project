@@ -31,6 +31,7 @@ try:
 except ImportError:
 	pass
 from copy import deepcopy
+from bin.Modules.winutils import applicationrunning
 
 ###############################################################
 #
@@ -45,7 +46,7 @@ def run(MaxTandaLength, LastPlaylist):
     #
     # Player Status
     #
-    if ApplicationRunning("MediaMonkey.exe"):
+    if applicationrunning("MediaMonkey.exe"):
         try:
             pythoncom.CoInitialize()
             MediaMonkey = win32com.client.Dispatch("SongsDB.SDBApplication")
@@ -82,13 +83,13 @@ def run(MaxTandaLength, LastPlaylist):
     # Quick-read
     #
     if quickRead(MediaMonkey, currentsong, MaxTandaLength, LastPlaylist):
-        print "Quick-read"
+        print("Quick-read")
         playlist = deepcopy(LastPlaylist)
         return playlist, playbackStatus
     #
     # Full-read
     #
-    print "Full-read"
+    print("Full-read")
     while searchsong < playlistlength and searchsong < currentsong+MaxTandaLength+2:
         try:
             playlist.append(getSongAt(MediaMonkey, searchsong))

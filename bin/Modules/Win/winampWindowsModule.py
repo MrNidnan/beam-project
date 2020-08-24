@@ -24,7 +24,7 @@
 #
 
 from bin.songclass import SongObject
-import Winamp
+from . import Winamp
 
 ###############################################################
 #

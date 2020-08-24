@@ -261,7 +261,7 @@ class ID3(DictProxy, mutagen.Metadata):
                     raise
 
                 self.version = ID3Header._V11
-                for v in frames.values():
+                for v in list(frames.values()):
                     self.add(v)
             else:
                 frames = self.__known_frames
@@ -307,7 +307,7 @@ class ID3(DictProxy, mutagen.Metadata):
             return [self[key]]
         else:
             key = key + ":"
-            return [v for s, v in self.items() if s.startswith(key)]
+            return [v for s, v in list(self.items()) if s.startswith(key)]
 
     def delall(self, key):
         """Delete all tags of a given kind; see getall."""
@@ -337,7 +337,7 @@ class ID3(DictProxy, mutagen.Metadata):
 
             ``POPM=user@example.org=3 128/255``
         """
-        frames = sorted(Frame.pprint(s) for s in self.values())
+        frames = sorted(Frame.pprint(s) for s in list(self.values()))
         return "\n".join(frames)
 
     def loaded_frame(self, tag):
@@ -458,7 +458,7 @@ class ID3(DictProxy, mutagen.Metadata):
         order = ["TIT2", "TPE1", "TRCK", "TALB", "TPOS", "TDRC", "TCON"]
         order = dict((b, a) for a, b in enumerate(order))
         last = len(order)
-        frames = sorted(self.items(),
+        frames = sorted(list(self.items()),
                         key=lambda a: (order.get(a[0][:4], last), a[0]))
 
         framedata = [self.__save_frame(frame, version=version, v23_sep=v23_sep)
@@ -680,7 +680,7 @@ class ID3(DictProxy, mutagen.Metadata):
         # TDAT, TYER, and TIME have been turned into TDRC.
         try:
             date = text_type(self.get("TYER", ""))
-            if date.strip(u"\x00"):
+            if date.strip("\x00"):
                 self.pop("TYER")
                 dat = text_type(self.get("TDAT", ""))
                 if dat.strip("\x00"):
@@ -947,8 +947,8 @@ def ParseID3v1(data):
     def fix(data):
         return data.split(b"\x00")[0].strip().decode('latin1')
 
-    title, artist, album, year, comment = map(
-        fix, [title, artist, album, year, comment])
+    title, artist, album, year, comment = list(map(
+        fix, [title, artist, album, year, comment]))
 
     frames = {}
     if title:
@@ -976,8 +976,8 @@ def MakeID3v1(id3):
 
     v1 = {}
 
-    for v2id, name in {"TIT2": "title", "TPE1": "artist",
-                       "TALB": "album"}.items():
+    for v2id, name in list({"TIT2": "title", "TPE1": "artist",
+                       "TALB": "album"}.items()):
         if v2id in id3:
             text = id3[v2id].text[0].encode('latin1', 'replace')[:30]
         else:

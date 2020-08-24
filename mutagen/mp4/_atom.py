@@ -178,7 +178,7 @@ class Atoms(object):
         """
 
         if PY2:
-            if isinstance(names, basestring):
+            if isinstance(names, str):
                 names = names.split(b".")
         else:
             if isinstance(names, bytes):

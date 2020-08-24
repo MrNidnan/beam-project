@@ -65,4 +65,4 @@ if platform.system() == 'Darwin':
 # LINUX
 #
 if platform.system() == 'Linux':
-    print "Setup-program is only for Windows and Mac, execute './Beam' to run Beam"
+    print("Setup-program is only for Windows and Mac, execute './Beam' to run Beam")

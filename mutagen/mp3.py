@@ -72,7 +72,7 @@ def _guess_xing_bitrate_mode(xing):
 
 
 # Mode values.
-STEREO, JOINTSTEREO, DUALCHANNEL, MONO = xrange(4)
+STEREO, JOINTSTEREO, DUALCHANNEL, MONO = range(4)
 
 
 class MPEGInfo(StreamInfo):
@@ -125,7 +125,7 @@ class MPEGInfo(StreamInfo):
     }
 
     __BITRATE[(2, 3)] = __BITRATE[(2, 2)]
-    for i in xrange(1, 4):
+    for i in range(1, 4):
         __BITRATE[(2.5, i)] = __BITRATE[(2, i)]
 
     # Map version to sample rates.
@@ -136,7 +136,7 @@ class MPEGInfo(StreamInfo):
     }
 
     sketchy = False
-    encoder_info = u""
+    encoder_info = ""
     bitrate_mode = BitrateMode.UNKNOWN
     track_gain = track_peak = album_gain = album_peak = None
 
@@ -286,7 +286,7 @@ class MPEGInfo(StreamInfo):
             if xing.bytes != -1 and self.length:
                 self.bitrate = int((xing.bytes * 8) / self.length)
             if xing.lame_version:
-                self.encoder_info = u"LAME %s" % xing.lame_version
+                self.encoder_info = "LAME %s" % xing.lame_version
             if lame is not None:
                 self.track_gain = lame.track_gain_adjustment
                 self.track_peak = lame.track_peak
@@ -302,7 +302,7 @@ class MPEGInfo(StreamInfo):
             pass
         else:
             self.bitrate_mode = BitrateMode.VBR
-            self.encoder_info = u"FhG"
+            self.encoder_info = "FhG"
             self.sketchy = False
             self.length = float(frame_size * vbri.frames) / self.sample_rate
             if self.length:
@@ -311,14 +311,14 @@ class MPEGInfo(StreamInfo):
     def pprint(self):
         info = str(self.bitrate_mode).split(".", 1)[-1]
         if self.bitrate_mode == BitrateMode.UNKNOWN:
-            info = u"CBR?"
+            info = "CBR?"
         if self.encoder_info:
             info += ", %s" % self.encoder_info
-        s = u"MPEG %s layer %d, %d bps (%s), %s Hz, %d chn, %.2f seconds" % (
+        s = "MPEG %s layer %d, %d bps (%s), %s Hz, %d chn, %.2f seconds" % (
             self.version, self.layer, self.bitrate, info,
             self.sample_rate, self.channels, self.length)
         if self.sketchy:
-            s += u" (sketchy)"
+            s += " (sketchy)"
         return s
 
 

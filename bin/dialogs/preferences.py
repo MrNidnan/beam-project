@@ -64,7 +64,7 @@ class Preferences(wx.Frame):
             x,y = (self.MainWindowParent.GetPosition()+(50,50))
         
         wx.Frame.__init__(self, parent, title="Preferences", pos=(x,y), size=BeamSettings._preferencesSize,
-                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
+                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
 
         ####################
         # PANEL AND SIZERS #

@@ -26,31 +26,13 @@
 # This Python file uses the following encoding: utf-8
 
 
-# import wx, wx.html
-import wx, wx.html, wx.adv
-import os, sys
-
-import textwrap
-from bin.beamsettings import *
-
-##################################################
-# About DIALOG
-##################################################
-
-def ShowAboutDialog(self):
-    
-       
-    # info = wx.AboutDialogInfo()
-    info = wx.adv.AboutDialogInfo()
-    info.SetIcon(self.favicon)
-    info.SetName(beamSettings.mainFrameTitle)
-    info.SetVersion(beamSettings.beamVersion)
-    info.SetDescription(textwrap.fill(beamSettings.aboutDialogDescription,70))
-    info.SetLicence(textwrap.fill(beamSettings.aboutDialogLicense, 70))
-    info.SetCopyright(beamSettings.aboutCopyright)
-    info.SetWebSite(beamSettings.aboutWebsite)
-    info.AddDeveloper(beamSettings.aboutDeveloper)
-    info.AddArtist(beamSettings.aboutArtist)
+# from bin.songclass import SongObject
+import bin.Modules.mixxxSqlite
 
 
-    wx.adv.AboutBox(info)
+def run(maxtandalength, lastplaylist):
+    # print("mixxxModule.run()")
+
+    playlist, playback_status = bin.Modules.mixxxSqlite.run(maxtandalength, lastplaylist)
+
+    return playlist, playback_status

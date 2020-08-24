@@ -61,7 +61,7 @@ class Frame(object):
             # ask the sub class to fill in our data
             other._to_other(self)
         else:
-            for checker, val in izip(self._framespec, args):
+            for checker, val in zip(self._framespec, args):
                 setattr(self, checker.name, checker.validate(self, val))
             for checker in self._framespec[len(args):]:
                 try:
@@ -302,14 +302,14 @@ class TextFrame(Frame):
 
     _framespec = [
         EncodingSpec('encoding'),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000'),
+        MultiSpec('text', EncodedTextSpec('text'), sep='\u0000'),
     ]
 
     def __bytes__(self):
         return text_type(self).encode('utf-8')
 
     def __str__(self):
-        return u'\u0000'.join(self.text)
+        return '\u0000'.join(self.text)
 
     def __eq__(self, other):
         if isinstance(other, bytes):
@@ -351,7 +351,7 @@ class NumericTextFrame(TextFrame):
 
     _framespec = [
         EncodingSpec('encoding'),
-        MultiSpec('text', EncodedNumericTextSpec('text'), sep=u'\u0000'),
+        MultiSpec('text', EncodedNumericTextSpec('text'), sep='\u0000'),
     ]
 
     def __pos__(self):
@@ -371,7 +371,7 @@ class NumericPartTextFrame(TextFrame):
 
     _framespec = [
         EncodingSpec('encoding'),
-        MultiSpec('text', EncodedNumericPartTextSpec('text'), sep=u'\u0000'),
+        MultiSpec('text', EncodedNumericPartTextSpec('text'), sep='\u0000'),
     ]
 
     def __pos__(self):
@@ -388,17 +388,17 @@ class TimeStampTextFrame(TextFrame):
 
     _framespec = [
         EncodingSpec('encoding'),
-        MultiSpec('text', TimeStampSpec('stamp'), sep=u','),
+        MultiSpec('text', TimeStampSpec('stamp'), sep=','),
     ]
 
     def __bytes__(self):
         return text_type(self).encode('utf-8')
 
     def __str__(self):
-        return u','.join([stamp.text for stamp in self.text])
+        return ','.join([stamp.text for stamp in self.text])
 
     def _pprint(self):
-        return u" / ".join([stamp.text for stamp in self.text])
+        return " / ".join([stamp.text for stamp in self.text])
 
 
 @swap_to_string
@@ -470,11 +470,11 @@ class TCON(TextFrame):
                 try:
                     genres.append(self.GENRES[int(value)])
                 except IndexError:
-                    genres.append(u"Unknown")
+                    genres.append("Unknown")
             elif value == "CR":
-                genres.append(u"Cover")
+                genres.append("Cover")
             elif value == "RX":
-                genres.append(u"Remix")
+                genres.append("Remix")
             elif value:
                 newgenres = []
                 genreid, dummy, genrename = genre_re.match(value).groups()
@@ -485,11 +485,11 @@ class TCON(TextFrame):
                             gid = text_type(self.GENRES[int(gid)])
                             newgenres.append(gid)
                         elif gid == "CR":
-                            newgenres.append(u"Cover")
+                            newgenres.append("Cover")
                         elif gid == "RX":
-                            newgenres.append(u"Remix")
+                            newgenres.append("Remix")
                         else:
-                            newgenres.append(u"Unknown")
+                            newgenres.append("Unknown")
 
                 if genrename:
                     # "Unescaping" the first parenthesis
@@ -732,7 +732,7 @@ class TXXX(TextFrame):
     _framespec = [
         EncodingSpec('encoding'),
         EncodedTextSpec('desc'),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000'),
+        MultiSpec('text', EncodedTextSpec('text'), sep='\u0000'),
     ]
 
     @property
@@ -959,7 +959,7 @@ class SYLT(Frame):
     __hash__ = Frame.__hash__
 
     def __str__(self):
-        return u"".join(text for (text, time) in self.text)
+        return "".join(text for (text, time) in self.text)
 
     def __bytes__(self):
         return text_type(self).encode("utf-8")
@@ -976,7 +976,7 @@ class COMM(TextFrame):
         EncodingSpec('encoding'),
         StringSpec('lang', 3),
         EncodedTextSpec('desc'),
-        MultiSpec('text', EncodedTextSpec('text'), sep=u'\u0000'),
+        MultiSpec('text', EncodedTextSpec('text'), sep='\u0000'),
     ]
 
     @property

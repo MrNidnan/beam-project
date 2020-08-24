@@ -39,12 +39,21 @@ from copy import deepcopy
 #
 ###############################################################
 
+# if platform.system() == 'Linux':
+#     from .Modules.Lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule
 if platform.system() == 'Linux':
-    from Modules.Lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule
+    from bin.Modules.Lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule, mixxxLinuxModule
+# if platform.system() == 'Windows':
+#     from .Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
 if platform.system() == 'Windows':
-    from Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
+    from bin.Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule, mixxxWindowsModule
+# if platform.system() == 'Darwin':
+#    from .Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule
 if platform.system() == 'Darwin':
-    from Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule
+    from bin.Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule, mixxxMacModule
+
+
+
 
 ###############################################################
 #
@@ -82,7 +91,7 @@ class NowPlayingDataModel:
         self.convDict = dict()
         
     def ExtractPlaylistInfo(self, currentSettings):
-        print "Start updating data... ", time.strftime("%H:%M:%S")
+        # print("Start updating data... ", time.strftime("%H:%M:%S"))
         self.PreviousPlaybackStatus = self.PlaybackStatus
         # Save previous state
         try:
@@ -112,6 +121,8 @@ class NowPlayingDataModel:
                     self.currentPlaylist, self.PlaybackStatus = winampWindowsModule.run(currentSettings._maxTandaLength)
             except:
                 pass
+            if currentSettings._moduleSelected == 'Mixxx':
+                self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # LINUX
         if platform.system() == 'Linux':
@@ -125,6 +136,8 @@ class NowPlayingDataModel:
                 self.currentPlaylist, self.PlaybackStatus = bansheeModule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Spotify':
                 self.currentPlaylist, self.PlaybackStatus = spotifyLinuxModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Mixxx':
+                self.currentPlaylist, self.PlaybackStatus = mixxxLinuxModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # Mac OS X
         if platform.system() == 'Darwin':
@@ -142,6 +155,8 @@ class NowPlayingDataModel:
                     self.currentPlaylist, self.PlaybackStatus  = cogModule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Embrace':
                     self.currentPlaylist, self.PlaybackStatus  = embraceModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+            if currentSettings._moduleSelected == 'Mixxx':
+                self.currentPlaylist, self.PlaybackStatus = mixxxMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         #
         # Set status message
@@ -163,7 +178,7 @@ class NowPlayingDataModel:
         else:
             self.playlistChanged  = False
 
-        print "Data Extracted... ", time.strftime("%H:%M:%S")
+        # print("Data Extracted... ", time.strftime("%H:%M:%S"))
         if self.PreviousPlaybackStatus == "":
             self.PreviousPlaybackStatus = self.PlaybackStatus
 
@@ -240,18 +255,18 @@ class NowPlayingDataModel:
         applyMood = []
         for i in range(1, len(currentSettings._moods)):
             currentRule = currentSettings._moods[i]
-            if currentRule[u'Type'] == 'Mood' and currentRule[u'Active'] == 'yes' and str(currentRule[u'PlayState']) == str(MoodStatus):
+            if currentRule['Type'] == 'Mood' and currentRule['Active'] == 'yes' and str(currentRule['PlayState']) == str(MoodStatus):
                 
                 
                 # Only apply Mood for current song
-                if currentRule[u'Field2'] == 'is':
-                    if eval(str(currentRule[u'Field1']).replace("%"," currentSong.")).lower() == str(currentRule[u'Field3']).lower():
+                if currentRule['Field2'] == 'is':
+                    if eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower() == str(currentRule['Field3']).lower():
                         applyMood = i
-                if currentRule[u'Field2'] == 'is not':
-                    if eval(str(currentRule[u'Field1']).replace("%"," currentSong.")).lower() not in str("["+currentRule[u'Field3'].lower()+"]"):
+                if currentRule['Field2'] == 'is not':
+                    if eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower() not in str("["+currentRule['Field3'].lower()+"]"):
                         applyMood = i
-                if currentRule[u'Field2'] == 'contains':
-                    if str(currentRule[u'Field3']).lower() in eval(str(currentRule[u'Field1']).replace("%"," currentSong.")).lower():
+                if currentRule['Field2'] == 'contains':
+                    if str(currentRule['Field3']).lower() in eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower():
                         applyMood = i
 
                 
@@ -260,18 +275,18 @@ class NowPlayingDataModel:
 #
         if not applyMood == []:
             currentRule = currentSettings._moods[applyMood]
-            self.CurrentMood = currentRule[u'Name']
-            self.DisplaySettings = currentRule[u'Display']
-            self.BackgroundImage = currentRule[u'Background']
-            self.RotateBackground = currentRule[u'RotateBackground']
-            self.RotateTimer = currentRule[u'RotateTimer']
+            self.CurrentMood = currentRule['Name']
+            self.DisplaySettings = currentRule['Display']
+            self.BackgroundImage = currentRule['Background']
+            self.RotateBackground = currentRule['RotateBackground']
+            self.RotateTimer = currentRule['RotateTimer']
         else:
             defaultMood = currentSettings._moods[0]
-            self.CurrentMood = defaultMood[u'Name']
-            self.DisplaySettings = defaultMood[u'Display']
-            self.BackgroundImage = defaultMood[u'Background']
-            self.RotateBackground = defaultMood[u'RotateBackground']
-            self.RotateTimer = defaultMood[u'RotateTimer']
+            self.CurrentMood = defaultMood['Name']
+            self.DisplaySettings = defaultMood['Display']
+            self.BackgroundImage = defaultMood['Background']
+            self.RotateBackground = defaultMood['RotateBackground']
+            self.RotateTimer = defaultMood['RotateTimer']
 
 
 ###############################################################
@@ -291,8 +306,10 @@ class NowPlayingDataModel:
             try:
                 displayValue = str(MyDisplay['Field'])
             except:
-                displayValue = unicode(MyDisplay['Field'])
-            for key in self.convDict:
+                displayValue = str(MyDisplay['Field'])
+            # for key in self.convDict:
+            # in reverse order to avoid issues with %AlbumArtist by %Artist
+            for key in sorted(list(self.convDict.keys()), reverse=True):
                 try:
                     displayValue = displayValue.replace(str(key), str(self.convDict[key]))
                 except:
@@ -305,14 +322,16 @@ class NowPlayingDataModel:
             else:
                 # Hides line if HideControl is empty if there is no next tanda
                 hideControlEval = str(MyDisplay['HideControl'])
-                for key in self.convDict:
+                # for key in self.convDict:
+                # in reverse order to avoid issues with %AlbumArtist by %Artist
+                for key in sorted(list(self.convDict.keys()), reverse=True):
                     hideControlEval = hideControlEval.replace(str(key), str(self.convDict[key]))
                         
                 if  not hideControlEval == ""  and MyDisplay['Active'] == "yes":
                     self.DisplayRow[j] = displayValue
                 else:
                     self.DisplayRow[j] = ""
-        print "...data filtered: ", time.strftime("%H:%M:%S")
+        # print("...data filtered: ", time.strftime("%H:%M:%S"))
     
 
 ########################################################
@@ -335,17 +354,17 @@ class NowPlayingDataModel:
             self.convDict['%Performer']     = self.currentPlaylist[0].Performer
             self.convDict['%IsCortina']     = self.currentPlaylist[0].IsCortina
         except:
-            self.convDict['%Artist']        = u""
-            self.convDict['%Album']         = u""
-            self.convDict['%Title']         = u""
-            self.convDict['%Genre']         = u""
-            self.convDict['%Comment']       = u""
-            self.convDict['%Composer']      = u""
-            self.convDict['%Year']          = u""
-            self.convDict['%Singer']        = u""
-            self.convDict['%AlbumArtist']   = u""
-            self.convDict['%Performer']     = u""            
-            self.convDict['%IsCortina']     = u""
+            self.convDict['%Artist']        = ""
+            self.convDict['%Album']         = ""
+            self.convDict['%Title']         = ""
+            self.convDict['%Genre']         = ""
+            self.convDict['%Comment']       = ""
+            self.convDict['%Composer']      = ""
+            self.convDict['%Year']          = ""
+            self.convDict['%Singer']        = ""
+            self.convDict['%AlbumArtist']   = ""
+            self.convDict['%Performer']     = ""            
+            self.convDict['%IsCortina']     = ""
             
         #PreviousSong
         try:
@@ -363,17 +382,17 @@ class NowPlayingDataModel:
             
             
         except:
-            self.convDict['%PreviousArtist']        = u""
-            self.convDict['%PreviousAlbum']         = u""
-            self.convDict['%PreviousTitle']         = u""
-            self.convDict['%PreviousGenre']         = u""
-            self.convDict['%PreviousComment']       = u""
-            self.convDict['%PreviousComposer']      = u""
-            self.convDict['%PreviousYear']          = u""
-            self.convDict['%PreviousSinger']        = u""
-            self.convDict['%PreviousAlbumArtist']   = u""
-            self.convDict['%PreviousPerformer']     = u""
-            self.convDict['%PreviousIsCortina']     = u""
+            self.convDict['%PreviousArtist']        = ""
+            self.convDict['%PreviousAlbum']         = ""
+            self.convDict['%PreviousTitle']         = ""
+            self.convDict['%PreviousGenre']         = ""
+            self.convDict['%PreviousComment']       = ""
+            self.convDict['%PreviousComposer']      = ""
+            self.convDict['%PreviousYear']          = ""
+            self.convDict['%PreviousSinger']        = ""
+            self.convDict['%PreviousAlbumArtist']   = ""
+            self.convDict['%PreviousPerformer']     = ""
+            self.convDict['%PreviousIsCortina']     = ""
             
         #NextSong
         try:
@@ -389,17 +408,17 @@ class NowPlayingDataModel:
             self.convDict['%NextPerformer']     = self.currentPlaylist[1].Performer
             self.convDict['%NextIsCortina']     = self.currentPlaylist[1].IsCortina
         except:
-            self.convDict['%NextArtist']        = u""
-            self.convDict['%NextAlbum']         = u""
-            self.convDict['%NextTitle']         = u""
-            self.convDict['%NextGenre']         = u""
-            self.convDict['%NextComment']       = u""
-            self.convDict['%NextComposer']      = u""
-            self.convDict['%NextYear']          = u""
-            self.convDict['%NextSinger']        = u""
-            self.convDict['%NextAlbumArtist']   = u""
-            self.convDict['%NextPerformer']     = u""
-            self.convDict['%NextIsCortina']     = u""
+            self.convDict['%NextArtist']        = ""
+            self.convDict['%NextAlbum']         = ""
+            self.convDict['%NextTitle']         = ""
+            self.convDict['%NextGenre']         = ""
+            self.convDict['%NextComment']       = ""
+            self.convDict['%NextComposer']      = ""
+            self.convDict['%NextYear']          = ""
+            self.convDict['%NextSinger']        = ""
+            self.convDict['%NextAlbumArtist']   = ""
+            self.convDict['%NextPerformer']     = ""
+            self.convDict['%NextIsCortina']     = ""
         
         #NextTanda
         try:
@@ -415,17 +434,17 @@ class NowPlayingDataModel:
             self.convDict['%NextTandaPerformer']     = self.nextTandaSong.Performer
             self.convDict['%NextTandaIsCortina']     = self.nextTandaSong.IsCortina        
         except:
-            self.convDict['%NextTandaArtist']        = u""
-            self.convDict['%NextTandaAlbum']         = u""
-            self.convDict['%NextTandaTitle']         = u""
-            self.convDict['%NextTandaGenre']         = u""
-            self.convDict['%NextTandaComment']       = u""
-            self.convDict['%NextTandaComposer']      = u""
-            self.convDict['%NextTandaYear']          = u""
-            self.convDict['%NextTandaSinger']        = u""
-            self.convDict['%NextTandaAlbumArtist']   = u""
-            self.convDict['%NextTandaPerformer']     = u""
-            self.convDict['%NextTandaIsCortina']     = u""        
+            self.convDict['%NextTandaArtist']        = ""
+            self.convDict['%NextTandaAlbum']         = ""
+            self.convDict['%NextTandaTitle']         = ""
+            self.convDict['%NextTandaGenre']         = ""
+            self.convDict['%NextTandaComment']       = ""
+            self.convDict['%NextTandaComposer']      = ""
+            self.convDict['%NextTandaYear']          = ""
+            self.convDict['%NextTandaSinger']        = ""
+            self.convDict['%NextTandaAlbumArtist']   = ""
+            self.convDict['%NextTandaPerformer']     = ""
+            self.convDict['%NextTandaIsCortina']     = ""        
 
         #date and time
         

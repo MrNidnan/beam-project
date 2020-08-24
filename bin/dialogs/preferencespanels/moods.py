@@ -177,9 +177,9 @@ class Moods(wx.Panel):
         for i in range(0, len(self.BeamSettings._moods)-1):
             mood = self.BeamSettings._moods[i+1]
             if self.MoodList.IsChecked(i):
-                mood[u'Active'] = "yes"
+                mood['Active'] = "yes"
             else:
-                mood[u'Active'] = "no"
+                mood['Active'] = "no"
         self.BuildMoodList()
 
         ####################
@@ -189,12 +189,12 @@ class Moods(wx.Panel):
         self.MoodRows = []
         for i in range(0, len(self.BeamSettings._moods)-1):
             mood = self.BeamSettings._moods[i+1]
-            self.MoodRows.append(str(mood[u'Name']))
+            self.MoodRows.append(str(mood['Name']))
         self.MoodList.Set(self.MoodRows)
         # Check the rules
         for i in range(0, len(self.BeamSettings._moods)-1):
             moods = self.BeamSettings._moods[i+1]
-            if moods[u'Active'] == "yes":
+            if moods['Active'] == "yes":
                 self.MoodList.Check(i, check=True)
             else:
                 self.MoodList.Check(i, check=False)

@@ -117,9 +117,9 @@ class Rules(wx.Panel):
         for i in range(0, len(self.BeamSettings._rules)):
             rule = self.BeamSettings._rules[i]
             if self.RuleList.IsChecked(i):
-                rule[u'Active'] = "yes"
+                rule['Active'] = "yes"
             else:
-                rule[u'Active'] = "no"
+                rule['Active'] = "no"
         self.BuildRuleList()
 
     #####################
@@ -129,32 +129,32 @@ class Rules(wx.Panel):
         self.RuleRows = []
         for i in range(0, len(self.BeamSettings._rules)):
             rule = self.BeamSettings._rules[i]
-            if rule[u'Type'] == "Copy":
-                self.RuleRows.append(str('Copy '+rule[u'Field1']+' to '+rule[u'Field2']))
+            if rule['Type'] == "Copy":
+                self.RuleRows.append(str('Copy '+rule['Field1']+' to '+rule['Field2']))
             
-            if rule[u'Type'] == "Cortina":
-                if rule[u'Field2'] =="is":
-                    self.RuleRows.append(str("It's a Cortina when: "+rule[u'Field1']+' is '+rule[u'Field3']))
-                if rule[u'Field2'] =="is not":
-                    self.RuleRows.append(str("It's a Cortina when: "+rule[u'Field1']+' is not '+rule[u'Field3']))
-                if rule[u'Field2'] =="contains":
-                    self.RuleRows.append(str("It's a Cortina when: "+rule[u'Field1']+' contains '+rule[u'Field3']))
+            if rule['Type'] == "Cortina":
+                if rule['Field2'] =="is":
+                    self.RuleRows.append(str("It's a Cortina when: "+rule['Field1']+' is '+rule['Field3']))
+                if rule['Field2'] =="is not":
+                    self.RuleRows.append(str("It's a Cortina when: "+rule['Field1']+' is not '+rule['Field3']))
+                if rule['Field2'] =="contains":
+                    self.RuleRows.append(str("It's a Cortina when: "+rule['Field1']+' contains '+rule['Field3']))
         
-            if rule[u'Type'] == "Parse":
-                self.RuleRows.append(str('Parse/split '+rule[u'Field1']+' containing '+rule[u'Field2']+' into '+rule[u'Field3']+' and '+rule[u'Field4']))
+            if rule['Type'] == "Parse":
+                self.RuleRows.append(str('Parse/split '+rule['Field1']+' containing '+rule['Field2']+' into '+rule['Field3']+' and '+rule['Field4']))
     
-            if rule[u'Type'] == "Ignore":
-                if rule[u'Field2'] =="is":
-                    self.RuleRows.append(str("Ignore song if "+rule[u'Field1']+' is '+rule[u'Field3']))
-                if rule[u'Field2'] =="is not":
-                    self.RuleRows.append(str("Ignore song if "+rule[u'Field1']+' is not '+rule[u'Field3']))
-                if rule[u'Field2'] =="contains":
-                    self.RuleRows.append(str("Ignore song if "+rule[u'Field1']+' contains '+rule[u'Field3']))
+            if rule['Type'] == "Ignore":
+                if rule['Field2'] =="is":
+                    self.RuleRows.append(str("Ignore song if "+rule['Field1']+' is '+rule['Field3']))
+                if rule['Field2'] =="is not":
+                    self.RuleRows.append(str("Ignore song if "+rule['Field1']+' is not '+rule['Field3']))
+                if rule['Field2'] =="contains":
+                    self.RuleRows.append(str("Ignore song if "+rule['Field1']+' contains '+rule['Field3']))
         self.RuleList.Set(self.RuleRows)
         # Check the rules
         for i in range(0, len(self.BeamSettings._rules)):
             rule = self.BeamSettings._rules[i]
-            if rule[u'Active'] == "yes":
+            if rule['Active'] == "yes":
                 self.RuleList.Check(i, check=True)
             else:
                 self.RuleList.Check(i, check=False)

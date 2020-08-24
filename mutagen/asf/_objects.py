@@ -86,7 +86,7 @@ class HeaderObject(BaseObject):
         header = cls()
 
         size, num_objects = cls.parse_size(fileobj)
-        for i in xrange(num_objects):
+        for i in range(num_objects):
             guid, size = struct.unpack("<16sQ", fileobj.read(24))
             obj = BaseObject._get_object(guid)
             data = fileobj.read(size - 24)
@@ -156,11 +156,11 @@ class ContentDescriptionObject(BaseObject):
     GUID = guid2bytes("75B22633-668E-11CF-A6D9-00AA0062CE6C")
 
     NAMES = [
-        u"Title",
-        u"Author",
-        u"Copyright",
-        u"Description",
-        u"Rating",
+        "Title",
+        "Author",
+        "Copyright",
+        "Description",
+        "Rating",
     ]
 
     def parse(self, asf, data):
@@ -171,12 +171,12 @@ class ContentDescriptionObject(BaseObject):
         for length in lengths:
             end = pos + length
             if length > 0:
-                texts.append(data[pos:end].decode("utf-16-le").strip(u"\x00"))
+                texts.append(data[pos:end].decode("utf-16-le").strip("\x00"))
             else:
                 texts.append(None)
             pos = end
 
-        for key, value in izip(self.NAMES, texts):
+        for key, value in zip(self.NAMES, texts):
             if value is not None:
                 value = ASFUnicodeAttribute(value=value)
                 asf._tags.setdefault(self.GUID, []).append((key, value))
@@ -190,7 +190,7 @@ class ContentDescriptionObject(BaseObject):
                 return b""
 
         texts = [render_text(x) for x in self.NAMES]
-        data = struct.pack("<HHHHH", *map(len, texts)) + b"".join(texts)
+        data = struct.pack("<HHHHH", *list(map(len, texts))) + b"".join(texts)
         return self.GUID + struct.pack("<Q", 24 + len(data)) + data
 
 
@@ -204,7 +204,7 @@ class ExtendedContentDescriptionObject(BaseObject):
         super(ExtendedContentDescriptionObject, self).parse(asf, data)
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
-        for i in xrange(num_attributes):
+        for i in range(num_attributes):
             name_length, = struct.unpack("<H", data[pos:pos + 2])
             pos += 2
             name = data[pos:pos + name_length]
@@ -218,7 +218,7 @@ class ExtendedContentDescriptionObject(BaseObject):
             asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
-        attrs = asf.to_extended_content_description.items()
+        attrs = list(asf.to_extended_content_description.items())
         data = b"".join(attr.render(name) for (name, attr) in attrs)
         data = struct.pack("<QH", 26 + len(data), len(attrs)) + data
         return self.GUID + data
@@ -268,7 +268,7 @@ class CodecListObject(BaseObject):
         try:
             name = data[offset:next_offset].decode("utf-16-le").strip("\x00")
         except UnicodeDecodeError:
-            name = u""
+            name = ""
         offset = next_offset
 
         units, offset = cdata.uint16_le_from(data, offset)
@@ -276,12 +276,12 @@ class CodecListObject(BaseObject):
         try:
             desc = data[offset:next_offset].decode("utf-16-le").strip("\x00")
         except UnicodeDecodeError:
-            desc = u""
+            desc = ""
         offset = next_offset
 
         bytes_, offset = cdata.uint16_le_from(data, offset)
         next_offset = offset + bytes_
-        codec = u""
+        codec = ""
         if bytes_ == 2:
             codec_id = cdata.uint16_le_from(data, offset)[0]
             if codec_id in CODECS:
@@ -295,7 +295,7 @@ class CodecListObject(BaseObject):
 
         offset = 16
         count, offset = cdata.uint32_le_from(data, offset)
-        for i in xrange(count):
+        for i in range(count):
             try:
                 offset, type_, name, desc, codec = \
                     self._parse_entry(data, offset)
@@ -383,7 +383,7 @@ class MetadataObject(BaseObject):
         super(MetadataObject, self).parse(asf, data)
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
-        for i in xrange(num_attributes):
+        for i in range(num_attributes):
             (reserved, stream, name_length, value_type,
              value_length) = struct.unpack("<HHHHI", data[pos:pos + 12])
             pos += 12
@@ -399,7 +399,7 @@ class MetadataObject(BaseObject):
             asf._tags.setdefault(self.GUID, []).append((name, attr))
 
     def render(self, asf):
-        attrs = asf.to_metadata.items()
+        attrs = list(asf.to_metadata.items())
         data = b"".join([attr.render_m(name) for (name, attr) in attrs])
         return (self.GUID + struct.pack("<QH", 26 + len(data), len(attrs)) +
                 data)
@@ -415,7 +415,7 @@ class MetadataLibraryObject(BaseObject):
         super(MetadataLibraryObject, self).parse(asf, data)
         num_attributes, = struct.unpack("<H", data[0:2])
         pos = 2
-        for i in xrange(num_attributes):
+        for i in range(num_attributes):
             (language, stream, name_length, value_type,
              value_length) = struct.unpack("<HHHHI", data[pos:pos + 12])
             pos += 12

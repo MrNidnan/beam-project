@@ -211,35 +211,35 @@ class LAMEHeader(object):
         if (major, minor) < (3, 90) or (
                 (major, minor) == (3, 90) and data[-11:-10] == b"("):
             flag = data.strip(b"\x00").rstrip().decode("ascii")
-            return u"%d.%d%s" % (major, minor, flag), False
+            return "%d.%d%s" % (major, minor, flag), False
 
         if len(data) <= 11:
             raise LAMEError("Invalid version: too long")
 
         flag = data[:-11].rstrip(b"\x00")
 
-        flag_string = u""
-        patch = u""
+        flag_string = ""
+        patch = ""
         if flag == b"a":
-            flag_string = u" (alpha)"
+            flag_string = " (alpha)"
         elif flag == b"b":
-            flag_string = u" (beta)"
+            flag_string = " (beta)"
         elif flag == b"r":
-            patch = u".1+"
+            patch = ".1+"
         elif flag == b" ":
             if (major, minor) > (3, 96):
-                patch = u".0"
+                patch = ".0"
             else:
-                patch = u".0+"
+                patch = ".0+"
         elif flag == b"" or flag == b".":
-            patch = u".0+"
+            patch = ".0+"
         else:
-            flag_string = u" (?)"
+            flag_string = " (?)"
 
         # extended header, seek back to 9 bytes for the caller
         fileobj.seek(-11, 1)
 
-        return u"%d.%d%s%s" % (major, minor, patch, flag_string), True
+        return "%d.%d%s%s" % (major, minor, patch, flag_string), True
 
 
 class XingHeaderError(Exception):
@@ -273,7 +273,7 @@ class XingHeader(object):
     lame_header = None
     """A LAMEHeader instance or None"""
 
-    lame_version = u""
+    lame_version = ""
     """The version of the LAME encoder e.g. '3.99.0'. Empty if unknown"""
 
     is_info = False
@@ -409,7 +409,7 @@ class VBRIHeader(object):
         else:
             raise VBRIHeaderError("Invalid TOC entry size")
 
-        self.toc = [unpack(i)[0] for i in xrange(0, toc_size, toc_entry_size)]
+        self.toc = [unpack(i)[0] for i in range(0, toc_size, toc_entry_size)]
 
     @classmethod
     def get_offset(cls, info):

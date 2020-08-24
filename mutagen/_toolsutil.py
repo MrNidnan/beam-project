@@ -133,7 +133,7 @@ def fsencoding():
     return locale.getpreferredencoding() or "utf-8"
 
 
-def fsnative(text=u""):
+def fsnative(text=""):
     """Returns the passed text converted to the preferred path type
     for each platform.
     """

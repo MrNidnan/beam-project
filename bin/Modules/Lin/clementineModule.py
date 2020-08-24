@@ -74,49 +74,49 @@ def getSongObjectFromTrack(Track):
     retSong = SongObject()
     
     try:
-        retSong.Artist      = (Track[u'artist']).encode('utf-8')
+        retSong.Artist      = (Track['artist']).encode('utf-8')
     except:
         pass
         
     try:
-        retSong.Album       = (Track[u'album']).encode('utf-8')
+        retSong.Album       = (Track['album']).encode('utf-8')
     except:
         pass
     
     try:
-        retSong.Title       = (Track[u'title']).encode('utf-8')
+        retSong.Title       = (Track['title']).encode('utf-8')
     except:
         pass
         
     try:
-        retSong.Genre       = (Track[u'genre']).encode('utf-8')
+        retSong.Genre       = (Track['genre']).encode('utf-8')
     except:
         pass
         
     try:
-        retSong.Comment     = (Track[u'comment']).encode('utf-8')
+        retSong.Comment     = (Track['comment']).encode('utf-8')
     except:
         pass
         
     try:
-        retSong.Composer    = (Track[u'composer']).encode('utf-8')
+        retSong.Composer    = (Track['composer']).encode('utf-8')
     except:
         pass
         
     try:
-        retSong.Year        = (Track[u'year'])
+        retSong.Year        = (Track['year'])
     except:
         pass
         
     #retSong.Singer
     
     try:
-        retSong.AlbumArtist = (Track[u'album artist']).encode('utf-8')
+        retSong.AlbumArtist = (Track['album artist']).encode('utf-8')
     except:
         pass
         
     try:
-        retSong.Performer   = (Track[u'performer']).encode('utf-8')
+        retSong.Performer   = (Track['performer']).encode('utf-8')
     except:
          pass
      #retSong.IsCortina

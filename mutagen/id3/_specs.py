@@ -284,7 +284,7 @@ class EncodedTextSpec(Spec):
         except ValueError:
             # utf-16 termination with missing BOM, or single NULL
             if not data[:len(term)].strip(b"\x00"):
-                return u"", data[len(term):]
+                return "", data[len(term):]
 
             # utf-16 data with single NULL, see issue 169
             try:
@@ -326,7 +326,7 @@ class MultiSpec(Spec):
                 data.append(self.specs[0].write(frame, v))
         else:
             for record in value:
-                for v, s in izip(record, self.specs):
+                for v, s in zip(record, self.specs):
                     data.append(s.write(frame, v))
         return b''.join(data)
 
@@ -340,14 +340,14 @@ class MultiSpec(Spec):
                 return [self.specs[0].validate(frame, v) for v in value]
             else:
                 return [
-                    [s.validate(frame, v) for (v, s) in izip(val, self.specs)]
+                    [s.validate(frame, v) for (v, s) in zip(val, self.specs)]
                     for val in value]
         raise ValueError('Invalid MultiSpec data: %r' % value)
 
     def _validate23(self, frame, value, **kwargs):
         if len(self.specs) != 1:
             return [[s._validate23(frame, v, **kwargs)
-                     for (v, s) in izip(val, self.specs)]
+                     for (v, s) in zip(val, self.specs)]
                     for val in value]
 
         spec = self.specs[0]
@@ -423,7 +423,7 @@ class ID3TimeStamp(object):
             if part is None:
                 break
             pieces.append(self.__formats[i] % part + self.__seps[i])
-        return u''.join(pieces)[:-1]
+        return ''.join(pieces)[:-1]
 
     def set_text(self, text, splitre=re.compile('[-T:/.]|\s+')):
         year, month, day, hour, minute, second = \
@@ -476,7 +476,7 @@ class TimeStampSpec(EncodedTextSpec):
 
 class ChannelSpec(ByteSpec):
     (OTHER, MASTER, FRONTRIGHT, FRONTLEFT, BACKRIGHT, BACKLEFT, FRONTCENTRE,
-     BACKCENTRE, SUBWOOFER) = xrange(9)
+     BACKCENTRE, SUBWOOFER) = range(9)
 
 
 class VolumeAdjustmentSpec(Spec):
@@ -511,7 +511,7 @@ class VolumePeakSpec(Spec):
         if vol_bytes + 1 > len(data):
             raise SpecError("not enough frame data")
         shift = ((8 - (bits & 7)) & 7) + (4 - vol_bytes) * 8
-        for i in xrange(1, vol_bytes + 1):
+        for i in range(1, vol_bytes + 1):
             peak *= 256
             peak += data_array[i]
         peak *= 2 ** shift

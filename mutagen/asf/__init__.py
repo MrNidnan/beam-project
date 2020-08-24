@@ -42,18 +42,18 @@ class ASFInfo(StreamInfo):
     channels = 0
     """Number of channels (`int`)"""
 
-    codec_type = u""
+    codec_type = ""
     """Name of the codec type of the first audio stream or
     an empty string if unknown. Example: ``Windows Media Audio 9 Standard``
     (:class:`mutagen.text`)
     """
 
-    codec_name = u""
+    codec_name = ""
     """Name and maybe version of the codec used. Example:
     ``Windows Media Audio 9.1`` (:class:`mutagen.text`)
     """
 
-    codec_description = u""
+    codec_description = ""
     """Further information on the codec used.
     Example: ``64 kbps, 48 kHz, stereo 2-pass CBR`` (:class:`mutagen.text`)
     """
@@ -63,9 +63,9 @@ class ASFInfo(StreamInfo):
         self.sample_rate = 0
         self.bitrate = 0
         self.channels = 0
-        self.codec_type = u""
-        self.codec_name = u""
-        self.codec_description = u""
+        self.codec_type = ""
+        self.codec_name = ""
+        self.codec_description = ""
 
     def pprint(self):
         """Returns a stream information text summary
@@ -73,8 +73,8 @@ class ASFInfo(StreamInfo):
         :rtype: text
         """
 
-        s = u"ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds" % (
-            self.codec_type or self.codec_name or u"???", self.bitrate,
+        s = "ASF (%s) %d bps, %s Hz, %d channels, %.2f seconds" % (
+            self.codec_type or self.codec_name or "???", self.bitrate,
             self.sample_rate, self.channels, self.length)
         return s
 
@@ -164,7 +164,7 @@ class ASFTags(list, DictMixin, Metadata):
     def keys(self):
         """Return a sequence of all keys in the comment."""
 
-        return self and set(next(izip(*self)))
+        return self and set(next(zip(*self)))
 
     def as_dict(self):
         """Return a copy of the comment data in a real dict."""
