@@ -95,16 +95,23 @@ class BeamSettings:
     def LoadConfig(self, inputConfigFile):
         try:
             try:
-                #Try loading in home directory
-                ConfigData = self.OpenSetting(os.path.join(os.path.expanduser("~"), inputConfigFile))
-                # Validate config
+                #Try loading current config file in home directory
+                configfile = os.path.join(os.path.expanduser("~"), inputConfigFile)
+                ConfigData = self.OpenSetting(configfile)
+                # Validate configfile version against string.txt version
                 if not ConfigData['ConfigVersion'] == self._beamVersion:
-                    raise Exception('Config Version error, loading default')
-            except:
-                #Use original config
-                ConfigData = self.OpenSetting(os.path.join(os.getcwd(), inputConfigFile))
+                    raise Exception("No configfile version match, loading default")
+            except Exception as e:
+                print("BeamSettings.LoadConfig(" + configfile + ") not loaded")
+                print(e)
+                print("Loading default configfile")
+                # Use original configfile which is the settingsfile below
+                configfile = os.path.join(os.getcwd(), inputConfigFile)
+                ConfigData = self.OpenSetting(configfile)
+
             # Also load the original settingsfile
-            ConfigDataOriginal = self.OpenSetting(os.path.join(os.getcwd(), inputConfigFile))
+            configfile = os.path.join(os.getcwd(), inputConfigFile)
+            ConfigDataOriginal = self.OpenSetting(configfile)
             self.ReadConfig(ConfigData, ConfigDataOriginal)
         except Exception as e:
             print("Exception BeamSettings.LoadConfig()")
@@ -155,8 +162,6 @@ class BeamSettings:
             print(e)
             raise (e)
 
-
-
         return
 #
 # SUPPORTING FUNCTIONS
@@ -169,15 +174,16 @@ class BeamSettings:
         return output
 
     def OpenSetting(self, inputConfigFile):
+        ConfigFile = open(inputConfigFile, 'r')
+
         try:
-            ConfigFile = open(inputConfigFile, 'r')
             ConfigData = json.load(ConfigFile)
-            ConfigFile.close()
         except Exception as e:
-            print("Exception BeamSettings.OpenSetting()")
+            print("Exception BeamSettings.OpenSetting(" + inputConfigFile + ")")
             print(e)
             raise (e)
-
+        finally:
+            ConfigFile.close()
 
         return ConfigData
 

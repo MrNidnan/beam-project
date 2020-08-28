@@ -50,28 +50,29 @@ class beamMainFrame(wx.Frame):
             wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle, pos=(150,150), size=(800,600))
             self.SetDoubleBuffered(True)
 
-        # Start the timer reading data
+            # Start the timer for updateData()
+            # ??? redundant see call to updateData() below
             self.DataTimer()
 
-        # Initialize DataObject - the model -
+            # Initialize DataObject - the model -
             self.nowPlayingDataModel = NowPlayingDataModel()
 
-        # Set Icon
+            # Set Icon
             iconFilename = os.path.join(os.getcwd(),'resources','icons','icon_square','icon_square_256px.png')
             self.favicon = wx.Icon(iconFilename, wx.BITMAP_TYPE_ANY, 256, 256)
             self.SetIcon(self.favicon)
 
-        # faders
+            # faders
             self.TransitionTimer = wx.Timer(self)
             self.Bind(wx.EVT_TIMER, self.transition, self.TransitionTimer)
             self.RotateBackgroundTimer = wx.Timer(self)
             self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
 
-        # Statusbar
+            # Statusbar
             self.statusbar = self.CreateStatusBar(style=0)
             self.SetStatusText('Initializing...')
 
-        # Setting up the menu.
+            # Setting up the menu.
             self.filemenu    = wx.Menu()
             self.Aboutmenu   = wx.Menu()
             self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl+P"," Configuration tool")
@@ -80,7 +81,7 @@ class beamMainFrame(wx.Frame):
             self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
             self.menuHelp    = self.Aboutmenu.Append(wx.ID_ANY, "&Help"," Getting started")
 
-        # Creating the menubar.
+            # Creating the menubar.
             self.menuBar = wx.MenuBar()
             self.menuBar.Append(self.filemenu,"&File")    # Adding the "file menu" to the MenuBar
             self.menuBar.Append(self.Aboutmenu,"&About")  # Adding the "About menu" to the MenuBar
@@ -127,6 +128,8 @@ class beamMainFrame(wx.Frame):
 
             #visibility switch
             self.showStatusBar()
+
+            # first update from player
             self.currentlyUpdating = False
             self.updateData()
         except Exception as e:
@@ -142,10 +145,10 @@ class beamMainFrame(wx.Frame):
 ########################################################
     def OnPreferences(self, event):
         try:
+            # Raises the window to the top of the window hierarchy
             self.PreferencesDialog.Raise()
         except Exception as e:
-            print("Exception beamMainFrame.OnPreferences()")
-            print(e)
+            # if not yet existing
             self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingDataModel)
             self.PreferencesDialog.Show()
                 
@@ -241,6 +244,7 @@ class beamMainFrame(wx.Frame):
 
             if not self.currentlyUpdating:
                 self.currentlyUpdating = True
+                # asynchronous transmission of datafrom a worker thread to the main thread
                 wx.lib.delayedresult.startWorker(self.getDataFinished, self.extractDataThread)
             self.DataTimer() # Reset the timer
         except Exception as e:

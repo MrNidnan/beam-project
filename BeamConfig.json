@@ -10,7 +10,7 @@
   "Logging": "False",
   "LogPath": "C:\\Users\\Martin\\BeamLog.txt",
   "ShowStatusbar": "True",
-  "ConfigVersion": "0.4",
+  "ConfigVersion": "0.4.3.3",
   "AllModules": [
     {
       "Modules": [
@@ -134,12 +134,12 @@
           "HideControl": "",
           "Field": "%AlbumArtist",
           "Position": [
-            23,
+            20,
             1
           ],
           "Active": "yes",
           "FontColor": "(255, 255, 255, 255)",
-          "Font": "Georgia",
+          "Font": "",
           "Alignment": "Center",
           "Size": 10,
           "TextFlow": "Cut"
@@ -150,30 +150,46 @@
           "HideControl": "%Artist",
           "Field": "c. %Artist",
           "Position": [
-            38,
+            35,
             1
           ],
           "Active": "yes",
           "FontColor": "(255, 255, 255, 255)",
-          "Font": "Georgia",
+          "Font": "",
           "Alignment": "Center",
-          "Size": 10,
+          "Size": 8,
           "TextFlow": "Cut"
         },
         {
-          "Style": "Italic",
-          "Weight": "Normal",
-          "HideControl": "",
           "Field": "%Title",
-          "Position": [
-            53,
-            1
-          ],
-          "Active": "yes",
-          "FontColor": "(255, 255, 255, 255)",
-          "Font": "Georgia",
-          "Alignment": "Center",
+          "Font": "",
+          "Style": "Normal",
+          "Weight": "Normal",
           "Size": 10,
+          "FontColor": "(255, 255, 255, 255)",
+          "HideControl": "",
+          "Position": [
+            48,
+            50
+          ],
+          "Alignment": "Center",
+          "Active": "yes",
+          "TextFlow": "Cut"
+        },
+        {
+          "Field": "%Genre %Year",
+          "Font": "",
+          "Style": "Normal",
+          "Weight": "Normal",
+          "Size": 8,
+          "FontColor": "(255, 255, 255, 255)",
+          "HideControl": "",
+          "Position": [
+            64,
+            50
+          ],
+          "Alignment": "Center",
+          "Active": "no",
           "TextFlow": "Cut"
         },
         {
@@ -182,12 +198,12 @@
           "HideControl": "%NextTandaAlbumArtist",
           "Field": "Next Tanda: %NextTandaGenre  - %NextTandaAlbumArtist \u266a",
           "Position": [
-            76,
+            77,
             2
           ],
           "Active": "yes",
           "FontColor": "(255, 255, 255, 255)",
-          "Font": "Georgia",
+          "Font": "",
           "Alignment": "Right",
           "Size": 5,
           "TextFlow": "Cut"

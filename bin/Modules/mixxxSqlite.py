@@ -36,20 +36,23 @@ import sqlite3
 
 class MixxxSqlite:
     sqlitePath = ""
-    # can only get executed in MainThread
-    if platform.system() == 'Windows':
-        sqlitePath = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
-        # Doku: sqlitePath = os.path.expandvars(r'%USERPROFILE%\Local Settings\Application Data\Mixxx\mixxxdb.sqlite')
-    if platform.system() == 'Linux':
-        sqlitePath = os.path.expandvars(r'~/.mixxx/mixxxdb.sqlite')
-        print("Linux sqlitePath untested")
-    if platform.system() == 'Darwin':
-        sqlitePath = os.path.expandvars(r'~/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
-        print("MacOS sqlitePath untested")
-    # Windows: "C:\\Users\\Martin\\AppData\Local\\Mixxx\\mixxxdb.sqlite"
-    # Linux: "/home/<username>/.mixxx/mixxxdb.sqlite"
-    # MacOS:
-
+    try:
+        # can only get executed in MainThread
+        if platform.system() == 'Windows':
+            sqlitePath = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
+            # "C:\\Users\\<user>\\AppData\Local\\Mixxx\\mixxxdb.sqlite"
+        if platform.system() == 'Linux':
+            sqlitePath = os.path.expandvars(r'$HOME/.mixxx/mixxxdb.sqlite')
+            # "/home/<username>/.mixxx/mixxxdb.sqlite"
+            # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'
+        if platform.system() == 'Darwin':
+            # MacOS:
+            sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
+    except Exception as e:
+        print("MixxxSqlite() Exception:")
+        print(e)
+        print(sqlitePath)
+        raise e
 
 def run(maxtandalength, lastlplaylist):
     # print("mixxxSqlite.run()");
@@ -77,9 +80,10 @@ def run(maxtandalength, lastlplaylist):
         if run.currentmod:
             # skip this round
             playlist = lastlplaylist
-            playback_status = 'Paused'
-        else:
-            playback_status = 'Playing'
+            # playback_status = 'Paused'
+
+        # always playing, we don't know better
+        playback_status = 'Playing'
 
     except Exception as e:
         print("mixxxSqlite.run() Exception")

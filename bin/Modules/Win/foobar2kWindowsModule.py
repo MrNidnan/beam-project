@@ -26,13 +26,13 @@
 # This Python file uses the following encoding: utf-8
 
 from bin.songclass import SongObject
-import subprocess
+
 try:
     import pythoncom
     import win32com.client
 except ImportError:
     pass
-from bin.Modules.winutils import applicationrunning
+from bin.Modules.Win.winutils import applicationrunning
 
 ###############################################################
 #

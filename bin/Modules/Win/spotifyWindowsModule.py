@@ -24,12 +24,12 @@
 #
 
 from bin.songclass import SongObject
-import subprocess
+
 try:
 	import win32gui
 except:
 	pass
-from bin.Modules.winutils import applicationrunning
+from bin.Modules.Win.winutils import applicationrunning
 
 ###############################################################
 #

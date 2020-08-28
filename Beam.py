@@ -34,6 +34,7 @@ import sys
 from bin.beamsettings import *
 from bin.dialogs.beammainframe import beamMainFrame
 
+
 app = wx.App(False) # Error messages go to terminal
 
 ########################################################
@@ -41,18 +42,20 @@ app = wx.App(False) # Error messages go to terminal
 ########################################################
 beamSettings.LoadConfig(beamSettings.defaultConfigFileName)
 
-print((beamSettings.mainFrameTitle))
-
 ########################################################
 # Select logging method (terminal or file)
 ########################################################
 if beamSettings._logging == 'True':
     sys.stdout = open(beamSettings._logPath,"w")
 
+print(beamSettings.mainFrameTitle + " started")
+
+
 ########################################################
 # Start the main window
 ########################################################
 top = beamMainFrame()       # Creates the main frame
+# __init__() starts timer for updating, transition, first updateData()
 top.Show()                  # Shows the main frame
 
 ########################################################

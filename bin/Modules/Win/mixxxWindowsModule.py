@@ -31,9 +31,8 @@
 #     pass
 # No error if not installed!
 # from copy import deepcopy
-import subprocess
 import bin.Modules.mixxxSqlite
-from bin.Modules.winutils import applicationrunning
+from bin.Modules.Win.winutils import applicationrunning
 # from bin.Modules import mixxxSqlite
 
 ###############################################################
