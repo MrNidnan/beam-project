@@ -164,7 +164,7 @@
           "Field": "%Title",
           "Font": "",
           "Style": "Normal",
-          "Weight": "Normal",
+          "Weight": "Bold",
           "Size": 10,
           "FontColor": "(255, 255, 255, 255)",
           "HideControl": "",
@@ -189,7 +189,7 @@
             50
           ],
           "Alignment": "Center",
-          "Active": "no",
+          "Active": "yes",
           "TextFlow": "Cut"
         },
         {
@@ -198,7 +198,7 @@
           "HideControl": "%NextTandaAlbumArtist",
           "Field": "Next Tanda: %NextTandaGenre  - %NextTandaAlbumArtist \u266a",
           "Position": [
-            77,
+            82,
             2
           ],
           "Active": "yes",

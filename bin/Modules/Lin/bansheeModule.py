@@ -65,32 +65,32 @@ def getSongObjectFromTrack(Track):
     retSong = SongObject()
     
     try:
-        retSong.Artist      = (Track['artist']).encode('utf-8')
+        retSong.Artist      = (Track['artist'])
     except:
         pass
         
     try:
-        retSong.Album       = (Track['album']).encode('utf-8')
+        retSong.Album       = (Track['album'])
     except:
         pass
     
     try:
-        retSong.Title       = (Track['name']).encode('utf-8')
+        retSong.Title       = (Track['name'])
     except:
         pass
         
     try:
-        retSong.Genre       = (Track['genre']).encode('utf-8')
+        retSong.Genre       = (Track['genre'])
     except:
         pass
         
     try:
-        retSong.Comment     = (Track['comment']).encode('utf-8')
+        retSong.Comment     = (Track['comment'])
     except:
         pass
         
     try:
-        retSong.Composer    = (Track['composer']).encode('utf-8')
+        retSong.Composer    = (Track['composer'])
     except:
         pass
         
@@ -102,12 +102,12 @@ def getSongObjectFromTrack(Track):
     #retSong.Singer
     
     try:
-        retSong.AlbumArtist = (Track['album artist']).encode('utf-8')
+        retSong.AlbumArtist = (Track['album artist'])
     except:
         pass
         
     try:
-        retSong.Performer   = (Track['performer']).encode('utf-8')
+        retSong.Performer   = (Track['performer'])
     except:
          pass
      #retSong.IsCortina

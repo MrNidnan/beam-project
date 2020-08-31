@@ -60,37 +60,37 @@ def getSongObjectFromTrack(metadata):
     retSong = SongObject()
 
     try:
-        retSong.Artist      = (metadata['xesam:artist'])[0].encode('utf-8')
+        retSong.Artist      = (metadata['xesam:artist'])[0]
     except:
         pass
         
     try:
-        retSong.Album       = metadata['xesam:album'].encode('utf-8')
+        retSong.Album       = metadata['xesam:album']
     except:
         pass
     
     try:
-        retSong.Title       = metadata['xesam:title'].encode('utf-8')
+        retSong.Title       = metadata['xesam:title']
     except:
         pass
         
     try:
-        retSong.Genre       = (metadata['xesam:genre'])[0].encode('utf-8')
+        retSong.Genre       = (metadata['xesam:genre'])[0]
     except:
         pass
         
     try:
-        retSong.Comment     = (metadata['xesam:comment'])[0].encode('utf-8')
+        retSong.Comment     = (metadata['xesam:comment'])[0]
     except:
         pass
         
     try:
-        retSong.Composer    = (Track['composer']).encode('utf-8')
+        retSong.Composer    = (Track['composer'])
     except:
         pass
         
     try:
-        retSong.Year        = (metadata['xesam:contentCreated'])[:4].encode('utf-8')
+        retSong.Year        = (metadata['xesam:contentCreated'])[:4]
     except:
         pass
         

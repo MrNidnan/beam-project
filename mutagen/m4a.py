@@ -2,8 +2,9 @@
 # Copyright 2006 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 as
-# published by the Free Software Foundation.
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 
 """
 since 1.9: mutagen.m4a is deprecated; use mutagen.mp4 instead.
@@ -13,15 +14,15 @@ since 1.31: mutagen.m4a will no longer work; any operation that could fail
 
 import warnings
 
-from mutagen import FileType, Metadata, StreamInfo
-from ._util import DictProxy, MutagenError
+from mutagen import FileType, Tags, StreamInfo
+from ._util import DictProxy, MutagenError, loadfile
 
 warnings.warn(
     "mutagen.m4a is deprecated; use mutagen.mp4 instead.",
     DeprecationWarning)
 
 
-class error(IOError, MutagenError):
+class error(MutagenError):
     pass
 
 
@@ -33,7 +34,7 @@ class M4AStreamInfoError(error):
     pass
 
 
-class M4AMetadataValueError(ValueError, M4AMetadataError):
+class M4AMetadataValueError(error):
     pass
 
 
@@ -53,7 +54,7 @@ class M4ACover(bytes):
         return self
 
 
-class M4ATags(DictProxy, Metadata):
+class M4ATags(DictProxy, Tags):
 
     def load(self, atoms, fileobj):
         raise error("deprecated")
@@ -65,7 +66,7 @@ class M4ATags(DictProxy, Metadata):
         raise error("deprecated")
 
     def pprint(self):
-        return ""
+        return u""
 
 
 class M4AInfo(StreamInfo):
@@ -76,14 +77,15 @@ class M4AInfo(StreamInfo):
         raise error("deprecated")
 
     def pprint(self):
-        return ""
+        return u""
 
 
 class M4A(FileType):
 
     _mimes = ["audio/mp4", "audio/x-m4a", "audio/mpeg4", "audio/aac"]
 
-    def load(self, filename):
+    @loadfile()
+    def load(self, filething):
         raise error("deprecated")
 
     def add_tags(self):

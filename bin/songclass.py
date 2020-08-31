@@ -35,6 +35,7 @@ import platform
 #
 ###############################################################
 
+
 class SongObject(object):
 
     def __init__(self, p_artist="", p_album="", p_title="", p_genre="",

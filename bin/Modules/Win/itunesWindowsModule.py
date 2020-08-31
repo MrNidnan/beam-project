@@ -98,16 +98,16 @@ def getSongAt(itunes, songPosition):
     retSong = SongObject()
     Track = itunes.CurrentTrack.Playlist.Tracks.Item(songPosition)
 
-    retSong.Artist      = (Track.Artist).encode('latin-1')
-    retSong.Album       = (Track.Album).encode('latin-1')
-    retSong.Title       = (Track.Name).encode('latin-1')
-    retSong.Genre       = (Track.Genre).encode('latin-1')
-    retSong.Comment     = (Track.Comment).encode('latin-1')
-    retSong.Composer    = (Track.Composer).encode('latin-1')
+    retSong.Artist      = (Track.Artist)
+    retSong.Album       = (Track.Album)
+    retSong.Title       = (Track.Name)
+    retSong.Genre       = (Track.Genre)
+    retSong.Comment     = (Track.Comment)
+    retSong.Composer    = (Track.Composer)
     retSong.Year        = Track.Year
     #retSong._Singer     Defined by beam
-    #retSong.AlbumArtist = (Track.AlbumArtist).encode('latin-1') # Does not exist for iTunes?
-    #retSong.Performer   = (Track.Performer).encode('latin-1') # Does not exist for iTunes?
+    #retSong.AlbumArtist = (Track.AlbumArtist) # Does not exist for iTunes?
+    #retSong.Performer   = (Track.Performer) # Does not exist for iTunes?
     #retSong.IsCortina   Defined by beam
     #retSong.fileUrl     Does not exist for iTunes
     #retSong.ModuleMessage = Not needed for iTunes

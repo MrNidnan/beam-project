@@ -102,7 +102,7 @@ class BeamSettings:
                 if not ConfigData['ConfigVersion'] == self._beamVersion:
                     raise Exception("No configfile version match, loading default")
             except Exception as e:
-                print("BeamSettings.LoadConfig(" + configfile + ") not loaded")
+                print("BeamSettings.LoadConfig($HOME) not loaded")
                 print(e)
                 print("Loading default configfile")
                 # Use original configfile which is the settingsfile below
@@ -153,14 +153,15 @@ class BeamSettings:
                 self._preferencesSize = (400, 600)
                 self._moodSize = (400,550)
 
-            self._currentModules = [s.encode('utf-8') for s in tmp['Modules']]
+            # self._currentModules = [s.encode('utf-8') for s in tmp['Modules']]
+            self._currentModules = [s for s in tmp['Modules']]
 
-            if self._moduleSelected == '':
-                self._moduleSelected = [s.encode('utf-8') for s in tmp['Modules']][0]
+            # if self._moduleSelected == '':
+            #     self._moduleSelected = [s.encode('utf-8') for s in tmp['Modules']][0]
         except Exception as e:
             print("Exception BeamSettings.ReadConfig()")
             print(e)
-            raise (e)
+            raise(e)
 
         return
 #
@@ -216,7 +217,8 @@ class BeamSettings:
             output['Moods']                = self._moods
 
             # Write config file to home dir
-            self.WriteSetting(os.path.join(os.path.expanduser("~"),outputConfigFile), output)
+            writepath = os.path.join(os.path.expanduser("~"), outputConfigFile)
+            self.WriteSetting(writepath, output)
         except Exception as e:
             print("Exception BeamSettings.SaveConfig()")
             print(e)
@@ -226,8 +228,8 @@ class BeamSettings:
 
 
     def WriteSetting(self, outputConfigFile, output):
+        ConfigFile = open(outputConfigFile, 'w')
         try:
-            ConfigFile = open(outputConfigFile, 'w')
             # Writing different format depending on platform
             if platform.system() == 'Windows':
                 # json.dump(output, ConfigFile, indent=2, encoding="latin-1")
@@ -235,11 +237,12 @@ class BeamSettings:
             else:
                 # json.dump(output, ConfigFile, indent=2, encoding="utf-8")
                 json.dump(output, ConfigFile, indent=2)
-            ConfigFile.close()
         except Exception as e:
-            print("Exception BeamSettings.WriteConfig()")
+            print("Exception BeamSettings.WriteSetting()")
             print(e)
             raise (e)
+        finally:
+            ConfigFile.close()
 
         return
 

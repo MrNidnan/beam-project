@@ -52,7 +52,10 @@ class BasicSettings(wx.Panel):
         mediaplayer.SetFont(font)
         
         mediadescription = wx.StaticText(self, wx.ID_ANY, "Select mediaplayer to display information from")
-        self.ModuleSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,value=self.BeamSettings._moduleSelected, choices=self.BeamSettings._currentModules, style=wx.CB_READONLY)
+        self.ModuleSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
+                                                  value = self.BeamSettings._moduleSelected,
+                                                  choices = self.BeamSettings._currentModules,
+                                                  style=wx.CB_READONLY)
         self.ModuleSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectMediaPlayer)
         vbox.Add(mediaplayer, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         vbox.Add(mediadescription, flag=wx.LEFT, border=20)

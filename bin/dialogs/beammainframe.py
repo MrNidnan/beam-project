@@ -250,7 +250,7 @@ class beamMainFrame(wx.Frame):
         except Exception as e:
             print("Error beammainframe.updateData()")
             print(e)
-            raise(e)
+            # raise(e)
 
         # MEDIA READER WORKER
     def extractDataThread(self):

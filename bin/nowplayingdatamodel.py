@@ -92,95 +92,118 @@ class NowPlayingDataModel:
         
     def ExtractPlaylistInfo(self, currentSettings):
         # print("Start updating data... ", time.strftime("%H:%M:%S"))
-        self.PreviousPlaybackStatus = self.PlaybackStatus
         # Save previous state
+        self.PreviousPlaybackStatus = self.PlaybackStatus
+
         try:
             self.LastRead = deepcopy(self.currentPlaylist)
-        except:
+        except Exception as e:
+            print("NowPlayingDataModel.ExtractPlaylistInfo(deepcopy) exception:")
+            print(e)
             self.LastRead = SongObject()
-        
 
-
-###############################################################
-#
-# Extract data using the player module
-#
-###############################################################
+        ###############################################################
+        #
+        # Extract data using the player module
+        #
+        ###############################################################
         # WINDOWS
-        if platform.system() == 'Windows':
-            if currentSettings._moduleSelected == 'iTunes':
-                self.currentPlaylist, self.PlaybackStatus = itunesWindowsModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'MediaMonkey':
-                self.currentPlaylist, self.PlaybackStatus = mediamonkeyModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-            if currentSettings._moduleSelected == 'Spotify':
-                self.currentPlaylist, self.PlaybackStatus =spotifyWindowsModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Foobar2000':
-                self.currentPlaylist, self.PlaybackStatus =foobar2kWindowsModule.run(currentSettings._maxTandaLength)
-            try: #required due to loaded modules
-                if currentSettings._moduleSelected == 'Winamp':
-                    self.currentPlaylist, self.PlaybackStatus = winampWindowsModule.run(currentSettings._maxTandaLength)
-            except:
-                pass
-            if currentSettings._moduleSelected == 'Mixxx':
-                self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+        try:
+            if platform.system() == 'Windows':
+                if currentSettings._moduleSelected == 'iTunes':
+                    self.currentPlaylist, self.PlaybackStatus = itunesWindowsModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'MediaMonkey':
+                    self.currentPlaylist, self.PlaybackStatus = mediamonkeyModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                if currentSettings._moduleSelected == 'Spotify':
+                    self.currentPlaylist, self.PlaybackStatus =spotifyWindowsModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Foobar2000':
+                    self.currentPlaylist, self.PlaybackStatus =foobar2kWindowsModule.run(currentSettings._maxTandaLength)
+                try: #required due to loaded modules
+                    if currentSettings._moduleSelected == 'Winamp':
+                        self.currentPlaylist, self.PlaybackStatus = winampWindowsModule.run(currentSettings._maxTandaLength)
+                except:
+                    pass
+                if currentSettings._moduleSelected == 'Mixxx':
+                    self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+        except Exception as e:
+            print("NowPlayingDataModel.ExtractPlaylistInfo(Windows) exception:")
+            print(e)
+            raise(e)
 
         # LINUX
-        if platform.system() == 'Linux':
-            if currentSettings._moduleSelected == 'Audacious':
-                self.currentPlaylist, self.PlaybackStatus = audaciousModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Rhythmbox':
-                self.currentPlaylist, self.PlaybackStatus = rhythmboxModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Clementine':
-                self.currentPlaylist, self.PlaybackStatus = clementineModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Banshee':
-                self.currentPlaylist, self.PlaybackStatus = bansheeModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Spotify':
-                self.currentPlaylist, self.PlaybackStatus = spotifyLinuxModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Mixxx':
-                self.currentPlaylist, self.PlaybackStatus = mixxxLinuxModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+        try:
+            if platform.system() == 'Linux':
+                if currentSettings._moduleSelected == 'Audacious':
+                    self.currentPlaylist, self.PlaybackStatus = audaciousModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Rhythmbox':
+                    self.currentPlaylist, self.PlaybackStatus = rhythmboxModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Clementine':
+                    self.currentPlaylist, self.PlaybackStatus = clementineModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Banshee':
+                    self.currentPlaylist, self.PlaybackStatus = bansheeModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Spotify':
+                    self.currentPlaylist, self.PlaybackStatus = spotifyLinuxModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Mixxx':
+                    self.currentPlaylist, self.PlaybackStatus = mixxxLinuxModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+        except Exception as e:
+            print("NowPlayingDataModel.ExtractPlaylistInfo(Windows) exception:")
+            print(e)
+            raise(e)
 
         # Mac OS X
-        if platform.system() == 'Darwin':
-            if currentSettings._moduleSelected == 'iTunes':
-                self.currentPlaylist, self.PlaybackStatus  = itunesMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-            if currentSettings._moduleSelected == 'Decibel':
-                self.currentPlaylist, self.PlaybackStatus  = decibelModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Swinsian':
-                self.currentPlaylist, self.PlaybackStatus  = swinsianModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Spotify':
-                self.currentPlaylist, self.PlaybackStatus  = spotifyMacModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Vox':
-                    self.currentPlaylist, self.PlaybackStatus  = voxModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Cog':
-                    self.currentPlaylist, self.PlaybackStatus  = cogModule.run(currentSettings._maxTandaLength)
-            if currentSettings._moduleSelected == 'Embrace':
-                    self.currentPlaylist, self.PlaybackStatus  = embraceModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-            if currentSettings._moduleSelected == 'Mixxx':
-                self.currentPlaylist, self.PlaybackStatus = mixxxMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+        try:
+            if platform.system() == 'Darwin':
+                if currentSettings._moduleSelected == 'iTunes':
+                    self.currentPlaylist, self.PlaybackStatus  = itunesMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                if currentSettings._moduleSelected == 'Decibel':
+                    self.currentPlaylist, self.PlaybackStatus  = decibelModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Swinsian':
+                    self.currentPlaylist, self.PlaybackStatus  = swinsianModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Spotify':
+                    self.currentPlaylist, self.PlaybackStatus  = spotifyMacModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Vox':
+                        self.currentPlaylist, self.PlaybackStatus  = voxModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Cog':
+                        self.currentPlaylist, self.PlaybackStatus  = cogModule.run(currentSettings._maxTandaLength)
+                if currentSettings._moduleSelected == 'Embrace':
+                        self.currentPlaylist, self.PlaybackStatus  = embraceModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                if currentSettings._moduleSelected == 'Mixxx':
+                    self.currentPlaylist, self.PlaybackStatus = mixxxMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+        except Exception as e:
+            print("NowPlayingDataModel.ExtractPlaylistInfo(Darwin) exception:")
+            print(e)
+            raise(e)
 
         #
         # Set status message
         #
         try:
             if not self.currentPlaylist[0].ModuleMessage == "":
-                self.StatusMessage = self.PlaybackStatus+", "+self.currentPlaylist[0].ModuleMessage
+                self.StatusMessage = self.PlaybackStatus+", " + self.currentPlaylist[0].ModuleMessage
             else:
                 self.StatusMessage = self.PlaybackStatus
-        except:
+        except Exception as e:
+            # print("NowPlayingDataModel.ExtractPlaylistInfo(status message) exception:")
+            # print(e)
             self.StatusMessage = self.PlaybackStatus
         
-        #
-        # Save the reading
-        #
-        if (self.rawPlaylist != self.currentPlaylist or self.PreviousPlaybackStatus != self.PlaybackStatus):
-            self.rawPlaylist = deepcopy(self.currentPlaylist)
-            self.playlistChanged  = True
-        else:
-            self.playlistChanged  = False
+        try:
+            #
+            # Save the reading
+            #
+            if (self.rawPlaylist != self.currentPlaylist or self.PreviousPlaybackStatus != self.PlaybackStatus):
+                self.rawPlaylist = deepcopy(self.currentPlaylist)
+                self.playlistChanged  = True
+            else:
+                self.playlistChanged  = False
 
-        # print("Data Extracted... ", time.strftime("%H:%M:%S"))
-        if self.PreviousPlaybackStatus == "":
-            self.PreviousPlaybackStatus = self.PlaybackStatus
+            # print("Data Extracted... ", time.strftime("%H:%M:%S"))
+            if self.PreviousPlaybackStatus == "":
+                self.PreviousPlaybackStatus = self.PlaybackStatus
+        except Exception as e:
+            print("NowPlayingDataModel.ExtractPlaylistInfo(ModuleMessage) exception:")
+            print(e)
+            raise(e)
 
 
         return self

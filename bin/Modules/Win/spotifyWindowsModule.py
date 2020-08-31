@@ -84,17 +84,17 @@ def getSongAt(Track, songPosition):
     artist, title = trackinfo[1].split(" \x96 ")
     
     retSong.Artist      = artist
-    #retSong.Album       = Track.AlbumName.encode('latin-1')
+    #retSong.Album       = Track.AlbumName
     retSong.Title       = title
-    #retSong.Genre       = Track.Genre.encode('latin-1')
-    #retSong.Comment     = Track.Comment.encode('latin-1')
-    #retSong.Composer    = Track.Author.encode('latin-1')
+    #retSong.Genre       = Track.Genre
+    #retSong.Comment     = Track.Comment
+    #retSong.Composer    = Track.Author
     #retSong.Year        = Track.Year
     #retSong._Singer     Defined by beam
-    #retSong.AlbumArtist = Track.AlbumArtistName.encode('latin-1')
-    #retSong.Performer  = (Track.Performer).encode('latin-1') # Does not exist for iTunes?
+    #retSong.AlbumArtist = Track.AlbumArtistName
+    #retSong.Performer  = (Track.Performer) # Does not exist for iTunes?
     #retSong.IsCortina   Defined by beam
-    #retSong.fileUrl     = Track.Path.encode('latin-1')
+    #retSong.fileUrl     = Track.Path
     #retSong.ModuleMessage = Not needed for iTunes
     
     return retSong

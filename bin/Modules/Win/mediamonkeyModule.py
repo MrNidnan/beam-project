@@ -110,7 +110,7 @@ def quickRead(MediaMonkey, songPosition = 1, MaxTandaLength = 1, LastRead = []):
     for i in range(0,MaxTandaLength+2):
         try:
             Track = MediaMonkey.Player.CurrentPlaylist.Item(songPosition+i)
-            Current.append(Track.Path.encode('latin-1'))
+            Current.append(Track.Path)
         except:
             pass
         try:
@@ -134,18 +134,18 @@ def getSongAt(MediaMonkey, songPosition):
     retSong = SongObject()
     Track = MediaMonkey.Player.CurrentPlaylist.Item(songPosition)
 
-    retSong.Artist      = Track.ArtistName.encode('latin-1')
-    retSong.Album       = Track.AlbumName.encode('latin-1')
-    retSong.Title       = Track.Title.encode('latin-1')
-    retSong.Genre       = Track.Genre.encode('latin-1')
-    retSong.Comment     = Track.Comment.encode('latin-1')
-    retSong.Composer    = Track.Author.encode('latin-1')
+    retSong.Artist      = Track.ArtistName
+    retSong.Album       = Track.AlbumName
+    retSong.Title       = Track.Title
+    retSong.Genre       = Track.Genre
+    retSong.Comment     = Track.Comment
+    retSong.Composer    = Track.Author
     retSong.Year        = Track.Year
     #retSong._Singer     Defined by beam
-    retSong.AlbumArtist = Track.AlbumArtistName.encode('latin-1')
-    #retSong.Performer  = (Track.Performer).encode('latin-1') # Does not exist for iTunes?
+    retSong.AlbumArtist = Track.AlbumArtistName
+    #retSong.Performer  = (Track.Performer) # Does not exist for iTunes?
     #retSong.IsCortina   Defined by beam
-    retSong.fileUrl     = Track.Path.encode('latin-1')
+    retSong.fileUrl     = Track.Path
     #retSong.ModuleMessage = Not needed for iTunes
     
     return retSong

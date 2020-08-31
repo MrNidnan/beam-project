@@ -90,17 +90,17 @@ def run(MaxTandaLength):
 def getSongAt(Foobar, songPosition):
     retSong = SongObject()
 
-    retSong.Artist      = Foobar.Playback.FormatTitle("[%artist%]").encode('latin-1')
-    retSong.Album       = Foobar.Playback.FormatTitle("[%album%]").encode('latin-1')
-    retSong.Title       = Foobar.Playback.FormatTitle("[%title%]").encode('latin-1')
-    retSong.Genre       = Foobar.Playback.FormatTitle("[%genre%]").encode('latin-1')
-    retSong.Comment     = Foobar.Playback.FormatTitle("[%comment%]").encode('latin-1')
-    retSong.Composer    = Foobar.Playback.FormatTitle("[%composer%]").encode('latin-1')
+    retSong.Artist      = Foobar.Playback.FormatTitle("[%artist%]")
+    retSong.Album       = Foobar.Playback.FormatTitle("[%album%]")
+    retSong.Title       = Foobar.Playback.FormatTitle("[%title%]")
+    retSong.Genre       = Foobar.Playback.FormatTitle("[%genre%]")
+    retSong.Comment     = Foobar.Playback.FormatTitle("[%comment%]")
+    retSong.Composer    = Foobar.Playback.FormatTitle("[%composer%]")
     retSong.Year        = Foobar.Playback.FormatTitle("[%date%]")
     #retSong._Singer     Defined by beam
-    retSong.AlbumArtist = Foobar.Playback.FormatTitle("[%album artist%]").encode('latin-1')
-    retSong.Performer   = Foobar.Playback.FormatTitle("[%performer%]").encode('latin-1')
+    retSong.AlbumArtist = Foobar.Playback.FormatTitle("[%album artist%]")
+    retSong.Performer   = Foobar.Playback.FormatTitle("[%performer%]")
     #retSong.IsCortina   Defined by beam
-    retSong.fileUrl     = Foobar.Playback.FormatTitle("[%path%]").encode('latin-1')
+    retSong.fileUrl     = Foobar.Playback.FormatTitle("[%path%]")
     
     return retSong

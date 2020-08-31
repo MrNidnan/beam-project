@@ -58,8 +58,8 @@ def run(maxtandalength, lastlplaylist):
     # print("mixxxSqlite.run()");
     sqlitepath = MixxxSqlite.sqlitePath
     # print("mixxxSqlite.run() connect to: " + sqlitepath)
-    sqliteconn = sqlite3.connect(sqlitepath)
 
+    sqliteconn = sqlite3.connect(sqlitepath)
     try:
         playlist = getplaylist(sqliteconn, maxtandalength)
 
