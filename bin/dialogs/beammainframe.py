@@ -35,13 +35,18 @@ from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
 from bin.dialogs import closedialog
 from copy import deepcopy
+
+from mutagen import File
+from mutagen.apev2 import APEv2
 from mutagen.flac import FLAC
+from mutagen.id3 import ID3
 # from pathlib import Path
 import urllib.request
 
 ##################################################
 # MAIN WINDOW - FRAME
 ##################################################
+from mutagen.mp3 import MP3
 
 
 class beamMainFrame(wx.Frame):
@@ -384,20 +389,21 @@ class beamMainFrame(wx.Frame):
 # DRAW TEXT & CoverArt
 ########################################################
     def drawImageItem(self, dc, cliWidth, cliHeight, j):
-        
+        image = None;
         #Text and settings
         fileUrl = self.currentDisplayRows[j]
         # Windows "file:///C:"
         filePath = urllib.request.url2pathname(fileUrl[5:])
         # filePath = Path(fileUrl[8:])
         # filePath = self.currentDisplayRows[j]
+        logging.debug('drawImageItem("' + filePath + '")')
 
         Settings = self.currentDisplaySettings[j]
 
-        # Get size and position
-        Size = Settings['Size']*cliHeight/100
-        HeightPosition = int(Settings['Position'][0]*cliHeight/100)
-
+        # Get (text) size and position
+        size = Settings['Size']*cliHeight/100
+        horizontalPosition = int(Settings['Position'][1]*cliWidth/100)
+        verticalPosition = int(Settings['Position'][0]*cliHeight/100)
 
         # Alignment position
         # if Settings['Alignment'] == 'Left':
@@ -409,20 +415,109 @@ class beamMainFrame(wx.Frame):
         # else:
         #     return
 
-        # Draw the CoverArt
-        # dc.DrawText(text, WidthPosition,  HeightPosition)
 
-        try:
-            logging.debug('drawImageItem(' + filePath + ')')
-            flac = FLAC(filePath)
-            pict = flac.pictures[0]
-            image = wx.Image(BytesIO(pict.data), wx.BITMAP_TYPE_PNG)
-            # image = image.Scale(50, 50, wx.IMAGE_QUALITY_HIGH)
-            bitmap = wx.Bitmap(image)
-            dc.DrawBitmap(bitmap, 10, 10)
-        except Exception as e:
-            logging.debug(e)
-            pass
+        # track = MP3(song_path)
+        # tags = ID3(song_path)
+        # print("ID3 tags included in this song ------------------")
+        # print(tags.pprint())
+        # print("-------------------------------------------------")
+        # pict = tags.get("APIC:").data
+        # im = Image.open(BytesIO(pict))
+        # print('Picture size : ' + str(im.size))
+        # image = wx.Image(BytesIO(pict), wx.BITMAP_TYPE_JPEG)
+
+        # try:
+        #     fileFrame = File(filePath)
+        #     logging.debug(fileFrame.pprint())
+        # except Exception as e:
+        #     pass
+
+        if image is None:
+            try:
+                # mp3Frame = MP3(filePath)
+                # logging.debug(mp3Frame.pprint())
+                id3Frame = ID3(filePath)
+                # logging.debug(id3Frame.pprint())
+                id3Keys = id3Frame.keys()
+                # logging.debug(id3Keys)
+                # dict_keys = keys.dict_keys
+                # logging.debug(dict_keys)
+                # apicTag = id3Tags.get("APIC:")
+                # for apicTag in id3Tags.getall("APIC"):
+                #    print(apicTag.pprint())
+                # mcdiTag = id3Frame.get("MCDI")
+                # if mcdiTag:
+                #     logging.debug(mcdiTag.pprint())
+                # apicTag = id3Frame.get("APIC")
+                apicTag = id3Frame.get("APIC:")
+                if apicTag:
+                    data = apicTag.data
+                    if data:
+                        if apicTag.mime == 'image/jpeg':
+                            bitmapType = wx.BITMAP_TYPE_JPEG
+                        if apicTag.mime == 'image/png':
+                            bitmapType = wx.BITMAP_TYPE_PNG
+                        if bitmapType is not None:
+                            image = wx.Image(BytesIO(data), wx.BITMAP_TYPE_JPEG)
+            except Exception as e:
+                pass
+
+
+        if image is None:
+            try:
+                flac = FLAC(filePath)
+                pict = flac.pictures[0]
+                if pict is not None:
+                    if pict.mime == 'image/jpeg':
+                        bitmapType = wx.BITMAP_TYPE_JPEG
+                    if pict.mime == 'image/png':
+                        bitmapType = wx.BITMAP_TYPE_PNG
+                    if bitmapType is not None:
+                        image = wx.Image(BytesIO(pict.data), bitmapType)
+            except Exception as e:
+                pass
+
+        if image is None:
+            try:
+                apeFrame = APEv2(filePath)
+                logging.info("APEv2 not implemented yet")
+                logging.debug(apeFrame.pprint())
+                # keys = fileFrame.keys()
+                # logging.debug(keys)
+                # dict_keys = keys.dict_keys
+                # logging.debug(dict_keys)
+                # apicTag = id3Tags.get("APIC:")
+                # for apicTag in id3Tags.getall("APIC"):
+                #    print(apicTag.pprint())
+                # pictures = fileFrame.pictures
+                # apicTag = fileFrame.get("APIC:")
+                # if apicTag:
+                #    pict = apicTag.data
+                #    image = wx.Image(BytesIO(pict), wx.BITMAP_TYPE_JPEG)
+            except Exception as e:
+                pass
+
+        if image is not None:
+            try:
+                image = image.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
+                bitmap = wx.Bitmap(image)
+                dc.DrawBitmap(bitmap, horizontalPosition, verticalPosition)
+            except Exception as e:
+                pass
+
+            # file_ = OggVorbis(path)
+            # b64_pictures = file_.get("metadata_block_picture", [])
+            # for n, b64_data in enumerate(b64_pictures):
+            #     try:
+            #         data = base64.b64decode(b64_data)
+            #     except (TypeError, ValueError):
+            #         continue
+            #     try:
+            #         picture = Picture(data)
+            #     except FLACError:
+            #         continue
+
+
 
 
     def drawTextItem(self, dc, cliWidth, cliHeight, j):
@@ -431,7 +526,7 @@ class beamMainFrame(wx.Frame):
         text = self.currentDisplayRows[j]
         Settings = self.currentDisplaySettings[j]
 
-        # Get size and position
+        # Get text size and position
         Size = Settings['Size'] * cliHeight / 100
         HeightPosition = int(Settings['Position'][0] * cliHeight / 100)
 
@@ -539,13 +634,18 @@ class beamMainFrame(wx.Frame):
         if not cliWidth or not cliHeight:
             return
 
+        # Draw images
         for j in range(0, len(self.currentDisplaySettings)):
             # Text and settings
             text = self.currentDisplayRows[j]
             if text[:5] == 'file:':
-            # if text[:2] == 'C:':
                 self.drawImageItem(dc, cliWidth, cliHeight, j)
-            else:
+
+        # Draw text after/over image
+        for j in range(0, len(self.currentDisplaySettings)):
+            # Text and settings
+            text = self.currentDisplayRows[j]
+            if text[:5] != 'file:':
                 self.drawTextItem(dc, cliWidth, cliHeight, j)
 
 

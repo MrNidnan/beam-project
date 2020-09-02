@@ -37,7 +37,7 @@ from mutagen import File
 
 
 def alwaysStr(curr_str):
-    if curr_str is not None:
+    if curr_str:
         ret_str = curr_str
     else:
         ret_str = ""
@@ -95,6 +95,23 @@ class SongObject(object):
                     self.FileUrl != other.FileUrl)
         else:
             return False
+
+
+    def sanitizeFields(self):
+        self.Artist        = alwaysStr(self.Artist)
+        self.Album         = alwaysStr(self.Album)
+        self.Title         = alwaysStr(self.Title)
+        self.Genre         = alwaysStr(self.Genre)
+        self.Composer      = alwaysStr(self.Composer)
+        self.Year          = alwaysStr(self.Year)
+        self.Singer        = alwaysStr(self.Singer)
+        self.AlbumArtist   = alwaysStr(self.AlbumArtist)
+        self.Performer     = alwaysStr(self.Performer)
+        self.IsCortina     = alwaysStr(self.IsCortina)
+        self.FileUrl       = alwaysStr(self.FileUrl)
+        self.ModuleMessage = alwaysStr(self.ModuleMessage)
+        self.IgnoreSong    = alwaysStr(self.IgnoreSong)
+
 
     ###############################################################
 #

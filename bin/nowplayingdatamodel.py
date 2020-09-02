@@ -89,7 +89,7 @@ class NowPlayingDataModel:
         self.convDict = dict()
         
     def ExtractPlaylistInfo(self, currentSettings):
-        logging.debug("Start updating data... ", time.strftime("%H:%M:%S"))
+        logging.debug("Start updating data... " + time.strftime("%H:%M:%S"))
         # Save previous state
         self.PreviousPlaybackStatus = self.PlaybackStatus
 
@@ -156,6 +156,10 @@ class NowPlayingDataModel:
                     self.currentPlaylist, self.PlaybackStatus  = embraceModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+
+        # sanitizeFields()
+        for song in self.currentPlaylist[:]:
+            song.sanitizeFields()
 
         #
         # Set status message
@@ -308,20 +312,11 @@ class NowPlayingDataModel:
         
         for j in range(0, len(self.DisplaySettings)):
             MyDisplay = self.DisplaySettings[j]
-            try:
-                displayValue = str(MyDisplay['Field'])
-            except:
-                displayValue = str(MyDisplay['Field'])
+            displayValue = str(MyDisplay['Field'])
             # for key in self.convDict:
             # in reverse order to avoid issues with %AlbumArtist by %Artist
             for key in sorted(list(self.convDict.keys()), reverse=True):
-                try:
-                    displayValue = displayValue.replace(str(key), str(self.convDict[key]))
-                except:
-                    try:
-                        displayValue = displayValue.replace(key.decode('utf-8'), self.convDict[key].decode('utf-8'))
-                    except:
-                        displayValue = displayValue.replace(key.decode('latin-1'), self.convDict[key].decode('latin-1'))              
+                displayValue = displayValue.replace(str(key), str(self.convDict[key]))
             if MyDisplay['HideControl']  == "" and MyDisplay['Active'] == "yes":
                 self.DisplayRow[j] = displayValue
             else:
@@ -331,7 +326,6 @@ class NowPlayingDataModel:
                 # in reverse order to avoid issues with %AlbumArtist by %Artist
                 for key in sorted(list(self.convDict.keys()), reverse=True):
                     hideControlEval = hideControlEval.replace(str(key), str(self.convDict[key]))
-                        
                 if  not hideControlEval == ""  and MyDisplay['Active'] == "yes":
                     self.DisplayRow[j] = displayValue
                 else:

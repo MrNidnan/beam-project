@@ -128,6 +128,8 @@ class BeamSettings:
         if self._logPath == '':
             self._logPath = os.path.join(os.path.expanduser("~"), BeamSettings.defaultLogFileName)
         self._logLevel              = self.ExtractSetting(ConfigData, ConfigDataOriginal, 'LogLevel')
+        if self._logLevel == '':
+            self._logLevel = BeamSettings.defaultLogLevel
 
         # Dictionaries
         self._allModulesSettings        = ConfigDataOriginal['AllModules']
@@ -181,8 +183,9 @@ class BeamSettings:
                 ConfigData['AllModules'][2]['Modules'].append('Mixxx')
 
             if not ConfigData['ConfigVersion'] == self._beamVersion:
-                logging.warning("Configfile version " + ConfigData['ConfigVersion'] + " differs from current " + self._beamVersion + ", gets updated")
-                ConfigData['ConfigVersion'] = self._beamVersion;
+                logging.warning("Configfile version " + ConfigData['ConfigVersion'] + " differs from current " + self._beamVersion )
+                # let the version untouched for beta tests
+                # ConfigData['ConfigVersion'] = self._beamVersion;
         finally:
             ConfigFile.close()
 

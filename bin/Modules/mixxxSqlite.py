@@ -138,6 +138,9 @@ def getplaylist(sqliteconn, maxtandalength):
             # playlist_song.FileUrl = pathlib.Path(currTrack[10]).as_uri()
             playlist_song.FileUrl = "file:" + urllib.request.pathname2url(currTrack[10])
 
+            # for compare of changes
+            playlist_song.sanitizeFields()
+
             new_playlist.append(playlist_song)
     finally:
         cursor.close()
@@ -145,9 +148,3 @@ def getplaylist(sqliteconn, maxtandalength):
     return new_playlist
 
 
-def getnotnull(curr_str):
-    if curr_str is not None:
-        ret_str = curr_str
-    else:
-        ret_str = ""
-    return ret_str
