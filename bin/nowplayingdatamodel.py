@@ -24,11 +24,9 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-
+import logging
 import platform, os, sys
 import time
-import datetime
-import wx.lib.delayedresult
 
 from bin.songclass import SongObject
 from copy import deepcopy
@@ -91,15 +89,15 @@ class NowPlayingDataModel:
         self.convDict = dict()
         
     def ExtractPlaylistInfo(self, currentSettings):
-        # print("Start updating data... ", time.strftime("%H:%M:%S"))
+        logging.debug("Start updating data... ", time.strftime("%H:%M:%S"))
         # Save previous state
         self.PreviousPlaybackStatus = self.PlaybackStatus
 
         try:
             self.LastRead = deepcopy(self.currentPlaylist)
         except Exception as e:
-            print("NowPlayingDataModel.ExtractPlaylistInfo(deepcopy) exception:")
-            print(e)
+            logging.warning("NowPlayingDataModel.ExtractPlaylistInfo(deepcopy) exception:")
+            logging.warning(e)
             self.LastRead = SongObject()
 
         ###############################################################
@@ -108,71 +106,56 @@ class NowPlayingDataModel:
         #
         ###############################################################
         # WINDOWS
-        try:
-            if platform.system() == 'Windows':
-                if currentSettings._moduleSelected == 'iTunes':
-                    self.currentPlaylist, self.PlaybackStatus = itunesWindowsModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'MediaMonkey':
-                    self.currentPlaylist, self.PlaybackStatus = mediamonkeyModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-                if currentSettings._moduleSelected == 'Spotify':
-                    self.currentPlaylist, self.PlaybackStatus =spotifyWindowsModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Foobar2000':
-                    self.currentPlaylist, self.PlaybackStatus =foobar2kWindowsModule.run(currentSettings._maxTandaLength)
-                try: #required due to loaded modules
-                    if currentSettings._moduleSelected == 'Winamp':
-                        self.currentPlaylist, self.PlaybackStatus = winampWindowsModule.run(currentSettings._maxTandaLength)
-                except:
-                    pass
-                if currentSettings._moduleSelected == 'Mixxx':
-                    self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-        except Exception as e:
-            print("NowPlayingDataModel.ExtractPlaylistInfo(Windows) exception:")
-            print(e)
-            raise(e)
+        if platform.system() == 'Windows':
+            if currentSettings._moduleSelected == 'iTunes':
+                self.currentPlaylist, self.PlaybackStatus = itunesWindowsModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'MediaMonkey':
+                self.currentPlaylist, self.PlaybackStatus = mediamonkeyModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+            if currentSettings._moduleSelected == 'Spotify':
+                self.currentPlaylist, self.PlaybackStatus =spotifyWindowsModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Foobar2000':
+                self.currentPlaylist, self.PlaybackStatus =foobar2kWindowsModule.run(currentSettings._maxTandaLength)
+            try: #required due to loaded modules
+                if currentSettings._moduleSelected == 'Winamp':
+                    self.currentPlaylist, self.PlaybackStatus = winampWindowsModule.run(currentSettings._maxTandaLength)
+            except:
+                pass
+            if currentSettings._moduleSelected == 'Mixxx':
+                self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # LINUX
-        try:
-            if platform.system() == 'Linux':
-                if currentSettings._moduleSelected == 'Audacious':
-                    self.currentPlaylist, self.PlaybackStatus = audaciousModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Rhythmbox':
-                    self.currentPlaylist, self.PlaybackStatus = rhythmboxModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Clementine':
-                    self.currentPlaylist, self.PlaybackStatus = clementineModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Banshee':
-                    self.currentPlaylist, self.PlaybackStatus = bansheeModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Spotify':
-                    self.currentPlaylist, self.PlaybackStatus = spotifyLinuxModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Mixxx':
-                    self.currentPlaylist, self.PlaybackStatus = mixxxLinuxModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-        except Exception as e:
-            print("NowPlayingDataModel.ExtractPlaylistInfo(Windows) exception:")
-            print(e)
-            raise(e)
+        if platform.system() == 'Linux':
+            if currentSettings._moduleSelected == 'Audacious':
+                self.currentPlaylist, self.PlaybackStatus = audaciousModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Rhythmbox':
+                self.currentPlaylist, self.PlaybackStatus = rhythmboxModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Clementine':
+                self.currentPlaylist, self.PlaybackStatus = clementineModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Banshee':
+                self.currentPlaylist, self.PlaybackStatus = bansheeModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Spotify':
+                self.currentPlaylist, self.PlaybackStatus = spotifyLinuxModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Mixxx':
+                self.currentPlaylist, self.PlaybackStatus = mixxxLinuxModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # Mac OS X
-        try:
-            if platform.system() == 'Darwin':
-                if currentSettings._moduleSelected == 'iTunes':
-                    self.currentPlaylist, self.PlaybackStatus  = itunesMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-                if currentSettings._moduleSelected == 'Decibel':
-                    self.currentPlaylist, self.PlaybackStatus  = decibelModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Swinsian':
-                    self.currentPlaylist, self.PlaybackStatus  = swinsianModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Spotify':
-                    self.currentPlaylist, self.PlaybackStatus  = spotifyMacModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Vox':
-                        self.currentPlaylist, self.PlaybackStatus  = voxModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Cog':
-                        self.currentPlaylist, self.PlaybackStatus  = cogModule.run(currentSettings._maxTandaLength)
-                if currentSettings._moduleSelected == 'Embrace':
-                        self.currentPlaylist, self.PlaybackStatus  = embraceModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-                if currentSettings._moduleSelected == 'Mixxx':
-                    self.currentPlaylist, self.PlaybackStatus = mixxxMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-        except Exception as e:
-            print("NowPlayingDataModel.ExtractPlaylistInfo(Darwin) exception:")
-            print(e)
-            raise(e)
+        if platform.system() == 'Darwin':
+            if currentSettings._moduleSelected == 'iTunes':
+                self.currentPlaylist, self.PlaybackStatus  = itunesMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+            if currentSettings._moduleSelected == 'Decibel':
+                self.currentPlaylist, self.PlaybackStatus  = decibelModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Swinsian':
+                self.currentPlaylist, self.PlaybackStatus  = swinsianModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Spotify':
+                self.currentPlaylist, self.PlaybackStatus  = spotifyMacModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Vox':
+                    self.currentPlaylist, self.PlaybackStatus  = voxModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Cog':
+                    self.currentPlaylist, self.PlaybackStatus  = cogModule.run(currentSettings._maxTandaLength)
+            if currentSettings._moduleSelected == 'Embrace':
+                    self.currentPlaylist, self.PlaybackStatus  = embraceModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+            if currentSettings._moduleSelected == 'Mixxx':
+                self.currentPlaylist, self.PlaybackStatus = mixxxMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         #
         # Set status message
@@ -183,8 +166,8 @@ class NowPlayingDataModel:
             else:
                 self.StatusMessage = self.PlaybackStatus
         except Exception as e:
-            # print("NowPlayingDataModel.ExtractPlaylistInfo(status message) exception:")
-            # print(e)
+            logging.warning("NowPlayingDataModel.ExtractPlaylistInfo(status message) exception:")
+            logging.warning(e)
             self.StatusMessage = self.PlaybackStatus
         
         try:
@@ -197,13 +180,12 @@ class NowPlayingDataModel:
             else:
                 self.playlistChanged  = False
 
-            # print("Data Extracted... ", time.strftime("%H:%M:%S"))
+            logging.info("Data Extracted... " + time.strftime("%H:%M:%S"))
             if self.PreviousPlaybackStatus == "":
                 self.PreviousPlaybackStatus = self.PlaybackStatus
         except Exception as e:
-            print("NowPlayingDataModel.ExtractPlaylistInfo(ModuleMessage) exception:")
-            print(e)
-            raise(e)
+            logging.error(e, exc_info=True)
+            raise
 
 
         return self
@@ -278,24 +260,24 @@ class NowPlayingDataModel:
         applyMood = []
         for i in range(1, len(currentSettings._moods)):
             currentRule = currentSettings._moods[i]
-            if currentRule['Type'] == 'Mood' and currentRule['Active'] == 'yes' and str(currentRule['PlayState']) == str(MoodStatus):
-                
-                
-                # Only apply Mood for current song
-                if currentRule['Field2'] == 'is':
-                    if eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower() == str(currentRule['Field3']).lower():
-                        applyMood = i
-                if currentRule['Field2'] == 'is not':
-                    if eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower() not in str("["+currentRule['Field3'].lower()+"]"):
-                        applyMood = i
-                if currentRule['Field2'] == 'contains':
-                    if str(currentRule['Field3']).lower() in eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower():
-                        applyMood = i
+            try:
+                if currentRule['Type'] == 'Mood' and currentRule['Active'] == 'yes' and str(currentRule['PlayState']) == str(MoodStatus):
+                    # Only apply Mood for current song
+                    if currentRule['Field2'] == 'is':
+                        if eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower() == str(currentRule['Field3']).lower():
+                            applyMood = i
+                    if currentRule['Field2'] == 'is not':
+                        if eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower() not in str("["+currentRule['Field3'].lower()+"]"):
+                            applyMood = i
+                    if currentRule['Field2'] == 'contains':
+                        if str(currentRule['Field3']).lower() in eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower():
+                            applyMood = i
+            except Exception as e:
+                logging.info(e, exc_info=True)
 
-                
-#
-# Apply default layout and background, then change it if mood is applied
-#
+        #
+        # Apply default layout and background, then change it if mood is applied
+        #
         if not applyMood == []:
             currentRule = currentSettings._moods[applyMood]
             self.CurrentMood = currentRule['Name']
@@ -354,7 +336,7 @@ class NowPlayingDataModel:
                     self.DisplayRow[j] = displayValue
                 else:
                     self.DisplayRow[j] = ""
-        # print("...data filtered: ", time.strftime("%H:%M:%S"))
+        logging.info("...data filtered: " + time.strftime("%H:%M:%S"))
     
 
 ########################################################
@@ -376,7 +358,10 @@ class NowPlayingDataModel:
             self.convDict['%AlbumArtist']   = self.currentPlaylist[0].AlbumArtist
             self.convDict['%Performer']     = self.currentPlaylist[0].Performer
             self.convDict['%IsCortina']     = self.currentPlaylist[0].IsCortina
-        except:
+            self.convDict['%CoverArt']      = self.currentPlaylist[0].FileUrl
+        except Exception as e:
+            logging.warning("updateConversionDisctionary()")
+            logging.warning(e)
             self.convDict['%Artist']        = ""
             self.convDict['%Album']         = ""
             self.convDict['%Title']         = ""
@@ -388,7 +373,9 @@ class NowPlayingDataModel:
             self.convDict['%AlbumArtist']   = ""
             self.convDict['%Performer']     = ""            
             self.convDict['%IsCortina']     = ""
-            
+            self.convDict['%CoverArt']      = ""
+
+
         #PreviousSong
         try:
             self.convDict['%PreviousArtist']        = self.prevPlayedSong.Artist

@@ -26,8 +26,8 @@
 # This Python file uses the following encoding: utf-8
 
 #import platform, os, sys
+import logging
 from mutagen import File
-import platform
 
 ###############################################################
 #
@@ -36,57 +36,67 @@ import platform
 ###############################################################
 
 
+def alwaysStr(curr_str):
+    if curr_str is not None:
+        ret_str = curr_str
+    else:
+        ret_str = ""
+    return ret_str
+
+
 class SongObject(object):
 
     def __init__(self, p_artist="", p_album="", p_title="", p_genre="",
                  p_comment="", p_composer="", p_year="", p_singer="",
                  p_albumArtist="", p_performer = "", p_isCortina = "no",
                  p_fileUrl="", p_moduleMessage="", p_ignoreSong="no"):
-        self.Artist        = p_artist
-        self.Album         = p_album
-        self.Title         = p_title
-        self.Genre         = p_genre
-        self.Comment       = p_comment
-        self.Composer      = p_composer
-        self.Year          = p_year
-        self.Singer        = p_singer
-        self.AlbumArtist   = p_albumArtist
-        self.Performer     = p_performer
-        self.IsCortina     = p_isCortina
-        self.fileUrl       = p_fileUrl
-        self.ModuleMessage = p_moduleMessage
-        self.IgnoreSong    = p_ignoreSong
-        
+        self.Artist        = alwaysStr(p_artist)
+        self.Album         = alwaysStr(p_album)
+        self.Title         = alwaysStr(p_title)
+        self.Genre         = alwaysStr(p_genre)
+        self.Comment       = alwaysStr(p_comment)
+        self.Composer      = alwaysStr(p_composer)
+        self.Year          = alwaysStr(p_year)
+        self.Singer        = alwaysStr(p_singer)
+        self.AlbumArtist   = alwaysStr(p_albumArtist)
+        self.Performer     = alwaysStr(p_performer)
+        self.IsCortina     = alwaysStr(p_isCortina)
+        self.FileUrl       = alwaysStr(p_fileUrl)
+        self.ModuleMessage = alwaysStr(p_moduleMessage)
+        self.IgnoreSong    = alwaysStr(p_ignoreSong)
+
     def __eq__(self, other):
         if isinstance(other, SongObject):
-            return (self.Artist == other.Artist           and
-                    self.Album == other.Album             and
-                    self.Title == other.Title             and
-                    self.Genre == other.Genre             and
-                    self.Comment == other.Comment         and
-                    self.Composer == other.Composer       and
-                    self.Year == other.Year               and
+            return (self.Artist == other.Artist and
+                    self.Album == other.Album and
+                    self.Title == other.Title and
+                    self.Genre == other.Genre and
+                    self.Comment == other.Comment and
+                    self.Composer == other.Composer and
+                    self.Year == other.Year and
                     self.AlbumArtist == other.AlbumArtist and
-                    self.Performer == other.Performer)
+                    self.Performer == other.Performer and
+                    self.FileUrl == other.FileUrl)
         else:
             return False
             
     
     def __ne__(self, other):
         if isinstance(other, SongObject):
-            return (self.Artist != other.Artist           or
-                    self.Album != other.Album             or
-                    self.Title != other.Title             or
-                    self.Genre != other.Genre             or
-                    self.Comment != other.Comment         or
-                    self.Composer != other.Composer       or
-                    self.Year != other.Year               or
+            return (self.Artist != other.Artist or
+                    self.Album != other.Album or
+                    self.Title != other.Title or
+                    self.Genre != other.Genre or
+                    self.Comment != other.Comment or
+                    self.Composer != other.Composer or
+                    self.Year != other.Year or
                     self.AlbumArtist != other.AlbumArtist or
-                    self.Performer != other.Performer)
+                    self.Performer != other.Performer or
+                    self.FileUrl != other.FileUrl)
         else:
-            return False 
+            return False
 
-###############################################################
+    ###############################################################
 #
 # Building from URL with mutagen
 #
@@ -100,42 +110,42 @@ class SongObject(object):
             self.ModuleMessage = "Error reading file", url
             raise NameError("Error reading file", url)
 
-        if platform.system() == 'Windows':
-            Formating = 'latin-1'
-        else:
-            Formating = 'utf-8'
+        # if platform.system() == 'Windows':
+        #     Formating = 'latin-1'
+        # else:
+        #     Formating = 'utf-8'
 
 
         try:
-            self.Artist     = audio["artist"][0].encode(Formating)
+            self.Artist     = audio["artist"][0]
         except:
             self.Artist     = ""
 
         try:    
-            self.Album      = audio["album"][0].encode(Formating)
+            self.Album      = audio["album"][0]
         except:
             self.Album      = ""
         
         try:
-            self.Title      = audio["title"][0].encode(Formating)
+            self.Title      = audio["title"][0]
         except:
             self.Title      = ""
 
         try:
-            self.Genre      = audio["genre"][0].encode(Formating)
+            self.Genre      = audio["genre"][0]
         except:
             self.Genre      = ""
 
         try:
-            self.Comment    = audio["comment"][0].encode(Formating)
+            self.Comment    = audio["comment"][0]
         except:
             try:
-                self.Comment    = audioRaw['COMM::eng'][0].encode(Formating)
+                self.Comment    = audioRaw['COMM::eng'][0]
             except:
                 self.Comment    = ""
 
         try:
-            self.Composer   = audio["composer"][0].encode(Formating)
+            self.Composer   = audio["composer"][0]
         except:
             self.Composer   = ""
 
@@ -147,17 +157,17 @@ class SongObject(object):
         self.Singer      = ""
         
         try:    
-            self.AlbumArtist    = audio["albumartist"][0].encode(Formating)
+            self.AlbumArtist    = audio["albumartist"][0]
         except:
             self.AlbumArtist    = ""
 
         try:
-            self.Performer  = audio["performer"][0].encode(Formating)
+            self.Performer  = audio["performer"][0]
         except:
             self.Performer  = ""
 
         self.IsCortina   = "no"
-        self.fileUrl     = url
+        self.FileUrl     = url
         return
 
 ###############################################################
@@ -221,7 +231,8 @@ class SongObject(object):
                     # Singer(j) = Comment(j)
                     setattr(self, currentRule['Field2'].replace("%",""), getattr(self, currentRule['Field1'].replace("%","")) )
             except:
-                print("Error at Rule:", i,".Type:", currentRule['Type'], ". First Field", currentRule['Field1'])
+                logging.error("Error at Rule: " + str(i) + " Type: " + currentRule['Type'] + "  First Field " + currentRule['Field1'])
                 break
     
     
+

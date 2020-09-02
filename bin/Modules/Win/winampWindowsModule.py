@@ -83,13 +83,13 @@ def getSongFromUrl(winamp, songPosition = 1):
     retSong = SongObject()
     
     try:
-        retSong.fileUrl = winamp.getPlaylistFile(songPosition)
+        retSong.FileUrl = winamp.getPlaylistFile(songPosition)
     except:
         retSong.ModuleMessage = "Error from Winamp"
         return retSong
     
     try:
-        retSong.buildFromUrl(retSong.fileUrl)
+        retSong.buildFromUrl(retSong.FileUrl)
     except:
         retSong.ModuleMessage = "Error reading file, check your ID3-tags"
     

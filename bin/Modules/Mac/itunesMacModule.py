@@ -24,9 +24,9 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import logging
 
 from bin.songclass import SongObject
-import sys, time
 from subprocess import Popen, PIPE
 from copy import deepcopy
 
@@ -177,14 +177,14 @@ def run(MaxTandaLength, LastPlaylist):
     # Quick-read
     #
     if quickRead(currentsong, LastPlaylist, MaxTandaLength):
-        print("Quick-read")
+        logging.debug("Quick-read")
         playlist = deepcopy(LastPlaylist)
         return playlist, playbackStatus
 
     #
     # Full-read
     #
-    print("Full-read")
+    logging.debug("Full-read")
     while searchsong < playlistlength and searchsong < currentsong+MaxTandaLength+2:
         try:
             playlist.append(getSongAt( searchsong))

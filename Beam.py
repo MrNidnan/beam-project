@@ -25,12 +25,6 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import wx
-import wx.html
-import platform
-import os
-import sys
-
 from bin.beamsettings import *
 from bin.dialogs.beammainframe import beamMainFrame
 
@@ -45,10 +39,38 @@ beamSettings.LoadConfig(beamSettings.defaultConfigFileName)
 ########################################################
 # Select logging method (terminal or file)
 ########################################################
-if beamSettings._logging == 'True':
-    sys.stdout = open(beamSettings._logPath,"w")
 
-print(beamSettings.mainFrameTitle + " started")
+logPath = beamSettings._logPath
+logFormat = '%(asctime)s : %(levelname)s : %(message)s'
+
+try:
+    logLevelDict = {
+        'Debug': logging.DEBUG,
+        'Info': logging.INFO,
+        'Warning': logging.WARNING,
+        'Error': logging.ERROR,
+        'Critical': logging.CRITICAL
+    }
+
+    logLevel = logLevelDict[beamSettings._logLevel]
+except Exception as e:
+    print(e)
+    logLevel = logging.DEBUG
+    pass
+
+
+# set up logging to file
+logging.basicConfig(format=logFormat, level=logLevel , filename=logPath, filemode='w')
+
+# set up logging to console also
+console = logging.StreamHandler()
+console.setLevel(logLevel)
+logging.getLogger("").addHandler(console)
+
+# if beamSettings._logging == 'True':
+#    sys.stdout = open(beamSettings._logPath,"w")
+
+print(beamSettings.mainFrameTitle + " logging to " + logPath)
 
 
 ########################################################

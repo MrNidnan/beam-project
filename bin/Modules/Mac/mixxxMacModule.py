@@ -27,6 +27,7 @@
 
 # from bin.songclass import SongObject
 # import sys
+import logging
 from subprocess import Popen, PIPE
 import bin.Modules.mixxxSqlite
 
@@ -84,7 +85,7 @@ CheckRunning = '''tell application "System Events"
 
 
 def run(MaxTandaLength, LastPlaylist):
-    # print("mixxxModule.run()")
+    logging.debug("mixxxModule.run()")
     playlist = []
 
     #

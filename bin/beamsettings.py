@@ -26,7 +26,8 @@
 # This Python file uses the following encoding: utf-8
 
 import json, wx, platform
-import io, os, sys
+import logging
+import os
 
 ###############################################################
 #
@@ -60,6 +61,7 @@ class BeamSettings:
 
     defaultConfigFileName = stringResources["defaultConfigFileName"]
     defaultLogFileName = stringResources["defaultLogFileName"]
+    defaultLogLevel = stringResources["defaultLogLevel"]
     mainFrameTitle = stringResources["mainFrameTitle"]
     aboutDialogDescription = stringResources["aboutDialogDescription"]
     aboutDialogLicense = stringResources["aboutDialogLicense"]
@@ -82,6 +84,7 @@ class BeamSettings:
         self._moodTransitionSpeed  = ''
         self._logging              = ''
         self._logPath              = ''
+        self._logLevel              = ''
         self._showStatusbar        = ''
         self._allModulesSettings    = ''
         self._rules                 = ''
@@ -94,74 +97,62 @@ class BeamSettings:
 ###############################################################
     def LoadConfig(self, inputConfigFile):
         try:
-            try:
-                #Try loading current config file in home directory
-                configfile = os.path.join(os.path.expanduser("~"), inputConfigFile)
-                ConfigData = self.OpenSetting(configfile)
-                # Validate configfile version against string.txt version
-                if not ConfigData['ConfigVersion'] == self._beamVersion:
-                    raise Exception("No configfile version match, loading default")
-            except Exception as e:
-                print("BeamSettings.LoadConfig($HOME) not loaded")
-                print(e)
-                print("Loading default configfile")
-                # Use original configfile which is the settingsfile below
-                configfile = os.path.join(os.getcwd(), inputConfigFile)
-                ConfigData = self.OpenSetting(configfile)
-
-            # Also load the original settingsfile
-            configfile = os.path.join(os.getcwd(), inputConfigFile)
-            ConfigDataOriginal = self.OpenSetting(configfile)
-            self.ReadConfig(ConfigData, ConfigDataOriginal)
+            #Try loading current config file in home directory
+            configfile = os.path.join(os.path.expanduser("~"), inputConfigFile)
+            ConfigData = self.OpenSetting(configfile)
         except Exception as e:
-            print("Exception BeamSettings.LoadConfig()")
-            print(e)
-            raise (e)
+            logging.warning("BeamSettings.LoadConfig($HOME) not loaded")
+            logging.warning(e)
+            logging.warning("Loading default configfile")
+            # Use original configfile which is the settingsfile below
+            configfile = os.path.join(os.getcwd(), inputConfigFile)
+            ConfigData = self.OpenSetting(configfile)
+
+        # Also load the original settingsfile
+        configfile = os.path.join(os.getcwd(), inputConfigFile)
+        ConfigDataOriginal = self.OpenSetting(configfile)
+        self.ReadConfig(ConfigData, ConfigDataOriginal)
 
         return
 
 
     def ReadConfig(self, ConfigData, ConfigDataOriginal):
-        try:
-            self._moduleSelected        = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Module')         # Player to read from
-            self._maxTandaLength        = self.ExtractSetting(ConfigData,ConfigDataOriginal,'MaxTandaLength') # Longest tandas, optimize for performance
-            self._updateTimer           = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Updtime')        # mSec between reading
-            self._moodTransition        = self.ExtractSetting(ConfigData,ConfigDataOriginal,'MoodTransition')
-            self._moodTransitionSpeed   = self.ExtractSetting(ConfigData,ConfigDataOriginal,'MoodTransitionSpeed')
-            self._logging               = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Logging')
-            self._logPath               = self.ExtractSetting(ConfigData,ConfigDataOriginal,'LogPath')
-            self._showStatusbar         = self.ExtractSetting(ConfigData,ConfigDataOriginal,'ShowStatusbar')
-            if self._logPath == '':
-                self._logPath = os.path.join(os.path.expanduser("~"), BeamSettings.defaultLogFileName)
+        self._moduleSelected        = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Module')         # Player to read from
+        self._maxTandaLength        = self.ExtractSetting(ConfigData,ConfigDataOriginal,'MaxTandaLength') # Longest tandas, optimize for performance
+        self._updateTimer           = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Updtime')        # mSec between reading
+        self._moodTransition        = self.ExtractSetting(ConfigData,ConfigDataOriginal,'MoodTransition')
+        self._moodTransitionSpeed   = self.ExtractSetting(ConfigData,ConfigDataOriginal,'MoodTransitionSpeed')
+        self._showStatusbar         = self.ExtractSetting(ConfigData,ConfigDataOriginal,'ShowStatusbar')
+        self._logging               = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Logging')
+        self._logPath               = self.ExtractSetting(ConfigData,ConfigDataOriginal,'LogPath')
+        if self._logPath == '':
+            self._logPath = os.path.join(os.path.expanduser("~"), BeamSettings.defaultLogFileName)
+        self._logLevel              = self.ExtractSetting(ConfigData, ConfigDataOriginal, 'LogLevel')
 
-            # Dictionaries
-            self._allModulesSettings        = ConfigDataOriginal['AllModules']
-            self._rules                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Rules')
-            self._moods                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Moods')
+        # Dictionaries
+        self._allModulesSettings        = ConfigDataOriginal['AllModules']
+        self._rules                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Rules')
+        self._moods                     = self.ExtractSetting(ConfigData,ConfigDataOriginal,'Moods')
 
-            # Set OS-specific variables
-            if platform.system() == 'Linux':
-                tmp = self._allModulesSettings[0]
-                self._preferencesSize = (500, 500)
-                self._moodSize = (480,600)
-            if platform.system() == 'Windows':
-                tmp = self._allModulesSettings[1]
-                self._preferencesSize = (500, 500)
-                self._moodSize = (420,550)
-            if platform.system() == 'Darwin':
-                tmp = self._allModulesSettings[2]
-                self._preferencesSize = (400, 600)
-                self._moodSize = (400,550)
+        # Set OS-specific variables
+        if platform.system() == 'Linux':
+            tmp = self._allModulesSettings[0]
+            self._preferencesSize = (500, 500)
+            self._moodSize = (480,600)
+        if platform.system() == 'Windows':
+            tmp = self._allModulesSettings[1]
+            self._preferencesSize = (500, 500)
+            self._moodSize = (420,550)
+        if platform.system() == 'Darwin':
+            tmp = self._allModulesSettings[2]
+            self._preferencesSize = (400, 600)
+            self._moodSize = (400,550)
 
-            # self._currentModules = [s.encode('utf-8') for s in tmp['Modules']]
-            self._currentModules = [s for s in tmp['Modules']]
+        # self._currentModules = [s.encode('utf-8') for s in tmp['Modules']]
+        self._currentModules = [s for s in tmp['Modules']]
 
-            # if self._moduleSelected == '':
-            #     self._moduleSelected = [s.encode('utf-8') for s in tmp['Modules']][0]
-        except Exception as e:
-            print("Exception BeamSettings.ReadConfig()")
-            print(e)
-            raise(e)
+        if self._moduleSelected == '':
+            self._moduleSelected = [s for s in tmp['Modules']][0]
 
         return
 #
@@ -179,10 +170,19 @@ class BeamSettings:
 
         try:
             ConfigData = json.load(ConfigFile)
-        except Exception as e:
-            print("Exception BeamSettings.OpenSetting(" + inputConfigFile + ")")
-            print(e)
-            raise (e)
+            # Validate configfile version against string.txt version
+
+            # Added since V0.4
+            if len(ConfigData['AllModules'][0]['Modules']) == 5: # System: Linux
+                ConfigData['AllModules'][0]['Modules'].append('Mixxx')
+            if len(ConfigData['AllModules'][1]['Modules']) == 5: # System: Windows
+                ConfigData['AllModules'][1]['Modules'].append('Mixxx')
+            if len(ConfigData['AllModules'][2]['Modules']) == 6: # System: Mac
+                ConfigData['AllModules'][2]['Modules'].append('Mixxx')
+
+            if not ConfigData['ConfigVersion'] == self._beamVersion:
+                logging.warning("Configfile version " + ConfigData['ConfigVersion'] + " differs from current " + self._beamVersion + ", gets updated")
+                ConfigData['ConfigVersion'] = self._beamVersion;
         finally:
             ConfigFile.close()
 
@@ -195,34 +195,30 @@ class BeamSettings:
 #
 ###############################################################
     def SaveConfig(self, outputConfigFile):
-        try:
-            output = {}
+        output = {}
 
-            output['Configname']       = "Default Configuration"
-            output['Comment']          = "This is a configuration file for Beam"
-            output['Author']           = "Mikael Holber & Horia Uifaleanu - 2015"
-            output['Module']           = self._moduleSelected
-            output['MaxTandaLength']   = self._maxTandaLength
-            output['Updtime']          = self._updateTimer
-            output['MoodTransition']           = self._moodTransition
-            output['MoodTransitionSpeed']      = self._moodTransitionSpeed
-            output['Logging']              = self._logging
-            output['LogPath']              = self._logPath
-            output['ShowStatusbar']        = self._showStatusbar
-            output['ConfigVersion']        = self._beamVersion
+        output['Configname']       = "Default Configuration"
+        output['Comment']          = "This is a configuration file for Beam"
+        output['Author']           = "Mikael Holber & Horia Uifaleanu - 2015"
+        output['Module']           = self._moduleSelected
+        output['MaxTandaLength']   = self._maxTandaLength
+        output['Updtime']          = self._updateTimer
+        output['MoodTransition']           = self._moodTransition
+        output['MoodTransitionSpeed']      = self._moodTransitionSpeed
+        output['Logging']              = self._logging
+        output['LogPath']              = self._logPath
+        output['LogLevel']              = self._logLevel
+        output['ShowStatusbar']        = self._showStatusbar
+        output['ConfigVersion']        = self._beamVersion
 
-            # Dictionaries
-            output['AllModules']           = self._allModulesSettings
-            output['Rules']                = self._rules
-            output['Moods']                = self._moods
+        # Dictionaries
+        output['AllModules']           = self._allModulesSettings
+        output['Rules']                = self._rules
+        output['Moods']                = self._moods
 
-            # Write config file to home dir
-            writepath = os.path.join(os.path.expanduser("~"), outputConfigFile)
-            self.WriteSetting(writepath, output)
-        except Exception as e:
-            print("Exception BeamSettings.SaveConfig()")
-            print(e)
-            raise (e)
+        # Write config file to user home dir
+        writepath = os.path.join(os.path.expanduser("~"), outputConfigFile)
+        self.WriteSetting(writepath, output)
 
         return
 
@@ -237,10 +233,6 @@ class BeamSettings:
             else:
                 # json.dump(output, ConfigFile, indent=2, encoding="utf-8")
                 json.dump(output, ConfigFile, indent=2)
-        except Exception as e:
-            print("Exception BeamSettings.WriteSetting()")
-            print(e)
-            raise (e)
         finally:
             ConfigFile.close()
 

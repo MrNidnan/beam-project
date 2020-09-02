@@ -24,118 +24,115 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-
-
-import wx, wx.html
-import os, sys
+from io import BytesIO
+import wx.html
 import wx.lib.delayedresult
 from random import randint
-
 from bin.beamsettings import *
 from bin.nowplayingdatamodel import *
 from bin.dialogs.preferences import Preferences
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
 from bin.dialogs import closedialog
-
 from copy import deepcopy
+from mutagen.flac import FLAC
+# from pathlib import Path
+import urllib.request
 
 ##################################################
 # MAIN WINDOW - FRAME
 ##################################################
+
+
 class beamMainFrame(wx.Frame):
     def __init__(self, settings = None):
-        try:
-            # Size and position of the main window
-            wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle, pos=(150,150), size=(800,600))
-            self.SetDoubleBuffered(True)
+        # Size and position of the main window
+        wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle, pos=(150,150), size=(800,600))
+        self.SetDoubleBuffered(True)
 
-            # Start the timer for updateData()
-            # ??? redundant see call to updateData() below
-            self.DataTimer()
+        # Start the timer for updateData()
+        # ??? redundant see call to updateData() below
+        self.DataTimer()
 
-            # Initialize DataObject - the model -
-            self.nowPlayingDataModel = NowPlayingDataModel()
+        # Initialize DataObject - the model -
+        self.nowPlayingDataModel = NowPlayingDataModel()
 
-            # Set Icon
-            iconFilename = os.path.join(os.getcwd(),'resources','icons','icon_square','icon_square_256px.png')
-            self.favicon = wx.Icon(iconFilename, wx.BITMAP_TYPE_ANY, 256, 256)
-            self.SetIcon(self.favicon)
+        # Set Icon
+        iconFilename = os.path.join(os.getcwd(),'resources','icons','icon_square','icon_square_256px.png')
+        self.favicon = wx.Icon(iconFilename, wx.BITMAP_TYPE_ANY, 256, 256)
+        self.SetIcon(self.favicon)
 
-            # faders
-            self.TransitionTimer = wx.Timer(self)
-            self.Bind(wx.EVT_TIMER, self.transition, self.TransitionTimer)
-            self.RotateBackgroundTimer = wx.Timer(self)
-            self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
+        # faders
+        self.TransitionTimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.transition, self.TransitionTimer)
+        self.RotateBackgroundTimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
 
-            # Statusbar
-            self.statusbar = self.CreateStatusBar(style=0)
-            self.SetStatusText('Initializing...')
+        # Statusbar
+        self.statusbar = self.CreateStatusBar(style=0)
+        self.SetStatusText('Initializing...')
 
-            # Setting up the menu.
-            self.filemenu    = wx.Menu()
-            self.Aboutmenu   = wx.Menu()
-            self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl+P"," Configuration tool")
-            self.menuFullScreen  = self.filemenu.Append(wx.ID_ANY, "&Fullscreen\tF11", "Set fullscreen")
-            self.menuExit    = self.filemenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
-            self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
-            self.menuHelp    = self.Aboutmenu.Append(wx.ID_ANY, "&Help"," Getting started")
+        # Setting up the menu.
+        self.filemenu    = wx.Menu()
+        self.Aboutmenu   = wx.Menu()
+        self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl+P"," Configuration tool")
+        self.menuFullScreen  = self.filemenu.Append(wx.ID_ANY, "&Fullscreen\tF11", "Set fullscreen")
+        self.menuExit    = self.filemenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
+        self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
+        self.menuHelp    = self.Aboutmenu.Append(wx.ID_ANY, "&Help"," Getting started")
 
-            # Creating the menubar.
-            self.menuBar = wx.MenuBar()
-            self.menuBar.Append(self.filemenu,"&File")    # Adding the "file menu" to the MenuBar
-            self.menuBar.Append(self.Aboutmenu,"&About")  # Adding the "About menu" to the MenuBar
-            self.SetMenuBar(self.menuBar)  # Adding the MenuBar to the Frame content.
+        # Creating the menubar.
+        self.menuBar = wx.MenuBar()
+        self.menuBar.Append(self.filemenu,"&File")    # Adding the "file menu" to the MenuBar
+        self.menuBar.Append(self.Aboutmenu,"&About")  # Adding the "About menu" to the MenuBar
+        self.SetMenuBar(self.menuBar)  # Adding the MenuBar to the Frame content.
 
-            # Events.
-            self.Bind(wx.EVT_MENU, self.OnPreferences, self.menuPreferences)
-            self.Bind(wx.EVT_MENU, self.OnClose, self.menuExit)
-            self.Bind(wx.EVT_MENU, self.OnAbout, self.menuAbout)
-            self.Bind(wx.EVT_MENU, self.OnHelp, self.menuHelp)
-            self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
-            self.Bind(wx.EVT_CLOSE, self.OnClose)
-            self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
+        # Events.
+        self.Bind(wx.EVT_MENU, self.OnPreferences, self.menuPreferences)
+        self.Bind(wx.EVT_MENU, self.OnClose, self.menuExit)
+        self.Bind(wx.EVT_MENU, self.OnAbout, self.menuAbout)
+        self.Bind(wx.EVT_MENU, self.OnHelp, self.menuHelp)
+        self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
 
-            # Background
-            self.Bind(wx.EVT_SIZE, self.OnSize)
-            self.Bind(wx.EVT_PAINT, self.OnPaint)
-            self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+        # Background
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
-            # self.backgroundImage = wx.EmptyBitmap(800,600)
-            self.backgroundImage = wx.Bitmap(800,600)
-            self.SetBackgroundColour(wx.BLACK)
-            self._currentBackgroundPath = []
-            self.modifiedBitmap = self._currentBackgroundPath
-            self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
+        # self.backgroundImage = wx.EmptyBitmap(800,600)
+        self.backgroundImage = wx.Bitmap(800,600)
+        self.SetBackgroundColour(wx.BLACK)
+        # self._currentBackgroundPath = []
+        self._currentBackgroundPath = None
+        self.modifiedBitmap = self._currentBackgroundPath
+        self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
 
-            self.alpha = float(1.0)
-            self.red = float(1.0)
-            self.blue = float(1.0)
-            self.green = float(1.0)
+        self.alpha = float(1.0)
+        self.red = float(1.0)
+        self.blue = float(1.0)
+        self.green = float(1.0)
 
-            self.currentDisplayRows = []
-            self.currentDisplaySettings = []
-            self.currentPlaybackStatus = ""
-            self.previousMood = ""
-            self.currentMood = ""
+        self.currentDisplayRows = []
+        self.currentDisplaySettings = []
+        self.currentPlaybackStatus = ""
+        self.previousMood = ""
+        self.currentMood = ""
 
 
-            #trigger
-            self.triggerResizeBackground = True
-            self.textsAreVisible = False
-            self.FadeDirection = 'In'
-            self.RotateBackgroundTrigger = False
+        #trigger
+        self.triggerResizeBackground = True
+        self.textsAreVisible = False
+        self.FadeDirection = 'In'
+        self.RotateBackgroundTrigger = False
 
-            #visibility switch
-            self.showStatusBar()
+        #visibility switch
+        self.showStatusBar()
 
-            # first update from player
-            self.currentlyUpdating = False
-            self.updateData()
-        except Exception as e:
-            print("Exception beamMainFrame()")
-            print(e)
-            raise (e)
+        # first update from player
+        self.currentlyUpdating = False
+        self.updateData()
 
     ########################## END FRAME INITIALIZATION #########################
 
@@ -163,9 +160,8 @@ class beamMainFrame(wx.Frame):
                 self.showStatusBar()
             self.ShowFullScreen(not self.IsFullScreen())
         except Exception as e:
-            print("Exception beamMainFrame.fullScreen()")
-            print(e)
-            raise (e)
+            logging.error(e, exc_info=True)
+            pass
 
     #
     # Hide/show statusbar
@@ -178,9 +174,8 @@ class beamMainFrame(wx.Frame):
             else:
                 self.statusbar.Hide()
         except Exception as e:
-            print("Exception beamMainFrame.showStatusBar()")
-            print(e)
-            raise (e)
+            logging.error(e, exc_info=True)
+            pass
 
     #
     # Show 'Close dialog
@@ -189,9 +184,8 @@ class beamMainFrame(wx.Frame):
         try:
             closedialog.ShowCloseDialog(self)
         except Exception as e:
-            print("Exception beamMainFrame.OnClose()")
-            print(e)
-            raise (e)
+            logging.error(e, exc_info=True)
+            pass
 
     #
     # Show 'About Dialog'
@@ -200,9 +194,8 @@ class beamMainFrame(wx.Frame):
         try:
             aboutdialog.ShowAboutDialog(self)
         except Exception as e:
-            print("Exception beamMainFrame.OnClose()")
-            print(e)
-            raise (e)
+            logging.error(e, exc_info=True)
+            pass
 
     #
     # Show 'Help'
@@ -212,9 +205,8 @@ class beamMainFrame(wx.Frame):
             help_dialog = HelpDialog(self)
             help_dialog.Show()
         except Exception as e:
-            print("Exception beamMainFrame.OnHelp()")
-            print(e)
-            raise (e)
+            logging.error(e, exc_info=True)
+            pass
 
     
     
@@ -248,20 +240,18 @@ class beamMainFrame(wx.Frame):
                 wx.lib.delayedresult.startWorker(self.getDataFinished, self.extractDataThread)
             self.DataTimer() # Reset the timer
         except Exception as e:
-            print("Error beammainframe.updateData()")
-            print(e)
-            # raise(e)
+            logging.error(e, exc_info=True)
+            pass
 
         # MEDIA READER WORKER
     def extractDataThread(self):
         try:
           self.nowPlayingDataModel.ExtractPlaylistInfo(beamSettings)
         except Exception as e:
-            print("Error beammainframe.extractDataThread()")
-            print(e)
-            raise(e)
+            logging.error(e, exc_info=True)
+            pass
 
-    
+
         # INFO FROM MEDIA PLAYER RECIEVED
     def getDataFinished(self, result):
         try:
@@ -269,27 +259,24 @@ class beamMainFrame(wx.Frame):
             if self.nowPlayingDataModel.playlistChanged:
                 self.processData() #Only update if playlist has changed
         except Exception as e:
-            print("Error beammainframe.getDataFinished()")
-            print(e)
-            raise(e)
+            logging.error(e, exc_info=True)
+            pass
 
         # PROCESS INFO FROM MEDIA PLAYER
     def processData(self):
         try:
             wx.lib.delayedresult.startWorker(self.updateMood, self.processDataThread)
         except Exception as e:
-            print("Error beammainframe.startWorker()")
-            print(e)
-            raise(e)
+            logging.error(e, exc_info=True)
+            pass
     
         # PROCESS DATA WORKER
     def processDataThread(self):
         try:
             self.nowPlayingDataModel.processInformation(beamSettings)
         except Exception as e:
-            print("Error beammainframe.processInformation()")
-            print(e)
-            raise(e)
+            logging.error(e, exc_info=True)
+            pass
 
         # AFTER PROCESSING DATA
     def updateMood(self, result):
@@ -312,9 +299,8 @@ class beamMainFrame(wx.Frame):
 
             self.Refresh()
         except Exception as e:
-            print("Error beammainframe.updateMood()")
-            print(e)
-            raise(e)
+            logging.error(e, exc_info=True)
+            pass
 
 
         # UPDATE INFO FROM PREFERENCES WINDOW
@@ -326,9 +312,8 @@ class beamMainFrame(wx.Frame):
             if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and not self.RotateBackground == 'no') or (not self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no'):
                 self.rotateBackground()
         except Exception as e:
-            print("Error beammainframe.updateSettings()")
-            print(e)
-            raise(e)
+            logging.error(e, exc_info=True)
+            pass
 
 
 ########################################################
@@ -365,7 +350,7 @@ class beamMainFrame(wx.Frame):
 
         try:
             # Image = wx.ImageFromBitmap(self.backgroundImage)
-            Image = wx.bitmap.ConvertToImage(self.backgroundImage)
+            Image = wx.Bitmap.ConvertToImage(self.backgroundImage)
             #resize current background picture - currently used at main frame resizing
 
             aspectRatioWindow = float(cliHeight) / float(cliWidth)
@@ -381,9 +366,12 @@ class beamMainFrame(wx.Frame):
                 Image = Image.AdjustChannels(self.red, self.green, self.blue, self.alpha)
             
             self.triggerResizeBackground = False
-            self.modifiedBitmap = wx.BitmapFromImage(Image)
-        except:
+            # self.modifiedBitmap = wx.BitmapFromImage(Image)
+            self.modifiedBitmap = wx.Bitmap(Image)
+        except Exception as e:
+            logging.info(e, exc_info=True)
             self.modifiedBitmap = self.backgroundImage
+            pass
 
             
         # Position the image and draw it
@@ -393,10 +381,157 @@ class beamMainFrame(wx.Frame):
         dc.DrawBitmap(self.modifiedBitmap, self.xPosResized, self.yPosResized, True)
 
 ########################################################
-# DRAW TEXT
+# DRAW TEXT & CoverArt
 ########################################################
-    def drawTexts(self, dc):
+    def drawImageItem(self, dc, cliWidth, cliHeight, j):
         
+        #Text and settings
+        fileUrl = self.currentDisplayRows[j]
+        # Windows "file:///C:"
+        filePath = urllib.request.url2pathname(fileUrl[5:])
+        # filePath = Path(fileUrl[8:])
+        # filePath = self.currentDisplayRows[j]
+
+        Settings = self.currentDisplaySettings[j]
+
+        # Get size and position
+        Size = Settings['Size']*cliHeight/100
+        HeightPosition = int(Settings['Position'][0]*cliHeight/100)
+
+
+        # Alignment position
+        # if Settings['Alignment'] == 'Left':
+        #     WidthPosition = int(Settings['Position'][1]*cliWidth/100)
+        # elif Settings['Alignment'] == 'Right':
+        #     WidthPosition = cliWidth - (int(Settings['Position'][1]*cliWidth/100)+TextWidth)
+        # elif Settings['Alignment'] == 'Center':
+        #     WidthPosition = (cliWidth-TextWidth)/2
+        # else:
+        #     return
+
+        # Draw the CoverArt
+        # dc.DrawText(text, WidthPosition,  HeightPosition)
+
+        try:
+            logging.debug('drawImageItem(' + filePath + ')')
+            flac = FLAC(filePath)
+            pict = flac.pictures[0]
+            image = wx.Image(BytesIO(pict.data), wx.BITMAP_TYPE_PNG)
+            # image = image.Scale(50, 50, wx.IMAGE_QUALITY_HIGH)
+            bitmap = wx.Bitmap(image)
+            dc.DrawBitmap(bitmap, 10, 10)
+        except Exception as e:
+            logging.debug(e)
+            pass
+
+
+    def drawTextItem(self, dc, cliWidth, cliHeight, j):
+
+        # Text and settings
+        text = self.currentDisplayRows[j]
+        Settings = self.currentDisplaySettings[j]
+
+        # Get size and position
+        Size = Settings['Size'] * cliHeight / 100
+        HeightPosition = int(Settings['Position'][0] * cliHeight / 100)
+
+        # Set font from settings
+        face = Settings['Font']
+
+        try:
+            dc.SetFont(wx.Font(Size,
+                               wx.ROMAN,
+                               beamSettings.FontStyleDictionary[Settings['Style']],
+                               beamSettings.FontWeightDictionary[Settings['Weight']],
+                               False,
+                               face))
+        except:
+            dc.SetFont(wx.Font(Size,
+                               wx.ROMAN,
+                               beamSettings.FontStyleDictionary[Settings['Style']],
+                               beamSettings.FontWeightDictionary[Settings['Weight']],
+                               False,
+                               "Liberation Sans"))
+
+        # Set font color, in the future, drawing a shadow ofsetted with the same text first might make a shadow!
+        dc.SetTextForeground(eval(Settings['FontColor']))
+
+        # Check if the text fits, cut it and add ...
+        # if platform.system() == 'Darwin':
+        #     try:
+        #         text = text.decode('utf-8')
+        #     except:
+        #         pass
+        TextWidth, TextHeight = dc.GetTextExtent(text)
+
+        #
+        # Find length and position of text
+        #
+        if Settings['Alignment'] == 'Center':
+            TextSpaceAvailable = cliWidth
+        else:
+            TextSpaceAvailable = int((100 - Settings['Position'][1]) * cliWidth)
+
+        #
+        # TEXT FLOW = CUT
+        #
+        if Settings['TextFlow'] == 'Cut':
+            while TextWidth > TextSpaceAvailable:
+                try:
+                    text = text[:-1]
+                    TextWidth, TextHeight = dc.GetTextExtent(text)
+                except:
+                    text = text[:-2]
+                    TextWidth, TextHeight = dc.GetTextExtent(text)
+                if TextWidth < TextSpaceAvailable:
+                    try:
+                        text = text[:-2]
+                        TextWidth, TextHeight = dc.GetTextExtent(text)
+                    except:
+                        text = text[:-3]
+                        TextWidth, TextHeight = dc.GetTextExtent(text)
+                    text = text + '...'
+            TextWidth, TextHeight = dc.GetTextExtent(text)
+        #
+        # TEXT FLOW = SCALE
+        #
+
+        if Settings['TextFlow'] == 'Scale':
+            while TextWidth > int(TextSpaceAvailable * 0.95):
+                # 10% Scaling each time
+                Size = int(Size * 0.9)
+                try:
+                    dc.SetFont(wx.Font(Size,
+                                       wx.ROMAN,
+                                       beamSettings.FontStyleDictionary[Settings['Style']],
+                                       beamSettings.FontWeightDictionary[Settings['Weight']],
+                                       False,
+                                       face))
+                except:
+                    dc.SetFont(wx.Font(Size,
+                                       wx.ROMAN,
+                                       beamSettings.FontStyleDictionary[Settings['Style']],
+                                       beamSettings.FontWeightDictionary[Settings['Weight']],
+                                       False,
+                                       "Liberation Sans"))
+                TextWidth, TextHeight = dc.GetTextExtent(text)
+
+        # Alignment position
+        if Settings['Alignment'] == 'Left':
+            WidthPosition = int(Settings['Position'][1] * cliWidth / 100)
+        elif Settings['Alignment'] == 'Right':
+            WidthPosition = cliWidth - (int(Settings['Position'][1] * cliWidth / 100) + TextWidth)
+        elif Settings['Alignment'] == 'Center':
+            WidthPosition = (cliWidth - TextWidth) / 2
+        else:
+            return
+
+        # Draw the text
+        dc.DrawText(text, WidthPosition, HeightPosition)
+
+
+    def drawItems(self, dc):
+
         if self.textsAreVisible == False:
             return
 
@@ -405,108 +540,14 @@ class beamMainFrame(wx.Frame):
             return
 
         for j in range(0, len(self.currentDisplaySettings)):
-
-            #Text and settings
+            # Text and settings
             text = self.currentDisplayRows[j]
-            Settings = self.currentDisplaySettings[j]
-
-            # Get size and position
-            Size = Settings['Size']*cliHeight/100
-            HeightPosition = int(Settings['Position'][0]*cliHeight/100)
-
-            # Set font from settings
-            face = Settings['Font']
-            
-            try:
-                dc.SetFont(wx.Font(Size, 
-                               wx.ROMAN, 
-                               beamSettings.FontStyleDictionary[Settings['Style']],
-                               beamSettings.FontWeightDictionary[Settings['Weight']],
-                               False, 
-                               face))
-            except:
-                dc.SetFont(wx.Font(Size, 
-                               wx.ROMAN, 
-                               beamSettings.FontStyleDictionary[Settings['Style']], 
-                               beamSettings.FontWeightDictionary[Settings['Weight']], 
-                               False, 
-                               "Liberation Sans"))
-
-            # Set font color, in the future, drawing a shadow ofsetted with the same text first might make a shadow!
-            dc.SetTextForeground(eval(Settings['FontColor']))
-
-            # Check if the text fits, cut it and add ...
-            if platform.system() == 'Darwin':
-                try:
-                    text = text.decode('utf-8')
-                except:
-                    pass
-            TextWidth, TextHeight   = dc.GetTextExtent(text)
-
-#
-# Find length and position of text
-#
-            if Settings['Alignment'] == 'Center':
-                TextSpaceAvailable = cliWidth
+            if text[:5] == 'file:':
+            # if text[:2] == 'C:':
+                self.drawImageItem(dc, cliWidth, cliHeight, j)
             else:
-                TextSpaceAvailable = int((100-Settings['Position'][1])*cliWidth)
+                self.drawTextItem(dc, cliWidth, cliHeight, j)
 
-#
-# TEXT FLOW = CUT
-#
-            if Settings['TextFlow'] == 'Cut':
-                while TextWidth > TextSpaceAvailable:
-                    try:
-                        text = text[:-1]
-                        TextWidth, TextHeight = dc.GetTextExtent(text)
-                    except:
-                        text = text[:-2]
-                        TextWidth, TextHeight = dc.GetTextExtent(text)
-                    if TextWidth < TextSpaceAvailable:
-                        try:
-                            text = text[:-2]
-                            TextWidth, TextHeight = dc.GetTextExtent(text)
-                        except:
-                            text = text[:-3]
-                            TextWidth, TextHeight = dc.GetTextExtent(text)
-                        text = text + '...'
-                TextWidth, TextHeight = dc.GetTextExtent(text)
-#
-# TEXT FLOW = SCALE
-#
-
-            if Settings['TextFlow'] == 'Scale':
-                while TextWidth > int(TextSpaceAvailable*0.95):
-                    # 10% Scaling each time
-                    Size = int(Size*0.9)
-                    try:
-                       dc.SetFont(wx.Font(Size,
-                                    wx.ROMAN,
-                                    beamSettings.FontStyleDictionary[Settings['Style']],
-                                    beamSettings.FontWeightDictionary[Settings['Weight']],
-                                    False,
-                                    face))
-                    except:
-                        dc.SetFont(wx.Font(Size,
-                               wx.ROMAN,
-                               beamSettings.FontStyleDictionary[Settings['Style']],
-                               beamSettings.FontWeightDictionary[Settings['Weight']],
-                               False,
-                               "Liberation Sans"))
-                    TextWidth, TextHeight = dc.GetTextExtent(text)
-
-# Alignment position
-            if Settings['Alignment'] == 'Left':
-                WidthPosition = int(Settings['Position'][1]*cliWidth/100)
-            elif Settings['Alignment'] == 'Right':
-                WidthPosition = cliWidth - (int(Settings['Position'][1]*cliWidth/100)+TextWidth)
-            elif Settings['Alignment'] == 'Center':
-                WidthPosition = (cliWidth-TextWidth)/2
-            else:
-                return
-                        
-            # Draw the text
-            dc.DrawText(text, WidthPosition,  HeightPosition)
 
 ########################################################
 # DRAW
@@ -518,7 +559,7 @@ class beamMainFrame(wx.Frame):
             return
         dc.Clear()
         self.drawBackgroundBitmap(dc)
-        self.drawTexts(dc)
+        self.drawItems(dc)
     
     
 ########################################################
@@ -590,9 +631,10 @@ class beamMainFrame(wx.Frame):
 
             self.alpha = float(0.0)
             # Load the background image
-            self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
-            self.modifiedBitmap = self._currentBackgroundPath
-            self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
+            if self._currentBackgroundPath is not None:
+                self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
+                self.modifiedBitmap = self._currentBackgroundPath
+                self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
             
             # Set triggers
             self.triggerResizeBackground = True

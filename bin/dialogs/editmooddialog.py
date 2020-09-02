@@ -25,8 +25,6 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import wx
-import os
 
 from bin.beamsettings import *
 from bin.dialogs.editlayoutdialog import EditLayoutDialog

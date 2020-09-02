@@ -27,11 +27,13 @@
 
 
 # from bin.songclass import SongObject
+import logging
+
 import bin.Modules.mixxxSqlite
 
 
 def run(maxtandalength, lastplaylist):
-    # print("mixxxModule.run()")
+    logging.debug("mixxxModule.run()")
 
     playlist, playback_status = bin.Modules.mixxxSqlite.run(maxtandalength, lastplaylist)
 

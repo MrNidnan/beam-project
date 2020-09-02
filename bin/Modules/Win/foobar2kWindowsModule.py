@@ -101,6 +101,6 @@ def getSongAt(Foobar, songPosition):
     retSong.AlbumArtist = Foobar.Playback.FormatTitle("[%album artist%]")
     retSong.Performer   = Foobar.Playback.FormatTitle("[%performer%]")
     #retSong.IsCortina   Defined by beam
-    retSong.fileUrl     = Foobar.Playback.FormatTitle("[%path%]")
+    retSong.FileUrl     = Foobar.Playback.FormatTitle("[%path%]")
     
     return retSong

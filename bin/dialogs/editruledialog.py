@@ -27,8 +27,7 @@
 
 
 
-import wx, wx.html
-import os
+import wx.html
 
 from bin.beamsettings import *
 

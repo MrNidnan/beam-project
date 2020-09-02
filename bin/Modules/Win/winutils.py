@@ -22,7 +22,7 @@
 #    Version 1.0
 #    	- Initial release
 #
-
+import logging
 import subprocess
 try:
     import pythoncom
@@ -39,19 +39,17 @@ except ImportError:
 
 def applicationrunning(appname):
 
-    try:
-        cmd = 'WMIC PROCESS get Caption'
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        for line in proc.stdout:
-            # line throws TypeError
-            # a bytes-like object is required, not 'str'
-            caption = line.decode('utf8')
-            if appname in caption:
-                proc.kill()
-                # print("winutils.AppplicationRunning() = True");
-                return True
-        proc.kill()
-    except Exception as e:
-        print(e)
-    print("winutils.AppplicationRunning() = False")
+    cmd = 'WMIC PROCESS get Caption'
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    for line in proc.stdout:
+        # line throws TypeError
+        # a bytes-like object is required, not 'str'
+        caption = line.decode('utf8')
+        if appname in caption:
+            proc.kill()
+            logging.debug("winutils.AppplicationRunning() = True");
+            return True
+    proc.kill()
+
+    logging.info("winutils.AppplicationRunning() = False")
     return False

@@ -31,6 +31,8 @@
 #     pass
 # No error if not installed!
 # from copy import deepcopy
+import logging
+
 import bin.Modules.mixxxSqlite
 from bin.Modules.Win.winutils import applicationrunning
 # from bin.Modules import mixxxSqlite
@@ -43,7 +45,7 @@ from bin.Modules.Win.winutils import applicationrunning
 
 
 def run(maxtandalength, lastplaylist):
-    # print("mixxxModule.run()")
+    logging.debug("mixxxModule.run()")
 
     #
     # Player Status

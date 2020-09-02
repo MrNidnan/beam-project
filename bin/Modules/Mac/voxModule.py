@@ -155,12 +155,12 @@ def run(MaxTandaLength):
 def getSongFromUrl(songPosition = 1):
     retSong = SongObject()
     try:
-        retSong.fileUrl = AppleScript(GetTrackURL, [str(songPosition)]).rstrip('\n').replace('file:','').replace('%20',' ')
+        retSong.FileUrl = AppleScript(GetTrackURL, [str(songPosition)]).rstrip('\n').replace('file:', '').replace('%20', ' ')
     except:
         return retSong
 
     try:
-        retSong.buildFromUrl(retSong.fileUrl)
+        retSong.buildFromUrl(retSong.FileUrl)
     except:
         retSong = getSongAt(1)
 
@@ -193,7 +193,7 @@ def getSongAt(songPosition = 1):
         retSong.AlbumArtist = AppleScript(GetAlbumArtist, [str(songPosition)]).rstrip('\n')
         #retSong.Performer  =
         #retSong.IsCortina  =
-        retSong.fileUrl    = AppleScript(GetTrackURL, [str(songPosition)]).rstrip('\n').replace('file:','')
+        retSong.FileUrl    = AppleScript(GetTrackURL, [str(songPosition)]).rstrip('\n').replace('file:', '')
 
     retSong.ModuleMessage = "Error reading file, using fallback info from player"
     return retSong

@@ -26,9 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 
-# import wx, wx.html
-import wx, wx.html, wx.adv
-import os, sys
+import wx.html, wx.adv
 
 import textwrap
 from bin.beamsettings import *

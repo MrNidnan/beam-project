@@ -28,7 +28,6 @@
 
 
 import wx, wx.html
-import os
 
 
 
@@ -65,7 +64,7 @@ class EditLayoutDialog(wx.Dialog):
         TextFlow = ["Cut","Scale"]
         
         HideLayoutTags = [  '','%Artist','%Album','%Title','%Genre','%Comment','%Composer',
-                            '%Year','%Singer','%AlbumArtist','%Performer','%IsCortina',
+                            '%Year','%Singer','%AlbumArtist','%Performer','%IsCortina', '%CoverArt',
                             '%PreviousArtist','%PreviousAlbum','%PreviousTitle','%PreviousGenre','%PreviousComment','%PreviousComposer',
                             '%PreviousYear','%PreviousSinger','%PreviousAlbumArtist','%PreviousPerformer','%PreviousIsCortina',
                             '%NextArtist','%NextAlbum','%NextTitle','%NextGenre','%NextComment','%NextComposer',

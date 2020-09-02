@@ -22,12 +22,9 @@
 #
 #    31/12/2009 Version 0.2
 #    	- Added support for keyword queries (queryAsKeyword)
-
+import logging
 from ctypes import *
 import win32api, win32con, win32gui, win32process, pywintypes
-import os
-import random
-import time
 
 class Winamp(object):
 	# Winamp main window IPC
@@ -487,15 +484,15 @@ class Winamp(object):
 		self.play()
 
 def printMediaLibraryItem(item):
-	print("Filename: %s\nTrack: %s, Album: %s, Artist: %s\nComment: %s, Genre: %s" % (item.filename, item.track, item.album, item.artist, item.comment, item.genre))
+	logging.info("Filename: %s\nTrack: %s, Album: %s, Artist: %s\nComment: %s, Genre: %s" % (item.filename, item.track, item.album, item.artist, item.comment, item.genre))
 
 if __name__ == "__main__":
 	# little demonstration...
 	
 	w = Winamp()
 
-	print("Current playlist:")
-	print(w.getPlaylistTitles())
+	logging.debug("Current playlist:")
+	logging.debug(w.getPlaylistTitles())
 
 	items = w.query("artist has \"opeth\"")
 	[printMediaLibraryItem(item) for item in items]
@@ -503,7 +500,7 @@ if __name__ == "__main__":
 	w.playlist = w.query("artist has \"jane's\"")
 	w.sortPlaylist()
 
-	print(w.playlist)
+	logging.debug(w.playlist)
 
 	"Playing album..."
 	w.playAlbum("Red")

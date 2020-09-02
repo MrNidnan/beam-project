@@ -23,6 +23,9 @@
 #    	- Initial release
 #
 
+import pathlib
+import urllib.request
+
 from bin.songclass import SongObject
 from bin.beamsettings import *
 import sqlite3
@@ -36,28 +39,23 @@ import sqlite3
 
 class MixxxSqlite:
     sqlitePath = ""
-    try:
-        # can only get executed in MainThread
-        if platform.system() == 'Windows':
-            sqlitePath = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
-            # "C:\\Users\\<user>\\AppData\Local\\Mixxx\\mixxxdb.sqlite"
-        if platform.system() == 'Linux':
-            sqlitePath = os.path.expandvars(r'$HOME/.mixxx/mixxxdb.sqlite')
-            # "/home/<username>/.mixxx/mixxxdb.sqlite"
-            # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'
-        if platform.system() == 'Darwin':
-            # MacOS:
-            sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
-    except Exception as e:
-        print("MixxxSqlite() Exception:")
-        print(e)
-        print(sqlitePath)
-        raise e
+
+    # can only get executed in MainThread
+    if platform.system() == 'Windows':
+        sqlitePath = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
+        # "C:\\Users\\<user>\\AppData\Local\\Mixxx\\mixxxdb.sqlite"
+    if platform.system() == 'Linux':
+        sqlitePath = os.path.expandvars(r'$HOME/.mixxx/mixxxdb.sqlite')
+        # "/home/<username>/.mixxx/mixxxdb.sqlite"
+        # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'
+    if platform.system() == 'Darwin':
+        # MacOS:
+        sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
 
 def run(maxtandalength, lastlplaylist):
-    # print("mixxxSqlite.run()");
+    logging.debug("mixxxSqlite.run()");
     sqlitepath = MixxxSqlite.sqlitePath
-    # print("mixxxSqlite.run() connect to: " + sqlitepath)
+    logging.debug("mixxxSqlite.run() connect to: " + sqlitepath)
 
     sqliteconn = sqlite3.connect(sqlitepath)
     try:
@@ -69,13 +67,13 @@ def run(maxtandalength, lastlplaylist):
                 # check for modification without switch
                 if (len(playlist) != len(lastlplaylist)) or (playlist[0] != lastlplaylist[1]):
                     run.currentmod = True
-                    print("Auto-DJ modified")
+                    logging.info("Auto-DJ modified")
             else:
                 # check for correction (by a switchover)
                 if playlist[0] == lastlplaylist[1]:
                     # next switchover occured
                     run.currentmod = False
-                    print("Auto-DJ correced")
+                    logging.info("Auto-DJ correced")
 
         if run.currentmod:
             # skip this round
@@ -84,11 +82,6 @@ def run(maxtandalength, lastlplaylist):
 
         # always playing, we don't know better
         playback_status = 'Playing'
-
-    except Exception as e:
-        print("mixxxSqlite.run() Exception")
-        print(e)
-        raise e
     finally:
         sqliteconn.close()
 
@@ -113,10 +106,11 @@ def getplaylist(sqliteconn, maxtandalength):
         "  ELSE pt.position+1" \
         "  END" \
         "     , li.id, li.artist, li.album, li.title, li.genre, li.comment, li.composer" \
-        "     , li.year, li.album_artist, li.url" \
+        "     , li.year, li.album_artist, tl.location" \
         "  from Playlists pl" \
         "  join PlaylistTracks pt ON pt.playlist_id = pl.id" \
         "  join library li ON pt.track_id = li.id" \
+        "  join track_locations tl ON tl.id = li.location" \
         " where pl.name = 'Auto DJ'" \
         " order by 1"
 
@@ -128,25 +122,23 @@ def getplaylist(sqliteconn, maxtandalength):
         for currTrack in curr_track_arr:
             playlist_song = SongObject()
 
-            playlist_song.Artist = getnotnull(currTrack[2])
-            playlist_song.Album = getnotnull(currTrack[3])
-            playlist_song.Title = getnotnull(currTrack[4])
-            playlist_song.Genre = getnotnull(currTrack[5])
-            playlist_song.Comment = getnotnull(currTrack[6])
-            playlist_song.Composer = getnotnull(currTrack[7])
-            playlist_song.Year = getnotnull(currTrack[8])
+            playlist_song.Artist = currTrack[2]
+            playlist_song.Album = currTrack[3]
+            playlist_song.Title = currTrack[4]
+            playlist_song.Genre = currTrack[5]
+            playlist_song.Comment = currTrack[6]
+            playlist_song.Composer = currTrack[7]
+            playlist_song.Year = currTrack[8]
             # playlist_song._Singer Defined by beam
-            playlist_song.AlbumArtist = getnotnull(currTrack[9])
+            playlist_song.AlbumArtist = currTrack[9]
             # playlist_song.Performer   = "Performer"
             # playlist_song.IsCortina   Defined by beam
-            playlist_song.fileUrl = getnotnull(currTrack[10])
+            # !!! provisorisch direkt Path übergeben
+            # playlist_song.FileUrl = currTrack[10]
+            # playlist_song.FileUrl = pathlib.Path(currTrack[10]).as_uri()
+            playlist_song.FileUrl = "file:" + urllib.request.pathname2url(currTrack[10])
 
             new_playlist.append(playlist_song)
-
-    except Exception as e:
-        print("mixxxSqlite.getPlaylist() Exception")
-        print(e)
-        raise e
     finally:
         cursor.close()
 

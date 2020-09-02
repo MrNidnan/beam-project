@@ -22,6 +22,7 @@
 #    Version 1.0
 #    	- Initial release
 #
+import logging
 
 from bin.songclass import SongObject
 
@@ -83,13 +84,13 @@ def run(MaxTandaLength, LastPlaylist):
     # Quick-read
     #
     if quickRead(MediaMonkey, currentsong, MaxTandaLength, LastPlaylist):
-        print("Quick-read")
+        logging.debug("Quick-read")
         playlist = deepcopy(LastPlaylist)
         return playlist, playbackStatus
     #
     # Full-read
     #
-    print("Full-read")
+    logging.debug("Full-read")
     while searchsong < playlistlength and searchsong < currentsong+MaxTandaLength+2:
         try:
             playlist.append(getSongAt(MediaMonkey, searchsong))
@@ -115,7 +116,7 @@ def quickRead(MediaMonkey, songPosition = 1, MaxTandaLength = 1, LastRead = []):
             pass
         try:
             Song = LastRead[i]
-            Last.append(Song.fileUrl)
+            Last.append(Song.FileUrl)
         except:
             pass
     if Last == Current:
@@ -145,7 +146,7 @@ def getSongAt(MediaMonkey, songPosition):
     retSong.AlbumArtist = Track.AlbumArtistName
     #retSong.Performer  = (Track.Performer) # Does not exist for iTunes?
     #retSong.IsCortina   Defined by beam
-    retSong.fileUrl     = Track.Path
+    retSong.FileUrl     = Track.Path
     #retSong.ModuleMessage = Not needed for iTunes
     
     return retSong

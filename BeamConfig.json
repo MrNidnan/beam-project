@@ -9,8 +9,9 @@
   "MoodTransitionSpeed": "1500",
   "Logging": "False",
   "LogPath": "C:\\Users\\Martin\\BeamLog.txt",
+  "LogLevel": "Warning",
   "ShowStatusbar": "True",
-  "ConfigVersion": "0.4.3.3",
+  "ConfigVersion": "0.4.3.4",
   "AllModules": [
     {
       "Modules": [

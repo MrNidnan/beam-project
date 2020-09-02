@@ -84,10 +84,12 @@ def getSongObjectFromTrack(metadata):
     except:
         pass
         
-    try:
-        retSong.Composer    = (Track['composer'])
-    except:
-        pass
+
+    # try:
+    # unresolved reference
+    #     retSong.Composer    = (Track['composer'])
+    # except:
+    #     pass
         
     try:
         retSong.Year        = (metadata['xesam:contentCreated'])[:4]
