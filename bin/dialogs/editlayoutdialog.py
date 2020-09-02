@@ -43,7 +43,9 @@ class EditLayoutDialog(wx.Dialog):
         self.EditLayoutPanel    = wx.Panel(self)
         self.RowSelected        = RowSelected
         self.mode               = mode
+
         self.LayoutList         = LayoutList
+        # List of items do display and edit
 
         self.ButtonSaveLayout   = wx.Button(self.EditLayoutPanel, label="Save")
         self.ButtonCancelLayout     = wx.Button(self.EditLayoutPanel, label="Cancel")
@@ -73,14 +75,13 @@ class EditLayoutDialog(wx.Dialog):
                             '%NextTandaYear','%NextTandaSinger','%NextTandaAlbumArtist','%NextTandaPerformer']
                 
         # Check if it is a new line
-        if self.RowSelected<len(self.LayoutList):
+        if self.RowSelected < len(self.LayoutList):
             # Get the properties of the selected item
             self.Settings   = LayoutList[self.RowSelected]
         else:
-            # Create a new default setting
+            # Create a new default item
             self.Settings   = ({"Field": "%Artist", "Font": "Default","Style": "Normal", "Weight": "Bold", "Size": 20, "FontColor": "(255,255,255,255)", "HideControl": "", "Position": [50,50], "Alignment": "Center", "Active": "yes", "TextFlow": "Cut"})
 
-        
         # Define fields
         self.LabelText          = wx.TextCtrl(self.EditLayoutPanel, size=(250,-1), value=self.Settings['Field'])
         self.FontDropdown       = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Font'], choices=elist, style=wx.CB_READONLY)
@@ -94,11 +95,19 @@ class EditLayoutDialog(wx.Dialog):
         self.Alignment          = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Alignment'], choices=Align, style=wx.CB_READONLY)
         self.TextFlow           = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['TextFlow'], choices=TextFlow, style=wx.CB_READONLY)
         self.ColorField.SetColour(eval(self.Settings['FontColor']))
-        
+
+        isCoverArt = (self.Settings["Field"].strip() == "%CoverArt")
+        if isCoverArt:
+            pass
+        else:
+            pass
+
+
         if self.Settings['Alignment']=="Center":
             self.HorizontalPos.Enable(False)
         self.Alignment.Bind(wx.EVT_COMBOBOX, self.DisableHorizontalBox)
-        
+
+
         # Information area
         InfoGrid    =   wx.FlexGridSizer(10, 2, 5, 5)
         InfoGrid.AddMany ( [(wx.StaticText(self.EditLayoutPanel, label="Font"), 0, wx.EXPAND),
@@ -113,7 +122,7 @@ class EditLayoutDialog(wx.Dialog):
                         (wx.StaticText(self.EditLayoutPanel, label="Horizontal position"), 0, wx.EXPAND),
                         (self.VerticalPos, 0),
                         (self.HorizontalPos, 0),
-                        (wx.StaticText(self.EditLayoutPanel, label="Text size"), 0,wx.EXPAND),
+                        (wx.StaticText(self.EditLayoutPanel, label="Size"), 0,wx.EXPAND),
                         (wx.StaticText(self.EditLayoutPanel, label="Text flow"), 0,wx.EXPAND),
                         (self.SizeText, 0),
                         (self.TextFlow, 0)

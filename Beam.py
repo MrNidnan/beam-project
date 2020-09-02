@@ -70,7 +70,7 @@ logging.getLogger("").addHandler(console)
 # if beamSettings._logging == 'True':
 #    sys.stdout = open(beamSettings._logPath,"w")
 
-print(beamSettings.mainFrameTitle + " logging to " + logPath)
+print(beamSettings.mainFrameTitle + " logging to '" + logPath + "' Level " + beamSettings._logLevel)
 
 
 ########################################################

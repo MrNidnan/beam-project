@@ -37,59 +37,30 @@ except ImportError:
 
 def run(MaxTandaLength):
 
-
     playlist = []
     playbackStatus  = ''
-    mprisVersion=1
-    
+
     try:
         bus = dbus.SessionBus()
-        player = bus.get_object('org.mpris.clementine', '/Player')
-        tracklist = bus.get_object('org.mpris.clementine', '/TrackList')
-        mprisVersion=1
+        player = bus.get_object('org.mpris.MediaPlayer2.clementine', '/org/mpris/MediaPlayer2')
+
+        StatusString = player.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus',
+                                  dbus_interface='org.freedesktop.DBus.Properties')
     except:
-        try:
-            bus = dbus.SessionBus()
-            player = bus.get_object('org.mpris.MediaPlayer2.clementine', '/org/mpris/MediaPlayer2')
-            
-            mprisVersion=2
-        except:
-            playbackStatus  = 'PlayerNotRunning'
-            return playlist, playbackStatus
-    
-    # Playstatus: 0 = Playing, 1 = Paused, 2 = Stopped
-    if mprisVersion == 1:
-        Status = player.GetStatus()[0] 
-        if Status == 0:
-            playbackStatus = 'Playing'
-        
-            
-            #Extract the playlist songs
-            currentsong = tracklist.GetCurrentTrack()
-            playlistlength = tracklist.GetLength()
-            iterator_song = currentsong 
-            
-            while iterator_song < currentsong+MaxTandaLength+2 and iterator_song < playlistlength:
-                playlist.append(getSongObjectFromTrack(tracklist.GetMetadata(iterator_song)))
-                iterator_song = iterator_song+1
-            
-        if Status == 1:
-            playbackStatus = 'Paused'
-        if Status == 2:
-            playbackStatus = 'Stopped'
-        
-        
-    elif mprisVersion ==2:
-        StatusString = player.Get('org.mpris.MediaPlayer2.Player','PlaybackStatus',dbus_interface='org.freedesktop.DBus.Properties')
-        if StatusString == 'Playing': 
-            currentMetadata = player.Get('org.mpris.MediaPlayer2.Player','Metadata',dbus_interface='org.freedesktop.DBus.Properties')
-            playlist.append(getSongObjectFromTrackMpris2(currentMetadata))
-           
-            #tracklist = player.Get('org.mpris.MediaPlayer2.TrackList','Tracks',dbus_interface='org.freedesktop.DBus.Properties')
-            #tracklist from clementine is empty ??
-           
-        playbackStatus = StatusString
+        playbackStatus = 'PlayerNotRunning'
+        return playlist, playbackStatus
+
+    if StatusString == 'Playing':
+        currentMetadata = player.Get('org.mpris.MediaPlayer2.Player', 'Metadata',
+                                     dbus_interface='org.freedesktop.DBus.Properties')
+        playlist.append(getSongObjectFromTrackMpris2(currentMetadata))
+        # tracklist = player.Get('org.mpris.MediaPlayer2.TrackList','Tracks',dbus_interface='org.freedesktop.DBus.Properties')
+        # tracklist from clementine is empty ??
+
+    playbackStatus = StatusString
+
     return playlist, playbackStatus
+
 
 def getSongObjectFromTrackMpris2(Track):
     retSong = SongObject()
@@ -136,7 +107,12 @@ def getSongObjectFromTrackMpris2(Track):
         retSong.AlbumArtist = Track['xesam:albumArtist'][0]
     except:
         pass
-        
+
+    try:
+        retSong.FileUrl = Track['xesam:url']
+    except:
+        pass
+
     try:
         # nicht implementiert?
         retSong.Performer   = Track['xesam:performer']

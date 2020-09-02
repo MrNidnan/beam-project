@@ -93,12 +93,16 @@ class NowPlayingDataModel:
         # Save previous state
         self.PreviousPlaybackStatus = self.PlaybackStatus
 
-        try:
+        # try:
+        if self.currentPlaylist:
             self.LastRead = deepcopy(self.currentPlaylist)
-        except Exception as e:
-            logging.warning("NowPlayingDataModel.ExtractPlaylistInfo(deepcopy) exception:")
-            logging.warning(e)
+        else:
+            self.currentPlaylist = []
             self.LastRead = SongObject()
+        # except Exception as e:
+        #     logging.warning("NowPlayingDataModel.ExtractPlaylistInfo(deepcopy):")
+        #     logging.warning(e)
+        #     self.LastRead = SongObject()
 
         ###############################################################
         #
@@ -119,6 +123,7 @@ class NowPlayingDataModel:
                 if currentSettings._moduleSelected == 'Winamp':
                     self.currentPlaylist, self.PlaybackStatus = winampWindowsModule.run(currentSettings._maxTandaLength)
             except:
+                # ???
                 pass
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
@@ -164,33 +169,23 @@ class NowPlayingDataModel:
         #
         # Set status message
         #
-        try:
-            if not self.currentPlaylist[0].ModuleMessage == "":
-                self.StatusMessage = self.PlaybackStatus+", " + self.currentPlaylist[0].ModuleMessage
-            else:
-                self.StatusMessage = self.PlaybackStatus
-        except Exception as e:
-            logging.warning("NowPlayingDataModel.ExtractPlaylistInfo(status message) exception:")
-            logging.warning(e)
-            self.StatusMessage = self.PlaybackStatus
-        
-        try:
-            #
-            # Save the reading
-            #
-            if (self.rawPlaylist != self.currentPlaylist or self.PreviousPlaybackStatus != self.PlaybackStatus):
-                self.rawPlaylist = deepcopy(self.currentPlaylist)
-                self.playlistChanged  = True
-            else:
-                self.playlistChanged  = False
+        self.StatusMessage = self.PlaybackStatus
+        if self.currentPlaylist and len(self.currentPlaylist) >= 1 and self.currentPlaylist[0].ModuleMessage != "":
+            # append ModulMessage
+            self.StatusMessage = self.StatusMessage + ", " + self.currentPlaylist[0].ModuleMessage
 
-            logging.info("Data Extracted... " + time.strftime("%H:%M:%S"))
-            if self.PreviousPlaybackStatus == "":
-                self.PreviousPlaybackStatus = self.PlaybackStatus
-        except Exception as e:
-            logging.error(e, exc_info=True)
-            raise
+        #
+        # Save the reading
+        #
+        if (self.rawPlaylist == self.currentPlaylist) and (self.PreviousPlaybackStatus == self.PlaybackStatus):
+            self.playlistChanged  = False
+        else:
+            self.rawPlaylist = deepcopy(self.currentPlaylist)
+            self.playlistChanged  = True
 
+        logging.info("Data Extracted, " + self.StatusMessage + ", " + time.strftime("%H:%M:%S"))
+        if self.PreviousPlaybackStatus == "":
+            self.PreviousPlaybackStatus = self.PlaybackStatus
 
         return self
 
@@ -250,9 +245,9 @@ class NowPlayingDataModel:
 ###############################################################
 
         
-        try:
+        if self.currentPlaylist and len(self.currentPlaylist) >= 1:
             currentSong = self.currentPlaylist[0]
-        except:
+        else:
             currentSong = SongObject()
         
         #Mood settings play status (Playing, Not Playing)
@@ -261,7 +256,7 @@ class NowPlayingDataModel:
         else:
             MoodStatus = "Not Playing"
         
-        applyMood = []
+        applyMood = None
         for i in range(1, len(currentSettings._moods)):
             currentRule = currentSettings._moods[i]
             try:
@@ -280,9 +275,9 @@ class NowPlayingDataModel:
                 logging.info(e, exc_info=True)
 
         #
-        # Apply default layout and background, then change it if mood is applied
+        # Apply mood layout and background or default mood
         #
-        if not applyMood == []:
+        if applyMood:
             currentRule = currentSettings._moods[applyMood]
             self.CurrentMood = currentRule['Name']
             self.DisplaySettings = currentRule['Display']
@@ -305,7 +300,8 @@ class NowPlayingDataModel:
 ###############################################################
 
         # The display lines
-        for i in range(0, len(self.DisplaySettings)): self.DisplayRow.append('')
+        for i in range(0, len(self.DisplaySettings)):
+            self.DisplayRow.append('')
         
         #first, update the conversion dictionary
         self.updateConversionDisctionary()
@@ -339,8 +335,9 @@ class NowPlayingDataModel:
 
     def updateConversionDisctionary(self):
         self.convDict = dict()
+
         #CurrentSong
-        try:
+        if self.currentPlaylist and len(self.currentPlaylist) >= 1:
             self.convDict['%Artist']        = self.currentPlaylist[0].Artist
             self.convDict['%Album']         = self.currentPlaylist[0].Album
             self.convDict['%Title']         = self.currentPlaylist[0].Title
@@ -353,9 +350,7 @@ class NowPlayingDataModel:
             self.convDict['%Performer']     = self.currentPlaylist[0].Performer
             self.convDict['%IsCortina']     = self.currentPlaylist[0].IsCortina
             self.convDict['%CoverArt']      = self.currentPlaylist[0].FileUrl
-        except Exception as e:
-            logging.warning("updateConversionDisctionary()")
-            logging.warning(e)
+        else:
             self.convDict['%Artist']        = ""
             self.convDict['%Album']         = ""
             self.convDict['%Title']         = ""
@@ -371,7 +366,7 @@ class NowPlayingDataModel:
 
 
         #PreviousSong
-        try:
+        if self.prevPlayedSong:
             self.convDict['%PreviousArtist']        = self.prevPlayedSong.Artist
             self.convDict['%PreviousAlbum']         = self.prevPlayedSong.Album
             self.convDict['%PreviousTitle']         = self.prevPlayedSong.Title
@@ -383,9 +378,7 @@ class NowPlayingDataModel:
             self.convDict['%PreviousAlbumArtist']   = self.prevPlayedSong.AlbumArtist
             self.convDict['%PreviousPerformer']     = self.prevPlayedSong.Performer
             self.convDict['%PreviousIsCortina']     = self.prevPlayedSong.IsCortina
-            
-            
-        except:
+        else:
             self.convDict['%PreviousArtist']        = ""
             self.convDict['%PreviousAlbum']         = ""
             self.convDict['%PreviousTitle']         = ""
@@ -399,7 +392,7 @@ class NowPlayingDataModel:
             self.convDict['%PreviousIsCortina']     = ""
             
         #NextSong
-        try:
+        if self.currentPlaylist and len(self.currentPlaylist) >= 2:
             self.convDict['%NextArtist']        = self.currentPlaylist[1].Artist
             self.convDict['%NextAlbum']         = self.currentPlaylist[1].Album
             self.convDict['%NextTitle']         = self.currentPlaylist[1].Title
@@ -411,7 +404,7 @@ class NowPlayingDataModel:
             self.convDict['%NextAlbumArtist']   = self.currentPlaylist[1].AlbumArtist
             self.convDict['%NextPerformer']     = self.currentPlaylist[1].Performer
             self.convDict['%NextIsCortina']     = self.currentPlaylist[1].IsCortina
-        except:
+        else:
             self.convDict['%NextArtist']        = ""
             self.convDict['%NextAlbum']         = ""
             self.convDict['%NextTitle']         = ""
@@ -425,7 +418,7 @@ class NowPlayingDataModel:
             self.convDict['%NextIsCortina']     = ""
         
         #NextTanda
-        try:
+        if self.nextTandaSong:
             self.convDict['%NextTandaArtist']        = self.nextTandaSong.Artist
             self.convDict['%NextTandaAlbum']         = self.nextTandaSong.Album
             self.convDict['%NextTandaTitle']         = self.nextTandaSong.Title
@@ -437,7 +430,7 @@ class NowPlayingDataModel:
             self.convDict['%NextTandaAlbumArtist']   = self.nextTandaSong.AlbumArtist
             self.convDict['%NextTandaPerformer']     = self.nextTandaSong.Performer
             self.convDict['%NextTandaIsCortina']     = self.nextTandaSong.IsCortina        
-        except:
+        else:
             self.convDict['%NextTandaArtist']        = ""
             self.convDict['%NextTandaAlbum']         = ""
             self.convDict['%NextTandaTitle']         = ""
@@ -458,6 +451,7 @@ class NowPlayingDataModel:
             self.convDict['%DateDay']       = time.strftime("%e") # Does not work on Windows
         except:
             self.convDict['%DateDay']       = time.strftime("%d")
+
         self.convDict['%DateMonth']     = time.strftime("%m")
         self.convDict['%DateYear']      = time.strftime("%Y")
         self.convDict['%LongDate']  = time.strftime("%d %B %Y")

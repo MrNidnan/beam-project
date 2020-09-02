@@ -65,7 +65,7 @@ def run(maxtandalength, lastlplaylist):
         if (len(lastlplaylist) > 0) and (playlist != lastlplaylist):
             if not run.currentmod:
                 # check for modification without switch
-                if (len(playlist) != len(lastlplaylist)) or (playlist[0] != lastlplaylist[1]):
+                if (len(playlist) != len(lastlplaylist)): # or (playlist[0] != lastlplaylist[1]):
                     run.currentmod = True
                     logging.info("Auto-DJ modified")
             else:
@@ -136,7 +136,7 @@ def getplaylist(sqliteconn, maxtandalength):
             # !!! provisorisch direkt Path übergeben
             # playlist_song.FileUrl = currTrack[10]
             # playlist_song.FileUrl = pathlib.Path(currTrack[10]).as_uri()
-            playlist_song.FileUrl = "file:" + urllib.request.pathname2url(currTrack[10])
+            playlist_song.FileUrl = "file://" + urllib.request.pathname2url(currTrack[10])
 
             # for compare of changes
             playlist_song.sanitizeFields()

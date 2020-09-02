@@ -1,0 +1,475 @@
+2020-09-02 18:40:48,117 : DEBUG : Start updating data... 18:40:48
+2020-09-02 18:40:48,147 : INFO : Data Extracted, Playing, 18:40:48
+2020-09-02 18:40:48,489 : INFO : ...data filtered: 18:40:48
+2020-09-02 18:40:48,657 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:48,678 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:48,679 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:48,891 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:48,906 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:48,907 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:48,940 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:48,952 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:48,953 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:48,979 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:48,991 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:48,992 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,014 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,029 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,030 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,053 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,067 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,070 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,091 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,149 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,158 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,222 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,245 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,246 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,272 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,287 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,288 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,313 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,329 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,331 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,369 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,438 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,439 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,507 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,519 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,520 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,549 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,569 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,570 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,640 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,682 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,684 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,712 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,732 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,735 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,764 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,790 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,791 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:49,816 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:49,839 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:49,842 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:52,109 : DEBUG : Start updating data... 18:40:52
+2020-09-02 18:40:52,124 : INFO : Data Extracted, Playing, 18:40:52
+2020-09-02 18:40:55,682 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:55,705 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:55,707 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:55,751 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:55,773 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:55,774 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:55,816 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:55,846 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:55,849 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:55,954 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:56,008 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:56,009 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:56,045 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:40:56,059 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:40:56,060 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:40:56,112 : DEBUG : Start updating data... 18:40:56
+2020-09-02 18:40:56,118 : INFO : Data Extracted, Playing, 18:40:56
+2020-09-02 18:41:00,118 : DEBUG : Start updating data... 18:41:00
+2020-09-02 18:41:00,134 : INFO : Data Extracted, Playing, 18:41:00
+2020-09-02 18:41:03,045 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:41:03,063 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:41:03,064 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:41:03,099 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:41:03,118 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:41:03,119 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:41:03,152 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:41:03,170 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:41:03,172 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:41:03,197 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:41:03,212 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:41:03,213 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:41:03,239 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:41:03,272 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:41:03,282 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:41:03,317 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:41:03,349 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:41:03,350 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29
+2020-09-02 18:41:04,139 : DEBUG : Start updating data... 18:41:04
+2020-09-02 18:41:04,155 : INFO : Data Extracted, Playing, 18:41:04
+2020-09-02 18:41:04,264 : DEBUG : drawImageItem("///home/osboxes/Tango/Best of/Al Compas Del Corazon - Miguel Calo - .mp3")
+2020-09-02 18:41:04,280 : DEBUG : APEv2 not implemented yet
+2020-09-02 18:41:04,281 : DEBUG : ALBUM=Most Common Tangos For Dancing
+ARTIST=Raúl Berón
+Album Artist=Miguel Caló
+BPM=119.628
+COMMENT=Mandragoratango.com
+GENRE=Tango
+Grouping=Golden Age Lyrical
+INITIALKEY=D
+MP3GAIN_MINMAX=122,182
+MP3GAIN_UNDO=+002,+002,N
+REPLAYGAIN_TRACK_GAIN=2.68163 dB
+REPLAYGAIN_TRACK_PEAK=0.666790
+TITLE=Al compás del corazón
+Year=1942-04-29

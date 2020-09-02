@@ -52,7 +52,7 @@ from mutagen.mp3 import MP3
 class beamMainFrame(wx.Frame):
     def __init__(self, settings = None):
         # Size and position of the main window
-        wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle, pos=(150,150), size=(800,600))
+        wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle + " " + beamSettings.beamVersion, pos=(150,150), size=(800,600))
         self.SetDoubleBuffered(True)
 
         # Start the timer for updateData()
@@ -438,7 +438,7 @@ class beamMainFrame(wx.Frame):
                 # logging.debug(mp3Frame.pprint())
                 id3Frame = ID3(filePath)
                 # logging.debug(id3Frame.pprint())
-                id3Keys = id3Frame.keys()
+                # id3Keys = id3Frame.keys()
                 # logging.debug(id3Keys)
                 # dict_keys = keys.dict_keys
                 # logging.debug(dict_keys)
@@ -453,10 +453,14 @@ class beamMainFrame(wx.Frame):
                 if apicTag:
                     data = apicTag.data
                     if data:
-                        if apicTag.mime == 'image/jpeg':
+                        if (apicTag.mime.lower() == 'image/jpeg') or (apicTag.mime.lower() == 'image/jpg'):
                             bitmapType = wx.BITMAP_TYPE_JPEG
-                        if apicTag.mime == 'image/png':
+                        if apicTag.mime.lower() == 'image/png':
                             bitmapType = wx.BITMAP_TYPE_PNG
+                        if apicTag.mime.lower() == 'image/gif':
+                            bitmapType = wx.BITMAP_TYPE_GIF
+                        if apicTag.mime.lower() == 'image/bmp':
+                            bitmapType = wx.BITMAP_TYPE_BMP
                         if bitmapType is not None:
                             image = wx.Image(BytesIO(data), wx.BITMAP_TYPE_JPEG)
             except Exception as e:
@@ -480,7 +484,7 @@ class beamMainFrame(wx.Frame):
         if image is None:
             try:
                 apeFrame = APEv2(filePath)
-                logging.info("APEv2 not implemented yet")
+                logging.debug("APEv2 not implemented yet")
                 logging.debug(apeFrame.pprint())
                 # keys = fileFrame.keys()
                 # logging.debug(keys)
@@ -638,7 +642,7 @@ class beamMainFrame(wx.Frame):
         for j in range(0, len(self.currentDisplaySettings)):
             # Text and settings
             text = self.currentDisplayRows[j]
-            if text[:5] == 'file:':
+            if text.strip()[:7] == 'file://':
                 self.drawImageItem(dc, cliWidth, cliHeight, j)
 
         # Draw text after/over image
