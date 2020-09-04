@@ -50,13 +50,13 @@
   ],
   "Rules": [
     {
-      "Active": "yes",
+      "Active": "no",
       "Field2": "%Singer",
       "Field1": "%Comment",
       "Type": "Copy"
     },
     {
-      "Active": "yes",
+      "Active": "no",
       "Field2": "is",
       "Field1": "%Artist",
       "Type": "Cortina",
@@ -81,7 +81,7 @@
       "Field3": "%Title",
       "Field1": "%Title",
       "Field4": "%Singer",
-      "Active": "yes",
+      "Active": "no",
       "Type": "Parse"
     },
     {
@@ -89,11 +89,11 @@
       "Field3": "%Artist",
       "Field1": "%Artist",
       "Field4": "%Singer",
-      "Active": "yes",
+      "Active": "no",
       "Type": "Parse"
     },
     {
-      "Active": "yes",
+      "Active": "no",
       "Field2": "is",
       "Field1": "%Title",
       "Type": "Ignore",
@@ -113,6 +113,22 @@
       "RotateBackground": "no",
       "RotateTimer": 1200,
       "Display": [
+        {
+          "Field": "%CoverArt",
+          "Font": "",
+          "Style": "Normal",
+          "Weight": "Bold",
+          "Size": 25,
+          "FontColor": "(255, 255, 255, 255)",
+          "HideControl": "",
+          "Position": [
+            5,
+            2
+          ],
+          "Alignment": "Right",
+          "Active": "yes",
+          "TextFlow": "Cut"
+        },
         {
           "Field": "\u266a Previous song: %PreviousTitle",
           "Style": "Italic",
@@ -180,7 +196,7 @@
         {
           "Field": "%Genre %Year",
           "Font": "",
-          "Style": "Normal",
+          "Style": "Italic",
           "Weight": "Normal",
           "Size": 8,
           "FontColor": "(255, 255, 255, 255)",
@@ -197,7 +213,7 @@
           "Style": "Italic",
           "Weight": "Normal",
           "HideControl": "%NextTandaAlbumArtist",
-          "Field": "Next Tanda: %NextTandaGenre  - %NextTandaAlbumArtist \u266a",
+          "Field": "Next Tanda (+%CurrentTandaSongsRemaining): %NextTandaGenre  - %NextTandaAlbumArtist \u266a",
           "Position": [
             82,
             2
@@ -548,7 +564,7 @@
       "Field3": "",
       "Field1": "%Artist",
       "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg",
-      "Active": "yes",
+      "Active": "no",
       "RotateBackground": "linear",
       "RotateTimer": 30,
       "Type": "Mood",

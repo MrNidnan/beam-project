@@ -396,14 +396,24 @@ class beamMainFrame(wx.Frame):
         filePath = urllib.request.url2pathname(fileUrl[5:])
         # filePath = Path(fileUrl[8:])
         # filePath = self.currentDisplayRows[j]
-        logging.debug('drawImageItem("' + filePath + '")')
 
         Settings = self.currentDisplaySettings[j]
 
         # Get (text) size and position
         size = Settings['Size']*cliHeight/100
-        horizontalPosition = int(Settings['Position'][1]*cliWidth/100)
-        verticalPosition = int(Settings['Position'][0]*cliHeight/100)
+        verticalPosition = int(Settings['Position'][0] * cliHeight / 100)
+
+        # Alignment position
+        if Settings['Alignment'] == 'Left':
+            horizontalPosition = int(Settings['Position'][1] * cliWidth / 100)
+        elif Settings['Alignment'] == 'Right':
+            horizontalPosition = cliWidth - (int(Settings['Position'][1] * cliWidth / 100) + size)
+        elif Settings['Alignment'] == 'Center':
+            horizontalPosition = (cliWidth - size) / 2
+        else:
+            raise Exception("Unknown alignment" + Settings['Alignment'])
+
+
 
         # Alignment position
         # if Settings['Alignment'] == 'Left':
@@ -505,6 +515,7 @@ class beamMainFrame(wx.Frame):
             try:
                 image = image.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
                 bitmap = wx.Bitmap(image)
+                logging.debug('drawImageItem("' + filePath + '")')
                 dc.DrawBitmap(bitmap, horizontalPosition, verticalPosition)
             except Exception as e:
                 pass
@@ -623,7 +634,7 @@ class beamMainFrame(wx.Frame):
         elif Settings['Alignment'] == 'Center':
             WidthPosition = (cliWidth - TextWidth) / 2
         else:
-            return
+            raise Exception("Unknown alignment" + Settings['Alignment'])
 
         # Draw the text
         dc.DrawText(text, WidthPosition, HeightPosition)

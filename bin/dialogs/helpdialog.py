@@ -24,7 +24,7 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-
+import webbrowser
 
 import wx, wx.html
 import os, sys

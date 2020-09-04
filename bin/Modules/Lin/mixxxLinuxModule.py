@@ -25,16 +25,19 @@
 #
 # This Python file uses the following encoding: utf-8
 
-
-# from bin.songclass import SongObject
+import os
 import logging
 
-import bin.Modules.mixxxSqlite
+from bin.Modules import mixxxSqlite
 
 
 def run(maxtandalength, lastplaylist):
     logging.debug("mixxxModule.run()")
 
-    playlist, playback_status = bin.Modules.mixxxSqlite.run(maxtandalength, lastplaylist)
+    sqlitePath = os.path.expandvars(r'$HOME/.mixxx/mixxxdb.sqlite')
+    # "/home/<username>/.mixxx/mixxxdb.sqlite"
+    # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'
+
+    playlist, playback_status = mixxxSqlite.run(maxtandalength, lastplaylist, sqlitePath)
 
     return playlist, playback_status

@@ -25,11 +25,12 @@
 #
 # This Python file uses the following encoding: utf-8
 
-# from bin.songclass import SongObject
-# import sys
+import os
 import logging
 from subprocess import Popen, PIPE
-import bin.Modules.mixxxSqlite
+from bin.Modules import mixxxSqlite
+
+
 
 
 ###############################################################
@@ -87,6 +88,8 @@ CheckRunning = '''tell application "System Events"
 def run(MaxTandaLength, LastPlaylist):
     logging.debug("mixxxModule.run()")
     playlist = []
+    sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
+
 
     #
     # Player Status
@@ -104,7 +107,7 @@ def run(MaxTandaLength, LastPlaylist):
         playback_status = 'PlayerNotRunning'
         return playlist, playback_status
 
-    playlist, playback_status = bin.Modules.mixxxSqlite.run(MaxTandaLength, LastPlaylist)
+    playlist, playback_status = mixxxSqlite.run(MaxTandaLength, LastPlaylist, sqlitePath)
 
     return playlist, playback_status
 

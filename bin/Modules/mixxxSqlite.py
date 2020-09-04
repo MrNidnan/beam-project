@@ -23,12 +23,10 @@
 #    	- Initial release
 #
 
-import pathlib
 import urllib.request
-
 from bin.songclass import SongObject
-from bin.beamsettings import *
 import sqlite3
+import logging
 
 ###############################################################
 #
@@ -40,56 +38,51 @@ import sqlite3
 class MixxxSqlite:
     sqlitePath = ""
 
-    # can only get executed in MainThread
-    if platform.system() == 'Windows':
-        sqlitePath = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
-        # "C:\\Users\\<user>\\AppData\Local\\Mixxx\\mixxxdb.sqlite"
-    if platform.system() == 'Linux':
-        sqlitePath = os.path.expandvars(r'$HOME/.mixxx/mixxxdb.sqlite')
-        # "/home/<username>/.mixxx/mixxxdb.sqlite"
-        # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'
-    if platform.system() == 'Darwin':
-        # MacOS:
-        sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
+def run(maxtandalength, lastlplaylist, sqlitePath):
+    logging.debug("mixxxSqlite.run(" + sqlitePath + ")")
 
-def run(maxtandalength, lastlplaylist):
-    logging.debug("mixxxSqlite.run()");
-    sqlitepath = MixxxSqlite.sqlitePath
-    logging.debug("mixxxSqlite.run() connect to: " + sqlitepath)
+    # lastplaylist gets updated only after next data processing
+    # so local lastMixxxPlaylist gets used instead here
 
-    sqliteconn = sqlite3.connect(sqlitepath)
+    sqliteconn = sqlite3.connect(sqlitePath)
     try:
         playlist = getplaylist(sqliteconn, maxtandalength)
 
-        # if not the first round and something changed
-        if (len(lastlplaylist) > 0) and (playlist != lastlplaylist):
+        # if (not the first round) and (playlist changed)
+        if run.lastMixxxPlaylist and (playlist != run.lastMixxxPlaylist):
             if not run.currentmod:
                 # check for modification without switch
-                if (len(playlist) != len(lastlplaylist)): # or (playlist[0] != lastlplaylist[1]):
+                if (len(playlist) != len(run.lastMixxxPlaylist)) or (playlist[0] != run.lastMixxxPlaylist[1]):
                     run.currentmod = True
+                    # remember the manually modified playlist to detect further switchover
                     logging.info("Auto-DJ modified")
             else:
-                # check for correction (by a switchover)
-                if playlist[0] == lastlplaylist[1]:
+                # check for correction by a switchover (or skip)
+                if playlist[0] == run.lastMixxxPlaylist[1]:
                     # next switchover occured
                     run.currentmod = False
                     logging.info("Auto-DJ correced")
 
         if run.currentmod:
-            # skip this round
-            playlist = lastlplaylist
-            # playback_status = 'Paused'
+            # skip this round and return last playlist instead of the modifed
+            playlist = run.lastMixxxPlaylist
+            playback_status = 'Paused'
+        else:
+            playback_status = 'Playing'
 
-        # always playing, we don't know better
-        playback_status = 'Playing'
+        # remember the last playlist for the next round to detect modifications or switchover
+        run.lastMixxxPlaylist = playlist
+
     finally:
         sqliteconn.close()
 
     return playlist, playback_status
 
 
-# Static for skipping refresh until next normal switch
+# Static for skipping refresh until next normal switch when the playlist got modified by hand
 run.currentmod = False
+run.lastMixxxPlaylist = None
+
 
 
 ###############################################################

@@ -23,19 +23,6 @@
 #    	- Initial release
 #
 
-# from bin.songclass import SongObject
-# try:
-#    import pythoncom
-#    import win32com.client
-# except ImportError:
-#     pass
-# No error if not installed!
-# from copy import deepcopy
-import logging
-
-import bin.Modules.mixxxSqlite
-from bin.Modules.Win.winutils import applicationrunning
-# from bin.Modules import mixxxSqlite
 
 ###############################################################
 #
@@ -43,15 +30,24 @@ from bin.Modules.Win.winutils import applicationrunning
 #
 ###############################################################
 
+import os
+import logging
+
+from bin.Modules import mixxxSqlite
+from bin.Modules.Win import winutils
+
 
 def run(maxtandalength, lastplaylist):
     logging.debug("mixxxModule.run()")
 
+    sqlitePath = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
+        # "C:\\Users\\<user>\\AppData\Local\\Mixxx\\mixxxdb.sqlite"
+
     #
     # Player Status
     #
-    if applicationrunning("mixxx.exe"):
-        playlist, playbackstatus = bin.Modules.mixxxSqlite.run(maxtandalength, lastplaylist)
+    if winutils.applicationrunning("mixxx.exe"):
+        playlist, playbackstatus = mixxxSqlite.run(maxtandalength, lastplaylist, sqlitePath)
     else:
         playbackstatus = 'PlayerNotRunning'
         emptyplaylist = []
