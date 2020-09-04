@@ -24,11 +24,9 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-
+from bin.Modules.Mac.macutils import AppleScript
 from bin.songclass import SongObject
 import sys, time
-from subprocess import Popen, PIPE
-from copy import deepcopy
 
 ###############################################################
 #
@@ -270,15 +268,3 @@ def getSongAt(songPosition = 1):
     retSong.ModuleMessage = "Error reading file, using fallback info from player"
     return retSong
 
-
-
-###############################################################
-#
-# AppleScript-function - MacOSX-specific
-#
-###############################################################
-
-def AppleScript(scpt, args=[]):
-     p = Popen(['osascript', '-'] + args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-     stdout, stderr = p.communicate(scpt)
-     return stdout

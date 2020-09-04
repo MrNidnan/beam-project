@@ -27,7 +27,6 @@
 
 import os
 import logging
-from subprocess import Popen, PIPE
 from bin.Modules import mixxxSqlite
 
 
@@ -38,7 +37,7 @@ from bin.Modules import mixxxSqlite
 # Define operations
 #
 ###############################################################
-
+from bin.Modules.Mac.macutils import AppleScript
 
 GetStatus   = '''tell application "Spotify"
                     set pstatus to player state
@@ -111,14 +110,3 @@ def run(MaxTandaLength, LastPlaylist):
 
     return playlist, playback_status
 
-
-###############################################################
-#
-# AppleScript-function - MacOSX-specific
-#
-###############################################################
-
-def AppleScript(scpt, args=[]):
-     p = Popen(['osascript', '-'] + args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-     stdout, stderr = p.communicate(scpt)
-     return stdout

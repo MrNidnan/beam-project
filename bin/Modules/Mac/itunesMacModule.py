@@ -26,8 +26,8 @@
 # This Python file uses the following encoding: utf-8
 import logging
 
+from bin.Modules.Mac.macutils import AppleScript
 from bin.songclass import SongObject
-from subprocess import Popen, PIPE
 from copy import deepcopy
 
 ###############################################################
@@ -258,14 +258,3 @@ def getSongAt(songPosition = 1):
     if retSong.Year == '0':
         retSong.Year =''
     return retSong
-
-###############################################################
-#
-# AppleScript-function - MacOSX-specific
-#
-###############################################################
-
-def AppleScript(scpt, args=[]):
-     p = Popen(['osascript', '-'] + args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-     stdout, stderr = p.communicate(scpt)
-     return stdout
