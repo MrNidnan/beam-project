@@ -28,6 +28,7 @@ import logging
 import platform, os, sys
 import time
 
+from bin.mutagenutils import readCoverArtImage
 from bin.songclass import SongObject
 from copy import deepcopy
 
@@ -83,7 +84,9 @@ class NowPlayingDataModel:
         self.BackgroundImage = ""
         self.RotateBackground = ""
         self.RotateTimer = []
-        self.DisplayRow = []
+        self.DisplayRows = []
+        self.currentCoverArtImage = None
+        self.currentCoverArtPath = ""
         self.DisplaySettings = {}
 
         self.convDict = dict()
@@ -301,11 +304,11 @@ class NowPlayingDataModel:
 
         # The display lines
         for i in range(0, len(self.DisplaySettings)):
-            self.DisplayRow.append('')
+            self.DisplayRows.append('')
         
         #first, update the conversion dictionary
         self.updateConversionDisctionary()
-        
+
         for j in range(0, len(self.DisplaySettings)):
             MyDisplay = self.DisplaySettings[j]
             displayValue = str(MyDisplay['Field'])
@@ -314,7 +317,7 @@ class NowPlayingDataModel:
             for key in sorted(list(self.convDict.keys()), reverse=True):
                 displayValue = displayValue.replace(str(key), str(self.convDict[key]))
             if MyDisplay['HideControl']  == "" and MyDisplay['Active'] == "yes":
-                self.DisplayRow[j] = displayValue
+                self.DisplayRows[j] = displayValue
             else:
                 # Hides line if HideControl is empty if there is no next tanda
                 hideControlEval = str(MyDisplay['HideControl'])
@@ -323,9 +326,25 @@ class NowPlayingDataModel:
                 for key in sorted(list(self.convDict.keys()), reverse=True):
                     hideControlEval = hideControlEval.replace(str(key), str(self.convDict[key]))
                 if  not hideControlEval == ""  and MyDisplay['Active'] == "yes":
-                    self.DisplayRow[j] = displayValue
+                    self.DisplayRows[j] = displayValue
                 else:
-                    self.DisplayRow[j] = ""
+                    self.DisplayRows[j] = ""
+
+        for j in range(0, len(self.DisplaySettings)):
+            MyDisplay = self.DisplaySettings[j]
+            displayValue = str(MyDisplay['Field'])
+            if str(displayValue).strip() == "%CoverArt":
+                filePath = currentSong.FilePath
+                if filePath != self.currentCoverArtPath:
+                    self.currentCoverArtPath = filePath
+                    # Stored anyhow
+                    if filePath == "":
+                        self.currentCoverArtImage = None
+                    else:
+                        self.currentCoverArtImage = readCoverArtImage(filePath)
+                    # None if none found
+                    break
+
         logging.info("...data filtered: " + time.strftime("%H:%M:%S"))
     
 
@@ -349,7 +368,7 @@ class NowPlayingDataModel:
             self.convDict['%AlbumArtist']   = self.currentPlaylist[0].AlbumArtist
             self.convDict['%Performer']     = self.currentPlaylist[0].Performer
             self.convDict['%IsCortina']     = self.currentPlaylist[0].IsCortina
-            self.convDict['%CoverArt']      = self.currentPlaylist[0].FileUrl
+            self.convDict['%CoverArt']      = self.currentPlaylist[0].FilePath
         else:
             self.convDict['%Artist']        = ""
             self.convDict['%Album']         = ""

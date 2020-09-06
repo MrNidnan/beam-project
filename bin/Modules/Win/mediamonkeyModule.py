@@ -116,7 +116,7 @@ def quickRead(MediaMonkey, songPosition = 1, MaxTandaLength = 1, LastRead = []):
             pass
         try:
             Song = LastRead[i]
-            Last.append(Song.FileUrl)
+            Last.append(Song.FilePath)
         except:
             pass
     if Last == Current:
@@ -146,7 +146,7 @@ def getSongAt(MediaMonkey, songPosition):
     retSong.AlbumArtist = Track.AlbumArtistName
     #retSong.Performer  = (Track.Performer) # Does not exist for iTunes?
     #retSong.IsCortina   Defined by beam
-    retSong.FileUrl     = Track.Path
+    retSong.FilePath     = Track.Path
     #retSong.ModuleMessage = Not needed for iTunes
     
     return retSong

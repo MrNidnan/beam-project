@@ -38,8 +38,6 @@ from bin.Modules.Win import winutils
 
 
 def run(maxtandalength, lastplaylist):
-    logging.debug("mixxxModule.run()")
-
     sqlitePath = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
         # "C:\\Users\\<user>\\AppData\Local\\Mixxx\\mixxxdb.sqlite"
 

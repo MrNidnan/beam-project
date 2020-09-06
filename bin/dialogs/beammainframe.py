@@ -36,12 +36,6 @@ from bin.dialogs import aboutdialog
 from bin.dialogs import closedialog
 from copy import deepcopy
 
-from mutagen import File
-from mutagen.apev2 import APEv2
-from mutagen.flac import FLAC
-from mutagen.id3 import ID3
-# from pathlib import Path
-import urllib.request
 
 ##################################################
 # MAIN WINDOW - FRAME
@@ -232,16 +226,17 @@ class beamMainFrame(wx.Frame):
 # Update data - Executed from top to bottom with exception if preferences changed
 ########################################################
 
-        # READ FROM MEDIA PLAYER
+    # READ FROM MEDIA PLAYER
     def updateData(self, event = wx.EVT_TIMER):
         try:
-            self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
+            self.currentDisplayRows = self.nowPlayingDataModel.DisplayRows
+            self.currentCoverArtImage = self.nowPlayingDataModel.currentCoverArtImage
             self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
             self.previousPlaybackStatus = self.nowPlayingDataModel.PreviousPlaybackStatus
 
             if not self.currentlyUpdating:
                 self.currentlyUpdating = True
-                # asynchronous transmission of datafrom a worker thread to the main thread
+                # asynchronous transmission of data from a worker thread to the main thread
                 wx.lib.delayedresult.startWorker(self.getDataFinished, self.extractDataThread)
             self.DataTimer() # Reset the timer
         except Exception as e:
@@ -251,7 +246,7 @@ class beamMainFrame(wx.Frame):
         # MEDIA READER WORKER
     def extractDataThread(self):
         try:
-          self.nowPlayingDataModel.ExtractPlaylistInfo(beamSettings)
+            self.nowPlayingDataModel.ExtractPlaylistInfo(beamSettings)
         except Exception as e:
             logging.error(e, exc_info=True)
             pass
@@ -286,7 +281,8 @@ class beamMainFrame(wx.Frame):
         # AFTER PROCESSING DATA
     def updateMood(self, result):
         try:
-            self.currentDisplayRows = self.nowPlayingDataModel.DisplayRow
+            self.currentDisplayRows = self.nowPlayingDataModel.DisplayRows
+            self.currentCoverArtImage = self.nowPlayingDataModel.currentCoverArtImage
             self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
             self.previousMood = deepcopy(self.currentMood)
             self.currentMood = self.nowPlayingDataModel.CurrentMood
@@ -388,12 +384,12 @@ class beamMainFrame(wx.Frame):
 ########################################################
 # DRAW TEXT & CoverArt
 ########################################################
-    def drawImageItem(self, dc, cliWidth, cliHeight, j):
+    def drawCoverArt(self, dc, cliWidth, cliHeight, j):
         image = None;
         #Text and settings
-        fileUrl = self.currentDisplayRows[j]
+        # filePath = self.currentDisplayRows[j]
         # Windows "file:///C:"
-        filePath = urllib.request.url2pathname(fileUrl[5:])
+        # filePath = urllib.request.url2pathname(fileUrl[5:])
         # filePath = Path(fileUrl[8:])
         # filePath = self.currentDisplayRows[j]
 
@@ -415,107 +411,10 @@ class beamMainFrame(wx.Frame):
 
 
 
-        # Alignment position
-        # if Settings['Alignment'] == 'Left':
-        #     WidthPosition = int(Settings['Position'][1]*cliWidth/100)
-        # elif Settings['Alignment'] == 'Right':
-        #     WidthPosition = cliWidth - (int(Settings['Position'][1]*cliWidth/100)+TextWidth)
-        # elif Settings['Alignment'] == 'Center':
-        #     WidthPosition = (cliWidth-TextWidth)/2
-        # else:
-        #     return
-
-
-        # track = MP3(song_path)
-        # tags = ID3(song_path)
-        # print("ID3 tags included in this song ------------------")
-        # print(tags.pprint())
-        # print("-------------------------------------------------")
-        # pict = tags.get("APIC:").data
-        # im = Image.open(BytesIO(pict))
-        # print('Picture size : ' + str(im.size))
-        # image = wx.Image(BytesIO(pict), wx.BITMAP_TYPE_JPEG)
-
-        # try:
-        #     fileFrame = File(filePath)
-        #     logging.debug(fileFrame.pprint())
-        # except Exception as e:
-        #     pass
-
-        if image is None:
+        if self.currentCoverArtImage:
             try:
-                # mp3Frame = MP3(filePath)
-                # logging.debug(mp3Frame.pprint())
-                id3Frame = ID3(filePath)
-                # logging.debug(id3Frame.pprint())
-                # id3Keys = id3Frame.keys()
-                # logging.debug(id3Keys)
-                # dict_keys = keys.dict_keys
-                # logging.debug(dict_keys)
-                # apicTag = id3Tags.get("APIC:")
-                # for apicTag in id3Tags.getall("APIC"):
-                #    print(apicTag.pprint())
-                # mcdiTag = id3Frame.get("MCDI")
-                # if mcdiTag:
-                #     logging.debug(mcdiTag.pprint())
-                # apicTag = id3Frame.get("APIC")
-                apicTag = id3Frame.get("APIC:")
-                if apicTag:
-                    data = apicTag.data
-                    if data:
-                        if (apicTag.mime.lower() == 'image/jpeg') or (apicTag.mime.lower() == 'image/jpg'):
-                            bitmapType = wx.BITMAP_TYPE_JPEG
-                        if apicTag.mime.lower() == 'image/png':
-                            bitmapType = wx.BITMAP_TYPE_PNG
-                        if apicTag.mime.lower() == 'image/gif':
-                            bitmapType = wx.BITMAP_TYPE_GIF
-                        if apicTag.mime.lower() == 'image/bmp':
-                            bitmapType = wx.BITMAP_TYPE_BMP
-                        if bitmapType is not None:
-                            image = wx.Image(BytesIO(data), wx.BITMAP_TYPE_JPEG)
-            except Exception as e:
-                pass
-
-
-        if image is None:
-            try:
-                flac = FLAC(filePath)
-                pict = flac.pictures[0]
-                if pict is not None:
-                    if pict.mime == 'image/jpeg':
-                        bitmapType = wx.BITMAP_TYPE_JPEG
-                    if pict.mime == 'image/png':
-                        bitmapType = wx.BITMAP_TYPE_PNG
-                    if bitmapType is not None:
-                        image = wx.Image(BytesIO(pict.data), bitmapType)
-            except Exception as e:
-                pass
-
-        if image is None:
-            try:
-                apeFrame = APEv2(filePath)
-                logging.debug("APEv2 not implemented yet")
-                logging.debug(apeFrame.pprint())
-                # keys = fileFrame.keys()
-                # logging.debug(keys)
-                # dict_keys = keys.dict_keys
-                # logging.debug(dict_keys)
-                # apicTag = id3Tags.get("APIC:")
-                # for apicTag in id3Tags.getall("APIC"):
-                #    print(apicTag.pprint())
-                # pictures = fileFrame.pictures
-                # apicTag = fileFrame.get("APIC:")
-                # if apicTag:
-                #    pict = apicTag.data
-                #    image = wx.Image(BytesIO(pict), wx.BITMAP_TYPE_JPEG)
-            except Exception as e:
-                pass
-
-        if image is not None:
-            try:
-                image = image.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
+                image = self.currentCoverArtImage.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
                 bitmap = wx.Bitmap(image)
-                logging.debug('drawImageItem("' + filePath + '")')
                 dc.DrawBitmap(bitmap, horizontalPosition, verticalPosition)
             except Exception as e:
                 pass
@@ -531,8 +430,6 @@ class beamMainFrame(wx.Frame):
             #         picture = Picture(data)
             #     except FLACError:
             #         continue
-
-
 
 
     def drawTextItem(self, dc, cliWidth, cliHeight, j):
@@ -651,16 +548,14 @@ class beamMainFrame(wx.Frame):
 
         # Draw images
         for j in range(0, len(self.currentDisplaySettings)):
-            # Text and settings
-            text = self.currentDisplayRows[j]
-            if text.strip()[:7] == 'file://':
-                self.drawImageItem(dc, cliWidth, cliHeight, j)
+            field = self.currentDisplaySettings[j]["Field"]
+            if field.strip() == "%CoverArt":
+                self.drawCoverArt(dc, cliWidth, cliHeight, j)
 
         # Draw text after/over image
         for j in range(0, len(self.currentDisplaySettings)):
-            # Text and settings
-            text = self.currentDisplayRows[j]
-            if text[:5] != 'file:':
+            field = self.currentDisplaySettings[j]["Field"]
+            if field.strip() != "%CoverArt":
                 self.drawTextItem(dc, cliWidth, cliHeight, j)
 
 
@@ -935,7 +830,7 @@ class beamMainFrame(wx.Frame):
 # Data timer
 ########################################################
     def DataTimer(self):
-    # If the configuration have a timer on how often to update the data
+    # If the configuration have a timer on how often to  the data
         try:
         # There is not timer, so create and start it
             self.timer = wx.Timer(self)

@@ -27,13 +27,10 @@
 
 import os
 import logging
-
 from bin.Modules import mixxxSqlite
 
 
 def run(maxtandalength, lastplaylist):
-    logging.debug("mixxxModule.run()")
-
     sqlitePath = os.path.expandvars(r'$HOME/.mixxx/mixxxdb.sqlite')
     # "/home/<username>/.mixxx/mixxxdb.sqlite"
     # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'

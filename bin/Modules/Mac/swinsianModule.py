@@ -227,12 +227,12 @@ def run(MaxTandaLength):
 def getSongFromUrl(songPosition):
     retSong = SongObject()
     try:
-        retSong.FileUrl = AppleScript(GetTrackURL, [str(songPosition)]).rstrip('\n')
+        retSong.FilePath = AppleScript(GetTrackURL, [str(songPosition)]).rstrip('\n')
     except:
         retSong = getSongAt(songPosition)
     
     try:
-        retSong.buildFromUrl(retSong.FileUrl)
+        retSong.buildFromPath(retSong.FilePath)
     except:
         retSong = getSongAt(songPosition)
     

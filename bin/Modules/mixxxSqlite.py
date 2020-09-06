@@ -39,8 +39,6 @@ class MixxxSqlite:
     sqlitePath = ""
 
 def run(maxtandalength, lastlplaylist, sqlitePath):
-    logging.debug("mixxxSqlite.run(" + sqlitePath + ")")
-
     # lastplaylist gets updated only after next data processing
     # so local lastMixxxPlaylist gets used instead here
 
@@ -127,9 +125,8 @@ def getplaylist(sqliteconn, maxtandalength):
             # playlist_song.Performer   = "Performer"
             # playlist_song.IsCortina   Defined by beam
             # !!! provisorisch direkt Path übergeben
-            # playlist_song.FileUrl = currTrack[10]
-            # playlist_song.FileUrl = pathlib.Path(currTrack[10]).as_uri()
-            playlist_song.FileUrl = "file://" + urllib.request.pathname2url(currTrack[10])
+            playlist_song.FilePath = currTrack[10]
+            # playlist_song.FileUrl = "file://" + urllib.request.pathname2url(currTrack[10])
 
             # for compare of changes
             playlist_song.sanitizeFields()

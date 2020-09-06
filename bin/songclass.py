@@ -49,7 +49,7 @@ class SongObject(object):
     def __init__(self, p_artist="", p_album="", p_title="", p_genre="",
                  p_comment="", p_composer="", p_year="", p_singer="",
                  p_albumArtist="", p_performer = "", p_isCortina = "no",
-                 p_fileUrl="", p_moduleMessage="", p_ignoreSong="no"):
+                 p_filePath="", p_moduleMessage="", p_ignoreSong="no"):
         self.Artist        = alwaysStr(p_artist)
         self.Album         = alwaysStr(p_album)
         self.Title         = alwaysStr(p_title)
@@ -61,7 +61,7 @@ class SongObject(object):
         self.AlbumArtist   = alwaysStr(p_albumArtist)
         self.Performer     = alwaysStr(p_performer)
         self.IsCortina     = alwaysStr(p_isCortina)
-        self.FileUrl       = alwaysStr(p_fileUrl)
+        self.FilePath       = alwaysStr(p_filePath)
         self.ModuleMessage = alwaysStr(p_moduleMessage)
         self.IgnoreSong    = alwaysStr(p_ignoreSong)
 
@@ -76,7 +76,7 @@ class SongObject(object):
                     self.Year == other.Year and
                     self.AlbumArtist == other.AlbumArtist and
                     self.Performer == other.Performer and
-                    self.FileUrl == other.FileUrl)
+                    self.FilePath == other.FilePath)
         else:
             return False
             
@@ -92,7 +92,7 @@ class SongObject(object):
                     self.Year != other.Year or
                     self.AlbumArtist != other.AlbumArtist or
                     self.Performer != other.Performer or
-                    self.FileUrl != other.FileUrl)
+                    self.FilePath != other.FilePath)
         else:
             return False
 
@@ -108,84 +108,11 @@ class SongObject(object):
         self.AlbumArtist   = alwaysStr(self.AlbumArtist)
         self.Performer     = alwaysStr(self.Performer)
         self.IsCortina     = alwaysStr(self.IsCortina)
-        self.FileUrl       = alwaysStr(self.FileUrl)
+        self.FilePath       = alwaysStr(self.FilePath)
         self.ModuleMessage = alwaysStr(self.ModuleMessage)
         self.IgnoreSong    = alwaysStr(self.IgnoreSong)
 
 
-    ###############################################################
-#
-# Building from URL with mutagen
-#
-###############################################################
-
-    def buildFromUrl(self, url):
-        audio    = File(url, easy=True)
-        audioRaw = File(url, easy=False)
-
-        if audio == {} or audioRaw == {}:
-            self.ModuleMessage = "Error reading file", url
-            raise NameError("Error reading file", url)
-
-        # if platform.system() == 'Windows':
-        #     Formating = 'latin-1'
-        # else:
-        #     Formating = 'utf-8'
-
-
-        try:
-            self.Artist     = audio["artist"][0]
-        except:
-            self.Artist     = ""
-
-        try:    
-            self.Album      = audio["album"][0]
-        except:
-            self.Album      = ""
-        
-        try:
-            self.Title      = audio["title"][0]
-        except:
-            self.Title      = ""
-
-        try:
-            self.Genre      = audio["genre"][0]
-        except:
-            self.Genre      = ""
-
-        try:
-            self.Comment    = audio["comment"][0]
-        except:
-            try:
-                self.Comment    = audioRaw['COMM::eng'][0]
-            except:
-                self.Comment    = ""
-
-        try:
-            self.Composer   = audio["composer"][0]
-        except:
-            self.Composer   = ""
-
-        try:
-            self.Year       = audio["date"][0]
-        except:
-            self.Year       = ""
-
-        self.Singer      = ""
-        
-        try:    
-            self.AlbumArtist    = audio["albumartist"][0]
-        except:
-            self.AlbumArtist    = ""
-
-        try:
-            self.Performer  = audio["performer"][0]
-        except:
-            self.Performer  = ""
-
-        self.IsCortina   = "no"
-        self.FileUrl     = url
-        return
 
 ###############################################################
 #

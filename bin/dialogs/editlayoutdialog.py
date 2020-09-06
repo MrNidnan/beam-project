@@ -96,17 +96,9 @@ class EditLayoutDialog(wx.Dialog):
         self.TextFlow           = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['TextFlow'], choices=TextFlow, style=wx.CB_READONLY)
         self.ColorField.SetColour(eval(self.Settings['FontColor']))
 
-        isCoverArt = (self.Settings["Field"].strip() == "%CoverArt")
-        if isCoverArt:
-            pass
-        else:
-            pass
-
-
         if self.Settings['Alignment']=="Center":
             self.HorizontalPos.Enable(False)
         self.Alignment.Bind(wx.EVT_COMBOBOX, self.DisableHorizontalBox)
-
 
         # Information area
         InfoGrid    =   wx.FlexGridSizer(10, 2, 5, 5)

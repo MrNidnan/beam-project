@@ -109,7 +109,7 @@ def getSongAt(itunes, songPosition):
     #retSong.AlbumArtist = (Track.AlbumArtist) # Does not exist for iTunes?
     #retSong.Performer   = (Track.Performer) # Does not exist for iTunes?
     #retSong.IsCortina   Defined by beam
-    #retSong.fileUrl     Does not exist for iTunes
+    #retSong.FilePath     Does not exist for iTunes
     #retSong.ModuleMessage = Not needed for iTunes
     
     return retSong

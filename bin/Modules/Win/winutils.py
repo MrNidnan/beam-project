@@ -40,14 +40,12 @@ except ImportError:
 def applicationrunning(appname):
 
     cmd = 'WMIC PROCESS get Caption'
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
     for line in proc.stdout:
-        # line throws TypeError
-        # a bytes-like object is required, not 'str'
-        caption = line.decode('utf8')
-        if appname in caption:
+        # logging.debug("proc: " + line)
+        if appname in line:
             proc.kill()
-            logging.debug("winutils.AppplicationRunning() = True");
+            # logging.debug("winutils.AppplicationRunning() = True");
             return True
     proc.kill()
 

@@ -30,81 +30,8 @@ import logging
 from bin.Modules import mixxxSqlite
 
 
-
-
-###############################################################
-#
-# Define operations
-#
-###############################################################
-from bin.Modules.Mac.macutils import AppleScript
-
-GetStatus   = '''tell application "Spotify"
-                    set pstatus to player state
-                 end tell
-                 return pstatus'''
-
-GetSongs    = '''tell application "Spotify"
-                    set artistname to artist of current track
-                    set trackname to name of current track
-                    set albumname to album of current track
-                    set albumartist to album artist of current track
-                end tell
-                return {artistname, trackname, albumname, albumartist}'''
-
-GetTitle   = '''tell application "Spotify"
-                   set var1 to name of current track
-                end tell
-                return var1'''
-
-GetArtist   = '''tell application "Spotify"
-                    set var1 to artist of current track
-                end tell
-                return var1'''
-
-GetAlbum   = '''tell application "Spotify"
-                    set var1 to album of current track
-                end tell
-                return var1'''
-
-GetAlbumArtist   = '''tell application "Spotify"
-                    set var1 to album artist of current track
-                end tell
-                return var1'''
-
-
-CheckRunning = '''tell application "System Events"
-    count (every process whose name is "Spotify")
-    end tell'''
-
-###############################################################
-#
-# MAIN FUNCTION
-#
-###############################################################
-
-
 def run(MaxTandaLength, LastPlaylist):
-    logging.debug("mixxxModule.run()")
-    playlist = []
     sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
-
-
-    #
-    # Player Status
-    #
-    if int(AppleScript(CheckRunning, []).strip()) == 0:
-        playback_status = 'PlayerNotRunning'
-        return playlist, playback_status
-
-    #
-    # Playback Status
-    #
-    try:
-        playback_status = AppleScript(GetStatus, []).rstrip('\n')
-    except:
-        playback_status = 'PlayerNotRunning'
-        return playlist, playback_status
 
     playlist, playback_status = mixxxSqlite.run(MaxTandaLength, LastPlaylist, sqlitePath)
 

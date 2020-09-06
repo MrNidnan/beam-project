@@ -25,6 +25,7 @@
 #
 # This Python file uses the following encoding: utf-8
 # An Mpris2 angepasst von Dominik und Peter Wenger 27.11.18
+import urllib
 
 from bin.songclass import SongObject
 
@@ -109,7 +110,9 @@ def getSongObjectFromTrackMpris2(Track):
         pass
 
     try:
-        retSong.FileUrl = Track['xesam:url']
+        url = Track['xesam:url']
+        # file:///home/
+        retSong.FilePath = urllib.request.url2pathname(url[5:])
     except:
         pass
 

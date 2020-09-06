@@ -24,6 +24,7 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import urllib
 
 from bin.songclass import SongObject
 
@@ -43,42 +44,33 @@ from bin.Modules.Win.winutils import applicationrunning
 def run(MaxTandaLength):
 
     playlist = []
+    playbackStatus = ''
     
     #
     # Player Status
     #
-    if applicationrunning("foobar2000.exe"):
-        try:
-            pythoncom.CoInitialize()
-            Foobar = win32com.client.Dispatch("Foobar2000.Application.0.7")
-        except:
-            playbackStatus = 'PlayerNotRunning'
-            pythoncom.CoUninitialize()
-            return playlist, playbackStatus
-    else:
+    if not applicationrunning("foobar2000.exe"):
         playbackStatus = 'PlayerNotRunning'
         return playlist, playbackStatus
 
-    #
-    # Playback Status
-    #
-    if not Foobar.Playback.IsPlaying:
-        playbackStatus = 'Stopped'
+    pythoncom.CoInitialize()
+    try:
+        # shell = win32com.client.Dispatch("WScript.Shell")
+        progID = "Foobar2000.Application.0.7"
+        Foobar = win32com.client.Dispatch(progID)
 
-    elif Foobar.Playback.IsPlaying and Foobar.Playback.IsPaused:
-        playbackStatus = 'Paused'
+        # Playback Status
+        if not Foobar.Playback.IsPlaying:
+            playbackStatus = 'Stopped'
+        else:
+            if Foobar.Playback.IsPaused:
+                playbackStatus = 'Paused'
+            else:
+                playbackStatus = 'Playing'
+                playlist.append(getSongAt(Foobar, 1))
+    finally:
+        pythoncom.CoUninitialize()
 
-    #
-    # Playback = Playing
-    #
-    elif Foobar.Playback.IsPlaying and not Foobar.Playback.IsPaused:
-        playbackStatus = 'Playing'
-        try:
-            playlist.append(getSongAt(Foobar, 1))
-        except:
-            pass
-
-    pythoncom.CoUninitialize()
     return playlist, playbackStatus
 
 ###############################################################
@@ -101,6 +93,8 @@ def getSongAt(Foobar, songPosition):
     retSong.AlbumArtist = Foobar.Playback.FormatTitle("[%album artist%]")
     retSong.Performer   = Foobar.Playback.FormatTitle("[%performer%]")
     #retSong.IsCortina   Defined by beam
-    retSong.FileUrl     = Foobar.Playback.FormatTitle("[%path%]")
+
+    retSong.FilePath     = Foobar.Playback.FormatTitle("[%path%]")
+    # 'C:\\Users\\DJ\\Tango\\Todays Tango\\Cola \'e Paja - Orquesta Típica Porteña - 1928-04-28.mp3'
     
     return retSong

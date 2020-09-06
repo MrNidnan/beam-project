@@ -31,6 +31,8 @@ from . import Winamp
 # Define operations
 #
 ###############################################################
+from ...mutagenutils import readSongObject
+
 
 def run(MaxTandaLength):
 
@@ -80,17 +82,8 @@ def run(MaxTandaLength):
 ###############################################################
 
 def getSongFromUrl(winamp, songPosition = 1):
-    retSong = SongObject()
-    
-    try:
-        retSong.FileUrl = winamp.getPlaylistFile(songPosition)
-    except:
-        retSong.ModuleMessage = "Error from Winamp"
-        return retSong
-    
-    try:
-        retSong.buildFromUrl(retSong.FileUrl)
-    except:
-        retSong.ModuleMessage = "Error reading file, check your ID3-tags"
-    
+
+    filePath = winamp.getPlaylistFile(songPosition)
+    retSong = readSongObject(filePath)
+
     return retSong
