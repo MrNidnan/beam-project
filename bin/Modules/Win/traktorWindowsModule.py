@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#    Copyright (C) 2014 Mikael Holber http://http://www.beam-project.com
+# -*- encoding: utf-8 -*-
+#    Copyright (C) 2014 Mikael Holber http://www.beam-project.com
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -21,19 +20,33 @@
 #    Revision History:
 #
 #    Version 1.0
-#       - Initial release
+#    	- Initial release
 #
-# This Python file uses the following encoding: utf-8
+
+
+###############################################################
+#
+# Define operations
+#
+###############################################################
 
 import os
 import logging
-from bin.Modules import mixxxModule
+
+from bin.Modules import traktorModule
+from bin.Modules.Win import winutils
 
 
-def run(MaxTandaLength, LastPlaylist):
-    sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
+def run(maxtandalength, lastplaylist):
 
-    playlist, playback_status = mixxxModule.run(MaxTandaLength, LastPlaylist, sqlitePath)
+    #
+    # Player Status
+    #
+    if winutils.applicationrunning("Traktor.exe"):
+        playlist, playbackstatus = traktorModule.run(maxtandalength, lastplaylist)
+    else:
+        playbackstatus = 'PlayerNotRunning'
+        emptyplaylist = []
+        return emptyplaylist, playbackstatus
 
-    return playlist, playback_status
-
+    return playlist, playbackstatus

@@ -33,7 +33,7 @@
 import os
 import logging
 
-from bin.Modules import mixxxSqlite
+from bin.Modules import mixxxModule
 from bin.Modules.Win import winutils
 
 
@@ -45,7 +45,7 @@ def run(maxtandalength, lastplaylist):
     # Player Status
     #
     if winutils.applicationrunning("mixxx.exe"):
-        playlist, playbackstatus = mixxxSqlite.run(maxtandalength, lastplaylist, sqlitePath)
+        playlist, playbackstatus = mixxxModule.run(maxtandalength, lastplaylist, sqlitePath)
     else:
         playbackstatus = 'PlayerNotRunning'
         emptyplaylist = []

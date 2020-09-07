@@ -24,6 +24,7 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import logging
 
 from bin.songclass import SongObject
 
@@ -47,45 +48,40 @@ def run(MaxTandaLength):
     #
     # Player Status
     #
-    if  applicationrunning("iTunes.exe"):
-        try:
-            pythoncom.CoInitialize()
-            itunes = win32com.client.gencache.EnsureDispatch ("iTunes.Application")
-        except:
-            playbackStatus = 'PlayerNotRunning'
-            pythoncom.CoUninitialize()
-            return playlist, playbackStatus
-    else:
+    if not applicationrunning("iTunes.exe"):
         playbackStatus = 'PlayerNotRunning'
         return playlist, playbackStatus
-
-    #
-    # Playback Status
-    #  
-    if not itunes.PlayerState == 1:
-        playbackStatus = 'Stopped'
-        return playlist, playbackStatus
-    #
-    # Playback = Playing
-    #
     else:
-        playbackStatus = 'Playing'
-
-        #Declare our position
-        currentsong = itunes.CurrentTrack.PlayOrderIndex
-        playlistlength  = currentsong+MaxTandaLength+2 # Not available for iTunes
-        searchsong = currentsong
-
-    #
-    # Full-read
-    #
-    while searchsong < playlistlength and searchsong < currentsong+MaxTandaLength+2:
+        pythoncom.CoInitialize()
         try:
-            playlist.append(getSongAt(itunes, searchsong))
-        except:
-            break
-        searchsong = searchsong+1
-    pythoncom.CoUninitialize()
+            iTunes = win32com.client.gencache.EnsureDispatch ("iTunes.Application")
+
+            #
+            # Playback Status
+            #
+            if not iTunes.PlayerState == 1:
+                playbackStatus = 'Stopped'
+                return playlist, playbackStatus
+                #
+                # Playback = Playing
+                #
+            else:
+                playbackStatus = 'Playing'
+
+                # Declare our position
+                currentsong = iTunes.CurrentTrack.PlayOrderIndex
+                playlistlength = currentsong + MaxTandaLength + 2  # Not available for iTunes
+                searchsong = currentsong
+
+                #
+                # Full-read
+                #
+            while searchsong < playlistlength and searchsong < currentsong + MaxTandaLength + 2:
+                 playlist.append(getSongAt(iTunes, searchsong))
+                 searchsong = searchsong + 1
+        finally:
+            pythoncom.CoUninitialize()
+
     return playlist, playbackStatus
 
 ###############################################################
@@ -96,20 +92,27 @@ def run(MaxTandaLength):
 
 def getSongAt(itunes, songPosition):
     retSong = SongObject()
-    Track = itunes.CurrentTrack.Playlist.Tracks.Item(songPosition)
+    iTrack = itunes.CurrentTrack.Playlist.Tracks.Item(songPosition)
 
-    retSong.Artist      = (Track.Artist)
-    retSong.Album       = (Track.Album)
-    retSong.Title       = (Track.Name)
-    retSong.Genre       = (Track.Genre)
-    retSong.Comment     = (Track.Comment)
-    retSong.Composer    = (Track.Composer)
-    retSong.Year        = Track.Year
+    retSong.Artist      = iTrack.Artist
+    retSong.Album       = iTrack.Album
+    retSong.Title       = iTrack.Name
+    retSong.Genre       = iTrack.Genre
+    retSong.Comment     = iTrack.Comment
+    retSong.Composer    = iTrack.Composer
+    retSong.Year        = iTrack.Year
+
+    if iTrack.Kind in [1, 2]: # [ITTrackKindFile, TTrackKindCD]:
+        iTrack = win32com.client.CastTo(iTrack, "IITFileOrCDTrack")
+
+        retSong.AlbumArtist = iTrack.AlbumArtist
+        retSong.FilePath   = iTrack.Location
+    else:
+        logging.warining("iTrack.Kind not in [ITTrackKindFile, TTrackKindCD]")
+
     #retSong._Singer     Defined by beam
-    #retSong.AlbumArtist = (Track.AlbumArtist) # Does not exist for iTunes?
     #retSong.Performer   = (Track.Performer) # Does not exist for iTunes?
     #retSong.IsCortina   Defined by beam
-    #retSong.FilePath     Does not exist for iTunes
     #retSong.ModuleMessage = Not needed for iTunes
     
     return retSong

@@ -137,8 +137,10 @@ def readCoverArtImage(filePath):
                     bitmapType = wx.BITMAP_TYPE_GIF
                 if apicTag.mime.lower() == 'image/bmp':
                     bitmapType = wx.BITMAP_TYPE_BMP
-                if bitmapType is not None:
-                    coverArtImage = wx.Image(BytesIO(data), wx.BITMAP_TYPE_JPEG)
+                if not bitmapType:
+                    logging.warning("Unkown mime type: " + apicTag.mime.lower())
+                    bitmapType = wx.BITMAP_TYPE_ANY
+                coverArtImage = wx.Image(BytesIO(data), bitmapType)
         except:
             pass
 
@@ -147,12 +149,18 @@ def readCoverArtImage(filePath):
             flac = FLAC(filePath)
             pict = flac.pictures[0]
             if pict is not None:
-                if pict.mime == 'image/jpeg':
+                if (pict.mime.lower() == 'image/jpeg') or (pict.mime.lower() == 'image/jpg'):
                     bitmapType = wx.BITMAP_TYPE_JPEG
-                if pict.mime == 'image/png':
+                if pict.mime.lower() == 'image/png':
                     bitmapType = wx.BITMAP_TYPE_PNG
-                if bitmapType is not None:
-                    coverArtImage = wx.Image(BytesIO(pict.data), bitmapType)
+                if pict.mime.lower() == 'image/gif':
+                    bitmapType = wx.BITMAP_TYPE_GIF
+                if pict.mime.lower() == 'image/bmp':
+                    bitmapType = wx.BITMAP_TYPE_BMP
+                if not bitmapType:
+                    logging.warning("Unkown mime type: " + pict.mime.lower())
+                    bitmapType = wx.BITMAP_TYPE_ANY
+                coverArtImage = wx.Image(BytesIO(pict.data), bitmapType)
         except Exception as e:
             pass
 

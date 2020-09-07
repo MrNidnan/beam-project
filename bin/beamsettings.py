@@ -177,8 +177,12 @@ class BeamSettings:
             # Added since V0.4
             if len(ConfigData['AllModules'][0]['Modules']) == 5: # System: Linux
                 ConfigData['AllModules'][0]['Modules'].append('Mixxx')
+
             if len(ConfigData['AllModules'][1]['Modules']) == 5: # System: Windows
                 ConfigData['AllModules'][1]['Modules'].append('Mixxx')
+            if len(ConfigData['AllModules'][1]['Modules']) == 6: # System: Windows
+                ConfigData['AllModules'][1]['Modules'].append('Traktor')
+
             if len(ConfigData['AllModules'][2]['Modules']) == 6: # System: Mac
                 ConfigData['AllModules'][2]['Modules'].append('Mixxx')
 

@@ -27,7 +27,7 @@
 
 import os
 import logging
-from bin.Modules import mixxxSqlite
+from bin.Modules import mixxxModule
 
 
 def run(maxtandalength, lastplaylist):
@@ -35,6 +35,6 @@ def run(maxtandalength, lastplaylist):
     # "/home/<username>/.mixxx/mixxxdb.sqlite"
     # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'
 
-    playlist, playback_status = mixxxSqlite.run(maxtandalength, lastplaylist, sqlitePath)
+    playlist, playback_status = mixxxModule.run(maxtandalength, lastplaylist, sqlitePath)
 
     return playlist, playback_status

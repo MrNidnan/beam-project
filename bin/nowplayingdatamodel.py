@@ -45,7 +45,7 @@ if platform.system() == 'Linux':
 # if platform.system() == 'Windows':
 #     from .Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
 if platform.system() == 'Windows':
-    from bin.Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule, mixxxWindowsModule
+    from bin.Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule, mixxxWindowsModule, traktorWindowsModule
 # if platform.system() == 'Darwin':
 #    from .Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule
 if platform.system() == 'Darwin':
@@ -130,6 +130,8 @@ class NowPlayingDataModel:
                 pass
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+            if currentSettings._moduleSelected == 'Traktor':
+                self.currentPlaylist, self.PlaybackStatus = traktorWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # LINUX
         if platform.system() == 'Linux':
