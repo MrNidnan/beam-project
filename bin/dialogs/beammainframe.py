@@ -24,11 +24,11 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-from io import BytesIO
 import wx.html
 import wx.lib.delayedresult
 from random import randint
 from bin.beamsettings import *
+from bin.beamutils import getApplicationPath
 from bin.nowplayingdatamodel import *
 from bin.dialogs.preferences import Preferences
 from bin.dialogs.helpdialog import HelpDialog
@@ -40,7 +40,6 @@ from copy import deepcopy
 ##################################################
 # MAIN WINDOW - FRAME
 ##################################################
-from mutagen.mp3 import MP3
 
 
 class beamMainFrame(wx.Frame):
@@ -48,6 +47,8 @@ class beamMainFrame(wx.Frame):
         # Size and position of the main window
         wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle + " " + beamSettings.beamVersion, pos=(150,150), size=(800,600))
         self.SetDoubleBuffered(True)
+
+        self.PreferencesDialog = None
 
         # Start the timer for updateData()
         # ??? redundant see call to updateData() below
@@ -57,7 +58,8 @@ class beamMainFrame(wx.Frame):
         self.nowPlayingDataModel = NowPlayingDataModel()
 
         # Set Icon
-        iconFilename = os.path.join(os.getcwd(),'resources','icons','icon_square','icon_square_256px.png')
+        appPath = getApplicationPath()
+        iconFilename = os.path.join(appPath,'resources','icons','icon_square','icon_square_256px.png')
         self.favicon = wx.Icon(iconFilename, wx.BITMAP_TYPE_ANY, 256, 256)
         self.SetIcon(self.favicon)
 
@@ -74,7 +76,7 @@ class beamMainFrame(wx.Frame):
         # Setting up the menu.
         self.filemenu    = wx.Menu()
         self.Aboutmenu   = wx.Menu()
-        self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl+P"," Configuration tool")
+        self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl-+"," Configuration tool")
         self.menuFullScreen  = self.filemenu.Append(wx.ID_ANY, "&Fullscreen\tF11", "Set fullscreen")
         self.menuExit    = self.filemenu.Append(wx.ID_EXIT,"E&xit"," Terminate the program")
         self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
@@ -141,13 +143,15 @@ class beamMainFrame(wx.Frame):
 ########################################################
     def OnPreferences(self, event):
         try:
-            # Raises the window to the top of the window hierarchy
-            self.PreferencesDialog.Raise()
+            if self.PreferencesDialog:
+                self.PreferencesDialog.Raise()
+            else:
+                # if not yet existing
+                self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingDataModel)
+                self.PreferencesDialog.Show()
         except Exception as e:
-            # if not yet existing
-            self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingDataModel)
-            self.PreferencesDialog.Show()
-                
+            logging.error(e, exc_info=True)
+
                 
     #
     # FULLSCREEN
@@ -160,7 +164,6 @@ class beamMainFrame(wx.Frame):
             self.ShowFullScreen(not self.IsFullScreen())
         except Exception as e:
             logging.error(e, exc_info=True)
-            pass
 
     #
     # Hide/show statusbar
@@ -174,7 +177,6 @@ class beamMainFrame(wx.Frame):
                 self.statusbar.Hide()
         except Exception as e:
             logging.error(e, exc_info=True)
-            pass
 
     #
     # Show 'Close dialog
@@ -184,7 +186,6 @@ class beamMainFrame(wx.Frame):
             closedialog.ShowCloseDialog(self)
         except Exception as e:
             logging.error(e, exc_info=True)
-            pass
 
     #
     # Show 'About Dialog'
@@ -194,7 +195,6 @@ class beamMainFrame(wx.Frame):
             aboutdialog.ShowAboutDialog(self)
         except Exception as e:
             logging.error(e, exc_info=True)
-            pass
 
     #
     # Show 'Help'
@@ -205,7 +205,6 @@ class beamMainFrame(wx.Frame):
             help_dialog.Show()
         except Exception as e:
             logging.error(e, exc_info=True)
-            pass
 
     
     
@@ -642,7 +641,8 @@ class beamMainFrame(wx.Frame):
             self.alpha = float(0.0)
             # Load the background image
             if self._currentBackgroundPath is not None:
-                self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
+                appPath = getApplicationPath()
+                self.backgroundImage = wx.Bitmap(os.path.join(appPath, self._currentBackgroundPath))
                 self.modifiedBitmap = self._currentBackgroundPath
                 self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
             
@@ -668,7 +668,8 @@ class beamMainFrame(wx.Frame):
         
             else:
                 # Load the new background image
-                self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
+                appPath = getApplicationPath()
+                self.backgroundImage = wx.Bitmap(os.path.join(appPath, self._currentBackgroundPath))
                 self.modifiedBitmap = self._currentBackgroundPath
                 self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
                 # Set triggers
@@ -693,7 +694,8 @@ class beamMainFrame(wx.Frame):
     def switchBackground(self):
         
         self.triggerResizeBackground = True
-        self.backgroundImage = wx.Bitmap(os.path.join(os.getcwd(), self._currentBackgroundPath))
+        appPath = getApplicationPath()
+        self.backgroundImage = wx.Bitmap(os.path.join(appPath, self._currentBackgroundPath))
         self.modifiedBitmap = self._currentBackgroundPath
         self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
         self.textsAreVisible = True

@@ -27,6 +27,7 @@
 
 
 from bin.beamsettings import *
+from bin.beamutils import getApplicationPath
 from bin.dialogs.editlayoutdialog import EditLayoutDialog
 
 from copy import deepcopy
@@ -335,8 +336,9 @@ class EditMood(wx.Frame):
 # Browse for background
 #
     def BrowseMoodBackground(self, event):
+        appPath = getApplicationPath()
         openFileDialog = wx.FileDialog(self, "Set new background image for mood",
-                                       os.path.join(os.getcwd(), 'resources', 'backgrounds'), "",
+                                       os.path.join(appPath, 'resources', 'backgrounds'), "",
                                        "Image files(*.png,*.jpg)|*.png;*.jpg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:

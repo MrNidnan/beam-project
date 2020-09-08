@@ -1,5 +1,6 @@
-# -*- encoding: utf-8 -*-
-#    Copyright (C) 2014 Mikael Holber http://www.beam-project.com
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2014 Mikael Holber http://mywebsite.com
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -19,34 +20,23 @@
 #
 #    Revision History:
 #
-#    Version 1.0
-#    	- Initial release
+#    XX/XX/2014 Version 1.0
+#       - Initial release
 #
-
-
-###############################################################
-#
-# Define operations
-#
-###############################################################
-
+# This Python file uses the following encoding: utf-8
 import os
-import logging
-
-from bin.Modules import traktorModule
-from bin.Modules.Win import winutils
+import sys
 
 
-def run(maxtandalength, lastplaylist):
-
-    #
-    # Player Status
-    #
-    if winutils.applicationrunning("Traktor.exe"):
-        playlist, playbackstatus = traktorModule.run(maxtandalength, lastplaylist)
+def getApplicationPath():
+    if getattr(sys, 'frozen', False):
+        # PyInstaller one-file
+        # application_path = os.path.dirname(sys.executable)
+        appPath = sys._MEIPASS
+        # print("Path PyInstaller: " + application_path)
     else:
-        playbackstatus = 'PlayerNotRunning'
-        emptyplaylist = []
-        return emptyplaylist, playbackstatus
+        appPath = os.getcwd()
+        # print("Path Python: " + appPath)
 
-    return playlist, playbackstatus
+    # print(os.listdir(appPath))
+    return appPath

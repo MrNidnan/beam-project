@@ -45,11 +45,12 @@ if platform.system() == 'Linux':
 # if platform.system() == 'Windows':
 #     from .Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
 if platform.system() == 'Windows':
-    from bin.Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule, mixxxWindowsModule, traktorWindowsModule
+    from bin.Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule, mixxxWindowsModule
 # if platform.system() == 'Darwin':
 #    from .Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule
 if platform.system() == 'Darwin':
     from bin.Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule, mixxxMacModule
+from bin.Modules import icecastModule
 
 
 
@@ -130,8 +131,6 @@ class NowPlayingDataModel:
                 pass
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
-            if currentSettings._moduleSelected == 'Traktor':
-                self.currentPlaylist, self.PlaybackStatus = traktorWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # LINUX
         if platform.system() == 'Linux':
@@ -167,6 +166,9 @@ class NowPlayingDataModel:
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
+        if currentSettings._moduleSelected == 'Icecast':
+            self.currentPlaylist, self.PlaybackStatus = icecastModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+
         # sanitizeFields()
         for song in self.currentPlaylist[:]:
             song.sanitizeFields()
@@ -188,7 +190,7 @@ class NowPlayingDataModel:
             self.rawPlaylist = deepcopy(self.currentPlaylist)
             self.playlistChanged  = True
 
-        logging.info("Data Extracted, " + self.StatusMessage + ", " + time.strftime("%H:%M:%S"))
+        logging.info("Data extracted from " + currentSettings._moduleSelected  + ": " + self.StatusMessage + ", " + time.strftime("%H:%M:%S"))
         if self.PreviousPlaybackStatus == "":
             self.PreviousPlaybackStatus = self.PlaybackStatus
 

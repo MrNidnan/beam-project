@@ -27,13 +27,16 @@
 
 import json, wx, platform
 import logging
-import os
+import sys, os
+
 
 ###############################################################
 #
 # BeamSettings
 #
 ###############################################################
+from bin.beamutils import getApplicationPath
+
 
 class BeamSettings:
     # Define Dictionaries
@@ -54,9 +57,9 @@ class BeamSettings:
                   "Normal":wx.FONTSTYLE_NORMAL,
                   "Slant":wx.FONTSTYLE_SLANT
                     }
-
+    applicationpath = getApplicationPath()
+    filename = os.path.join(applicationpath, 'resources', 'text', 'strings.txt')
     # strings resources JSON format
-    filename = os.path.join(os.getcwd(), 'resources', 'text', 'strings.txt')
     stringResources = json.load(open(filename, "r"))
 
     defaultConfigFileName = stringResources["defaultConfigFileName"]
@@ -105,11 +108,13 @@ class BeamSettings:
             logging.warning(e)
             logging.warning("Loading default configfile")
             # Use original configfile which is the settingsfile below
-            configfile = os.path.join(os.getcwd(), inputConfigFile)
+            applicationpath = getApplicationPath()
+            configfile = os.path.join(applicationpath, inputConfigFile)
             ConfigData = self.OpenSetting(configfile)
 
         # Also load the original settingsfile
-        configfile = os.path.join(os.getcwd(), inputConfigFile)
+        applicationpath = getApplicationPath()
+        configfile = os.path.join(applicationpath, inputConfigFile)
         ConfigDataOriginal = self.OpenSetting(configfile)
         self.ReadConfig(ConfigData, ConfigDataOriginal)
 
@@ -177,14 +182,18 @@ class BeamSettings:
             # Added since V0.4
             if len(ConfigData['AllModules'][0]['Modules']) == 5: # System: Linux
                 ConfigData['AllModules'][0]['Modules'].append('Mixxx')
+            if len(ConfigData['AllModules'][0]['Modules']) == 6: # System: Windows
+                ConfigData['AllModules'][0]['Modules'].append('Icecast')
 
             if len(ConfigData['AllModules'][1]['Modules']) == 5: # System: Windows
                 ConfigData['AllModules'][1]['Modules'].append('Mixxx')
             if len(ConfigData['AllModules'][1]['Modules']) == 6: # System: Windows
-                ConfigData['AllModules'][1]['Modules'].append('Traktor')
+                ConfigData['AllModules'][1]['Modules'].append('Icecast')
 
             if len(ConfigData['AllModules'][2]['Modules']) == 6: # System: Mac
                 ConfigData['AllModules'][2]['Modules'].append('Mixxx')
+            if len(ConfigData['AllModules'][2]['Modules']) == 7: # System: Windows
+                ConfigData['AllModules'][2]['Modules'].append('Icecast')
 
             if not ConfigData['ConfigVersion'] == self._beamVersion:
                 logging.warning("Configfile version " + ConfigData['ConfigVersion'] + " differs from current " + self._beamVersion )
@@ -244,6 +253,9 @@ class BeamSettings:
             ConfigFile.close()
 
         return
+
+
+
 
 ###############################################################
 #

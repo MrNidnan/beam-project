@@ -4,14 +4,14 @@
   "Author": "Mikael Holber & Horia Uifaleanu - 2015",
   "Module": "Mixxx",
   "MaxTandaLength": 4,
-  "Updtime": 4000,
+  "Updtime": 6311,
   "MoodTransition": "Fade to black",
   "MoodTransitionSpeed": "1500",
   "Logging": "False",
   "LogPath": "C:\\Users\\Martin\\BeamLog.txt",
   "LogLevel": "Debug",
   "ShowStatusbar": "True",
-  "ConfigVersion": "0.4.3.7",
+  "ConfigVersion": "0.4.3.8",
   "AllModules": [
     {
       "Modules": [
@@ -20,7 +20,8 @@
         "Clementine",
         "Rhythmbox",
         "Spotify",
-        "Mixxx"
+        "Mixxx",
+        "Icecast"
       ],
       "System": "Linux"
     },
@@ -31,7 +32,8 @@
         "MediaMonkey",
         "Spotify",
         "Winamp",
-        "Mixxx"
+        "Mixxx",
+        "Icecast"
       ],
       "System": "Windows"
     },
@@ -43,7 +45,8 @@
         "Vox",
         "Spotify",
         "Embrace",
-        "Mixxx"
+        "Mixxx",
+        "Icecast"
       ],
       "System": "Mac"
     }

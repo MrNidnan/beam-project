@@ -25,12 +25,8 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import wx
-
 from bin.beamsettings import *
-from bin.dialogs.editlayoutdialog import EditLayoutDialog
-from bin.dialogs.editruledialog import EditRuleDialog
-from bin.dialogs.editmooddialog import EditMood
+from bin.beamutils import getApplicationPath
 
 from bin.dialogs.preferencespanels.basicsettings import BasicSettings
 from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
@@ -131,7 +127,8 @@ class ListBookMenu(wx.Listbook):
         imagelist = wx.ImageList(32,32)
         urllist = ["1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         for urls in urllist:
-            bmp = wx.Bitmap(os.path.join(os.getcwd(), 'resources', 'icons', 'preferences', urls), wx.BITMAP_TYPE_PNG)
+            appPath = getApplicationPath()
+            bmp = wx.Bitmap(os.path.join(appPath, 'resources', 'icons', 'preferences', urls), wx.BITMAP_TYPE_PNG)
             imagelist.Add(bmp)
         
         self.AssignImageList(imagelist)
@@ -149,5 +146,4 @@ class ListBookMenu(wx.Listbook):
             self.AddPage(page,label,imageId=ImId)
             ImId +=1
 
-#----------------------------------------------------------------------
 

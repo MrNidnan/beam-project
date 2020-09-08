@@ -31,6 +31,9 @@ from bin.dialogs.editlayoutdialog import EditLayoutDialog
 ###################################################################
 #                      DefaultLayout                              #
 ###################################################################
+from bin.beamutils import getApplicationPath
+
+
 class DefaultLayout(wx.Panel):
     def __init__(self, parent, BeamSettings):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
@@ -141,8 +144,9 @@ class DefaultLayout(wx.Panel):
         # BROWSE BACKGROUND #
         #####################
     def BrowseBackgroundImage(self, event):
+        appPath = getApplicationPath()
         openFileDialog = wx.FileDialog(self, "Set new background image",
-                                       os.path.join(os.getcwd(), 'resources', 'backgrounds'), "",
+                                       os.path.join(appPath, 'resources', 'backgrounds'), "",
                                        "Image files(*.png,*.jpg)|*.png;*.jpg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:
