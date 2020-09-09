@@ -24,15 +24,9 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-
+from bin.Modules.Lin.dbusutils import getDbusSession
 from bin.songclass import SongObject
 
-import imp
-try:
-    imp.find_module('dbus') #doesn't exist in Windows
-    import dbus
-except ImportError:
-    found = False
 
 def run(MaxTandaLength):
 
@@ -41,8 +35,7 @@ def run(MaxTandaLength):
     BansheeState = ''
     
     try:
-        bus = dbus.SessionBus()
-        banshee = bus.get_object("org.bansheeproject.Banshee", "/org/bansheeproject/Banshee/PlayerEngine")
+        banshee = getDbusSession("org.bansheeproject.Banshee", "/org/bansheeproject/Banshee/PlayerEngine")
         BansheeState = banshee.GetCurrentState()
     except:
         playbackStatus  = 'PlayerNotRunning'

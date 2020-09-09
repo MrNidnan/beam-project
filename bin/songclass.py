@@ -27,7 +27,6 @@
 
 #import platform, os, sys
 import logging
-from mutagen import File
 
 ###############################################################
 #

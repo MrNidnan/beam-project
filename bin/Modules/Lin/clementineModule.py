@@ -26,39 +26,20 @@
 # This Python file uses the following encoding: utf-8
 # An Mpris2 angepasst von Dominik und Peter Wenger 27.11.18
 import urllib
-
+from bin.Modules.Lin.dbusutils import getDbusPlayerValue, getDbusSessionStatus
 from bin.songclass import SongObject
 
-import imp
-try:
-    imp.find_module('dbus') #doesn't exist in Windows
-    import dbus
-except ImportError:
-    found = False
 
 def run(MaxTandaLength):
 
     playlist = []
-    playbackStatus  = ''
 
-    try:
-        bus = dbus.SessionBus()
-        player = bus.get_object('org.mpris.MediaPlayer2.clementine', '/org/mpris/MediaPlayer2')
-
-        StatusString = player.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus',
-                                  dbus_interface='org.freedesktop.DBus.Properties')
-    except:
-        playbackStatus = 'PlayerNotRunning'
-        return playlist, playbackStatus
-
-    if StatusString == 'Playing':
-        currentMetadata = player.Get('org.mpris.MediaPlayer2.Player', 'Metadata',
-                                     dbus_interface='org.freedesktop.DBus.Properties')
+    dbusSess, playbackStatus = getDbusSessionStatus('org.mpris.MediaPlayer2.clementine')
+    if playbackStatus == 'Playing':
+        currentMetadata = getDbusPlayerValue(dbusSess, 'Metadata')
         playlist.append(getSongObjectFromTrackMpris2(currentMetadata))
         # tracklist = player.Get('org.mpris.MediaPlayer2.TrackList','Tracks',dbus_interface='org.freedesktop.DBus.Properties')
         # tracklist from clementine is empty ??
-
-    playbackStatus = StatusString
 
     return playlist, playbackStatus
 

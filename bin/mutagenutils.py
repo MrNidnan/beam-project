@@ -33,7 +33,6 @@ from io import BytesIO
 from bin.songclass import SongObject
 from mutagen import File
 from mutagen.apev2 import APEv2
-from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.id3 import ID3
 

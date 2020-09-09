@@ -24,36 +24,17 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-
-
+from bin.Modules.Lin.dbusutils import getDbusPlayerValue, getDbusSessionStatus
 from bin.songclass import SongObject
 
-import imp
-try:
-    imp.find_module('dbus') #doesn't exist in Windows
-    import dbus
-except ImportError:
-    found = False
-
 def run(MaxTandaLength):
-
     playlist = []
-    playbackStatus  = ''
 
-    try:
-        bus = dbus.SessionBus()
-        spotify_bus = bus.get_object("org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2")
-        spotify = dbus.Interface(spotify_bus,"org.mpris.MediaPlayer2.Player")
-        properties_manager = dbus.Interface(spotify_bus, 'org.freedesktop.DBus.Properties')
-        metadata = properties_manager.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
-        playbackStatus = properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
-    except:
-        playbackStatus  = 'PlayerNotRunning'
-        return playlist, playbackStatus
-
+    dbusSess, playbackStatus = getDbusSessionStatus("org.mpris.MediaPlayer2.spotify")
     # Retrieve current song
     if playbackStatus == 'Playing':
-        playlist.append( getSongObjectFromTrack(metadata) )
+        currentMetadata = getDbusPlayerValue(dbusSess, 'Metadata')
+        playlist.append(getSongObjectFromTrack(currentMetadata))
         
     return playlist, playbackStatus
 

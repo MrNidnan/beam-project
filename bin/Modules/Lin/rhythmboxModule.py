@@ -24,26 +24,17 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-
-
+from bin.Modules.Lin.dbusutils import getDbusSession, getDbusInterface
 from bin.songclass import SongObject
 
-import imp
-try:
-    imp.find_module('dbus') #doesn't exist in Windows
-    import dbus
-except ImportError:
-    found = False
 
 def run(MaxTandaLength):
 
     playlist = []
     playbackStatus  = ''
     try:
-        bus = dbus.SessionBus()
-        bus.name_has_owner('org.gnome.Rhythmbox3')
-        proxy = bus.get_object('org.gnome.Rhythmbox3','/org/mpris/MediaPlayer2')
-        properties_manager = dbus.Interface(proxy, 'org.freedesktop.DBus.Properties')
+        proxy = getDbusSession('org.gnome.Rhythmbox3', '/org/mpris/MediaPlayer2', 'org.gnome.Rhythmbox3')
+        properties_manager = getDbusInterface(proxy, 'org.freedesktop.DBus.Properties')
         metadata = properties_manager.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
         playbackStatus = properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
     except:

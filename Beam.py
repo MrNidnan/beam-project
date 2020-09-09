@@ -71,7 +71,8 @@ logging.getLogger("").addHandler(console)
 #    sys.stdout = open(beamSettings._logPath,"w")
 
 print(beamSettings.mainFrameTitle + " logging to '" + logPath + "' Level " + beamSettings._logLevel)
-
+logging.debug("Home dir: " + os.path.expanduser("~"))
+logging.debug("App dir: " + getApplicationPath())
 
 ########################################################
 # Start the main window

@@ -28,6 +28,7 @@ import logging
 import platform, os, sys
 import time
 
+from bin.beamutils import getApplicationPath
 from bin.mutagenutils import readCoverArtImage
 from bin.songclass import SongObject
 from copy import deepcopy
@@ -288,14 +289,16 @@ class NowPlayingDataModel:
             currentRule = currentSettings._moods[applyMood]
             self.CurrentMood = currentRule['Name']
             self.DisplaySettings = currentRule['Display']
-            self.BackgroundImage = currentRule['Background']
+            appPath = getApplicationPath()
+            self.BackgroundImage = os.path.join(appPath, currentRule['Background'])
             self.RotateBackground = currentRule['RotateBackground']
             self.RotateTimer = currentRule['RotateTimer']
         else:
             defaultMood = currentSettings._moods[0]
             self.CurrentMood = defaultMood['Name']
             self.DisplaySettings = defaultMood['Display']
-            self.BackgroundImage = defaultMood['Background']
+            appPath = getApplicationPath()
+            self.BackgroundImage = os.path.join(appPath, defaultMood['Background'])
             self.RotateBackground = defaultMood['RotateBackground']
             self.RotateTimer = defaultMood['RotateTimer']
 
