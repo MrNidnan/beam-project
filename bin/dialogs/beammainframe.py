@@ -45,7 +45,7 @@ from copy import deepcopy
 class beamMainFrame(wx.Frame):
     def __init__(self, settings = None):
         # Size and position of the main window
-        wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle + " " + beamSettings.beamVersion, pos=(150,150), size=(800,600))
+        wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle + " V" + beamSettings.beamVersion, pos=(150,150), size=(800,600))
         self.SetDoubleBuffered(True)
 
         self.PreferencesDialog = None

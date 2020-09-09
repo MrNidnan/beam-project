@@ -29,7 +29,7 @@ from bin.beamsettings import *
 from bin.dialogs.beammainframe import beamMainFrame
 
 
-app = wx.App(False) # Error messages go to terminal
+app = wx.App(False)  # Error messages go to terminal
 
 ########################################################
 # Load Settings (global object)
