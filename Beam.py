@@ -26,7 +26,8 @@
 # This Python file uses the following encoding: utf-8
 
 from bin.beamsettings import *
-from bin.dialogs.beammainframe import beamMainFrame
+# from bin.dialogs.beammainframe import beamMainFrame
+from bin.dialogs.mainframe import MainFrame
 
 
 app = wx.App(False)  # Error messages go to terminal
@@ -77,7 +78,10 @@ logging.debug("App dir: " + getApplicationPath())
 ########################################################
 # Start the main window
 ########################################################
-top = beamMainFrame()       # Creates the main frame
+# top = beamMainFrame()       # Creates the main frame
+# Main Window now with preferences and preview
+top = MainFrame()       # Creates the main frame
+
 # __init__() starts timer for updating, transition, first updateData()
 top.Show()                  # Shows the main frame
 

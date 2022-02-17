@@ -11,7 +11,7 @@
   "LogPath": "C:\\Users\\Martin\\BeamLog.txt",
   "LogLevel": "Debug",
   "ShowStatusbar": "True",
-  "ConfigVersion": "0.4.4",
+  "ConfigVersion": "0.4.4.0",
   "AllModules": [
     {
       "Modules": [

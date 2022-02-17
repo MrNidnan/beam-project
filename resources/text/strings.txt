@@ -1,6 +1,6 @@
 {
-  "Comment": "This JSON files contains the strings resources to be used by Beam",
-  "version": "0.4.4",
+  "Comment": "This JSON files contains the string resources to be used by Beam",
+  "version": "0.4.4.0",
   "defaultConfigFileName": "BeamConfig.json",
   "defaultLogFileName": "BeamLog.txt",
   "defaultLogLevel": "Debug",

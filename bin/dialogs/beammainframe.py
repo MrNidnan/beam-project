@@ -28,7 +28,7 @@ import wx.html
 import wx.lib.delayedresult
 from random import randint
 from bin.beamsettings import *
-from bin.beamutils import getApplicationPath
+# from bin.beamutils import getApplicationPath
 from bin.nowplayingdatamodel import *
 from bin.dialogs.preferences import Preferences
 from bin.dialogs.helpdialog import HelpDialog
@@ -41,8 +41,8 @@ from copy import deepcopy
 # MAIN WINDOW - FRAME
 ##################################################
 
-
 class beamMainFrame(wx.Frame):
+    # Called by Beam.py
     def __init__(self, settings = None):
         # Size and position of the main window
         wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle + " V" + beamSettings.beamVersion, pos=(150,150), size=(800,600))
@@ -55,7 +55,7 @@ class beamMainFrame(wx.Frame):
         self.DataTimer()
 
         # Initialize DataObject - the model -
-        self.nowPlayingDataModel = NowPlayingDataModel()
+        self.nowPlayingDataModel = DataModelNowPlaying()
 
         # Set Icon
         appPath = getApplicationPath()
@@ -570,8 +570,7 @@ class beamMainFrame(wx.Frame):
         self.drawBackgroundBitmap(dc)
         self.drawItems(dc)
     
-    
-########################################################
+    ########################################################
 #                                                      #
 #                                                      #
 #                  TRANSITIONS                         #
