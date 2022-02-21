@@ -39,19 +39,13 @@ from copy import deepcopy
 #
 ###############################################################
 
-# if platform.system() == 'Linux':
-#     from .Modules.Lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule
 if platform.system() == 'Linux':
-    from bin.modules.lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule, mixxxLinuxModule
-# if platform.system() == 'Windows':
-#     from .Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
+    from bin.modules.lin import audaciousmodule, rhythmboxmodule, clementinemodule, bansheemodule, spotifymodule, mixxxmodule
 if platform.system() == 'Windows':
-    from bin.modules.win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule, mixxxWindowsModule
-# if platform.system() == 'Darwin':
-#    from .Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule
+    from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule
 if platform.system() == 'Darwin':
-    from bin.modules.mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule, mixxxMacModule
-from bin.modules import icecastModule
+    from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule
+from bin.modules import icecastmodule
 
 
 
@@ -118,58 +112,58 @@ class NowPlayingData:
         # WINDOWS
         if platform.system() == 'Windows':
             if currentSettings._moduleSelected == 'iTunes':
-                self.currentPlaylist, self.PlaybackStatus = itunesWindowsModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus = itunesmodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'MediaMonkey':
-                self.currentPlaylist, self.PlaybackStatus = mediamonkeyModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                self.currentPlaylist, self.PlaybackStatus = mediamonkeymodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
             if currentSettings._moduleSelected == 'Spotify':
-                self.currentPlaylist, self.PlaybackStatus =spotifyWindowsModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus =spotifymodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Foobar2000':
-                self.currentPlaylist, self.PlaybackStatus =foobar2kWindowsModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus =foobar2kmodule.run(currentSettings._maxTandaLength)
             try: #required due to loaded modules
                 if currentSettings._moduleSelected == 'Winamp':
-                    self.currentPlaylist, self.PlaybackStatus = winampWindowsModule.run(currentSettings._maxTandaLength)
+                    self.currentPlaylist, self.PlaybackStatus = winampmodule.run(currentSettings._maxTandaLength)
             except:
                 # ???
                 pass
             if currentSettings._moduleSelected == 'Mixxx':
-                self.currentPlaylist, self.PlaybackStatus = mixxxWindowsModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # LINUX
         if platform.system() == 'Linux':
             if currentSettings._moduleSelected == 'Audacious':
-                self.currentPlaylist, self.PlaybackStatus = audaciousModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus = audaciousmodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Rhythmbox':
-                self.currentPlaylist, self.PlaybackStatus = rhythmboxModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus = rhythmboxmodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Clementine':
-                self.currentPlaylist, self.PlaybackStatus = clementineModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus = clementinemodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Banshee':
-                self.currentPlaylist, self.PlaybackStatus = bansheeModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus = bansheemodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Spotify':
-                self.currentPlaylist, self.PlaybackStatus = spotifyLinuxModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus = spotifymodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Mixxx':
-                self.currentPlaylist, self.PlaybackStatus = mixxxLinuxModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # Mac OS X
         if platform.system() == 'Darwin':
             if currentSettings._moduleSelected == 'iTunes':
-                self.currentPlaylist, self.PlaybackStatus  = itunesMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                self.currentPlaylist, self.PlaybackStatus  = itunesmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
             if currentSettings._moduleSelected == 'Decibel':
-                self.currentPlaylist, self.PlaybackStatus  = decibelModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus  = decibelmodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Swinsian':
-                self.currentPlaylist, self.PlaybackStatus  = swinsianModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus  = swinsianmodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Spotify':
-                self.currentPlaylist, self.PlaybackStatus  = spotifyMacModule.run(currentSettings._maxTandaLength)
+                self.currentPlaylist, self.PlaybackStatus  = spotifymodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Vox':
-                    self.currentPlaylist, self.PlaybackStatus  = voxModule.run(currentSettings._maxTandaLength)
+                    self.currentPlaylist, self.PlaybackStatus  = voxmodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Cog':
-                    self.currentPlaylist, self.PlaybackStatus  = cogModule.run(currentSettings._maxTandaLength)
+                    self.currentPlaylist, self.PlaybackStatus  = cogmodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Embrace':
-                    self.currentPlaylist, self.PlaybackStatus  = embraceModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                    self.currentPlaylist, self.PlaybackStatus  = embracemodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
             if currentSettings._moduleSelected == 'Mixxx':
-                self.currentPlaylist, self.PlaybackStatus = mixxxMacModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+                self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         if currentSettings._moduleSelected == 'Icecast':
-            self.currentPlaylist, self.PlaybackStatus = icecastModule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+            self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
         # sanitizeFields()
         for song in self.currentPlaylist[:]:

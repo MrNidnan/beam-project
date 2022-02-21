@@ -30,6 +30,7 @@ import wx.lib.delayedresult
 from bin.beamsettings import *
 from bin.beamutils import getApplicationPath
 from bin.nowplayingdata import *
+from random import randint
 
 from bin.dialogs.preferencespanels.basicsettings import BasicSettings
 from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
@@ -39,7 +40,7 @@ from bin.dialogs.preferencespanels.tagspreview import TagsPreview
 
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
-# from bin.dialogs.displayframe import DisplayFrame
+# from bin.dialogs.displayframe import DisplayPanel
 
 
 ###################################################################

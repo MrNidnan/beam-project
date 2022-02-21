@@ -27,20 +27,24 @@
 import wx.html
 import wx.lib.delayedresult
 from bin.beamsettings import *
+from bin.dialogs.displaypanel import DisplayPanel
 
-
-##################################################
-# MAIN WINDOW - FRAME
-##################################################
 
 class DisplayFrame(wx.Frame):
 
-    # Called by Beam.py
+    # Called by beam.py
     def __init__(self, displayData):
 
-        wx.Frame.__init__(self, None, title="", pos=(200,200), size=(800,600))
-
-        # !!! Display to be moved to a panel
+        # wx.DEFAULT_FRAME_STYLE
+        # wx.CAPTION | wx.RESIZE_BORDER
+        # wxFULLSCREEN_NOMENUBAR
+        # wxFULLSCREEN_NOSTATUSBAR
+        # wxFULLSCREEN_NOBORDER
+        # wxFULLSCREEN_NOCAPTION
+        # wx.FULLSCREEN_ALL
+        # wx.RESIZE_BORDER
+        framestyle = wx.DEFAULT_FRAME_STYLE & ~ (wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
+        wx.Frame.__init__(self, parent=None, title="F11: Full Screen", pos=(200,200), size=(800,600), style=framestyle)
 
         ###################
         # CLASS VARIABLES #
@@ -50,18 +54,22 @@ class DisplayFrame(wx.Frame):
         self.displayData = displayData
         self.nowPlayingData = displayData.nowPlayingData
 
+        self.displayPanel = DisplayPanel(self, self.displayData)
         self.SetDoubleBuffered(True)
 
         # Events.
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
-        self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
+        self.Bind(wx.EVT_CHAR_HOOK, self.onKeyUP)
+
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+        # !!! Funktioniert nicht, nur implizit on caption
+        # self.Bind(wx.EVT_LEFT_DCLICK, self.onLeftDClick)
+        self.Bind(wx.EVT_MAXIMIZE, self.onMaximize, self)
 
         # Background
         self.modifiedBitmap = None
         self.SetBackgroundColour(wx.BLACK)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+        self.Bind(wx.EVT_SIZE, self.onSize)
+        # self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
         ########################## END FRAME INITIALIZATION #########################
 
@@ -69,280 +77,58 @@ class DisplayFrame(wx.Frame):
 ########################################################
 # Buttons and menues
 ########################################################
-    #
-    # FULLSCREEN
-    #
-    def fullScreen(self, event):
+
+
+    def onKeyUP(self, event):
         try:
-            self.ShowFullScreen(not self.IsFullScreen())
+            keyCode = event.GetKeyCode()
+            if keyCode == wx.WXK_ESCAPE:
+                if self.IsFullScreen():
+                    self.ShowFullScreen(False)
+                else:
+                    self.onClose(event)
+                # event.Skip()
+            if keyCode == wx.WXK_F11:
+                self.ShowFullScreen(not self.IsFullScreen())
+                # event.Skip()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+
+    def onMaximize(self, event):
+        try:
+            # ??? Needed for Mac
+            # if platform.system() == 'Darwin':
+            #   self.showStatusBar()
+            if self.IsFullScreen():
+                self.ShowFullScreen(False)
+                self.Maximize(False)
+            else:
+                self.ShowFullScreen(True)
         except Exception as e:
             logging.error(e, exc_info=True)
 
 
     #
-    # Show 'Close dialog
+    # resize displayPanel
     #
-    def OnClose(self, event):
+    def onSize(self, size):
+        try:
+            cliWidth, cliHeight = self.GetClientSize()
+            if not cliWidth or not cliHeight:
+                return
+            # size displayPanel to full frame
+            self.displayPanel.SetSize(cliWidth,cliHeight);
+            # Triggers displayPanel.OnSize()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    #
+    # Hide on close event
+    #
+    def onClose(self, event):
         try:
             self.Hide()
         except Exception as e:
             logging.error(e, exc_info=True)
-
-
-########################################################
-#                                                      #
-#                                                      #
-#                 WINDOW DRAWING                       #
-#                                                      #
-#                                                      #
-########################################################
-
-########################################################
-# Painter
-########################################################
-    def OnSize(self, size):
-        self.displayData.triggerResizeBackground = True
-        self.Refresh()
-
-    def OnEraseBackground(self, evt):
-        pass
-
-    def OnPaint(self, event):
-        pdc = wx.BufferedPaintDC(self)
-        try:
-            dc = wx.GCDC(pdc)
-        except:
-            dc = pdc
-        self.Draw(dc)
-
-########################################################
-# Draw background
-########################################################
-    def drawBackgroundBitmap(self, dc):
-        cliWidth, cliHeight = self.GetClientSize()
-        if not cliWidth or not cliHeight:
-            return
-
-        try:
-            # Image = wx.ImageFromBitmap(self.backgroundImage)
-            Image = wx.Bitmap.ConvertToImage(self.displayData.backgroundImage)
-            #resize current background picture - currently used at main frame resizing
-
-            aspectRatioWindow = float(cliHeight) / float(cliWidth)
-            aspectRatioBackground = float(self.displayData.BackgroundImageHeight) / float(self.displayData.BackgroundImageWidth)
-            if aspectRatioWindow >= aspectRatioBackground:
-                # Window is too tall, scale to height
-                Image = Image.Scale(cliHeight*self.displayData.BackgroundImageWidth / self.displayData.BackgroundImageHeight, cliHeight, wx.IMAGE_QUALITY_NORMAL)
-            else:
-                # Window is too wide, scale to width
-                Image = Image.Scale(cliWidth, cliWidth*self.displayData.BackgroundImageHeight / self.displayData.BackgroundImageWidth, wx.IMAGE_QUALITY_NORMAL)
-            # Fader
-            if self.displayData.alpha <1 or self.displayData.red <1 or self.displayData.blue <1 or self.displayData.green <1:
-                Image = Image.AdjustChannels(self.displayData.red, self.displayData.green, self.displayData.blue, self.displayData.alpha)
-            
-            self.displayData.triggerResizeBackground = False
-            # self.modifiedBitmap = wx.BitmapFromImage(Image)
-            self.modifiedBitmap = wx.Bitmap(Image)
-        except Exception as e:
-            logging.info(e, exc_info=True)
-            self.modifiedBitmap = self.displayData.backgroundImage
-            pass
-
-            
-        # Position the image and draw it
-        resizedWidth, resizedHeight = self.modifiedBitmap.GetSize()
-        self.xPosResized = (cliWidth - resizedWidth)/2
-        self.yPosResized = (cliHeight - resizedHeight)/2
-        dc.DrawBitmap(self.modifiedBitmap, self.xPosResized, self.yPosResized, True)
-
-########################################################
-# DRAW TEXT & CoverArt
-########################################################
-    def drawCoverArt(self, dc, cliWidth, cliHeight, j):
-        image = None;
-        #Text and settings
-        # filePath = self.currentDisplayRows[j]
-        # Windows "file:///C:"
-        # filePath = urllib.request.url2pathname(fileUrl[5:])
-        # filePath = Path(fileUrl[8:])
-        # filePath = self.currentDisplayRows[j]
-
-        Settings = self.displayData.currentDisplaySettings[j]
-
-        # Get (text) size and position
-        size = Settings['Size']*cliHeight/100
-        verticalPosition = int(Settings['Position'][0] * cliHeight / 100)
-
-        # Alignment position
-        if Settings['Alignment'] == 'Left':
-            horizontalPosition = int(Settings['Position'][1] * cliWidth / 100)
-        elif Settings['Alignment'] == 'Right':
-            horizontalPosition = cliWidth - (int(Settings['Position'][1] * cliWidth / 100) + size)
-        elif Settings['Alignment'] == 'Center':
-            horizontalPosition = (cliWidth - size) / 2
-        else:
-            raise Exception("Unknown alignment" + Settings['Alignment'])
-
-
-
-        if self.displayData.currentCoverArtImage:
-            try:
-                image = self.displayData.currentCoverArtImage.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
-                bitmap = wx.Bitmap(image)
-                dc.DrawBitmap(bitmap, horizontalPosition, verticalPosition)
-            except Exception as e:
-                pass
-
-            # file_ = OggVorbis(path)
-            # b64_pictures = file_.get("metadata_block_picture", [])
-            # for n, b64_data in enumerate(b64_pictures):
-            #     try:
-            #         data = base64.b64decode(b64_data)
-            #     except (TypeError, ValueError):
-            #         continue
-            #     try:
-            #         picture = Picture(data)
-            #     except FLACError:
-            #         continue
-
-
-    def drawTextItem(self, dc, cliWidth, cliHeight, j):
-
-        # Text and settings
-        text = self.displayData.currentDisplayRows[j]
-        Settings = self.displayData.currentDisplaySettings[j]
-
-        # Get text size and position
-        Size = Settings['Size'] * cliHeight / 100
-        HeightPosition = int(Settings['Position'][0] * cliHeight / 100)
-
-        # Set font from settings
-        face = Settings['Font']
-
-        try:
-            dc.SetFont(wx.Font(Size,
-                               wx.ROMAN,
-                               beamSettings.FontStyleDictionary[Settings['Style']],
-                               beamSettings.FontWeightDictionary[Settings['Weight']],
-                               False,
-                               face))
-        except:
-            dc.SetFont(wx.Font(Size,
-                               wx.ROMAN,
-                               beamSettings.FontStyleDictionary[Settings['Style']],
-                               beamSettings.FontWeightDictionary[Settings['Weight']],
-                               False,
-                               "Liberation Sans"))
-
-        # Set font color, in the future, drawing a shadow ofsetted with the same text first might make a shadow!
-        dc.SetTextForeground(eval(Settings['FontColor']))
-
-        # Check if the text fits, cut it and add ...
-        # if platform.system() == 'Darwin':
-        #     try:
-        #         text = text.decode('utf-8')
-        #     except:
-        #         pass
-        TextWidth, TextHeight = dc.GetTextExtent(text)
-
-        #
-        # Find length and position of text
-        #
-        if Settings['Alignment'] == 'Center':
-            TextSpaceAvailable = cliWidth
-        else:
-            TextSpaceAvailable = int((100 - Settings['Position'][1]) * cliWidth)
-
-        #
-        # TEXT FLOW = CUT
-        #
-        if Settings['TextFlow'] == 'Cut':
-            while TextWidth > TextSpaceAvailable:
-                try:
-                    text = text[:-1]
-                    TextWidth, TextHeight = dc.GetTextExtent(text)
-                except:
-                    text = text[:-2]
-                    TextWidth, TextHeight = dc.GetTextExtent(text)
-                if TextWidth < TextSpaceAvailable:
-                    try:
-                        text = text[:-2]
-                        TextWidth, TextHeight = dc.GetTextExtent(text)
-                    except:
-                        text = text[:-3]
-                        TextWidth, TextHeight = dc.GetTextExtent(text)
-                    text = text + '...'
-            TextWidth, TextHeight = dc.GetTextExtent(text)
-        #
-        # TEXT FLOW = SCALE
-        #
-
-        if Settings['TextFlow'] == 'Scale':
-            while TextWidth > int(TextSpaceAvailable * 0.95):
-                # 10% Scaling each time
-                Size = int(Size * 0.9)
-                try:
-                    dc.SetFont(wx.Font(Size,
-                                       wx.ROMAN,
-                                       beamSettings.FontStyleDictionary[Settings['Style']],
-                                       beamSettings.FontWeightDictionary[Settings['Weight']],
-                                       False,
-                                       face))
-                except:
-                    dc.SetFont(wx.Font(Size,
-                                       wx.ROMAN,
-                                       beamSettings.FontStyleDictionary[Settings['Style']],
-                                       beamSettings.FontWeightDictionary[Settings['Weight']],
-                                       False,
-                                       "Liberation Sans"))
-                TextWidth, TextHeight = dc.GetTextExtent(text)
-
-        # Alignment position
-        if Settings['Alignment'] == 'Left':
-            WidthPosition = int(Settings['Position'][1] * cliWidth / 100)
-        elif Settings['Alignment'] == 'Right':
-            WidthPosition = cliWidth - (int(Settings['Position'][1] * cliWidth / 100) + TextWidth)
-        elif Settings['Alignment'] == 'Center':
-            WidthPosition = (cliWidth - TextWidth) / 2
-        else:
-            raise Exception("Unknown alignment" + Settings['Alignment'])
-
-        # Draw the text
-        dc.DrawText(text, WidthPosition, HeightPosition)
-
-
-    def drawItems(self, dc):
-
-        if self.displayData.textsAreVisible == False:
-            return
-
-        cliWidth, cliHeight = self.GetClientSize()
-        if not cliWidth or not cliHeight:
-            return
-
-        # Draw images
-        for j in range(0, len(self.displayData.currentDisplaySettings)):
-            field = self.displayData.currentDisplaySettings[j]["Field"]
-            if field.strip() == "%CoverArt":
-                self.drawCoverArt(dc, cliWidth, cliHeight, j)
-
-        # Draw text after/over image
-        for j in range(0, len(self.displayData.currentDisplaySettings)):
-            field = self.displayData.currentDisplaySettings[j]["Field"]
-            if field.strip() != "%CoverArt":
-                self.drawTextItem(dc, cliWidth, cliHeight, j)
-
-
-########################################################
-# DRAW
-########################################################
-    def Draw(self, dc):
-    # Get width and height of window
-        cliWidth, cliHeight = self.GetClientSize()
-        if not cliWidth or not cliHeight:
-            return
-        dc.Clear()
-        self.drawBackgroundBitmap(dc)
-        self.drawItems(dc)
-
 

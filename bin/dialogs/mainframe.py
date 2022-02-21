@@ -29,6 +29,7 @@ import wx.lib.delayedresult
 
 from bin.beamsettings import *
 from bin.displaydata import DisplayData
+from bin.dialogs.displaypanel import DisplayPanel
 
 from bin.dialogs.preferencespanels.basicsettings import BasicSettings
 from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
@@ -49,7 +50,7 @@ class MainFrame(wx.Frame):
 
     def __init__(self):
         # Size and position of this main window
-        # beamsettings loaded in Beam.py
+        # beamsettings loaded in beam.py
         wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle + " V" + beamSettings.beamVersion, pos=(150,150), size=(800,600))
 
         # only required for display
@@ -108,12 +109,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onHelp, self.menuHelp)
         # self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
         self.Bind(wx.EVT_CLOSE, self.onClose)
-        self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
-
-        # Background
-        self.Bind(wx.EVT_SIZE, self.onSize)
-        self.Bind(wx.EVT_PAINT, self.onPaint)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
+        # self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
 
 
         ####################
@@ -126,23 +122,25 @@ class MainFrame(wx.Frame):
         #################
         # LISTBOOK MENU #
         #################
-        menu = ListBookMenu(panel, beamSettings, self.displayData.nowPlayingData)
+        listBookMenu = ListBookMenu(panel, beamSettings, self.displayData)
+        self.previewPanel = listBookMenu.pages[0][0];
+
         
         ###########
         # BUTTONS #
         ###########
-        self.button_apply = wx.Button(panel, label="Apply")
-        self.button_apply.Bind(wx.EVT_BUTTON, self.onApply)
-        hbox.Add(self.button_apply,flag= wx.LEFT | wx.TOP, border=10)
+        self.applyBtn = wx.Button(panel, label="Apply")
+        self.applyBtn.Bind(wx.EVT_BUTTON, self.onApply)
+        hbox.Add(self.applyBtn, flag=wx.LEFT | wx.TOP, border=10)
 
-        self.button_display = wx.Button(panel, label="Display")
-        self.button_display.Bind(wx.EVT_BUTTON, self.onDisplay)
-        hbox.Add(self.button_display, flag= wx.ALL, border=10)
+        self.displayBtn = wx.Button(panel, label="Display")
+        self.displayBtn.Bind(wx.EVT_BUTTON, self.onDisplay)
+        hbox.Add(self.displayBtn, flag= wx.ALL, border=10)
 
         ###########
         # ARRANGE #
         ###########
-        vbox.Add(menu, 1,wx.ALL | wx.EXPAND, 5)
+        vbox.Add(listBookMenu, 1, wx.ALL | wx.EXPAND, 5)
         vbox.Add(hbox, flag=wx.ALIGN_RIGHT)
 
         ###########
@@ -153,6 +151,8 @@ class MainFrame(wx.Frame):
         self.Show()
         self.showStatusBar()
 
+        logging.info("Beam started")
+
         ########################## END OF INITIALIZATION #########################
 
 
@@ -161,8 +161,10 @@ class MainFrame(wx.Frame):
     #
     def onClose(self, event):
         try:
-            # ??? parent pointer?
+            self.displayFrame.Hide()
+            self.Hide()
             self.Destroy()
+            logging.info("Beam ended")
         except Exception as e:
             logging.error(e, exc_info=True)
 
@@ -200,23 +202,18 @@ class MainFrame(wx.Frame):
         try:
             if self.displayFrame.IsShown():
                 self.displayFrame.Hide()
+                # self.displayBtn.SetLabel("Display")
             else:
                 self.displayFrame.Show()
+                # self.displayBtn.SetLabel("Hide")
         except Exception as e:
             logging.error(e, exc_info=True)
 
 
-    def onSize(self, size):
-        pass
 
-
-    def onEraseBackground(self, evt):
-        pass
-
-    def onPaint(self, event):
-        pass
-
-    # UPDATE INFO FROM PREFERENCES WINDOW
+    #
+    #
+    #
     def updateSettings(self):
         try:
             self.showStatusBar()
@@ -229,17 +226,6 @@ class MainFrame(wx.Frame):
             logging.error(e, exc_info=True)
             pass
 
-    #
-    # FULLSCREEN
-    #
-    def fullScreen(self, event):
-        try:
-            # Needed for Mac
-            if platform.system() == 'Darwin':
-                self.showStatusBar()
-            self.ShowFullScreen(not self.IsFullScreen())
-        except Exception as e:
-            logging.error(e, exc_info=True)
 
     #
     # Hide/show statusbar
@@ -276,6 +262,7 @@ class MainFrame(wx.Frame):
     def refreshDisplay(self):
         try:
             self.displayFrame.Refresh()
+            self.previewPanel.Refresh()
         except Exception as e:
             logging.error(e, exc_info=True)
 
@@ -284,18 +271,21 @@ class MainFrame(wx.Frame):
 ###################################################################
 #                The ListBookMenu                                 #
 ###################################################################
-
 class ListBookMenu(wx.Listbook):
-    def __init__(self, parent, beamSettings, nowPlayingData):
+
+    # pages = []
+
+    def __init__(self, parent, beamSettings, displayData):
         wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
         
         ##########
         # IMAGES #
         ##########
         imagelist = wx.ImageList(32,32)
-        urllist = ["1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         for urls in urllist:
             appPath = getApplicationPath()
+            # /resources/icons/preferences
             bmp = wx.Bitmap(os.path.join(appPath, 'resources', 'icons', 'preferences', urls), wx.BITMAP_TYPE_PNG)
             imagelist.Add(bmp)
         
@@ -304,12 +294,16 @@ class ListBookMenu(wx.Listbook):
         ###########
         # CONTENT #
         ###########
-        pages = [(BasicSettings(self, beamSettings), "Settings"),
-                 (DefaultLayout(self, beamSettings), "Layout"),
-                 (Moods(self, beamSettings), "Moods"),
-                 (Rules(self, beamSettings), "Rules"),
-                 (TagsPreview(self, beamSettings, nowPlayingData), "Tags")]
+        self.pages = [
+                    # preview must be first in array
+                    (DisplayPanel(self, displayData), "Preview"),
+                    (BasicSettings(self, beamSettings), "Settings"),
+                    (DefaultLayout(self, beamSettings), "Layout"),
+                    (Moods(self, beamSettings), "Moods"),
+                    (Rules(self, beamSettings), "Rules"),
+                    (TagsPreview(self, beamSettings, displayData.nowPlayingData), "Tags")
+                 ]
         ImId=0
-        for page, label in pages:
+        for page, label in self.pages:
             self.AddPage(page,label,imageId=ImId)
             ImId +=1

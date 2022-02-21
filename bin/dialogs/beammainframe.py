@@ -42,7 +42,7 @@ from copy import deepcopy
 ##################################################
 
 class beamMainFrame(wx.Frame):
-    # Called by Beam.py
+    # Called by beam.py
     def __init__(self, settings = None):
         # Size and position of the main window
         wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle + " V" + beamSettings.beamVersion, pos=(150,150), size=(800,600))
@@ -55,7 +55,7 @@ class beamMainFrame(wx.Frame):
         self.DataTimer()
 
         # Initialize DataObject - the model -
-        self.nowPlayingDataModel = DataModelNowPlaying()
+        self.nowPlayingData = NowPlayingData()
 
         # Set Icon
         appPath = getApplicationPath()
@@ -147,7 +147,7 @@ class beamMainFrame(wx.Frame):
                 self.PreferencesDialog.Raise()
             else:
                 # if not yet existing
-                self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingDataModel)
+                self.PreferencesDialog = Preferences(self, beamSettings, self.nowPlayingData)
                 self.PreferencesDialog.Show()
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -228,10 +228,10 @@ class beamMainFrame(wx.Frame):
     # READ FROM MEDIA PLAYER
     def updateData(self, event = wx.EVT_TIMER):
         try:
-            self.currentDisplayRows = self.nowPlayingDataModel.DisplayRows
-            self.currentCoverArtImage = self.nowPlayingDataModel.currentCoverArtImage
-            self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
-            self.previousPlaybackStatus = self.nowPlayingDataModel.PreviousPlaybackStatus
+            self.currentDisplayRows = self.nowPlayingData.DisplayRows
+            self.currentCoverArtImage = self.nowPlayingData.currentCoverArtImage
+            self.currentPlaybackStatus = self.nowPlayingData.StatusMessage
+            self.previousPlaybackStatus = self.nowPlayingData.PreviousPlaybackStatus
 
             if not self.currentlyUpdating:
                 self.currentlyUpdating = True
@@ -245,7 +245,7 @@ class beamMainFrame(wx.Frame):
         # MEDIA READER WORKER
     def extractDataThread(self):
         try:
-            self.nowPlayingDataModel.readData(beamSettings)
+            self.nowPlayingData.readData(beamSettings)
         except Exception as e:
             logging.error(e, exc_info=True)
             pass
@@ -255,7 +255,7 @@ class beamMainFrame(wx.Frame):
     def getDataFinished(self, result):
         try:
             self.currentlyUpdating = False
-            if self.nowPlayingDataModel.playlistChanged:
+            if self.nowPlayingData.playlistChanged:
                 self.processData() #Only update if playlist has changed
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -272,7 +272,7 @@ class beamMainFrame(wx.Frame):
         # PROCESS DATA WORKER
     def processDataThread(self):
         try:
-            self.nowPlayingDataModel.processData(beamSettings)
+            self.nowPlayingData.processData(beamSettings)
         except Exception as e:
             logging.error(e, exc_info=True)
             pass
@@ -280,19 +280,19 @@ class beamMainFrame(wx.Frame):
         # AFTER PROCESSING DATA
     def updateMood(self, result):
         try:
-            self.currentDisplayRows = self.nowPlayingDataModel.DisplayRows
-            self.currentCoverArtImage = self.nowPlayingDataModel.currentCoverArtImage
-            self.currentPlaybackStatus = self.nowPlayingDataModel.StatusMessage
+            self.currentDisplayRows = self.nowPlayingData.DisplayRows
+            self.currentCoverArtImage = self.nowPlayingData.currentCoverArtImage
+            self.currentPlaybackStatus = self.nowPlayingData.StatusMessage
             self.previousMood = deepcopy(self.currentMood)
-            self.currentMood = self.nowPlayingDataModel.CurrentMood
-            self.currentDisplaySettings = self.nowPlayingDataModel.DisplaySettings
-            self.RotateBackground = self.nowPlayingDataModel.RotateBackground
-            self.RotateTimer = self.nowPlayingDataModel.RotateTimer
+            self.currentMood = self.nowPlayingData.CurrentMood
+            self.currentDisplaySettings = self.nowPlayingData.DisplaySettings
+            self.RotateBackground = self.nowPlayingData.RotateBackground
+            self.RotateTimer = self.nowPlayingData.RotateTimer
 
             self.SetStatusText("Player: "+self.currentPlaybackStatus+" - Mood: "+self.currentMood)
 
             if (self.previousMood != self.currentMood):
-                self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundPath
+                self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
                 self.startTransition('MoodChange')
             else:
                 self.startTransition('SongChange')
@@ -801,7 +801,7 @@ class beamMainFrame(wx.Frame):
                         self._currentBackgroundPath = os.path.join(path,backgrounds[0])
         # Stop the rotation
         if self.RotateBackground == 'no':
-            self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundPath
+            self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
             try:
                 self.RotateBackgroundTimer.Stop()
                 return

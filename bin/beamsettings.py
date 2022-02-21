@@ -195,8 +195,9 @@ class BeamSettings:
             if len(ConfigData['AllModules'][2]['Modules']) == 7: # System: Windows
                 ConfigData['AllModules'][2]['Modules'].append('Icecast')
 
-            if not ConfigData['ConfigVersion'] == self._beamVersion:
-                logging.warning("Configfile version " + ConfigData['ConfigVersion'] + " differs from current " + self._beamVersion )
+            # Funktioniert so nicht, muss gegen Default verglichen werden
+            # if not ConfigData['ConfigVersion'] == self._beamVersion:
+                # logging.warning("Configfile version " + ConfigData['ConfigVersion'] + " differs from current " + self._beamVersion )
                 # let the version untouched for beta tests
                 # ConfigData['ConfigVersion'] = self._beamVersion;
         finally:
