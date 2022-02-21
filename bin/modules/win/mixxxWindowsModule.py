@@ -33,8 +33,8 @@
 import os
 import logging
 
-from bin.Modules import mixxxModule
-from bin.Modules.Win import winutils
+from bin.modules import mixxxModule
+from bin.modules.win import winutils
 
 
 def run(maxtandalength, lastplaylist):

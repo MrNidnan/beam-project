@@ -42,16 +42,16 @@ from copy import deepcopy
 # if platform.system() == 'Linux':
 #     from .Modules.Lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule
 if platform.system() == 'Linux':
-    from bin.Modules.Lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule, mixxxLinuxModule
+    from bin.modules.lin import audaciousModule, rhythmboxModule, clementineModule, bansheeModule, spotifyLinuxModule, mixxxLinuxModule
 # if platform.system() == 'Windows':
 #     from .Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule
 if platform.system() == 'Windows':
-    from bin.Modules.Win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule, mixxxWindowsModule
+    from bin.modules.win import itunesWindowsModule, winampWindowsModule, mediamonkeyModule, spotifyWindowsModule, foobar2kWindowsModule, mixxxWindowsModule
 # if platform.system() == 'Darwin':
 #    from .Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule
 if platform.system() == 'Darwin':
-    from bin.Modules.Mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule, mixxxMacModule
-from bin.Modules import icecastModule
+    from bin.modules.mac import itunesMacModule, decibelModule, swinsianModule, spotifyMacModule, voxModule, cogModule, embraceModule, mixxxMacModule
+from bin.modules import icecastModule
 
 
 
@@ -62,7 +62,7 @@ from bin.Modules import icecastModule
 #
 ###############################################################
 
-class NowPlayingDataModel:
+class NowPlayingData:
 
     def __init__(self):
         
@@ -83,7 +83,7 @@ class NowPlayingDataModel:
         self.PreviousPlaybackStatus = ""
         self.CurrentMood =""
         self.PreviousMood = ""
-        self.BackgroundImage = ""
+        self.BackgroundPath = ""
         self.RotateBackground = ""
         self.RotateTimer = []
         self.DisplayRows = []
@@ -92,8 +92,9 @@ class NowPlayingDataModel:
         self.DisplaySettings = {}
 
         self.convDict = dict()
-        
-    def ExtractPlaylistInfo(self, currentSettings):
+
+
+    def readData(self, currentSettings):
         logging.debug("Start updating data... " + time.strftime("%H:%M:%S"))
         # Save previous state
         self.PreviousPlaybackStatus = self.PlaybackStatus
@@ -105,7 +106,7 @@ class NowPlayingDataModel:
             self.currentPlaylist = []
             self.LastRead = SongObject()
         # except Exception as e:
-        #     logging.warning("NowPlayingDataModel.ExtractPlaylistInfo(deepcopy):")
+        #     logging.warning("NowPlayingData.ExtractPlaylistInfo(deepcopy):")
         #     logging.warning(e)
         #     self.LastRead = SongObject()
 
@@ -197,13 +198,13 @@ class NowPlayingDataModel:
 
         return self
 
-###############################################################
-#
-# APPLY RULES
-#
-###############################################################
-
-    def processInformation(self, currentSettings):
+    ###############################################################
+    #
+    # APPLY RULES
+    # Create display strings
+    #
+    ###############################################################
+    def processData(self, currentSettings):
         for i in range(0, len(self.currentPlaylist)):
             self.currentPlaylist[i].applySongRules(currentSettings._rules)
 
@@ -246,13 +247,11 @@ class NowPlayingDataModel:
                 self.TillNextCortinaCount = self.TillNextCortinaCount + 1
 
 
-###############################################################
-#
-# MOOD RULES - apply only to current song
-#
-###############################################################
-
-        
+        ###############################################################
+        #
+        # MOOD RULES - apply only to current song
+        #
+        ###############################################################
         if self.currentPlaylist and len(self.currentPlaylist) >= 1:
             currentSong = self.currentPlaylist[0]
         else:
@@ -290,7 +289,7 @@ class NowPlayingDataModel:
             self.CurrentMood = currentRule['Name']
             self.DisplaySettings = currentRule['Display']
             appPath = getApplicationPath()
-            self.BackgroundImage = os.path.join(appPath, currentRule['Background'])
+            self.BackgroundPath = os.path.join(appPath, currentRule['Background'])
             self.RotateBackground = currentRule['RotateBackground']
             self.RotateTimer = currentRule['RotateTimer']
         else:
@@ -298,16 +297,16 @@ class NowPlayingDataModel:
             self.CurrentMood = defaultMood['Name']
             self.DisplaySettings = defaultMood['Display']
             appPath = getApplicationPath()
-            self.BackgroundImage = os.path.join(appPath, defaultMood['Background'])
+            self.BackgroundPath = os.path.join(appPath, defaultMood['Background'])
             self.RotateBackground = defaultMood['RotateBackground']
             self.RotateTimer = defaultMood['RotateTimer']
 
 
-###############################################################
-#
-# Create Display Strings
-#
-###############################################################
+        ###############################################################
+        #
+        # Create Display Strings
+        #
+        ###############################################################
 
         # The display lines
         for i in range(0, len(self.DisplaySettings)):

@@ -75,15 +75,16 @@ print(beamSettings.mainFrameTitle + " logging to '" + logPath + "' Level " + bea
 logging.debug("Home dir: " + os.path.expanduser("~"))
 logging.debug("App dir: " + getApplicationPath())
 
+
 ########################################################
 # Start the main window
 ########################################################
-# top = beamMainFrame()       # Creates the main frame
+# mainFrame = beamMainFrame()       # Creates the main frame
 # Main Window now with preferences and preview
-top = MainFrame()       # Creates the main frame
+mainFrame = MainFrame()       # Creates the main frame
 
 # __init__() starts timer for updating, transition, first updateData()
-top.Show()                  # Shows the main frame
+mainFrame.Show()                  # Shows the main frame
 
 ########################################################
 # Start the main loop

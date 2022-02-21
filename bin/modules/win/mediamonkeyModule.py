@@ -32,7 +32,7 @@ try:
 except ImportError:
 	pass
 from copy import deepcopy
-from bin.Modules.Win.winutils import applicationrunning
+from bin.modules.win.winutils import applicationrunning
 
 ###############################################################
 #

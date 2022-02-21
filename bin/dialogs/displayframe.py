@@ -27,8 +27,6 @@
 import wx.html
 import wx.lib.delayedresult
 from bin.beamsettings import *
-# from bin.beamutils import getApplicationPath
-from bin.nowplayingdatamodel import *
 
 
 ##################################################
@@ -36,22 +34,23 @@ from bin.nowplayingdatamodel import *
 ##################################################
 
 class DisplayFrame(wx.Frame):
+
     # Called by Beam.py
-    def __init__(self, parent, BeamSettings, nowPlayingDataModel):
+    def __init__(self, displayData):
 
         wx.Frame.__init__(self, None, title="", pos=(200,200), size=(800,600))
+
+        # !!! Display to be moved to a panel
 
         ###################
         # CLASS VARIABLES #
         ###################
-        self.BeamSettings = BeamSettings
+        # self.BeamSettings = BeamSettings
         # Do not use parent for threading
-        self.mainFrame = parent
-        self.nowPlayingDataModel = nowPlayingDataModel
+        self.displayData = displayData
+        self.nowPlayingData = displayData.nowPlayingData
 
         self.SetDoubleBuffered(True)
-
-        self.nowPlayingDataModel = nowPlayingDataModel
 
         # Events.
         self.Bind(wx.EVT_CLOSE, self.OnClose)
@@ -64,7 +63,7 @@ class DisplayFrame(wx.Frame):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
-    ########################## END FRAME INITIALIZATION #########################
+        ########################## END FRAME INITIALIZATION #########################
 
 
 ########################################################
@@ -85,8 +84,7 @@ class DisplayFrame(wx.Frame):
     #
     def OnClose(self, event):
         try:
-            self.mainFrame.displayFrame = None
-            self.Destroy()
+            self.Hide()
         except Exception as e:
             logging.error(e, exc_info=True)
 
@@ -103,7 +101,7 @@ class DisplayFrame(wx.Frame):
 # Painter
 ########################################################
     def OnSize(self, size):
-        self.mainFrame.triggerResizeBackground = True
+        self.displayData.triggerResizeBackground = True
         self.Refresh()
 
     def OnEraseBackground(self, evt):
@@ -127,27 +125,27 @@ class DisplayFrame(wx.Frame):
 
         try:
             # Image = wx.ImageFromBitmap(self.backgroundImage)
-            Image = wx.Bitmap.ConvertToImage(self.mainFrame.backgroundImage)
+            Image = wx.Bitmap.ConvertToImage(self.displayData.backgroundImage)
             #resize current background picture - currently used at main frame resizing
 
             aspectRatioWindow = float(cliHeight) / float(cliWidth)
-            aspectRatioBackground = float(self.mainFrame.BackgroundImageHeight) / float(self.mainFrame.BackgroundImageWidth)
+            aspectRatioBackground = float(self.displayData.BackgroundImageHeight) / float(self.displayData.BackgroundImageWidth)
             if aspectRatioWindow >= aspectRatioBackground:
                 # Window is too tall, scale to height
-                Image = Image.Scale(cliHeight*self.mainFrame.BackgroundImageWidth / self.mainFrame.BackgroundImageHeight, cliHeight, wx.IMAGE_QUALITY_NORMAL)
+                Image = Image.Scale(cliHeight*self.displayData.BackgroundImageWidth / self.displayData.BackgroundImageHeight, cliHeight, wx.IMAGE_QUALITY_NORMAL)
             else:
                 # Window is too wide, scale to width
-                Image = Image.Scale(cliWidth, cliWidth*self.mainFrame.BackgroundImageHeight / self.mainFrame.BackgroundImageWidth, wx.IMAGE_QUALITY_NORMAL)
+                Image = Image.Scale(cliWidth, cliWidth*self.displayData.BackgroundImageHeight / self.displayData.BackgroundImageWidth, wx.IMAGE_QUALITY_NORMAL)
             # Fader
-            if self.mainFrame.alpha <1 or self.mainFrame.red <1 or self.mainFrame.blue <1 or self.mainFrame.green <1:
-                Image = Image.AdjustChannels(self.mainFrame.red, self.mainFrame.green, self.mainFrame.blue, self.mainFrame.alpha)
+            if self.displayData.alpha <1 or self.displayData.red <1 or self.displayData.blue <1 or self.displayData.green <1:
+                Image = Image.AdjustChannels(self.displayData.red, self.displayData.green, self.displayData.blue, self.displayData.alpha)
             
-            self.mainFrame.triggerResizeBackground = False
+            self.displayData.triggerResizeBackground = False
             # self.modifiedBitmap = wx.BitmapFromImage(Image)
             self.modifiedBitmap = wx.Bitmap(Image)
         except Exception as e:
             logging.info(e, exc_info=True)
-            self.modifiedBitmap = self.mainFrame.backgroundImage
+            self.modifiedBitmap = self.displayData.backgroundImage
             pass
 
             
@@ -169,7 +167,7 @@ class DisplayFrame(wx.Frame):
         # filePath = Path(fileUrl[8:])
         # filePath = self.currentDisplayRows[j]
 
-        Settings = self.mainFrame.currentDisplaySettings[j]
+        Settings = self.displayData.currentDisplaySettings[j]
 
         # Get (text) size and position
         size = Settings['Size']*cliHeight/100
@@ -187,9 +185,9 @@ class DisplayFrame(wx.Frame):
 
 
 
-        if self.mainFrame.currentCoverArtImage:
+        if self.displayData.currentCoverArtImage:
             try:
-                image = self.mainFrame.currentCoverArtImage.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
+                image = self.displayData.currentCoverArtImage.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
                 bitmap = wx.Bitmap(image)
                 dc.DrawBitmap(bitmap, horizontalPosition, verticalPosition)
             except Exception as e:
@@ -211,8 +209,8 @@ class DisplayFrame(wx.Frame):
     def drawTextItem(self, dc, cliWidth, cliHeight, j):
 
         # Text and settings
-        text = self.mainFrame.currentDisplayRows[j]
-        Settings = self.mainFrame.currentDisplaySettings[j]
+        text = self.displayData.currentDisplayRows[j]
+        Settings = self.displayData.currentDisplaySettings[j]
 
         # Get text size and position
         Size = Settings['Size'] * cliHeight / 100
@@ -315,7 +313,7 @@ class DisplayFrame(wx.Frame):
 
     def drawItems(self, dc):
 
-        if self.mainFrame.textsAreVisible == False:
+        if self.displayData.textsAreVisible == False:
             return
 
         cliWidth, cliHeight = self.GetClientSize()
@@ -323,14 +321,14 @@ class DisplayFrame(wx.Frame):
             return
 
         # Draw images
-        for j in range(0, len(self.mainFrame.currentDisplaySettings)):
-            field = self.mainFrame.currentDisplaySettings[j]["Field"]
+        for j in range(0, len(self.displayData.currentDisplaySettings)):
+            field = self.displayData.currentDisplaySettings[j]["Field"]
             if field.strip() == "%CoverArt":
                 self.drawCoverArt(dc, cliWidth, cliHeight, j)
 
         # Draw text after/over image
-        for j in range(0, len(self.mainFrame.currentDisplaySettings)):
-            field = self.mainFrame.currentDisplaySettings[j]["Field"]
+        for j in range(0, len(self.displayData.currentDisplaySettings)):
+            field = self.displayData.currentDisplaySettings[j]["Field"]
             if field.strip() != "%CoverArt":
                 self.drawTextItem(dc, cliWidth, cliHeight, j)
 

@@ -33,7 +33,7 @@ try:
     import win32com.client
 except ImportError:
     pass
-from bin.Modules.Win.winutils import applicationrunning
+from bin.modules.win.winutils import applicationrunning
 
 ###############################################################
 #

@@ -29,7 +29,7 @@ import wx.lib.delayedresult
 from random import randint
 from bin.beamsettings import *
 # from bin.beamutils import getApplicationPath
-from bin.nowplayingdatamodel import *
+from bin.nowplayingdata import *
 from bin.dialogs.preferences import Preferences
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
@@ -222,7 +222,7 @@ class beamMainFrame(wx.Frame):
 ########################################################
 
 ########################################################
-# Update data - Executed from top to bottom with exception if preferences changed
+# Update data - Executed from mainFrame to bottom with exception if preferences changed
 ########################################################
 
     # READ FROM MEDIA PLAYER
@@ -245,7 +245,7 @@ class beamMainFrame(wx.Frame):
         # MEDIA READER WORKER
     def extractDataThread(self):
         try:
-            self.nowPlayingDataModel.ExtractPlaylistInfo(beamSettings)
+            self.nowPlayingDataModel.readData(beamSettings)
         except Exception as e:
             logging.error(e, exc_info=True)
             pass
@@ -272,7 +272,7 @@ class beamMainFrame(wx.Frame):
         # PROCESS DATA WORKER
     def processDataThread(self):
         try:
-            self.nowPlayingDataModel.processInformation(beamSettings)
+            self.nowPlayingDataModel.processData(beamSettings)
         except Exception as e:
             logging.error(e, exc_info=True)
             pass
@@ -292,7 +292,7 @@ class beamMainFrame(wx.Frame):
             self.SetStatusText("Player: "+self.currentPlaybackStatus+" - Mood: "+self.currentMood)
 
             if (self.previousMood != self.currentMood):
-                self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
+                self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundPath
                 self.startTransition('MoodChange')
             else:
                 self.startTransition('SongChange')
@@ -801,7 +801,7 @@ class beamMainFrame(wx.Frame):
                         self._currentBackgroundPath = os.path.join(path,backgrounds[0])
         # Stop the rotation
         if self.RotateBackground == 'no':
-            self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundImage
+            self._currentBackgroundPath = self.nowPlayingDataModel.BackgroundPath
             try:
                 self.RotateBackgroundTimer.Stop()
                 return
