@@ -8,7 +8,7 @@
   "MoodTransition": "Fade to black",
   "MoodTransitionSpeed": "1500",
   "Logging": "False",
-  "LogPath": "C:\\Users\\Martin\\BeamLog.txt",
+  "LogPath": "BeamLog.txt",
   "LogLevel": "Debug",
   "ShowStatusbar": "True",
   "ConfigVersion": "0.4.4.0",
