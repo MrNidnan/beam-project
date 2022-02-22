@@ -42,39 +42,43 @@ def run(maxtandalength, lastlplaylist, sqlitePath):
     # lastplaylist gets updated only after next data processing
     # so local lastMixxxPlaylist gets used instead here
 
-    sqliteconn = sqlite3.connect(sqlitePath)
+    sqliteconn = None
     try:
-        playlist = getplaylist(sqliteconn, maxtandalength)
+        sqliteconn = sqlite3.connect(sqlitePath)
+        try:
+            playlist = getplaylist(sqliteconn, maxtandalength)
 
-        # if (not the first round) and (playlist changed)
-        if run.lastMixxxPlaylist and (playlist != run.lastMixxxPlaylist):
-            if not run.currentmod:
-                # check for modification without switch
-                if (len(playlist) != len(run.lastMixxxPlaylist)) or (playlist[0] != run.lastMixxxPlaylist[1]):
-                    run.currentmod = True
-                    # remember the manually modified playlist to detect further switchover
-                    logging.info("Auto-DJ modified")
+            # if (not the first round) and (playlist changed)
+            if run.lastMixxxPlaylist and (playlist != run.lastMixxxPlaylist):
+                if not run.currentmod:
+                    # check for modification without switch
+                    if (len(playlist) != len(run.lastMixxxPlaylist)) or (playlist[0] != run.lastMixxxPlaylist[1]):
+                        run.currentmod = True
+                        # remember the manually modified playlist to detect further switchover
+                        logging.info("Auto-DJ modified")
+                else:
+                    # check for correction by a switchover (or skip)
+                    if playlist[0] == run.lastMixxxPlaylist[1]:
+                        # next switchover occured
+                        run.currentmod = False
+                        logging.info("Auto-DJ correced")
+
+            if run.currentmod:
+                # skip this round and return last playlist instead of the modifed
+                playlist = run.lastMixxxPlaylist
+                playback_status = 'Paused'
             else:
-                # check for correction by a switchover (or skip)
-                if playlist[0] == run.lastMixxxPlaylist[1]:
-                    # next switchover occured
-                    run.currentmod = False
-                    logging.info("Auto-DJ correced")
+                playback_status = 'Playing'
 
-        if run.currentmod:
-            # skip this round and return last playlist instead of the modifed
-            playlist = run.lastMixxxPlaylist
-            playback_status = 'Paused'
-        else:
-            playback_status = 'Playing'
+            # remember the last playlist for the next round to detect modifications or switchover
+            run.lastMixxxPlaylist = playlist
 
-        # remember the last playlist for the next round to detect modifications or switchover
-        run.lastMixxxPlaylist = playlist
-
-    finally:
-        sqliteconn.close()
-
-    return playlist, playback_status
+            return playlist, playback_status
+        finally:
+            sqliteconn.close()
+    except Exception as e:
+        # logging.error(e, exc_info=True)
+        return [], "Not installed"
 
 
 # Static for skipping refresh until next normal switch when the playlist got modified by hand
