@@ -8,10 +8,10 @@
   "MoodTransition": "Fade to black",
   "MoodTransitionSpeed": "1500",
   "Logging": "False",
-  "LogPath": "BeamLog.txt",
+  "LogPath": "C:\\Users\\Martin\\BeamLog.txt",
   "LogLevel": "Debug",
   "ShowStatusbar": "True",
-  "ConfigVersion": "0.4.4.0",
+  "ConfigVersion": "0.4.4.3",
   "AllModules": [
     {
       "Modules": [
@@ -116,22 +116,6 @@
       "RotateBackground": "no",
       "RotateTimer": 1200,
       "Display": [
-        {
-          "Field": "%CoverArt",
-          "Font": "",
-          "Style": "Normal",
-          "Weight": "Bold",
-          "Size": 25,
-          "FontColor": "(255, 255, 255, 255)",
-          "HideControl": "",
-          "Position": [
-            5,
-            2
-          ],
-          "Alignment": "Right",
-          "Active": "yes",
-          "TextFlow": "Cut"
-        },
         {
           "Field": "\u266a Previous song: %PreviousTitle",
           "Style": "Italic",
