@@ -24,7 +24,7 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-from bin.Modules.Lin.dbusutils import getDbusPlayerValue, getDbusSessionStatus
+from bin.modules.lin.dbusutils import getDbusPlayerValue, getDbusSessionStatus
 from bin.songclass import SongObject
 
 def run(MaxTandaLength):

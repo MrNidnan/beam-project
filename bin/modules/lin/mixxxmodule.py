@@ -27,7 +27,7 @@
 
 import os
 import logging
-from bin.Modules import mixxxModule
+from bin.modules import mixxxmodule
 
 
 def run(maxtandalength, lastplaylist):
