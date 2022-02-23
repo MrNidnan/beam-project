@@ -28,7 +28,7 @@ import logging
 import platform, os, sys
 import time
 
-from bin.beamutils import getApplicationPath
+from bin.beamutils import getBeamHomePath
 from bin.mutagenutils import readCoverArtImage
 from bin.songclass import SongObject
 from copy import deepcopy
@@ -186,7 +186,7 @@ class NowPlayingData:
             self.rawPlaylist = deepcopy(self.currentPlaylist)
             self.playlistChanged  = True
 
-        logging.info("Data extracted from " + currentSettings._moduleSelected  + ": " + self.StatusMessage + ", " + time.strftime("%H:%M:%S"))
+        logging.info("Data extracted from " + currentSettings._moduleSelected  + ": " + self.StatusMessage)
         if self.PreviousPlaybackStatus == "":
             self.PreviousPlaybackStatus = self.PlaybackStatus
 
@@ -282,7 +282,7 @@ class NowPlayingData:
             currentRule = currentSettings._moods[applyMood]
             self.CurrentMood = currentRule['Name']
             self.DisplaySettings = currentRule['Display']
-            appPath = getApplicationPath()
+            appPath = getBeamHomePath()
             self.BackgroundPath = os.path.join(appPath, currentRule['Background'])
             self.RotateBackground = currentRule['RotateBackground']
             self.RotateTimer = currentRule['RotateTimer']
@@ -290,7 +290,7 @@ class NowPlayingData:
             defaultMood = currentSettings._moods[0]
             self.CurrentMood = defaultMood['Name']
             self.DisplaySettings = defaultMood['Display']
-            appPath = getApplicationPath()
+            appPath = getBeamHomePath()
             self.BackgroundPath = os.path.join(appPath, defaultMood['Background'])
             self.RotateBackground = defaultMood['RotateBackground']
             self.RotateTimer = defaultMood['RotateTimer']
@@ -345,7 +345,7 @@ class NowPlayingData:
                     # None if none found
                     break
 
-        logging.info("...data filtered: " + time.strftime("%H:%M:%S"))
+        logging.info("...data got filtered: ")
     
 
 ########################################################

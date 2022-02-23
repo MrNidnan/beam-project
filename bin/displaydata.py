@@ -28,7 +28,7 @@
 import wx.lib.delayedresult
 
 from bin.beamsettings import *
-from bin.beamutils import getApplicationPath
+from bin.beamutils import getBeamHomePath
 from bin.nowplayingdata import *
 from random import randint
 
@@ -252,7 +252,7 @@ class DisplayData():
             self.alpha = float(0.0)
             # Load the background image
             if self._currentBackgroundPath is not None:
-                appPath = getApplicationPath()
+                appPath = getBeamHomePath()
                 self.backgroundImage = wx.Bitmap(os.path.join(appPath, self._currentBackgroundPath))
                 self.modifiedBitmap = self._currentBackgroundPath
                 self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
@@ -278,7 +278,7 @@ class DisplayData():
 
             else:
                 # Load the new background image
-                appPath = getApplicationPath()
+                appPath = getBeamHomePath()
                 self.backgroundImage = wx.Bitmap(os.path.join(appPath, self._currentBackgroundPath))
                 self.modifiedBitmap = self._currentBackgroundPath
                 self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
@@ -304,7 +304,7 @@ class DisplayData():
     def switchBackground(self):
 
         self.triggerResizeBackground = True
-        appPath = getApplicationPath()
+        appPath = getBeamHomePath()
         self.backgroundImage = wx.Bitmap(os.path.join(appPath, self._currentBackgroundPath))
         self.modifiedBitmap = self._currentBackgroundPath
         self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()

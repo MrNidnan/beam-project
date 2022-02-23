@@ -26,17 +26,57 @@
 # This Python file uses the following encoding: utf-8
 import os
 import sys
+import logging
 
 
-def getApplicationPath():
+#
+# Linux ~, $HOME
+# Windows %HOMEPATH%
+#
+def getUserHomePath():
+    userhomepath = os.path.expanduser("~")
+
+    return userhomepath
+
+
+#
+# directory where beam got started from
+#
+def getBeamHomePath():
     if getattr(sys, 'frozen', False):
         # PyInstaller one-file
         # application_path = os.path.dirname(sys.executable)
-        appPath = sys._MEIPASS
+        apphomepath = sys._MEIPASS
         # print("Path PyInstaller: " + application_path)
     else:
-        appPath = os.getcwd()
+        apphomepath = os.getcwd()
         # print("Path Python: " + appPath)
 
     # print(os.listdir(appPath))
-    return appPath
+    return apphomepath
+
+#
+# config directory in user ~/.beam/"
+def getBeamConfigPath():
+    userhomepath = getUserHomePath()
+    beamconfigpath = os.path.join(os.path.expanduser("~"), ".beam")
+
+    return beamconfigpath
+
+def getLogLevel(loglevelname):
+    loglevel = None
+    try:
+        logLevelDict = {
+            'Debug': logging.DEBUG,
+            'Info': logging.INFO,
+            'Warning': logging.WARNING,
+            'Error': logging.ERROR,
+            'Critical': logging.CRITICAL
+        }
+        # set now loglevelname from configfile
+        loglevel = logLevelDict[loglevelname]
+    except Exception as e:
+        logger.error("beam: unknown loglevelname: '" + loglevelname + "' using Debug'")
+        loglevel = logging.DEBUG
+
+    return loglevel

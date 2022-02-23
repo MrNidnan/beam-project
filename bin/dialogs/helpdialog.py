@@ -32,7 +32,7 @@ import os, sys
 ##################################################
 # HELP DIALOG
 ##################################################
-from bin.beamutils import getApplicationPath
+from bin.beamutils import getBeamHomePath
 
 
 class HelpDialog(wx.Dialog):
@@ -40,7 +40,7 @@ class HelpDialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, title="Help", size=(600,600))
         html = wxHTML(self)
 
-        appPath = getApplicationPath()
+        appPath = getBeamHomePath()
         filename = os.path.join(appPath, 'docs', 'Help.html')
         fHandler = open(filename, 'r')
 

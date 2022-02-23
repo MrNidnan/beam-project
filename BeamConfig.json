@@ -7,9 +7,9 @@
   "Updtime": 6311,
   "MoodTransition": "Fade to black",
   "MoodTransitionSpeed": "1500",
-  "Logging": "False",
-  "LogPath": "C:\\Users\\Martin\\BeamLog.txt",
-  "LogLevel": "Debug",
+  "Logging": "True",
+  "LogPath": "",
+  "LogLevel": "Warning",
   "ShowStatusbar": "True",
   "ConfigVersion": "0.4.4.3",
   "AllModules": [

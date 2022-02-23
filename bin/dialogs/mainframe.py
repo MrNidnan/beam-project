@@ -51,7 +51,7 @@ class MainFrame(wx.Frame):
     def __init__(self):
         # Size and position of this main window
         # beamsettings loaded in beam.py
-        wx.Frame.__init__(self, None, title=beamSettings.mainFrameTitle + " V" + beamSettings.beamVersion, pos=(150,150), size=(800,600))
+        wx.Frame.__init__(self, None, title=beamSettings.mainframetitle + " V" + beamSettings.beamVersion, pos=(150, 150), size=(800, 600))
 
         # only required for display
         # self.SetDoubleBuffered(True)
@@ -63,7 +63,7 @@ class MainFrame(wx.Frame):
         self.displayFrame = DisplayFrame(self.displayData)
 
         # Set Icon
-        appPath = getApplicationPath()
+        appPath = getBeamHomePath()
         iconFilename = os.path.join(appPath,'resources','icons','icon_square','icon_square_256px.png')
         self.favicon = wx.Icon(iconFilename, wx.BITMAP_TYPE_ANY, 256, 256)
         self.SetIcon(self.favicon)
@@ -191,7 +191,7 @@ class MainFrame(wx.Frame):
     def onApply(self, event):
         try:
             # Save settings
-            beamSettings.SaveConfig(beamSettings.defaultConfigFileName)
+            beamSettings.saveConfig(beamSettings.configfilename)
             # Reload settings in main-window
             self.updateSettings()
         except Exception as e:
@@ -284,7 +284,7 @@ class ListBookMenu(wx.Listbook):
         imagelist = wx.ImageList(32,32)
         urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         for urls in urllist:
-            appPath = getApplicationPath()
+            appPath = getBeamHomePath()
             # /resources/icons/preferences
             bmp = wx.Bitmap(os.path.join(appPath, 'resources', 'icons', 'preferences', urls), wx.BITMAP_TYPE_PNG)
             imagelist.Add(bmp)

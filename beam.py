@@ -24,58 +24,63 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import logging
+from logging import *
 
+from bin.beamutils import *
+
+# initializes public variables of beamsettings.beamSettings
+# from stringResuorces by BeamSettings() __init__
 from bin.beamsettings import *
-# from bin.dialogs.beammainframe import beamMainFrame
+
 from bin.dialogs.mainframe import MainFrame
 
+logformat = "%(asctime)s : %(levelname)s : %(message)s"
+dateformat = "%Y-%m-%d %H:%M:%S"
+loglevel = getLogLevel(beamSettings.loglevel)
+logging.basicConfig(format=logformat, datefmt=dateformat, level=loglevel, stream=sys.stdout)
+# logging and stringResources default is WARNING
+rootLogger = logging.getLogger()
+# for further logging configuration
 
 app = wx.App(False)  # Error messages go to terminal
 
-########################################################
-# Load Settings (global object)
-########################################################
-beamSettings.LoadConfig(beamSettings.defaultConfigFileName)
-
-########################################################
-# Select logging method (terminal or file)
-########################################################
-
-logPath = beamSettings._logPath
-logFormat = '%(asctime)s : %(levelname)s : %(message)s'
-
+# apply
+# BeamConfig.json
 try:
-    logLevelDict = {
-        'Debug': logging.DEBUG,
-        'Info': logging.INFO,
-        'Warning': logging.WARNING,
-        'Error': logging.ERROR,
-        'Critical': logging.CRITICAL
-    }
-
-    logLevel = logLevelDict[beamSettings._logLevel]
+    # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
+    beamSettings.loadConfig()
 except Exception as e:
-    print(e)
-    logLevel = logging.DEBUG
-    pass
+    logger.error(e)
 
+# now BeamConfig.json is read, from config or home dir
+loglevel = getLogLevel(beamSettings._loglevel)
+rootLogger.setLevel(loglevel)
 
-# set up logging to file
-logging.basicConfig(format=logFormat, level=logLevel , filename=logPath, filemode='w')
-
-# set up logging to console also
-console = logging.StreamHandler()
-console.setLevel(logLevel)
-logging.getLogger("").addHandler(console)
+logpath = beamSettings._logPath
+if os.path.isdir(logpath):
+    # set up additional logging to file
+    logfilepath = os.path.join(logpath, beamSettings.logfilename)
+    fileHandler = logging.FileHandler(logfilepath,  mode='w')
+    # w=overwrwrite
+    logFormatter = logging.Formatter(logformat, dateformat)
+    fileHandler.setFormatter(logFormatter)
+    # fileHandler.setLevel(loglevel)
+    # level set by rootLogger
+    rootLogger.addHandler(fileHandler)
+else:
+    logging.warning("Beam: <" + logpath + "> does not exist, logging to stdout only")
+    # no logging at the first call because it reads the logpath
 
 # if beamSettings._logging == 'True':
 #    sys.stdout = open(beamSettings._logPath,"w")
 
-print(beamSettings.mainFrameTitle + " logging to '" + logPath + "' Level " + beamSettings._logLevel)
-logging.debug("Home dir: " + os.path.expanduser("~"))
-logging.debug("App dir: " + getApplicationPath())
+logging.info("Beam started")
+logging.info("Beam home dir: '" + getBeamHomePath() + "'")
+logging.info("Beam config dir: " + getBeamConfigPath() + "'")
+logging.info("Logpath: '" + logpath + "'")
+logging.info("Loglevel: '" + beamSettings._loglevel + "'")
 
-logging.info("App started")
 
 ########################################################
 # Start the main window
@@ -92,5 +97,4 @@ mainFrame.Show()                  # Shows the main frame
 ########################################################
 
 app.MainLoop()              # Start the main loop which handles events
-
 
