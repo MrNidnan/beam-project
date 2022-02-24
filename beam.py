@@ -51,7 +51,7 @@ try:
     # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
     beamSettings.loadConfig()
 except Exception as e:
-    logger.error(e)
+    logging.error(e)
 
 # now BeamConfig.json is read, from config or home dir
 loglevel = getLogLevel(beamSettings._loglevel)

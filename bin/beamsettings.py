@@ -28,14 +28,7 @@
 import json, wx, platform
 import logging
 import sys, os
-
-
-###############################################################
-#
-# BeamSettings
-#
-###############################################################
-from bin.beamutils import getBeamHomePath, getBeamConfigPath
+from bin.beamutils import getUserHomePath, getBeamHomePath, getBeamConfigPath
 
 
 #
@@ -132,6 +125,11 @@ class BeamSettings:
         # configfilename="BeamConfig.json"
 
         try:
+            oldconfigfile = os.path.join(getUserHomePath(), self.configfilename)
+            if os.path.isfile(oldconfigfile):
+                logging.warning(
+                    "BeamSettings.loadConfig(): configfile in old directory, ignored: '" + oldconfigfile + "'")
+
             beamconfigfile = os.path.join(getBeamConfigPath(), self.configfilename)
             if not os.path.isfile(beamconfigfile):
                 # if the file does not exist use default from beam home
