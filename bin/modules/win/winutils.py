@@ -45,9 +45,10 @@ def applicationrunning(appname):
         # logging.debug("proc: " + line)
         if appname in line:
             proc.kill()
-            # logging.debug("winutils.AppplicationRunning() = True");
             return True
     proc.kill()
 
-    logging.info("winutils.AppplicationRunning(" + appname + ") = False")
+    # if not returned successfully above
+    logging.warning("winutils.appplicationRunning(" + appname + ") = False")
+
     return False

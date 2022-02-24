@@ -1,8 +1,8 @@
 {
   "comment": "This JSON files contains the string resources to be used by Beam",
-  "version": "0.4.4.3",
-  "defaultconfigfilename": "BeamConfig.json",
-  "defaultlogfilename": "BeamLog.txt",
+  "version": "0.4.4.5",
+  "defaultconfigfilename": "beamconfig.json",
+  "defaultlogfilename": "beamlog.txt",
   "defaultloglevel": "Warning",
   "mainframetitle": "Beam",
   "aboutdialogdescription": "Beam is an advanced live media extractor for Unix, Windows and Mac operating system. Features include a scalable display for TV or projector, customisable backgrounds and text, possibility to detect cortinas and display the next tanda.",

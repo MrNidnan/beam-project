@@ -42,7 +42,7 @@ def ShowAboutDialog(self):
     info = wx.adv.AboutDialogInfo()
     info.SetIcon(self.favicon)
     info.SetName(beamSettings.mainframetitle)
-    info.SetVersion(beamSettings.beamVersion)
+    info.SetVersion(beamSettings.beamversion)
     info.SetDescription(textwrap.fill(beamSettings.aboutdialogdescription, 70))
     info.SetLicence(textwrap.fill(beamSettings.aboutdialoglicense, 70))
     info.SetCopyright(beamSettings.aboutcopyright)

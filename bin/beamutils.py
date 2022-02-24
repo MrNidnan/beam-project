@@ -55,6 +55,9 @@ def getBeamHomePath():
     # print(os.listdir(appPath))
     return apphomepath
 
+def getBeamResourcesPath():
+   return os.path.join(getBeamHomePath(), "resources")
+
 #
 # config directory in user ~/.beam/"
 def getBeamConfigPath():
@@ -76,7 +79,7 @@ def getLogLevel(loglevelname):
         # set now loglevelname from configfile
         loglevel = logLevelDict[loglevelname]
     except Exception as e:
-        logger.error("beam: unknown loglevelname: '" + loglevelname + "' using Debug'")
+        logging.error("beam: unknown loglevelname: '" + loglevelname + "' using Debug'")
         loglevel = logging.DEBUG
 
     return loglevel

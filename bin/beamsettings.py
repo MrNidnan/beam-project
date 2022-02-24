@@ -28,7 +28,7 @@
 import json, wx, platform
 import logging
 import sys, os
-from bin.beamutils import getUserHomePath, getBeamHomePath, getBeamConfigPath
+from bin.beamutils import getUserHomePath, getBeamHomePath, getBeamResourcesPath, getBeamConfigPath
 
 
 #
@@ -72,7 +72,7 @@ class BeamSettings:
     aboutwebsite = ''
     aboutdeveloper = ''
     aboutartist = ''
-    beamVersion = ''
+    beamversion = ''
 
 ###############################################################
 #
@@ -82,6 +82,7 @@ class BeamSettings:
     def __init__(self):
         # protected variables
         # get initialized empty
+        # later on set from config file
         self._moduleSelected    = ''
         self._maxTandaLength    = ''
         self._updateTimer       = ''
@@ -93,12 +94,12 @@ class BeamSettings:
         self._showStatusbar        = ''
         self._allModulesSettings    = ''
         self._rules                 = ''
-        self._beamVersion = BeamSettings.beamVersion
+        self._configversion = ''
 
-        self.applicationpath = getBeamHomePath()
-        stringsfile = os.path.join(self.applicationpath, 'resources', 'text', 'strings.txt')
-        # Linux ./resources/text/strings.txt
-        # Windows .\resources\text\strings.txt
+        # self.applicationpath = getBeamHomePath()
+        stringsfile = os.path.join(getBeamResourcesPath(), 'json', 'strings.json')
+        # Linux ./resources/text/strings.json
+        # Windows .\resources\text\strings.json
         # strings resources in simple JSON format
         self.stringResources = json.load(open(stringsfile, "r"))
 
@@ -113,7 +114,7 @@ class BeamSettings:
         self.aboutwebsite = self.stringResources["aboutwebsite"]
         self.aboutdeveloper = self.stringResources["aboutdeveloper"]
         self.aboutartist = self.stringResources["aboutartist"]
-        self.beamVersion = self.stringResources["version"]
+        self.beamversion = self.stringResources["version"]
 
 
     ###############################################################
@@ -122,10 +123,11 @@ class BeamSettings:
     #
     ###############################################################
     def loadConfig(self):
-        # configfilename="BeamConfig.json"
+        # configfilename="beamconfig.json"
 
         try:
-            oldconfigfile = os.path.join(getUserHomePath(), self.configfilename)
+            # with capital letters before V0.4.4.5
+            oldconfigfile = os.path.join(getUserHomePath(), "BeamConfig.json")
             if os.path.isfile(oldconfigfile):
                 logging.warning(
                     "BeamSettings.loadConfig(): configfile in old directory, ignored: '" + oldconfigfile + "'")
@@ -135,16 +137,22 @@ class BeamSettings:
                 # if the file does not exist use default from beam home
                 logging.warning("BeamSettings.loadConfig(): configfile does not exist '" + beamconfigfile + "'")
                 beamconfigpath = getBeamHomePath()
-                beamconfigfile = os.path.join(beamconfigpath, self.configfilename)
+                beamconfigfile = os.path.join(getBeamResourcesPath(), "json", self.configfilename)
                 logging.warning("BeamSettings.loadConfig(): loading default configfile '" + beamconfigfile + "'")
                 # Use original configfile which is the settingsfile below
-            ConfigData = self.openSetting(beamconfigfile)
+            ConfigData = self.loadConfigFile(beamconfigfile)
 
-            # Also load the original settingsfile from Home into Original
-            beamconfigpath = getBeamHomePath()
-            beamconfigfile = os.path.join(beamconfigpath, self.configfilename)
-            ConfigDataOriginal = self.openSetting(beamconfigfile)
-            # ???
+            # Also load the default configfile
+            defaultconfigpath = getBeamHomePath()
+            defaultconfigfile = os.path.join(getBeamResourcesPath(), "json", self.configfilename)
+            ConfigDataOriginal = self.loadConfigFile(defaultconfigfile)
+
+            beamconfigversion = ConfigData['ConfigVersion'];
+            defaultconfigversion = ConfigDataOriginal['ConfigVersion']
+            if beamconfigversion != defaultconfigversion:
+                logging.error("Default configfile version '" + defaultconfigversion +
+                              "' differs from '" + beamconfigversion + "' in '" + beamconfigfile + "'")
+
             self.readConfig(ConfigData, ConfigDataOriginal)
         except Exception as e:
             logging.error(e)
@@ -168,11 +176,12 @@ class BeamSettings:
         if self._loglevel == '':
             logging.error("BeamConfig.readConfig(): _loglevel is empty")
             self._loglevel = "Warning"
+        self._configversion         = self.extractSetting(ConfigData, ConfigDataOriginal, 'ConfigVersion')
 
         # Dictionaries
-        self._allModulesSettings        = ConfigDataOriginal['AllModules']
-        self._rules                     = self.extractSetting(ConfigData, ConfigDataOriginal, 'Rules')
-        self._moods                     = self.extractSetting(ConfigData, ConfigDataOriginal, 'Moods')
+        self._allModulesSettings    = ConfigDataOriginal['AllModules']
+        self._rules                 = self.extractSetting(ConfigData, ConfigDataOriginal, 'Rules')
+        self._moods                 = self.extractSetting(ConfigData, ConfigDataOriginal, 'Moods')
 
         # Set OS-specific variables
         if platform.system() == 'Linux':
@@ -207,7 +216,7 @@ class BeamSettings:
         return output
 
 
-    def openSetting(self, inputconfigfile):
+    def loadConfigFile(self, inputconfigfile):
 
         ConfigFile = open(inputconfigfile, 'r')
         try:
@@ -230,11 +239,8 @@ class BeamSettings:
             if len(ConfigData['AllModules'][2]['Modules']) == 7: # System: Windows
                 ConfigData['AllModules'][2]['Modules'].append('Icecast')
 
-            # Funktioniert so nicht, muss gegen Default verglichen werden
-            # if not ConfigData['ConfigVersion'] == self._beamVersion:
-                # logging.warning("Configfile version " + ConfigData['ConfigVersion'] + " differs from current " + self._beamVersion )
-                # let the version untouched for beta tests
-                # ConfigData['ConfigVersion'] = self._beamVersion;
+        except Exception as e:
+            logging.error(e)
         finally:
             ConfigFile.close()
 
@@ -262,7 +268,7 @@ class BeamSettings:
             output['LogPath']              = self._logPath
             output['LogLevel']              = self._loglevel
             output['ShowStatusbar']        = self._showStatusbar
-            output['ConfigVersion']        = self._beamVersion
+            output['ConfigVersion']        = self._configversion
 
             # Dictionaries
             output['AllModules']           = self._allModulesSettings
@@ -276,7 +282,7 @@ class BeamSettings:
 
             # Write config file to user ~/.beamconfig/
             beamconfigfile = os.path.join(beamconfigpath, self.configfilename)
-            self.writeSetting(beamconfigfile, output)
+            self.dumpConfigFile(beamconfigfile, output)
             logging.info("BeamSettings.saveConfig(): configfile '" + beamconfigfile + "'")
         except Exception as e:
             logging.error(e)
@@ -284,16 +290,16 @@ class BeamSettings:
         return
 
 
-    def writeSetting(self, outputConfigFile, output):
+    def dumpConfigFile(self, outputConfigFile, output):
 
         beamconfigpath = getBeamConfigPath()
         if not os.path.isdir(beamconfigpath):
-            logging.warning("BeamSettings.writeSetting(): '" + beamconfigpath + "' does not exist, creating it.")
+            logging.warning("BeamSettings.dumpConfigFile(): '" + beamconfigpath + "' does not exist, creating it.")
             os.mkdir(beamconfigpath)
 
         if not os.path.isfile(outputConfigFile):
             # if the file does not exist use default from beam home
-            logging.info("BeamSettings.writeSetting(): configfile does not exist '" + outputConfigFile + "'")
+            logging.info("BeamSettings.dumpConfigFile(): configfile does not exist '" + outputConfigFile + "'")
 
         ConfigFile = open(outputConfigFile, 'w')
         try:

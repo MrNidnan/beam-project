@@ -46,14 +46,14 @@ rootLogger = logging.getLogger()
 app = wx.App(False)  # Error messages go to terminal
 
 # apply
-# BeamConfig.json
+# beamconfig.json
 try:
     # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
     beamSettings.loadConfig()
 except Exception as e:
     logging.error(e)
 
-# now BeamConfig.json is read, from config or home dir
+# now beamconfig.json is read, from config or home dir
 loglevel = getLogLevel(beamSettings._loglevel)
 rootLogger.setLevel(loglevel)
 
@@ -69,7 +69,7 @@ if os.path.isdir(logpath):
     # level set by rootLogger
     rootLogger.addHandler(fileHandler)
 else:
-    logging.warning("Beam: <" + logpath + "> does not exist, logging to stdout only")
+    logging.warning("Beam: Directory <" + logpath + "> does not exist, logging to stdout only")
     # no logging at the first call because it reads the logpath
 
 # if beamSettings._logging == 'True':

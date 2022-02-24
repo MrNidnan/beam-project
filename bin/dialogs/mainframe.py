@@ -51,7 +51,7 @@ class MainFrame(wx.Frame):
     def __init__(self):
         # Size and position of this main window
         # beamsettings loaded in beam.py
-        wx.Frame.__init__(self, None, title=beamSettings.mainframetitle + " V" + beamSettings.beamVersion, pos=(150, 150), size=(800, 600))
+        wx.Frame.__init__(self, None, title=beamSettings.mainframetitle + " V" + beamSettings.beamversion, pos=(150, 150), size=(800, 600))
 
         # only required for display
         # self.SetDoubleBuffered(True)
@@ -74,6 +74,7 @@ class MainFrame(wx.Frame):
         # Initialize and start the timer for further updateData() in main loop
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.displayData.updateData, self.timer)
+        # pyinstaller TypeError: Timer.Start(): argument 1 has unexpected type 'str'
         self.timer.Start(beamSettings._updateTimer)  # Refresh time in ms from config, default 6311
 
         # faders
