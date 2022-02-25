@@ -40,7 +40,7 @@ from copy import deepcopy
 ###############################################################
 
 if platform.system() == 'Linux':
-    from bin.modules.lin import audaciousmodule, rhythmboxmodule, clementinemodule, bansheemodule, spotifymodule, mixxxmodule
+    from bin.modules.lin import audaciousmodule, rhythmboxmodule, clementinemodule, bansheemodule, spotifymodule, mixxxmodule, strawberrymodule
 if platform.system() == 'Windows':
     from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule
 if platform.system() == 'Darwin':
@@ -142,6 +142,9 @@ class NowPlayingData:
                 self.currentPlaylist, self.PlaybackStatus = spotifymodule.run(currentSettings._maxTandaLength)
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+            if currentSettings._moduleSelected == 'Strawberry':
+                self.currentPlaylist, self.PlaybackStatus = strawberrymodule.run(currentSettings._maxTandaLength)
+
 
         # Mac OS X
         if platform.system() == 'Darwin':
