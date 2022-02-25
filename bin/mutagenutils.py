@@ -112,7 +112,7 @@ def readSongObject(filePath):
     songObject.IsCortina = "no"
     songObject.FilePath = filePath
 
-    return
+    return songObject
 
 
 ########################################################

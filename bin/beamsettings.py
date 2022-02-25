@@ -93,7 +93,6 @@ class BeamSettings:
         self._showStatusbar        = ''
         self._allModulesSettings    = ''
         self._rules                 = ''
-        self._configversion = ''
 
         # self.applicationpath = getBeamHomePath()
         stringsfile = os.path.join(getBeamResourcesPath(), 'json', 'strings.json')
@@ -138,14 +137,6 @@ class BeamSettings:
             # Also load the default configfile
             defaultconfigfile = os.path.join(getBeamResourcesPath(), "json", self.configfilename)
             defaultConfigData = self.loadConfigFile(defaultconfigfile)
-
-            # beamconfigversion = beamConfigData['ConfigVersion'];
-            # defaultconfigversion = defaultConfigData['ConfigVersion']
-            # ??? readConfig() handles this
-            # if beamconfigversion != defaultconfigversion:
-                # merge the dictionaries
-                # logging.error("Default configfile version '" + defaultconfigversion +
-                #              "' differs from '" + beamconfigversion + "' in '" + beamconfigfile + "'")
 
             # merges new properties from defaultConfigData into beamConfigData
             self.readConfig(beamConfigData, defaultConfigData)
@@ -192,14 +183,9 @@ class BeamSettings:
     #
     def readConfig(self, beamConfigData, defaultConfigData):
 
-        # save ConfigVersion from default which is final
-        configversion = defaultConfigData['ConfigVersion']
         # copies values and dicts from beam to default config, but not lists
         mergeDict(beamConfigData, defaultConfigData)
-        # restore ConfigVersion
-        defaultConfigData['ConfigVersion'] = configversion
 
-        self._configversion         = defaultConfigData['ConfigVersion']
         self._moduleSelected        = defaultConfigData['Module']         # Player to read from
         self._maxTandaLength        = defaultConfigData['MaxTandaLength'] # Longest tandas, optimize for performance
         self._updateTimer           = defaultConfigData['Updtime']        # mSec between reading
@@ -284,7 +270,6 @@ class BeamSettings:
             output['LogPath']              = self._logPath
             output['LogLevel']              = self._loglevel
             output['ShowStatusbar']        = self._showStatusbar
-            output['ConfigVersion']        = self._configversion
 
             # Dictionaries
             output['AllModules']           = self._allModulesSettings

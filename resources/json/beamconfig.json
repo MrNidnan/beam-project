@@ -2,16 +2,15 @@
   "Configname": "Default Configuration",
   "Comment": "This is a configuration file for Beam",
   "Author": "Mikael Holber & Horia Uifaleanu - 2015",
-  "Module": "Mixxx",
+  "Module": "",
   "MaxTandaLength": 4,
-  "Updtime": 6311,
+  "Updtime": 4000,
   "MoodTransition": "Fade to black",
   "MoodTransitionSpeed": "1500",
   "Logging": "True",
   "LogPath": "",
   "LogLevel": "Warning",
   "ShowStatusbar": "True",
-  "ConfigVersion": "0.4.4.7",
   "AllModules": [
     {
       "Modules": [
@@ -117,6 +116,22 @@
       "RotateBackground": "no",
       "RotateTimer": 1200,
       "Display": [
+        {
+          "Field": "%CoverArt",
+          "Font": "",
+          "Style": "Normal",
+          "Weight": "Bold",
+          "Size": 25,
+          "FontColor": "(255, 255, 255, 255)",
+          "HideControl": "",
+          "Position": [
+            5,
+            2
+          ],
+          "Alignment": "Right",
+          "Active": "yes",
+          "TextFlow": "Cut"
+        },
         {
           "Field": "\u266a Previous song: %PreviousTitle",
           "Style": "Italic",

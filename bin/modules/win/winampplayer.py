@@ -26,6 +26,9 @@ import logging
 from ctypes import *
 import win32api, win32con, win32gui, win32process, pywintypes
 
+# test
+import codecs
+
 class WinampPlayer(object):
 	# Winamp main window IPC
 	WM_WA_IPC = win32con.WM_USER
@@ -247,9 +250,8 @@ class WinampPlayer(object):
 			bufferLength = win32con.MAX_PATH
 			buffer = create_string_buffer(bufferLength)
 
-		bytesRead = c_ulong(0)
-
-		"""Note: this is quite an ugly hack, because we assume the string will have a maximum
+		"""
+		Note: this is quite an ugly hack, because we assume the string will have a maximum
 		size of MAX_PATH (=260) and that we're not in an end of a page.
 		
 		A proper way to solve it would be:
@@ -257,9 +259,18 @@ class WinampPlayer(object):
 			2. Reading one byte at a time. (?)
 			3. Use CreateRemoteThread to run strlen on Winamp's process.
 		"""
+		bytesRead = c_ulong(0)
 		windll.kernel32.ReadProcessMemory(self.__hProcess, address, buffer, bufferLength, byref(bytesRead))
 
-		return buffer.value
+		# !!! convert buffer to utf8 string
+		if isUnicode:
+			retstr = buffer.value.encode("utf-8")
+		else:
+			# c_char_Array_260
+			# raw \x00 in cp1252 null terminated
+			# value bytes in cp1252, e.g. with \xf1 for n~
+			retstr = buffer.value.decode('cp1252')
+		return retstr
 	
 	def enqueueFile(self, filePath):
 		"""Enqueues a file in Winamp's playlist.
