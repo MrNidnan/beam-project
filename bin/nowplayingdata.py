@@ -122,8 +122,8 @@ class NowPlayingData:
             try: #required due to loaded modules
                 if currentSettings._moduleSelected == 'Winamp':
                     self.currentPlaylist, self.PlaybackStatus = winampmodule.run(currentSettings._maxTandaLength)
-            except:
-                # ???
+            except Exception as e:
+                logging.error(e, exc_info=True)                # ???
                 pass
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
