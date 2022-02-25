@@ -83,13 +83,13 @@ class BeamSettings:
         # get initialized empty
         # later on set from config file
         self._moduleSelected    = ''
-        self._maxTandaLength    = ''
-        self._updateTimer       = ''
+        self._maxTandaLength    = 4
+        self._updateTimer       = 5000
         self._moodTransition       = ''
         self._moodTransitionSpeed  = ''
-        self._logging              = ''
+        self._logging              = True
         self._logPath              = ''
-        self._loglevel              = ''
+        self._loglevel              = "Debug"
         self._showStatusbar        = ''
         self._allModulesSettings    = ''
         self._rules                 = ''
@@ -116,16 +116,10 @@ class BeamSettings:
         self.beamversion = self.stringResources["version"]
 
 
-    ###############################################################
-    #
-    # LOAD Config
-    #
-    ###############################################################
     def loadConfig(self):
         # configfilename="beamconfig.json"
 
         try:
-
             beamconfigfile = os.path.join(getBeamConfigPath(), self.configfilename)
             if not os.path.isfile(beamconfigfile):
                 # if there is no configfile yet
@@ -184,7 +178,6 @@ class BeamSettings:
             #     ConfigData['AllModules'][2]['Modules'].append('Mixxx')
             # if len(ConfigData['AllModules'][2]['Modules']) == 7: # System: Windows
             #     ConfigData['AllModules'][2]['Modules'].append('Icecast')
-
         except Exception as e:
             logging.error(e, exc_info=True)
         finally:
