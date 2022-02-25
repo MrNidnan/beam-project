@@ -87,10 +87,10 @@ try:
         logging.error("Beam: Directory '" + logpath + "' does not exist, logging to stdout only", exc_info=True)
         # no logging at the first call because it reads the logpath
 
-    logging.info("Beam version: V" + beamSettings.beamversion)
-    logging.info("Beam home dir: '" + getBeamHomePath() + "'")
-    logging.info("Beam config dir: " + getBeamConfigPath() + "'")
-    logging.info("Beam logfile: '" + logpath + "'")
+    logging.info("Beam V" + beamSettings.beamversion)
+    logging.info("Home dir: '" + getBeamHomePath() + "'")
+    logging.info("Config dir: " + getBeamConfigPath() + "'")
+    logging.info("Logfile: '" + logpath + "'")
 
     loglevel = getLogLevel(beamSettings._loglevel)
     rootLogger.setLevel(loglevel)
