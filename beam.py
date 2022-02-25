@@ -32,69 +32,79 @@ from bin.beamutils import *
 # initializes public variables of beamsettings.beamSettings
 # from stringResuorces by BeamSettings() __init__
 from bin.beamsettings import *
-
 from bin.dialogs.mainframe import MainFrame
 
-logformat = "%(asctime)s : %(levelname)s : %(message)s"
-dateformat = "%Y-%m-%d %H:%M:%S"
-loglevel = getLogLevel(beamSettings.loglevel)
-logging.basicConfig(format=logformat, datefmt=dateformat, level=loglevel, stream=sys.stdout)
-# logging and stringResources default is WARNING
-rootLogger = logging.getLogger()
-# for further logging configuration
-
-app = wx.App(False)  # Error messages go to terminal
-
-# apply
-# beamconfig.json
 try:
+    logformat = "%(asctime)s : %(levelname)s : %(message)s"
+    dateformat = "%Y-%m-%d %H:%M:%S"
+    loglevel = getLogLevel(beamSettings.loglevel)
+    logging.basicConfig(format=logformat, datefmt=dateformat, level=loglevel, stream=sys.stdout)
+    # logging and stringResources default is WARNING
+    rootLogger = logging.getLogger()
+    # for further logging configuration
+except Exception as e:
+    logging.error(e, exc_info=True)
+
+try:
+    app = wx.App(False)  # Error messages go to terminal
+except Exception as e:
+    logging.error(e, exc_info=True)
+
+try:
+    # apply
+    # beamconfig.json
     # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
     beamSettings.loadConfig()
 except Exception as e:
-    logging.error(e)
+    logging.error(e, exc_info=True)
 
-# now beamconfig.json is read, from config or home dir
-loglevel = getLogLevel(beamSettings._loglevel)
-rootLogger.setLevel(loglevel)
+try:
+    # now beamconfig.json is read, from config or home dir
+    loglevel = getLogLevel(beamSettings._loglevel)
+    rootLogger.setLevel(loglevel)
 
-logpath = beamSettings._logPath
-if os.path.isdir(logpath):
-    # set up additional logging to file
-    logfilepath = os.path.join(logpath, beamSettings.logfilename)
-    fileHandler = logging.FileHandler(logfilepath,  mode='w')
-    # w=overwrwrite
-    logFormatter = logging.Formatter(logformat, dateformat)
-    fileHandler.setFormatter(logFormatter)
-    # fileHandler.setLevel(loglevel)
-    # level set by rootLogger
-    rootLogger.addHandler(fileHandler)
-else:
-    logging.warning("Beam: Directory <" + logpath + "> does not exist, logging to stdout only")
-    # no logging at the first call because it reads the logpath
+    logpath = beamSettings._logPath
+    if os.path.isdir(logpath):
+        # set up additional logging to file
+        logfilepath = os.path.join(logpath, beamSettings.logfilename)
+        fileHandler = logging.FileHandler(logfilepath,  mode='w')
+        # w=overwrwrite
+        logFormatter = logging.Formatter(logformat, dateformat)
+        fileHandler.setFormatter(logFormatter)
+        # fileHandler.setLevel(loglevel)
+        # level set by rootLogger
+        rootLogger.addHandler(fileHandler)
+    else:
+        logging.warning("Beam: Directory <" + logpath + "> does not exist, logging to stdout only")
+        # no logging at the first call because it reads the logpath
 
-# if beamSettings._logging == 'True':
-#    sys.stdout = open(beamSettings._logPath,"w")
+    # if beamSettings._logging == 'True':
+    #    sys.stdout = open(beamSettings._logPath,"w")
 
-logging.info("Beam started")
-logging.info("Beam home dir: '" + getBeamHomePath() + "'")
-logging.info("Beam config dir: " + getBeamConfigPath() + "'")
-logging.info("Logpath: '" + logpath + "'")
-logging.info("Loglevel: '" + beamSettings._loglevel + "'")
+    logging.info("Beam started")
+    logging.info("Beam home dir: '" + getBeamHomePath() + "'")
+    logging.info("Beam config dir: " + getBeamConfigPath() + "'")
+    logging.info("Logpath: '" + logpath + "'")
+    logging.info("Loglevel: '" + beamSettings._loglevel + "'")
+except Exception as e:
+    logging.error(e, exc_info=True)
 
+try:
+    ########################################################
+    # Start the main window
+    ########################################################
+    # mainFrame = beamMainFrame()       # Creates the main frame
+    # Main Window now with preferences and preview
+    mainFrame = MainFrame()       # Creates the main frame
 
-########################################################
-# Start the main window
-########################################################
-# mainFrame = beamMainFrame()       # Creates the main frame
-# Main Window now with preferences and preview
-mainFrame = MainFrame()       # Creates the main frame
+    # __init__() starts timer for updating, transition, first updateData()
+    mainFrame.Show()                  # Shows the main frame
 
-# __init__() starts timer for updating, transition, first updateData()
-mainFrame.Show()                  # Shows the main frame
+    ########################################################
+    # Start the main loop
+    ########################################################
 
-########################################################
-# Start the main loop
-########################################################
-
-app.MainLoop()              # Start the main loop which handles events
+    app.MainLoop()              # Start the main loop which handles events
+except Exception as e:
+    logging.error(e, exc_info=True)
 

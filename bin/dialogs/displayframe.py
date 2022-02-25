@@ -44,7 +44,7 @@ class DisplayFrame(wx.Frame):
         # wx.FULLSCREEN_ALL
         # wx.RESIZE_BORDER
         framestyle = wx.DEFAULT_FRAME_STYLE & ~ (wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
-        wx.Frame.__init__(self, parent=None, title="F11: Full Screen", pos=(200,200), size=(800,600), style=framestyle)
+        wx.Frame.__init__(self, parent=None, title="F11: toggle Full Screen", pos=(200,200), size=(800,600), style=framestyle)
 
         ###################
         # CLASS VARIABLES #

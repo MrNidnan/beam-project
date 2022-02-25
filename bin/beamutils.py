@@ -83,3 +83,39 @@ def getLogLevel(loglevelname):
         loglevel = logging.DEBUG
 
     return loglevel
+
+
+def mergeDict(sourceDict, targetDict):
+    for key, value in sourceDict.items():
+        # Add new key values
+        if key not in targetDict:
+            # insert key
+            targetDict[key] = sourceDict[key]
+            continue
+        else:
+            # update key
+            if isinstance(value, (str, int, float)):
+                targetDict[key] = sourceDict[key]
+            if isinstance(value, dict):
+                mergeDict(targetDict[key], sourceDict[key])
+            if isinstance(value, list):
+                # updateList(original[key], update[key])
+                # keep lists in targetDict
+                pass
+    return targetDict
+
+
+def updateList(original, update):
+    # Make sure the order is equal, otherwise it is hard to compare the items.
+    assert len(original) == len(update), "Can only handle equal length lists."
+
+    for idx, (val_original, val_update) in enumerate(zip(original, update)):
+        if not isinstance(val_original, type(val_update)):
+            raise ValueError(f"Different types! {type(val_original)}, {type(val_update)}")
+        if isinstance(val_original, dict):
+            original[idx] = mergeDict(original[idx], update[idx])
+        if isinstance(val_original, (tuple, list)):
+            original[idx] = updateList(original[idx], update[idx])
+        if isinstance(val_original, (str, int, float)):
+            original[idx] = val_update
+    return original

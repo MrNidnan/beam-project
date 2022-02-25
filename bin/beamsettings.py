@@ -25,11 +25,12 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import json, wx, platform
+import json
+import wx
+import platform
 import logging
-import sys, os
-from bin.beamutils import getUserHomePath, getBeamHomePath, getBeamResourcesPath, getBeamConfigPath
-
+import os
+from bin.beamutils import *
 
 #
 # On start created as global object beamsettings.beamSettings
@@ -57,10 +58,8 @@ class BeamSettings:
 
     # public variables, initialized empty
     # on fist import from beam.py
-
     # then __init__ gets called from the global beamSettings
     # and variables read from string ressources
-
     # then read from configfile
     configfilename = ''
     logfilename = ''
@@ -126,62 +125,116 @@ class BeamSettings:
         # configfilename="beamconfig.json"
 
         try:
-            # with capital letters before V0.4.4.5
-            oldconfigfile = os.path.join(getUserHomePath(), "BeamConfig.json")
-            if os.path.isfile(oldconfigfile):
-                logging.warning(
-                    "BeamSettings.loadConfig(): configfile in old directory, ignored: '" + oldconfigfile + "'")
 
             beamconfigfile = os.path.join(getBeamConfigPath(), self.configfilename)
             if not os.path.isfile(beamconfigfile):
-                # if the file does not exist use default from beam home
+                # if there is no configfile yet
                 logging.warning("BeamSettings.loadConfig(): configfile does not exist '" + beamconfigfile + "'")
-                beamconfigpath = getBeamHomePath()
-                beamconfigfile = os.path.join(getBeamResourcesPath(), "json", self.configfilename)
-                logging.warning("BeamSettings.loadConfig(): loading default configfile '" + beamconfigfile + "'")
-                # Use original configfile which is the settingsfile below
-            ConfigData = self.loadConfigFile(beamconfigfile)
+                oldconfigfile = os.path.join(getUserHomePath(), "BeamConfig.json")
+                if os.path.isfile(oldconfigfile):
+                    logging.warning("BeamSettings.loadConfig(): using configfile in old directory: '" + oldconfigfile + "'")
+                    beamconfigfile = oldconfigfile
+                else:
+                    # beamconfigpath = getBeamHomePath()
+                    beamconfigfile = os.path.join(getBeamResourcesPath(), "json", self.configfilename)
+                    logging.warning("BeamSettings.loadConfig(): loading default configfile '" + beamconfigfile + "'")
+                    # Use original configfile which is the settingsfile below
+            beamConfigData = self.loadConfigFile(beamconfigfile)
 
             # Also load the default configfile
-            defaultconfigpath = getBeamHomePath()
             defaultconfigfile = os.path.join(getBeamResourcesPath(), "json", self.configfilename)
-            ConfigDataOriginal = self.loadConfigFile(defaultconfigfile)
+            defaultConfigData = self.loadConfigFile(defaultconfigfile)
 
-            beamconfigversion = ConfigData['ConfigVersion'];
-            defaultconfigversion = ConfigDataOriginal['ConfigVersion']
-            if beamconfigversion != defaultconfigversion:
-                logging.error("Default configfile version '" + defaultconfigversion +
-                              "' differs from '" + beamconfigversion + "' in '" + beamconfigfile + "'")
+            # beamconfigversion = beamConfigData['ConfigVersion'];
+            # defaultconfigversion = defaultConfigData['ConfigVersion']
+            # ??? readConfig() handles this
+            # if beamconfigversion != defaultconfigversion:
+                # merge the dictionaries
+                # logging.error("Default configfile version '" + defaultconfigversion +
+                #              "' differs from '" + beamconfigversion + "' in '" + beamconfigfile + "'")
 
-            self.readConfig(ConfigData, ConfigDataOriginal)
+            # merges new properties from defaultConfigData into beamConfigData
+            self.readConfig(beamConfigData, defaultConfigData)
         except Exception as e:
-            logging.error(e)
+            logging.error(e, exc_info=True)
 
         return
 
-    # Initializes protected variables by copying from ConfigData or ConfigDataOriginal
-    def readConfig(self, ConfigData, ConfigDataOriginal):
-        self._moduleSelected        = self.extractSetting(ConfigData, ConfigDataOriginal, 'Module')         # Player to read from
-        self._maxTandaLength        = self.extractSetting(ConfigData, ConfigDataOriginal, 'MaxTandaLength') # Longest tandas, optimize for performance
-        self._updateTimer           = self.extractSetting(ConfigData, ConfigDataOriginal, 'Updtime')        # mSec between reading
-        self._moodTransition        = self.extractSetting(ConfigData, ConfigDataOriginal, 'MoodTransition')
-        self._moodTransitionSpeed   = self.extractSetting(ConfigData, ConfigDataOriginal, 'MoodTransitionSpeed')
-        self._showStatusbar         = self.extractSetting(ConfigData, ConfigDataOriginal, 'ShowStatusbar')
-        self._logging               = self.extractSetting(ConfigData, ConfigDataOriginal, 'Logging')
-        self._logPath               = self.extractSetting(ConfigData, ConfigDataOriginal, 'LogPath')
-        if self._logPath == '':
-            self._logPath = os.path.join(getBeamConfigPath())
-        # plus self.logfilename
-        self._loglevel              = self.extractSetting(ConfigData, ConfigDataOriginal, 'LogLevel')
-        if self._loglevel == '':
-            logging.error("BeamConfig.readConfig(): _loglevel is empty")
-            self._loglevel = "Warning"
-        self._configversion         = self.extractSetting(ConfigData, ConfigDataOriginal, 'ConfigVersion')
 
+    def loadConfigFile(self, inputconfigfile):
+
+        ConfigFile = open(inputconfigfile, 'r')
+        try:
+            ConfigData = json.load(ConfigFile)
+            # Validate configfile version against string.txt version
+
+            # Added since V0.4
+            # But however, modules are always teken from default config
+            # if len(ConfigData['AllModules'][0]['Modules']) == 5: # System: Linux
+            #     ConfigData['AllModules'][0]['Modules'].append('Mixxx')
+            # if len(ConfigData['AllModules'][0]['Modules']) == 6: # System: Windows
+            #     ConfigData['AllModules'][0]['Modules'].append('Icecast')
+
+            # if len(ConfigData['AllModules'][1]['Modules']) == 5: # System: Windows
+            #     ConfigData['AllModules'][1]['Modules'].append('Mixxx')
+            # if len(ConfigData['AllModules'][1]['Modules']) == 6: # System: Windows
+            #     ConfigData['AllModules'][1]['Modules'].append('Icecast')
+
+            # if len(ConfigData['AllModules'][2]['Modules']) == 6: # System: Mac
+            #     ConfigData['AllModules'][2]['Modules'].append('Mixxx')
+            # if len(ConfigData['AllModules'][2]['Modules']) == 7: # System: Windows
+            #     ConfigData['AllModules'][2]['Modules'].append('Icecast')
+
+        except Exception as e:
+            logging.error(e, exc_info=True)
+        finally:
+            ConfigFile.close()
+
+        return ConfigData
+
+
+
+    #
+    # Initializes protected variables by copying from ConfigData or ConfigDataOriginal
+    #
+    def readConfig(self, beamConfigData, defaultConfigData):
+
+        # save ConfigVersion from default which is final
+        configversion = defaultConfigData['ConfigVersion']
+        # copies values and dicts from beam to default config, but not lists
+        mergeDict(beamConfigData, defaultConfigData)
+        # restore ConfigVersion
+        defaultConfigData['ConfigVersion'] = configversion
+
+        self._configversion         = defaultConfigData['ConfigVersion']
+        self._moduleSelected        = defaultConfigData['Module']         # Player to read from
+        self._maxTandaLength        = defaultConfigData['MaxTandaLength'] # Longest tandas, optimize for performance
+        self._updateTimer           = defaultConfigData['Updtime']        # mSec between reading
+        self._moodTransition        = defaultConfigData['MoodTransition']
+        self._moodTransitionSpeed   = defaultConfigData['MoodTransitionSpeed']
+        self._showStatusbar         = defaultConfigData['ShowStatusbar']
+        self._logging               = defaultConfigData['Logging']
+        self._logPath               = defaultConfigData['LogPath']
+        if self._logPath == '':
+            self._logPath = getBeamConfigPath()
+        self._loglevel           = defaultConfigData['LogLevel']
+
+        # does not work
+        # mergedConfigData = beamConfigData.expand(defaultConfigData)
+        # AttributeError: 'dict' object has no attribute 'expand'
+
+        # mergedConfigData = mergeDict(defaultConfigData, beamConfigData)
+        # mergedConfigData = mergeDict(beamConfigData, defaultConfigData)
         # Dictionaries
-        self._allModulesSettings    = ConfigDataOriginal['AllModules']
-        self._rules                 = self.extractSetting(ConfigData, ConfigDataOriginal, 'Rules')
-        self._moods                 = self.extractSetting(ConfigData, ConfigDataOriginal, 'Moods')
+        # ModulesSettings from default config
+        # does not work properly
+        # self._allModulesSettings    = defaultConfigData['AllModules']
+
+        self._allModulesSettings    = defaultConfigData['AllModules']
+        # self._rules                 = self.extractSetting(beamConfigData, defaultConfigData, 'Rules')
+        self._rules                 = beamConfigData['Rules']
+        # self._moods                 = self.extractSetting(beamConfigData, defaultConfigData, 'Moods')
+        self._moods                 = beamConfigData['Moods']
 
         # Set OS-specific variables
         if platform.system() == 'Linux':
@@ -206,45 +259,16 @@ class BeamSettings:
         return
 
     #
-    # SUPPORTING FUNCTIONS
+    # Returns the value of ConfigData
+    # and if that does not exist
+    # replaced by the value of ConfigDataOriginal
     #
-    def extractSetting(self, ConfigData, ConfigDataOriginal, key):
+    def extractSetting(self, beamConfigData, defaultConfigData, key):
         try:
-            output = ConfigData[key]
+            output = beamConfigData[key]
         except:
-            output = ConfigDataOriginal[key]
+            output = defaultConfigData[key]
         return output
-
-
-    def loadConfigFile(self, inputconfigfile):
-
-        ConfigFile = open(inputconfigfile, 'r')
-        try:
-            ConfigData = json.load(ConfigFile)
-            # Validate configfile version against string.txt version
-
-            # Added since V0.4
-            if len(ConfigData['AllModules'][0]['Modules']) == 5: # System: Linux
-                ConfigData['AllModules'][0]['Modules'].append('Mixxx')
-            if len(ConfigData['AllModules'][0]['Modules']) == 6: # System: Windows
-                ConfigData['AllModules'][0]['Modules'].append('Icecast')
-
-            if len(ConfigData['AllModules'][1]['Modules']) == 5: # System: Windows
-                ConfigData['AllModules'][1]['Modules'].append('Mixxx')
-            if len(ConfigData['AllModules'][1]['Modules']) == 6: # System: Windows
-                ConfigData['AllModules'][1]['Modules'].append('Icecast')
-
-            if len(ConfigData['AllModules'][2]['Modules']) == 6: # System: Mac
-                ConfigData['AllModules'][2]['Modules'].append('Mixxx')
-            if len(ConfigData['AllModules'][2]['Modules']) == 7: # System: Windows
-                ConfigData['AllModules'][2]['Modules'].append('Icecast')
-
-        except Exception as e:
-            logging.error(e)
-        finally:
-            ConfigFile.close()
-
-        return ConfigData
 
 
 ###############################################################
@@ -285,7 +309,7 @@ class BeamSettings:
             self.dumpConfigFile(beamconfigfile, output)
             logging.info("BeamSettings.saveConfig(): configfile '" + beamconfigfile + "'")
         except Exception as e:
-            logging.error(e)
+            logging.error(e, exc_info=True)
 
         return
 
