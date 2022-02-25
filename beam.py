@@ -54,28 +54,28 @@ try:
     # beamconfig.json
     # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
     beamSettings.loadConfig()
+    # now beamconfig.json is read, from config or home dir
 except Exception as e:
     logging.error(e, exc_info=True)
 
 # handle logging related exceptions in a separae block
 try:
+    rootLogger.setLevel(logging.INFO)
+    # To publish sume start infos
+
     logpath = beamSettings._logPath
     try:
         if not os.path.isdir(logpath):
-            logging.warning("Beam: '" + logpath + "' does not exist, creating it for logging.")
+            logging.info("Beam: '" + logpath + "' does not exist, creating it for logging.")
             os.mkdir(logpath)
     except Exception as e:
         # show must go on, try logging to $USERHOME instead
         logPath = getUserHomePath()
         logging.error(e, exc_info=True)
 
-    # now beamconfig.json is read, from config or home dir
-    loglevel = getLogLevel(beamSettings._loglevel)
-    rootLogger.setLevel(loglevel)
-
+    logfilepath = os.path.join(logpath, beamSettings.logfilename)
     if os.path.isdir(logpath):
         # set up additional logging to file
-        logfilepath = os.path.join(logpath, beamSettings.logfilename)
         fileHandler = logging.FileHandler(logfilepath,  mode='w')
         # w=overwrwrite
         logFormatter = logging.Formatter(logformat, dateformat)
@@ -84,14 +84,16 @@ try:
         # level set by rootLogger
         rootLogger.addHandler(fileHandler)
     else:
-        logging.error("Beam: Directory <" + logpath + "> does not exist, logging to stdout only", exc_info=True)
+        logging.error("Beam: Directory '" + logpath + "' does not exist, logging to stdout only", exc_info=True)
         # no logging at the first call because it reads the logpath
 
-    logging.info("Beam started")
+    logging.info("Beam version: V" + beamSettings.beamversion)
     logging.info("Beam home dir: '" + getBeamHomePath() + "'")
     logging.info("Beam config dir: " + getBeamConfigPath() + "'")
-    logging.info("Logpath: '" + logpath + "'")
-    logging.info("Loglevel: '" + beamSettings._loglevel + "'")
+    logging.info("Beam logfile: '" + logpath + "'")
+
+    loglevel = getLogLevel(beamSettings._loglevel)
+    rootLogger.setLevel(loglevel)
 except Exception as e:
     logging.error(e, exc_info=True)
 
