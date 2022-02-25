@@ -11,7 +11,7 @@
   "LogPath": "",
   "LogLevel": "Warning",
   "ShowStatusbar": "True",
-  "ConfigVersion": "0.4.4.6",
+  "ConfigVersion": "0.4.4.7",
   "AllModules": [
     {
       "Modules": [
