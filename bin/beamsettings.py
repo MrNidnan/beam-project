@@ -300,10 +300,6 @@ class BeamSettings:
             output['Moods']                = self._moods
 
             beamconfigpath = getBeamConfigPath()
-            if not os.path.isdir(beamconfigpath):
-                logging.warning("BeamSettings.safeConfig(): '" + beamconfigpath + "' does not exist, creating it.")
-                os.mkdir(beamconfigpath)
-
             # Write config file to user ~/.beamconfig/
             beamconfigfile = os.path.join(beamconfigpath, self.configfilename)
             self.dumpConfigFile(beamconfigfile, output)

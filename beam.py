@@ -35,8 +35,10 @@ from bin.beamsettings import *
 from bin.dialogs.mainframe import MainFrame
 
 try:
+    # beam config did not get loaded here
     logformat = "%(asctime)s : %(levelname)s : %(message)s"
     dateformat = "%Y-%m-%d %H:%M:%S"
+    # there is a preliminary log level in the strings.json
     loglevel = getLogLevel(beamSettings.loglevel)
     logging.basicConfig(format=logformat, datefmt=dateformat, level=loglevel, stream=sys.stdout)
     # logging and stringResources default is WARNING
@@ -47,10 +49,7 @@ except Exception as e:
 
 try:
     app = wx.App(False)  # Error messages go to terminal
-except Exception as e:
-    logging.error(e, exc_info=True)
 
-try:
     # apply
     # beamconfig.json
     # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
@@ -58,12 +57,22 @@ try:
 except Exception as e:
     logging.error(e, exc_info=True)
 
+# handle logging related exceptions in a separae block
 try:
+    logpath = beamSettings._logPath
+    try:
+        if not os.path.isdir(logpath):
+            logging.warning("Beam: '" + logpath + "' does not exist, creating it for logging.")
+            os.mkdir(logpath)
+    except Exception as e:
+        # show must go on, try logging to $USERHOME instead
+        logPath = getUserHomePath()
+        logging.error(e, exc_info=True)
+
     # now beamconfig.json is read, from config or home dir
     loglevel = getLogLevel(beamSettings._loglevel)
     rootLogger.setLevel(loglevel)
 
-    logpath = beamSettings._logPath
     if os.path.isdir(logpath):
         # set up additional logging to file
         logfilepath = os.path.join(logpath, beamSettings.logfilename)
@@ -75,11 +84,8 @@ try:
         # level set by rootLogger
         rootLogger.addHandler(fileHandler)
     else:
-        logging.warning("Beam: Directory <" + logpath + "> does not exist, logging to stdout only")
+        logging.error("Beam: Directory <" + logpath + "> does not exist, logging to stdout only", exc_info=True)
         # no logging at the first call because it reads the logpath
-
-    # if beamSettings._logging == 'True':
-    #    sys.stdout = open(beamSettings._logPath,"w")
 
     logging.info("Beam started")
     logging.info("Beam home dir: '" + getBeamHomePath() + "'")
