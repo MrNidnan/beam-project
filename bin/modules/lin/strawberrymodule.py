@@ -34,12 +34,12 @@ def run(MaxTandaLength):
 
     playlist = []
 
-    dbusSess, playbackStatus = getDbusSessionStatus('org.mpris.MediaPlayer2.clementine')
+    dbusSess, playbackStatus = getDbusSessionStatus('org.mpris.MediaPlayer2.strawberry')
     if playbackStatus == 'Playing':
         currentMetadata = getDbusPlayerValue(dbusSess, 'Metadata')
         playlist.append(getSongObjectFromTrackMpris2(currentMetadata))
         # tracklist = player.Get('org.mpris.MediaPlayer2.TrackList','Tracks',dbus_interface='org.freedesktop.DBus.Properties')
-        # tracklist from clementine is empty ??
+        # tracklist from strawberry is empty ??
 
     return playlist, playbackStatus
 
