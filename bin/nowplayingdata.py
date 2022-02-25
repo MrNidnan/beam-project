@@ -165,6 +165,7 @@ class NowPlayingData:
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 
+        # for all platforms
         if currentSettings._moduleSelected == 'Icecast':
             self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
 

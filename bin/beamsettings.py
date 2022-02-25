@@ -250,7 +250,6 @@ class BeamSettings:
             self._preferencesSize = (400, 600)
             self._moodSize = (400,550)
 
-        # self._currentModules = [s.encode('utf-8') for s in tmp['Modules']]
         self._currentModules = [s for s in tmp['Modules']]
 
         if self._moduleSelected == '':
