@@ -55,19 +55,28 @@ def run(MaxTandaLength):
 
     pythoncom.CoInitialize()
     try:
-        # shell = win32com.client.Dispatch("WScript.Shell")
         progID = "Foobar2000.Application.0.7"
-        Foobar = win32com.client.Dispatch(progID)
-
+        foobarComObj = win32com.client.Dispatch(progID)
+        # https://github.com/ranveer5289/Foobar2000-COM-Interface/blob/master/pyfoobar.py
+        # !!! Yields error dialog in Foobar2000 V1.5.5
+        # Unknown commandline parameter: -Embedding
+        # and an exception
+        # pywintypes.com_error: (-2146959355, 'Starten des Servers fehlgeschlagen', None, None)
+        # pywintypes.com_error: (-2146959355, 'Server execution failed', None, None)
+        # 0x80080005
+        # The error is CO_E_SERVER_EXEC_FAILURE, which most likely means that Outlook is running in a security context different from that of your process.
+        # I had the same issue, I was using a 64 bit installation of Python 2.7. I reinstalled a 32 bit version of Python 2.7 and I was able to use the client dispatch calls.
         # Playback Status
-        if not Foobar.Playback.IsPlaying:
+        if not foobarComObj.Playback.IsPlaying:
             playbackStatus = 'Stopped'
         else:
-            if Foobar.Playback.IsPaused:
+            if foobarComObj.Playback.IsPaused:
                 playbackStatus = 'Paused'
             else:
                 playbackStatus = 'Playing'
-                playlist.append(getSongAt(Foobar, 1))
+                playlist.append(getSongAt(foobarComObj, 1))
+
+        # ??? foobarComObj..Quit()
     finally:
         pythoncom.CoUninitialize()
 

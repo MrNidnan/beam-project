@@ -68,7 +68,6 @@ def run(MaxTandaLength, LastPlaylist):
     elif MediaMonkey.Player.isPaused and MediaMonkey.Player.isPlaying:
         playbackStatus = 'Paused'
         return playlist, playbackStatus
-        
     #
     # Playback = Playing
     #

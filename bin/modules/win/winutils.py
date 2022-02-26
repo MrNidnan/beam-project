@@ -42,11 +42,15 @@ def applicationrunning(appname):
     cmd = 'WMIC PROCESS get Caption'
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
     for line in proc.stdout:
-        # logging.debug("proc: " + line)
-        if appname in line:
+        # logging.debug("Line: '" + line + "'")
+        if appname.lower() in line.lower():
             proc.kill()
             return True
     proc.kill()
+
+        # for i in range(len(string_list)):
+        # string_list[i] = string_list[i].lower()
+
 
     # if not returned successfully above
     logging.warning("winutils.appplicationRunning(" + appname + ") = False")

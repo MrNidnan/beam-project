@@ -24,6 +24,7 @@
 #
 
 from bin.songclass import SongObject
+import logging
 
 try:
 	import win32gui
@@ -38,35 +39,67 @@ from bin.modules.win.winutils import applicationrunning
 ###############################################################
 
 def run(MaxTandaLength):
-
-
     playlist = []
     
-    #
     # Player Status
-    #
-    if applicationrunning("spotify.exe"):
+    if applicationrunning("Spotify.exe"):
         try:
-            spotify = win32gui.FindWindow("SpotifyMainWindow", None)
-            Track = win32gui.GetWindowText(spotify)
-        except:
-            playbackStatus = 'PlayerNotRunning'
-            return playlist, playbackStatus
-    else:
-        playbackStatus = 'PlayerNotRunning'
-        return playlist, playbackStatus
+            windows = []
 
-    if Track == "":
-        playbackStatus = 'PlayerNotRunning'
-        return playlist, playbackStatus
+            spotifyWin = win32gui.FindWindow("SpotifyMainWindow", None)
+            # https: // github.com / XanderMJ / spotilib / issues / 7
+            # does no longer work
+            track = win32gui.GetWindowText(spotifyWin)
+
+            def find_spotify_uwp(hwnd, windows):
+                text = win32gui.GetWindowText(hwnd)
+                classname = win32gui.GetClassName(hwnd)
+                if classname == "Chrome_WidgetWin_0" and len(text) > 0:
+                    windows.append(text)
+
+            if track:
+                windows.append(track)
+            else:
+                win32gui.EnumWindows(find_spotify_uwp, windows)
+
+            # If Spotify isn't running the list will be empty
+            if len(windows) == 0:
+                return playlist, 'PlayerNotRunning'
+
+            # The window title is the default one when paused
+            if windows[0].startswith('Spotify'):
+                return playlist, 'Paused'
+
+            # Local songs may only have a title field
+            try:
+                artist, track = windows[0].split(" - ", 1)
+            except ValueError:
+                artist = ''
+                track = windows[0]
+
+            retSong = SongObject()
+            retSong.Artist = artist
+            retSong.Title = track
+            playlist.append(retSong)
+            # !!! add to playlist
+            # playlist.append(getSongAt(track, 1))
+
+            return playlist, 'Playing'
+        except Exception as e:
+            logging.debug(e, exc_info=True)
+            return playlist, 'PlayerNotRunning'
+    else:
+        return playlist, 'PlayerNotRunning'
+
+    if track == "":
+        return playlist, 'PlayerNotRunning'
 
     #
     # Playback
     #
     try:
-        playlist.append(getSongAt(Track, 1))
+        playlist.append(getSongAt(track, 1))
         playbackStatus = 'Playing'
-
     except:
         playbackStatus = 'Paused'
 
