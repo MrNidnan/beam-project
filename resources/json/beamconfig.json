@@ -117,22 +117,6 @@
       "RotateTimer": 1200,
       "Display": [
         {
-          "Field": "%CoverArt",
-          "Font": "",
-          "Style": "Normal",
-          "Weight": "Bold",
-          "Size": 25,
-          "FontColor": "(255, 255, 255, 255)",
-          "HideControl": "",
-          "Position": [
-            5,
-            2
-          ],
-          "Alignment": "Right",
-          "Active": "yes",
-          "TextFlow": "Cut"
-        },
-        {
           "Field": "\u266a Previous song: %PreviousTitle",
           "Style": "Italic",
           "Weight": "Normal",
@@ -356,7 +340,7 @@
           "Style": "Italic",
           "Weight": "Normal",
           "HideControl": "",
-          "Field": "%SongsSinceLastCortina - %Title",
+          "Field": "%Title",
           "Position": [
             38,
             0

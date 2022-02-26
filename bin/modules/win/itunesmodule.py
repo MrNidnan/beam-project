@@ -77,8 +77,9 @@ def run(MaxTandaLength):
                 # Full-read
                 #
             while searchsong < playlistlength and searchsong < currentsong + MaxTandaLength + 2:
-                 playlist.append(getSongAt(iTunes, searchsong))
-                 searchsong = searchsong + 1
+                songObj = getSongAt(iTunes, searchsong)
+                playlist.append(songObj)
+                searchsong = searchsong + 1
         finally:
             pythoncom.CoUninitialize()
 
