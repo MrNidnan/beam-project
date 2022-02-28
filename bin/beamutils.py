@@ -29,6 +29,7 @@ import sys
 import logging
 
 
+
 #
 # Linux ~, $HOME
 # Windows %HOMEPATH%
@@ -66,8 +67,18 @@ def getBeamConfigPath():
 
     return beamconfigpath
 
-def getLogLevel(loglevelname):
-    loglevel = None
+
+
+# for GUI
+logLevelList = ["Critical", "Error", "Warning", "Info", "Debug"]
+
+def setLogLevel(loglevelname):
+    loglevelid = getLogLevelId(loglevelname)
+    rootLogger = logging.getLogger()
+    rootLogger.setLevel(loglevelid)
+
+
+def getLogLevelId(loglevelname):
     try:
         logLevelDict = {
             'Debug': logging.DEBUG,
@@ -77,12 +88,12 @@ def getLogLevel(loglevelname):
             'Critical': logging.CRITICAL
         }
         # set now loglevelname from configfile
-        loglevel = logLevelDict[loglevelname]
+        loglevelid = logLevelDict[loglevelname]
     except Exception as e:
-        logging.error("beam: unknown loglevelname: '" + loglevelname + "' using Debug'")
-        loglevel = logging.DEBUG
+        logging.error("beam: unknown loglevelname: '" + loglevelname + "', using Debug'")
+        loglevelid = logging.DEBUG
 
-    return loglevel
+    return loglevelid
 
 
 def mergeDict(sourceDict, targetDict):

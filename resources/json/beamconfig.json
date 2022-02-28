@@ -9,7 +9,7 @@
   "MoodTransitionSpeed": "1500",
   "Logging": "True",
   "LogPath": "",
-  "LogLevel": "Warning",
+  "LogLevel": "Info",
   "ShowStatusbar": "True",
   "AllModules": [
     {

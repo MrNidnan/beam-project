@@ -53,6 +53,6 @@ def applicationrunning(appname):
 
 
     # if not returned successfully above
-    logging.warning("winutils.appplicationRunning(" + appname + ") = False")
+    logging.debug("winutils.appplicationRunning(" + appname + ") = False")
 
     return False

@@ -79,7 +79,7 @@ class NowPlayingData:
         self.PreviousMood = ""
         self.BackgroundPath = ""
         self.RotateBackground = ""
-        self.RotateTimer = []
+        self.rotatebackgroundtime = None
         self.DisplayRows = []
         self.currentCoverArtImage = None
         self.currentCoverArtPath = ""
@@ -190,7 +190,7 @@ class NowPlayingData:
             self.rawPlaylist = deepcopy(self.currentPlaylist)
             self.playlistChanged  = True
 
-        logging.info("Data extracted from " + currentSettings._moduleSelected  + ": " + self.StatusMessage)
+        logging.debug("Data extracted from " + currentSettings._moduleSelected  + ": " + self.StatusMessage)
         if self.PreviousPlaybackStatus == "":
             self.PreviousPlaybackStatus = self.PlaybackStatus
 
@@ -289,7 +289,7 @@ class NowPlayingData:
             appPath = getBeamHomePath()
             self.BackgroundPath = os.path.join(appPath, currentRule['Background'])
             self.RotateBackground = currentRule['RotateBackground']
-            self.RotateTimer = currentRule['RotateTimer']
+            self.rotatebackgroundtime = currentRule['RotateTimer']
         else:
             defaultMood = currentSettings._moods[0]
             self.CurrentMood = defaultMood['Name']
@@ -297,7 +297,7 @@ class NowPlayingData:
             appPath = getBeamHomePath()
             self.BackgroundPath = os.path.join(appPath, defaultMood['Background'])
             self.RotateBackground = defaultMood['RotateBackground']
-            self.RotateTimer = defaultMood['RotateTimer']
+            self.rotatebackgroundtime = defaultMood['RotateTimer']
 
 
         ###############################################################
@@ -349,7 +349,7 @@ class NowPlayingData:
                     # None if none found
                     break
 
-        logging.info("...data got filtered: ")
+        logging.debug("...data got filtered: ")
     
 
 ########################################################

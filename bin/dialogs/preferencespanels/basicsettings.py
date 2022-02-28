@@ -26,6 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 import wx
+from bin.beamutils import *
 
 ###################################################################
 #                      BasicSettingsTab                           #
@@ -99,21 +100,8 @@ class BasicSettings(wx.Panel):
         hboxTanda.Add(self.TandaLengthLabel, flag=wx.LEFT | wx.TOP, border=7)
         vbox.Add(hboxTanda, flag=wx.LEFT, border=20)
         
-        ##################
-        #   Statusbar    #
-        ##################
-        windowdecoration = wx.StaticText(self, -1, "Window decoration")
-        self.StatusBarCheckBox = wx.CheckBox(self, label='Show statusbar')
-        if self.BeamSettings._showStatusbar == 'True':
-            self.StatusBarCheckBox.SetValue(True)
-        else:
-            self.StatusBarCheckBox.SetValue(False)
-        self.StatusBarCheckBox.Bind(wx.EVT_CHECKBOX, self.OnStatusBarCheckBox)
-        vbox.Add(windowdecoration, flag=wx.LEFT, border=20)
-        hboxDecoration = wx.BoxSizer(wx.HORIZONTAL)
-        hboxDecoration.Add(self.StatusBarCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
-        vbox.Add(hboxDecoration, flag=wx.LEFT, border=20)
-        
+
+        '''        
         ################
         #   LOGGING    #
         ################
@@ -128,8 +116,23 @@ class BasicSettings(wx.Panel):
         hboxLog = wx.BoxSizer(wx.HORIZONTAL)
         hboxLog.Add(self.LogCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
         vbox.Add(hboxLog, flag=wx.LEFT, border=20)
+        '''
 
-        
+        loglevel = wx.StaticText(self, wx.ID_ANY, "Logging Level")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        loglevel.SetFont(font)
+
+        logleveldescription = wx.StaticText(self, wx.ID_ANY, "Select Log Level")
+        self.LogLevelSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
+                                                    value=self.BeamSettings._loglevel,
+                                                    choices=logLevelList,
+                                                    style=wx.CB_READONLY)
+        self.LogLevelSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectLogLevel)
+        vbox.Add(loglevel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        vbox.Add(logleveldescription, flag=wx.LEFT, border=20)
+        vbox.Add(self.LogLevelSelectorDropdown, flag=wx.LEFT, border=20)
+
+
         ##############
         # SET SIZERS #
         ##############
@@ -144,11 +147,12 @@ class BasicSettings(wx.Panel):
 #                           EVENTS                                #
 ###################################################################
 
-    #########################
-    # MEDIA PLAYER SELECTOR #
-    #########################
     def OnSelectMediaPlayer(self, event):
         self.BeamSettings._moduleSelected = self.ModuleSelectorDropdown.GetValue()
+
+    def OnSelectLogLevel(self, event):
+        self.BeamSettings._loglevel = self.LogLevelSelectorDropdown.GetValue()
+        setLogLevel(self.BeamSettings._loglevel)
 
     ################
     # REFRESH TIME #
@@ -176,12 +180,6 @@ class BasicSettings(wx.Panel):
             self.TandaLengthLabel.SetLabel(str(self.BeamSettings._maxTandaLength) + " songs")
         else:
             self.TandaLengthLabel.SetLabel("No preview")
-
-    ##################
-    #   Statusbar    #
-    ##################
-    def OnStatusBarCheckBox(self, event):
-        self.BeamSettings._showStatusbar = str(self.StatusBarCheckBox.GetValue())
 
     ################
     #   LOGGING    #

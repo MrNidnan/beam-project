@@ -39,15 +39,9 @@ try:
     logformat = "%(asctime)s : %(levelname)s : %(message)s"
     dateformat = "%Y-%m-%d %H:%M:%S"
     # there is a preliminary log level in the strings.json
-    loglevel = getLogLevel(beamSettings.loglevel)
-    logging.basicConfig(format=logformat, datefmt=dateformat, level=loglevel, stream=sys.stdout)
-    # logging and stringResources default is WARNING
-    rootLogger = logging.getLogger()
-    # for further logging configuration
-except Exception as e:
-    logging.error(e, exc_info=True)
+    logging.basicConfig(format=logformat, datefmt=dateformat, level=logging.INFO, stream=sys.stdout)
+    setLogLevel("Error")
 
-try:
     app = wx.App(False)  # Error messages go to terminal
 
     # apply
@@ -55,13 +49,7 @@ try:
     # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
     beamSettings.loadConfig()
     # now beamconfig.json is read, from config or home dir
-except Exception as e:
-    logging.error(e, exc_info=True)
-
-# handle logging related exceptions in a separae block
-try:
-    rootLogger.setLevel(logging.INFO)
-    # To publish sume start infos
+    setLogLevel(beamSettings._loglevel)
 
     logpath = beamSettings._logPath
     try:
@@ -73,8 +61,8 @@ try:
         logPath = getUserHomePath()
         logging.error(e, exc_info=True)
 
-    logfilepath = os.path.join(logpath, beamSettings.logfilename)
     if os.path.isdir(logpath):
+        logfilepath = os.path.join(logpath, beamSettings.getString("logfilename"))
         # set up additional logging to file
         fileHandler = logging.FileHandler(logfilepath,  mode='w')
         # w=overwrwrite
@@ -82,22 +70,18 @@ try:
         fileHandler.setFormatter(logFormatter)
         # fileHandler.setLevel(loglevel)
         # level set by rootLogger
+        rootLogger = logging.getLogger()
+        # for further logging configuration
         rootLogger.addHandler(fileHandler)
     else:
         logging.error("Beam: Directory '" + logpath + "' does not exist, logging to stdout only", exc_info=True)
         # no logging at the first call because it reads the logpath
 
-    logging.info("Beam V" + beamSettings.beamversion)
+    logging.info("Beam V" + beamSettings.getString("version"))
     logging.info("Home dir: '" + getBeamHomePath() + "'")
-    logging.info("Config dir: " + getBeamConfigPath() + "'")
+    logging.info("Config dir: '" + getBeamConfigPath() + "'")
     logging.info("Logfile: '" + logpath + "'")
 
-    loglevel = getLogLevel(beamSettings._loglevel)
-    rootLogger.setLevel(loglevel)
-except Exception as e:
-    logging.error(e, exc_info=True)
-
-try:
     ########################################################
     # Start the main window
     ########################################################
@@ -113,6 +97,8 @@ try:
     ########################################################
 
     app.MainLoop()              # Start the main loop which handles events
+
+    logging.info("Beam closed")
+
 except Exception as e:
     logging.error(e, exc_info=True)
-

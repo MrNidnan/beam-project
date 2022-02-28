@@ -20,31 +20,37 @@
 #
 #    Revision History:
 #
-#    XX/XX/2014 Version 1.0
+#    Version 1.0
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
 
+import json
 
-import wx.html, wx.adv
+#
+# On start created as global object beamsettings.beamSettings
+# stringResources[] must be initialized before
+#
+class BeamStrings():
 
-import textwrap
-from bin.beamsettings import *
+    def __init__(self, stringsfilename):
 
-##################################################
-# About DIALOG
-##################################################
+        self._stringDict = self.loadStrings(stringsfilename)
 
-def ShowAboutDialog(self):
-    info = wx.adv.AboutDialogInfo()
-    info.SetIcon(self.favicon)
-    info.SetName(beamSettings.getString("mainframetitle"))
-    info.SetVersion(beamSettings.getString("version"))
-    info.SetDescription(textwrap.fill(beamSettings.getString("aboutdialogdescription"), 70))
-    info.SetLicence(textwrap.fill(beamSettings.getString("aboutdialoglicense"), 70))
-    info.SetCopyright(beamSettings.getString("aboutcopyright"))
-    info.SetWebSite(beamSettings.getString("aboutwebsite"))
-    info.AddDeveloper(beamSettings.getString("aboutdeveloper"))
-    info.AddArtist(beamSettings.getString("aboutartist"))
 
-    wx.adv.AboutBox(info)
+    def getString(self, key):
+        value = self._stringDict[key]
+
+        return value
+
+
+    def loadStrings(self, stringsfilename):
+        stringsFile = open(stringsfilename, 'r')
+        try:
+            stringsDict = json.load(stringsFile)
+        finally:
+            stringsFile.close()
+
+        return stringsDict
+
+

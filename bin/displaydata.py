@@ -139,7 +139,7 @@ class DisplayData():
     # runtime so long?
     def processData(self):
         try:
-            wx.lib.delayedresult.startWorker(self.updateMood, self.processDataThread)
+            wx.lib.delayedresult.startWorker(self.__updateMood, self.processDataThread)
         except Exception as e:
             logging.error(e, exc_info=True)
             pass
@@ -152,10 +152,11 @@ class DisplayData():
             logging.error(e, exc_info=True)
             pass
 
+    # Running in processDataThread
     # After processing data
     # update the mood in main loop
     # and refresh the display
-    def updateMood(self, result):
+    def __updateMood(self, result):
         try:
             # ??? done above yet
             self.currentDisplayRows = self.nowPlayingData.DisplayRows
@@ -165,10 +166,12 @@ class DisplayData():
             self.previousMood = deepcopy(self.currentMood)
             self.currentMood = self.nowPlayingData.CurrentMood
             self.currentDisplaySettings = self.nowPlayingData.DisplaySettings
+            # can be "no"
             self.RotateBackground = self.nowPlayingData.RotateBackground
-            self.RotateTimer = self.nowPlayingData.RotateTimer
+            # in seconds
+            self.rotatebackgroundtime = self.nowPlayingData.rotatebackgroundtime
 
-            self.mainFrame.SetStatusText("Player: " + self.currentPlaybackStatus + " - Mood: " + self.currentMood)
+            self.mainFrame.SetStatusText(beamSettings._moduleSelected + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMood)
 
             if (self.previousMood != self.currentMood):
                 self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
@@ -210,10 +213,11 @@ class DisplayData():
                 try:
                     self.mainFrame.RotateBackgroundTimer = wx.Timer(self)
                     self.mainFrame.Bind(wx.EVT_TIMER, self.rotateBackground, self.mainFrame.RotateBackgroundTimer)
-                    self.mainFrame.RotateBackgroundTimer.Start(int(self.RotateTimer) * 1000)
+                    # ??? *1000
+                    self.mainFrame.RotateBackgroundTimer.Start(int(self.rotatebackgroundtime) * 1000)
                 except:
                     self.mainFrame.RotateBackgroundTimer.Stop()
-                    self.mainFrame.RotateBackgroundTimer.Start(self.RotateTimer)
+                    self.mainFrame.RotateBackgroundTimer.Start(int(self.rotatebackgroundtime) * 1000)
                     # Select Mood transition and start changing
 
             if beamSettings._moodTransition == 'Fade directly':

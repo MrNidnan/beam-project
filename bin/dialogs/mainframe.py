@@ -51,15 +51,12 @@ class MainFrame(wx.Frame):
     def __init__(self):
         # Size and position of this main window
         # beamsettings loaded in beam.py
-        wx.Frame.__init__(self, None, title=beamSettings.mainframetitle + " V" + beamSettings.beamversion, pos=(150, 150), size=(800, 600))
+        wx.Frame.__init__(self, None, title=beamSettings.getString("mainframetitle") + " V" + beamSettings.getString("version"), pos=(150, 150), size=(800, 600))
 
         # only required for display
         # self.SetDoubleBuffered(True)
 
-        # self reference to be removed later
         self.displayData = DisplayData(self)
-
-        # self reference to be removed later
         self.displayFrame = DisplayFrame(self.displayData)
 
         # Set Icon
@@ -150,7 +147,6 @@ class MainFrame(wx.Frame):
         panel.SetSizer(vbox)
         self.Layout()
         self.Show()
-        self.showStatusBar()
 
         logging.info("Beam started")
 
@@ -162,12 +158,25 @@ class MainFrame(wx.Frame):
     #
     def onClose(self, event):
         try:
-            self.displayFrame.Hide()
-            self.Hide()
-            self.Destroy()
-            logging.info("Beam ended")
+            if self.displayFrame.IsShown():
+                closeDialog = dialog = wx.MessageDialog(self, message="Are you sure you want to quit?", caption="Display Frame shown",
+                                              style=wx.YES_NO, pos=wx.DefaultPosition)
+                response = closeDialog.ShowModal()
+                if response != wx.ID_YES:
+                    event.StopPropagation()
+                else:
+                    self.destroyFrame()
+            else:
+                self.destroyFrame()
         except Exception as e:
             logging.error(e, exc_info=True)
+
+
+    def destroyFrame(self):
+        self.displayFrame.Hide()
+        self.displayFrame.Destroy()
+        self.Hide()
+        self.Destroy()
 
     #
     # Show 'About Dialog'
@@ -192,7 +201,7 @@ class MainFrame(wx.Frame):
     def onApply(self, event):
         try:
             # Save settings
-            beamSettings.saveConfig(beamSettings.configfilename)
+            beamSettings.saveConfig()
             # Reload settings in main-window
             self.updateSettings()
         except Exception as e:
@@ -217,7 +226,7 @@ class MainFrame(wx.Frame):
     #
     def updateSettings(self):
         try:
-            self.showStatusBar()
+            # self.showStatusBar()
             self.processData()
             # Starts and stops rotation if it has changed.
             # To be done
@@ -225,30 +234,27 @@ class MainFrame(wx.Frame):
             #    self.rotateBackground()
         except Exception as e:
             logging.error(e, exc_info=True)
-            pass
 
 
+    '''
     #
     # Hide/show statusbar
     #
     def showStatusBar(self):
         try:
             self.triggerResizeBackground = True
-            if beamSettings._showStatusbar == 'True':
+            if beamSettings.__showStatusbar == 'True':
                 self.statusbar.Show()
             else:
                 self.statusbar.Hide()
         except Exception as e:
             logging.error(e, exc_info=True)
-
-        # PROCESS INFO FROM MEDIA PLAYER
-
-
+    '''
 
     # UPDATE INFO FROM PREFERENCES WINDOW
     def updateSettings(self):
         try:
-            self.showStatusBar()
+            # self.showStatusBar()
             self.displayData.processData()
             # Starts and stops rotation if it has changed.
             # if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (
