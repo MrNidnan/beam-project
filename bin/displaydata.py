@@ -32,11 +32,11 @@ from bin.beamutils import getBeamHomePath
 from bin.nowplayingdata import *
 from random import randint
 
-from bin.dialogs.preferencespanels.basicsettings import BasicSettings
-from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
-from bin.dialogs.preferencespanels.moods import Moods
-from bin.dialogs.preferencespanels.rules import Rules
-from bin.dialogs.preferencespanels.tagspreview import TagsPreview
+from bin.dialogs.preferencespanels.basicsettingspanel import BasicSettingsPanel
+from bin.dialogs.preferencespanels.defaultlayoutpanel import DefaultLayoutPanel
+from bin.dialogs.preferencespanels.moodspanel import MoodsPanel
+from bin.dialogs.preferencespanels.rulespanel import RulesPanel
+from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel
 
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
@@ -77,6 +77,9 @@ class DisplayData():
         # self._currentBackgroundPath = []
         self._currentBackgroundPath = None
         self.BackgroundImageWidth, self.BackgroundImageHeight = self.backgroundImage.GetSize()
+        # "no", "linear", "random"
+        # ??? wird wo gesetzt und gespeichert
+        self.RotateBackground = 'no'
 
         # trigger
         self.triggerResizeBackground = True
@@ -166,10 +169,11 @@ class DisplayData():
             self.previousMood = deepcopy(self.currentMood)
             self.currentMood = self.nowPlayingData.CurrentMood
             self.currentDisplaySettings = self.nowPlayingData.DisplaySettings
-            # can be "no"
+            # can be "no", "linear", "random"
+            ## set in __updateMood()
             self.RotateBackground = self.nowPlayingData.RotateBackground
             # in seconds
-            self.rotatebackgroundtime = self.nowPlayingData.rotatebackgroundtime
+            self.rotatebackgroundseconds = self.nowPlayingData.rotatebackgroundseconds
 
             self.mainFrame.SetStatusText(beamSettings._moduleSelected + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMood)
 
@@ -202,24 +206,8 @@ class DisplayData():
         if TransitionType == 'MoodChange':
             # LOAD NEW SETTINGS FOR NEW MOOD
             # Stop RotateBackground timer if it is running
-            try:
-                self.mainFrame.RotateBackgroundTimer.Stop()
-            except:
-                pass
-
-            # !!! move to mainFrame
-            # If there is a RotateBackground timer to be set. Initialize it.
-            if not self.RotateBackground == 'no':
-                try:
-                    self.mainFrame.RotateBackgroundTimer = wx.Timer(self)
-                    self.mainFrame.Bind(wx.EVT_TIMER, self.rotateBackground, self.mainFrame.RotateBackgroundTimer)
-                    # ??? *1000
-                    self.mainFrame.RotateBackgroundTimer.Start(int(self.rotatebackgroundtime) * 1000)
-                except:
-                    self.mainFrame.RotateBackgroundTimer.Stop()
-                    self.mainFrame.RotateBackgroundTimer.Start(int(self.rotatebackgroundtime) * 1000)
-                    # Select Mood transition and start changing
-
+            self.mainFrame.RotateBackgroundTimer.Stop()
+            # Select Mood transition and start changing
             if beamSettings._moodTransition == 'Fade directly':
                 self.currentTransition = 'FadeDirect'
                 self.initiateTransition()
@@ -229,6 +217,9 @@ class DisplayData():
             else:
                 self.currentTransition = ''
                 self.initiateTransition()
+
+            if not self.RotateBackground == 'no':
+                self.mainFrame.RotateBackgroundTimer.Start(int(self.rotatebackgroundseconds) * 1000)
 
             return
 
@@ -381,9 +372,8 @@ class DisplayData():
             self.mainFrame.TransitionTimer.Stop()
             self.mainFrame.refreshDisplay()
 
-    ########################################################
-    # Rotate Background
-    ########################################################
+    #
+    # Gets triggered by a timer event in MainFrame
     def rotateBackground(self, event=wx.EVT_TIMER):
         # Starts, stops and executes the rotate-background function.
 

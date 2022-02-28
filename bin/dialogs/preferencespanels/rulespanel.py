@@ -31,7 +31,7 @@ from bin.dialogs.editruledialog import EditRuleDialog
 ########################################################
 #                      Rules                           #
 ########################################################
-class Rules(wx.Panel):
+class RulesPanel(wx.Panel):
     def __init__(self, parent, BeamSettings):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         

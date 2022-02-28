@@ -30,7 +30,7 @@ import wx, os, platform
 ########################################################
 #                   TagsPreview                        #
 ########################################################
-class TagsPreview(wx.Panel):
+class TagsPreviewPanel(wx.Panel):
     def __init__(self, parent, BeamSettings, nowPlayingDataModel):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
 

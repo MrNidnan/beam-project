@@ -34,7 +34,6 @@ class DisplayFrame(wx.Frame):
 
     # Called by beam.py
     def __init__(self, displayData):
-
         # wx.DEFAULT_FRAME_STYLE
         # wx.CAPTION | wx.RESIZE_BORDER
         # wxFULLSCREEN_NOMENUBAR
@@ -43,7 +42,8 @@ class DisplayFrame(wx.Frame):
         # wxFULLSCREEN_NOCAPTION
         # wx.FULLSCREEN_ALL
         # wx.RESIZE_BORDER
-        framestyle = wx.DEFAULT_FRAME_STYLE & ~ (wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX)
+        # wx.MAXIMIZE_BOX|
+        framestyle = wx.DEFAULT_FRAME_STYLE & ~(wx.MINIMIZE_BOX|wx.MAXIMIZE_BOX)
         wx.Frame.__init__(self, parent=None, title="F11: toggle Full Screen", pos=(200,200), size=(800,600), style=framestyle)
 
         ###################
@@ -62,14 +62,21 @@ class DisplayFrame(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.onClose)
         # !!! Funktioniert nicht, nur implizit on caption
+        # self.Bind(wx.EVT_MAXIMIZE, self.onMaximize, self)
         # self.Bind(wx.EVT_LEFT_DCLICK, self.onLeftDClick)
-        self.Bind(wx.EVT_MAXIMIZE, self.onMaximize, self)
-
+        # Fuktioniert alles nicht
+        # self.dclicktime = 500
+        # self.dclickTimer = wx.Timer(self)
+        # self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
+        # self.Bind(wx.EVT_LEFT_DCLICK, self.onLeftDClick)
+        # elf.Bind(wx.EVT_TIMER, self.onSingleClick)
         # Background
         self.modifiedBitmap = None
         self.SetBackgroundColour(wx.BLACK)
         self.Bind(wx.EVT_SIZE, self.onSize)
         # self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+
 
         ########################## END FRAME INITIALIZATION #########################
 
@@ -78,15 +85,32 @@ class DisplayFrame(wx.Frame):
 # Buttons and menues
 ########################################################
 
+    def onLeftDClick(self, e):
+        # self.dclickTimer.Stop()
+        self.ShowFullScreen(not self.IsFullScreen())
 
+    def onLeftDown(self, e):
+        # self.dclickTimer.Start(self.dclicktime)
+        pass
+
+    def onSingleClick(self, e):
+        # self.dclickTimer.Stop()
+        pass
+
+    def onMaximize(self, event):
+        # Does ot work
+        self.ShowFullScreen(True)
+
+    # F11: togle fullscreen
+    # Esc: escape fullscreen
     def onKeyUP(self, event):
         try:
             keyCode = event.GetKeyCode()
             if keyCode == wx.WXK_ESCAPE:
                 if self.IsFullScreen():
                     self.ShowFullScreen(False)
-                else:
-                    self.onClose(event)
+                # else:
+                #    self.onClose(event)
                 # event.Skip()
             if keyCode == wx.WXK_F11:
                 self.ShowFullScreen(not self.IsFullScreen())

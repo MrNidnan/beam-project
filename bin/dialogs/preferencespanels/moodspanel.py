@@ -26,12 +26,12 @@
 # This Python file uses the following encoding: utf-8
 
 import wx, os
-from bin.dialogs.editmooddialog import EditMood
+from bin.dialogs.editmoodframe import EditMoodFrame
 
 ###################################################################
 #                           MOODS                                 #
 ###################################################################
-class Moods(wx.Panel):
+class MoodsPanel(wx.Panel):
     def __init__(self, parent, BeamSettings):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         
@@ -148,13 +148,13 @@ class Moods(wx.Panel):
         # LAYOUT BUTTONS #
         ##################
     def OnAddMood(self, event):
-        self.EditMood = EditMood(self, self.MoodList.GetCount()+1, "Add mood")
+        self.EditMood = EditMoodFrame(self, self.MoodList.GetCount() + 1, "Add mood")
         self.EditMood.Show()
 
     def OnEditMood(self, event):
         RowSelected = self.MoodList.GetSelection()+1
         if RowSelected>-1:
-            self.MoodRule = EditMood(self, RowSelected, "Edit mood")
+            self.MoodRule = EditMoodFrame(self, RowSelected, "Edit mood")
             self.MoodRule.Show()
 
     def OnDelMood(self, event):

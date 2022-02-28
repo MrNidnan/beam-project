@@ -31,7 +31,7 @@ from bin.beamutils import *
 ###################################################################
 #                      BasicSettingsTab                           #
 ###################################################################
-class BasicSettings(wx.Panel):
+class BasicSettingsPanel(wx.Panel):
     def __init__(self, parent, BeamSettings):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         
@@ -76,7 +76,7 @@ class BasicSettings(wx.Panel):
         # REFRESH TIME #
         ################
         refreshtime = wx.StaticText(self, -1, "Refresh time")
-        self.RefreshTime = wx.Slider(self, -1, int(self.BeamSettings._updateTimer), 500, 10000,(0,0), (233,-1), wx.SL_HORIZONTAL)
+        self.RefreshTime = wx.Slider(self, -1, int(self.BeamSettings._updtime), 500, 10000, (0, 0), (233, -1), wx.SL_HORIZONTAL)
         self.RefreshTimeLabel = wx.StaticText(self, -1, "")
         self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
         vbox.Add(refreshtime, flag=wx.LEFT, border=20)
@@ -158,9 +158,9 @@ class BasicSettings(wx.Panel):
     # REFRESH TIME #
     ################
     def OnRefreshTimerScroll(self, event = wx.EVT_SCROLL):
-        self.BeamSettings._updateTimer        = self.RefreshTime.GetValue()
+        self.BeamSettings._updtime = self.RefreshTime.GetValue()
         
-        Timervalue = round(float(self.BeamSettings._updateTimer)/1000,1)
+        Timervalue = round(float(self.BeamSettings._updtime) / 1000, 1)
         if Timervalue < float(2.0):
             # Fast
             self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Fast)")

@@ -31,11 +31,11 @@ from bin.beamsettings import *
 from bin.displaydata import DisplayData
 from bin.dialogs.displaypanel import DisplayPanel
 
-from bin.dialogs.preferencespanels.basicsettings import BasicSettings
-from bin.dialogs.preferencespanels.defaultlayout import DefaultLayout
-from bin.dialogs.preferencespanels.moods import Moods
-from bin.dialogs.preferencespanels.rules import Rules
-from bin.dialogs.preferencespanels.tagspreview import TagsPreview
+from bin.dialogs.preferencespanels.basicsettingspanel import BasicSettingsPanel
+from bin.dialogs.preferencespanels.defaultlayoutpanel import DefaultLayoutPanel
+from bin.dialogs.preferencespanels.moodspanel import MoodsPanel
+from bin.dialogs.preferencespanels.rulespanel import RulesPanel
+from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel
 
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
@@ -72,13 +72,13 @@ class MainFrame(wx.Frame):
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.displayData.updateData, self.timer)
         # pyinstaller TypeError: Timer.Start(): argument 1 has unexpected type 'str'
-        self.timer.Start(beamSettings._updateTimer)  # Refresh time in ms from config, default 6311
+        self.timer.Start(beamSettings._updtime)  # Refresh time in ms from config, default 6311
 
         # faders
         self.TransitionTimer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.displayData.transition, self.TransitionTimer)
         self.RotateBackgroundTimer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.displayData.rotateBackground, self.RotateBackgroundTimer)
+        self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
 
         # Statusbar
         self.statusbar = self.CreateStatusBar(style=0)
@@ -152,6 +152,10 @@ class MainFrame(wx.Frame):
 
         ########################## END OF INITIALIZATION #########################
 
+
+    def rotateBackground(self, event=wx.EVT_TIMER):
+        # Starts, stops and executes the rotate-background function.
+        self.displayData.rotateBackground(event)
 
     #
     # Show 'Close dialog
@@ -304,11 +308,11 @@ class ListBookMenu(wx.Listbook):
         self.pages = [
                     # preview must be first in array
                     (DisplayPanel(self, displayData), "Preview"),
-                    (BasicSettings(self, beamSettings), "Settings"),
-                    (DefaultLayout(self, beamSettings), "Layout"),
-                    (Moods(self, beamSettings), "Moods"),
-                    (Rules(self, beamSettings), "Rules"),
-                    (TagsPreview(self, beamSettings, displayData.nowPlayingData), "Tags")
+                    (BasicSettingsPanel(self, beamSettings), "Settings"),
+                    (DefaultLayoutPanel(self, beamSettings), "Layout"),
+                    (MoodsPanel(self, beamSettings), "Moods"),
+                    (RulesPanel(self, beamSettings), "Rules"),
+                    (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")
                  ]
         ImId=0
         for page, label in self.pages:

@@ -67,18 +67,19 @@ class BeamSettings:
         # protected variables
         # get initialized empty
         # later on set from config file
-        self._moduleSelected    = ''
-        self._maxTandaLength    = 4
-        self._updateTimer       = 5000
-        self._moodTransition       = ''
-        self._moodTransitionSpeed  = ''
+        self._moduleSelected    = None
+        self._maxTandaLength    = None
+        # module run() interval in milliseconds
+        self._updtime       = None
+        self._moodTransition       = None
+        self._moodTransitionSpeed  = None
         self._logging              = True
-        self._logPath              = ''
-        self._loglevel              = "Debug"
+        self._logPath              = None
+        self._loglevel              = None
         # not in use, kept for configfile
         self.__showStatusbar        = None
-        self._allModulesSettings    = ''
-        self._rules                 = ''
+        self._allModulesSettings    = None
+        self._rules                 = None
 
         # self.applicationpath = getBeamHomePath()
         stringsfilename = os.path.join(getBeamResourcesPath(), 'json', 'strings.json')
@@ -123,7 +124,7 @@ class BeamSettings:
         output['Author']           = "Mikael Holber & Horia Uifaleanu - 2015"
         output['Module']           = self._moduleSelected
         output['MaxTandaLength']   = self._maxTandaLength
-        output['Updtime']          = self._updateTimer
+        output['Updtime']          = self._updtime
         output['MoodTransition']           = self._moodTransition
         output['MoodTransitionSpeed']      = self._moodTransitionSpeed
         output['Logging']              = self._logging
@@ -148,13 +149,14 @@ class BeamSettings:
     # and if that does not exist
     # replaced by the value of ConfigDataOriginal
     #
+    '''
     def __extractSetting(self, beamConfigData, defaultConfigData, key):
         try:
             output = beamConfigData[key]
         except:
             output = defaultConfigData[key]
         return output
-
+    '''
 
     def __getConfigFilePath(self):
 
@@ -190,7 +192,7 @@ class BeamSettings:
 
         self._moduleSelected        = defaultConfigData['Module']         # Player to read from
         self._maxTandaLength        = defaultConfigData['MaxTandaLength'] # Longest tandas, optimize for performance
-        self._updateTimer           = defaultConfigData['Updtime']        # mSec between reading
+        self._updtime               = defaultConfigData['Updtime']        # mSec between reading
         self._moodTransition        = defaultConfigData['MoodTransition']
         self._moodTransitionSpeed   = defaultConfigData['MoodTransitionSpeed']
         self.__showStatusbar         = defaultConfigData['ShowStatusbar']

@@ -194,3 +194,4 @@ class EditLayoutDialog(wx.Dialog):
     def OnCancelLayoutItem(self, event):
         self.Destroy()
 
+

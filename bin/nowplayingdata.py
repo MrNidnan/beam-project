@@ -67,8 +67,7 @@ class NowPlayingData:
         self.prevPlayedSong = SongObject()
         self.nextTandaSong = SongObject()
         self.prevReading = SongObject()
-        
-        
+
         self.SinceLastCortinaCount = 1
         self.TillNextCortinaCount = 0
         
@@ -78,8 +77,9 @@ class NowPlayingData:
         self.CurrentMood =""
         self.PreviousMood = ""
         self.BackgroundPath = ""
-        self.RotateBackground = ""
-        self.rotatebackgroundtime = None
+        self.RotateBackground = None
+        # in processData() set to currentRule['RotateBackground'] or defaultMood['RotateBackground']
+        self.rotatebackgroundseconds = None
         self.DisplayRows = []
         self.currentCoverArtImage = None
         self.currentCoverArtPath = ""
@@ -198,7 +198,7 @@ class NowPlayingData:
 
     ###############################################################
     #
-    # APPLY RULES
+    # Apply rules and moods
     # Create display strings
     #
     ###############################################################
@@ -283,21 +283,23 @@ class NowPlayingData:
         # Apply mood layout and background or default mood
         #
         if applyMood:
+            # By EditMoodDialog
             currentRule = currentSettings._moods[applyMood]
             self.CurrentMood = currentRule['Name']
             self.DisplaySettings = currentRule['Display']
             appPath = getBeamHomePath()
             self.BackgroundPath = os.path.join(appPath, currentRule['Background'])
             self.RotateBackground = currentRule['RotateBackground']
-            self.rotatebackgroundtime = currentRule['RotateTimer']
+            self.rotatebackgroundseconds = currentRule['RotateTimer']
         else:
+            # by EditLayoutDialog
             defaultMood = currentSettings._moods[0]
             self.CurrentMood = defaultMood['Name']
             self.DisplaySettings = defaultMood['Display']
             appPath = getBeamHomePath()
             self.BackgroundPath = os.path.join(appPath, defaultMood['Background'])
             self.RotateBackground = defaultMood['RotateBackground']
-            self.rotatebackgroundtime = defaultMood['RotateTimer']
+            self.rotatebackgroundseconds = defaultMood['RotateTimer']
 
 
         ###############################################################
