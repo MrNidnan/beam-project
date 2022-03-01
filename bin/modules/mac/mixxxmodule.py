@@ -33,7 +33,7 @@ from bin.modules import mixxxutils
 def run(MaxTandaLength, LastPlaylist):
     sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
 
-    playlist, playback_status = mixxxmodule.run(MaxTandaLength, LastPlaylist, sqlitePath)
+    playlist, playback_status = mixxxutils.run(MaxTandaLength, LastPlaylist, sqlitePath)
 
     return playlist, playback_status
 

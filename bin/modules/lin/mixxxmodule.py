@@ -35,6 +35,6 @@ def run(maxtandalength, lastplaylist):
     # "/home/<username>/.mixxx/mixxxdb.sqlite"
     # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'
 
-    playlist, playback_status = mixxxmodule.run(maxtandalength, lastplaylist, sqlitePath)
+    playlist, playback_status = mixxxutils.run(maxtandalength, lastplaylist, sqlitePath)
 
     return playlist, playback_status
