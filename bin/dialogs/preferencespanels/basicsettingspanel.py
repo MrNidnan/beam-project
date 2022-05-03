@@ -75,7 +75,7 @@ class BasicSettingsPanel(wx.Panel):
         ################
         # REFRESH TIME #
         ################
-        refreshtime = wx.StaticText(self, -1, "Refresh time")
+        refreshtime = wx.StaticText(self, -1, "Mediaplayer Refresh Time")
         self.RefreshTime = wx.Slider(self, -1, int(self.BeamSettings._updtime), 500, 10000, (0, 0), (233, -1), wx.SL_HORIZONTAL)
         self.RefreshTimeLabel = wx.StaticText(self, -1, "")
         self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
@@ -89,7 +89,7 @@ class BasicSettingsPanel(wx.Panel):
         ################
         # TANDA LENGTH #
         ################
-        tandalength = wx.StaticText(self, -1, "Tanda Length")
+        tandalength = wx.StaticText(self, -1, "Max. Tanda Length")
         self.TandaLength = wx.Slider(self, -1, self.BeamSettings._maxTandaLength, 0, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
         self.TandaLengthLabel = wx.StaticText(self, -1, "")
         self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)

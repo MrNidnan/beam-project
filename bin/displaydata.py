@@ -95,8 +95,8 @@ class DisplayData():
     # Update data - Executed from mainFrame to bottom with exception if preferences changed
     ########################################################
 
-    # Copy display data from nowplayingdatamodel
-    # gets continously called by a timer in main loop
+    # Copy display data from nowplayingdata
+    # gets continously called by a timer in MainFrame.__init__()
     def updateData(self, event=wx.EVT_TIMER):
         try:
             # copy playing data to current
@@ -109,37 +109,46 @@ class DisplayData():
             if not self.currentlyUpdating:
                 self.currentlyUpdating = True
                 # asynchronous transmission of data from a worker thread to the main thread
-                # call extractDataThread() and then getDataFinished()
+                # calls readDataThread() in separate thread and then getDataFinished()
                 wx.lib.delayedresult.startWorker(self.getDataFinished, self.readDataThread)
             # ??? Why resets updateDate it's own timer
             # It will create a new one, indeed
             # self.updateDataTimer()  # Reset the timer
         except Exception as e:
             logging.error(e, exc_info=True)
-            pass
 
 
-    # Thread by startWorker()
+    #
+    # Read song info from the modules
+    # in a thread by updateData()
+    #
     def readDataThread(self):
         try:
             self.nowPlayingData.readData(beamSettings)
+            # sets playlistChanged
         except Exception as e:
             logging.error(e, exc_info=True)
 
-
-    # New data read into nowPlayingData
+    #
+    # Check if the playlist got changed
+    # and in case process that
+    # in the MainThread
+    #
     def getDataFinished(self, result):
         try:
             self.currentlyUpdating = False
+            # playlistChabnged set by NowPlayingData.readData()
             if self.nowPlayingData.playlistChanged:
                 # Only update if playlist has changed
                 self.processData()
         except Exception as e:
             logging.error(e, exc_info=True)
 
-    # Read data from media player
-    # in an own thread
-    # runtime so long?
+    #
+    # called in MainTread
+    # starts Thread for processDataThread()
+    # and then calls __updateMood()
+    #
     def processData(self):
         try:
             wx.lib.delayedresult.startWorker(self.__updateMood, self.processDataThread)
@@ -155,9 +164,9 @@ class DisplayData():
             logging.error(e, exc_info=True)
             pass
 
-    # Running in processDataThread
+    # Running in MainThread
     # After processing data
-    # update the mood in main loop
+    # update the mood
     # and refresh the display
     def __updateMood(self, result):
         try:

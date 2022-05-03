@@ -47,56 +47,70 @@ def run(MaxTandaLength, LastPlaylist):
     #
     # Player Status
     #
-    if applicationrunning("MediaMonkey.exe"):
-        try:
-            pythoncom.CoInitialize()
-            MediaMonkey = win32com.client.Dispatch("SongsDB.SDBApplication")
-        except:
-            playbackStatus = 'PlayerNotRunning'
-            pythoncom.CoUninitialize()
-            return playlist, playbackStatus
-    else:
+    if not applicationrunning("MediaMonkey.exe"):
         playbackStatus = 'PlayerNotRunning'
         return playlist, playbackStatus
 
-    #
-    # Playback Status
-    #
-    if not MediaMonkey.Player.isPlaying:
-        playbackStatus = 'Stopped'
-        return playlist, playbackStatus
-    elif MediaMonkey.Player.isPaused and MediaMonkey.Player.isPlaying:
-        playbackStatus = 'Paused'
-        return playlist, playbackStatus
-    #
-    # Playback = Playing
-    #
-    elif MediaMonkey.Player.isPlaying and not MediaMonkey.Player.isPaused:
-        playbackStatus = 'Playing'
-
-    #Declare our position
-    currentsong = MediaMonkey.Player.CurrentSongIndex
-    searchsong = currentsong
-    playlistlength = searchsong + MaxTandaLength+2
-
-    #
-    # Quick-read
-    #
-    if quickRead(MediaMonkey, currentsong, MaxTandaLength, LastPlaylist):
-        logging.debug("Quick-read")
-        playlist = deepcopy(LastPlaylist)
-        return playlist, playbackStatus
-    #
-    # Full-read
-    #
-    logging.debug("Full-read")
-    while searchsong < playlistlength and searchsong < currentsong+MaxTandaLength+2:
+    pythoncom.CoInitialize()
+    try:
         try:
-            playlist.append(getSongAt(MediaMonkey, searchsong))
+            # First check for MM5
+            MediaMonkey = win32com.client.Dispatch("SongsDB5.SDBApplication")
+            # Tries to start MM5 when MM5 is not running!
+            # raise
         except:
-            break
-        searchsong = searchsong+1
-    pythoncom.CoUninitialize()
+            # then check for MM4
+            MediaMonkey = win32com.client.Dispatch("SongsDB.SDBApplication")
+
+        #
+        # Playback Status
+        #
+        if not MediaMonkey.Player.isPlaying:
+            playbackStatus = 'Stopped'
+            return playlist, playbackStatus
+        elif MediaMonkey.Player.isPaused and MediaMonkey.Player.isPlaying:
+            playbackStatus = 'Paused'
+            return playlist, playbackStatus
+        #
+        # Playback = Playing
+        #
+        elif MediaMonkey.Player.isPlaying and not MediaMonkey.Player.isPaused:
+            playbackStatus = 'Playing'
+
+        #Declare our position
+        currentsong = MediaMonkey.Player.CurrentSongIndex
+        searchsong = currentsong
+        playlistlength = searchsong + MaxTandaLength+2
+
+        if MediaMonkey.VersionHi == 4:
+            #
+            # Quick-read
+            #
+            # Does not work with MM5
+            if quickRead(MediaMonkey, currentsong, MaxTandaLength, LastPlaylist):
+                logging.debug("Quick-read")
+                playlist = deepcopy(LastPlaylist)
+            else:
+                # Full-read
+                #
+                # MM4 works current playlist
+                logging.debug("Full-read")
+                while searchsong < playlistlength and searchsong < currentsong+MaxTandaLength+2:
+                    try:
+                        playlist.append(getSongAt(MediaMonkey, searchsong))
+                    except:
+                        break
+                    searchsong = searchsong+1
+        else:
+            if MediaMonkey.VersionHi == 5:
+                # MM5 works only current song
+                playlist.append(getSongAt(MediaMonkey, searchsong))
+            else:
+                # Unknown version
+                raise
+    finally:
+        pythoncom.CoUninitialize()
+
     return playlist, playbackStatus
 ###############################################################
 #
@@ -109,15 +123,18 @@ def quickRead(MediaMonkey, songPosition = 1, MaxTandaLength = 1, LastRead = []):
     Current = []
     for i in range(0,MaxTandaLength+2):
         try:
+            # does not work for MM5:
             Track = MediaMonkey.Player.CurrentPlaylist.Item(songPosition+i)
             Current.append(Track.Path)
         except:
             pass
         try:
             Song = LastRead[i]
+            # if LastRead[i] exists
             Last.append(Song.FilePath)
         except:
             pass
+# !!! auch wenn beide leer
     if Last == Current:
         return True
 
@@ -132,7 +149,13 @@ def quickRead(MediaMonkey, songPosition = 1, MaxTandaLength = 1, LastRead = []):
 
 def getSongAt(MediaMonkey, songPosition):
     retSong = SongObject()
-    Track = MediaMonkey.Player.CurrentPlaylist.Item(songPosition)
+
+    if MediaMonkey.Player.CurrentSongIndex == songPosition:
+        # Does work with MM5
+        Track = MediaMonkey.Player.CurrentSong
+    else:
+        # Does not work with MM5
+        Track = MediaMonkey.Player.CurrentPlaylist.Item(songPosition)
 
     retSong.Artist      = Track.ArtistName
     retSong.Album       = Track.AlbumName
@@ -156,13 +179,13 @@ def getSongAt(MediaMonkey, songPosition):
 #
 ###############################################################
 
-def ApplicationRunning(AppName):
-    import subprocess
-    cmd = 'WMIC PROCESS get Caption,Commandline,Processid'
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    for line in proc.stdout:
-        if AppName in line:
-            proc.kill()
-            return True
-    proc.kill()
-    return False
+# def ApplicationRunning(AppName):
+    #     import subprocess
+    # cmd = 'WMIC PROCESS get Caption,Commandline,Processid'
+    # proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    # for line in proc.stdout:
+    #     if AppName in line:
+    #         proc.kill()
+    #         return True
+    # proc.kill()
+    # return False

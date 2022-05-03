@@ -26,10 +26,12 @@
 # This Python file uses the following encoding: utf-8
 # An Mpris2 angepasst von Dominik und Peter Wenger 27.11.18
 
-# will only get used by linux modules
 import logging
 
+# this will only get called by Linux modules
+# and dbus is only be available on Linux
 import dbus
+
 # import importlib
 # dbus_specs = importlib.util.find_spec("dbus")
 # dbus = importlib.util.module_from_spec(dbus_specs)

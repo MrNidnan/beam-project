@@ -87,7 +87,11 @@ class NowPlayingData:
 
         self.convDict = dict()
 
-
+    #
+    # Dispatches to the selected module run()
+    # gets called by DisplayData.readDataThread()
+    # started by DisplayData.updateData() by startWorker()
+    #
     def readData(self, currentSettings):
         logging.debug("Start updating data... " + time.strftime("%H:%M:%S"))
         # Save previous state
