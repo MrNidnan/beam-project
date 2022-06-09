@@ -24,31 +24,17 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-import webbrowser
 
-import wx, wx.html
-import os, sys
-
-##################################################
-# HELP DIALOG
-##################################################
-from bin.beamutils import getBeamHomePath
+from subprocess import Popen, PIPE
 
 
-class HelpDialog(wx.Dialog):
-    def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, title="Help", size=(600,600))
-        html = wxHTML(self)
+###############################################################
+#
+# AppleScript-function - MacOSX-specific
+#
+###############################################################
 
-        appPath = getBeamHomePath()
-        filename = os.path.join(appPath, 'docs', 'Help.html')
-        fHandler = open(filename, 'r')
-
-        page = fHandler.read()
-        fHandler.close
-        html.SetPage(page)
-
- 
-class wxHTML(wx.html.HtmlWindow):
-     def OnLinkClicked(self, link):
-         webbrowser.open(link.GetHref())
+def AppleScript(scpt, args=[]):
+     p = Popen(['osascript', '-'] + args, stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+     stdout, stderr = p.communicate(scpt)
+     return stdout

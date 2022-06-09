@@ -20,35 +20,37 @@
 #
 #    Revision History:
 #
-#    XX/XX/2014 Version 1.0
+#    Version 1.0
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-import webbrowser
 
-import wx, wx.html
-import os, sys
+import json
 
-##################################################
-# HELP DIALOG
-##################################################
-from bin.beamutils import getBeamHomePath
+#
+# On start created as global object beamsettings.beamSettings
+# stringResources[] must be initialized before
+#
+class BeamStrings():
+
+    def __init__(self, stringsfilename):
+
+        self._stringDict = self.loadStrings(stringsfilename)
 
 
-class HelpDialog(wx.Dialog):
-    def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, title="Help", size=(600,600))
-        html = wxHTML(self)
+    def getString(self, key):
+        value = self._stringDict[key]
 
-        appPath = getBeamHomePath()
-        filename = os.path.join(appPath, 'docs', 'Help.html')
-        fHandler = open(filename, 'r')
+        return value
 
-        page = fHandler.read()
-        fHandler.close
-        html.SetPage(page)
 
- 
-class wxHTML(wx.html.HtmlWindow):
-     def OnLinkClicked(self, link):
-         webbrowser.open(link.GetHref())
+    def loadStrings(self, stringsfilename):
+        stringsFile = open(stringsfilename, 'r')
+        try:
+            stringsDict = json.load(stringsFile)
+        finally:
+            stringsFile.close()
+
+        return stringsDict
+
+

@@ -26,9 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 
-
-import wx, wx.html
-import os, sys
+import wx.html, wx.adv
 
 import textwrap
 from bin.beamsettings import *
@@ -38,18 +36,15 @@ from bin.beamsettings import *
 ##################################################
 
 def ShowAboutDialog(self):
-    
-       
-    info = wx.AboutDialogInfo()
+    info = wx.adv.AboutDialogInfo()
     info.SetIcon(self.favicon)
-    info.SetName(beamSettings.mainFrameTitle)
-    info.SetVersion(beamSettings.beamVersion)
-    info.SetDescription(textwrap.fill(beamSettings.aboutDialogDescription,70))
-    info.SetLicence(textwrap.fill(beamSettings.aboutDialogLicense, 70))
-    info.SetCopyright(beamSettings.aboutCopyright)
-    info.SetWebSite(beamSettings.aboutWebsite)
-    info.AddDeveloper(beamSettings.aboutDeveloper)
-    info.AddArtist(beamSettings.aboutArtist)
+    info.SetName(beamSettings.getString("mainframetitle"))
+    info.SetVersion(beamSettings.getString("version"))
+    info.SetDescription(textwrap.fill(beamSettings.getString("aboutdialogdescription"), 70))
+    info.SetLicence(textwrap.fill(beamSettings.getString("aboutdialoglicense"), 70))
+    info.SetCopyright(beamSettings.getString("aboutcopyright"))
+    info.SetWebSite(beamSettings.getString("aboutwebsite"))
+    info.AddDeveloper(beamSettings.getString("aboutdeveloper"))
+    info.AddArtist(beamSettings.getString("aboutartist"))
 
-
-    wx.AboutBox(info)
+    wx.adv.AboutBox(info)

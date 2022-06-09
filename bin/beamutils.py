@@ -1,0 +1,132 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2014 Mikael Holber http://mywebsite.com
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#    or download it from http://www.gnu.org/licenses/gpl.txt
+#
+#
+#    Revision History:
+#
+#    XX/XX/2014 Version 1.0
+#       - Initial release
+#
+# This Python file uses the following encoding: utf-8
+import os
+import sys
+import logging
+
+
+
+#
+# Linux ~, $HOME
+# Windows %HOMEPATH%
+#
+def getUserHomePath():
+    userhomepath = os.path.expanduser("~")
+
+    return userhomepath
+
+
+#
+# directory where beam got started from
+#
+def getBeamHomePath():
+    if getattr(sys, 'frozen', False):
+        # PyInstaller one-file
+        # application_path = os.path.dirname(sys.executable)
+        apphomepath = sys._MEIPASS
+        # print("Path PyInstaller: " + application_path)
+    else:
+        apphomepath = os.getcwd()
+        # print("Path Python: " + appPath)
+
+    # print(os.listdir(appPath))
+    return apphomepath
+
+def getBeamResourcesPath():
+   return os.path.join(getBeamHomePath(), "resources")
+
+#
+# config directory in user ~/.beam/"
+def getBeamConfigPath():
+    userhomepath = getUserHomePath()
+    beamconfigpath = os.path.join(os.path.expanduser("~"), ".beam")
+
+    return beamconfigpath
+
+
+
+# for GUI
+logLevelList = ["Critical", "Error", "Warning", "Info", "Debug"]
+
+def setLogLevel(loglevelname):
+    loglevelid = getLogLevelId(loglevelname)
+    rootLogger = logging.getLogger()
+    rootLogger.setLevel(loglevelid)
+
+
+def getLogLevelId(loglevelname):
+    try:
+        logLevelDict = {
+            'Debug': logging.DEBUG,
+            'Info': logging.INFO,
+            'Warning': logging.WARNING,
+            'Error': logging.ERROR,
+            'Critical': logging.CRITICAL
+        }
+        # set now loglevelname from configfile
+        loglevelid = logLevelDict[loglevelname]
+    except Exception as e:
+        logging.error("beam: unknown loglevelname: '" + loglevelname + "', using Debug'")
+        loglevelid = logging.DEBUG
+
+    return loglevelid
+
+
+def mergeDict(sourceDict, targetDict):
+    for key, value in sourceDict.items():
+        # Add new key values
+        if key not in targetDict:
+            # insert key
+            targetDict[key] = sourceDict[key]
+            continue
+        else:
+            # update key
+            if isinstance(value, (str, int, float)):
+                targetDict[key] = sourceDict[key]
+            if isinstance(value, dict):
+                mergeDict(targetDict[key], sourceDict[key])
+            if isinstance(value, list):
+                # updateList(original[key], update[key])
+                # keep lists in targetDict
+                pass
+    return targetDict
+
+
+def updateList(original, update):
+    # Make sure the order is equal, otherwise it is hard to compare the items.
+    assert len(original) == len(update), "Can only handle equal length lists."
+
+    for idx, (val_original, val_update) in enumerate(zip(original, update)):
+        if not isinstance(val_original, type(val_update)):
+            raise ValueError(f"Different types! {type(val_original)}, {type(val_update)}")
+        if isinstance(val_original, dict):
+            original[idx] = mergeDict(original[idx], update[idx])
+        if isinstance(val_original, (tuple, list)):
+            original[idx] = updateList(original[idx], update[idx])
+        if isinstance(val_original, (str, int, float)):
+            original[idx] = val_update
+    return original

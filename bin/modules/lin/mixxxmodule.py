@@ -24,31 +24,17 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-import webbrowser
 
-import wx, wx.html
-import os, sys
-
-##################################################
-# HELP DIALOG
-##################################################
-from bin.beamutils import getBeamHomePath
+import os
+import logging
+from bin.modules import mixxxutils
 
 
-class HelpDialog(wx.Dialog):
-    def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, title="Help", size=(600,600))
-        html = wxHTML(self)
+def run(maxtandalength, lastplaylist):
+    sqlitePath = os.path.expandvars(r'$HOME/.mixxx/mixxxdb.sqlite')
+    # "/home/<username>/.mixxx/mixxxdb.sqlite"
+    # Funktioniert nicht: r'~/.mixxx/mixxxdb.sqlite'
 
-        appPath = getBeamHomePath()
-        filename = os.path.join(appPath, 'docs', 'Help.html')
-        fHandler = open(filename, 'r')
+    playlist, playback_status = mixxxutils.run(maxtandalength, lastplaylist, sqlitePath)
 
-        page = fHandler.read()
-        fHandler.close
-        html.SetPage(page)
-
- 
-class wxHTML(wx.html.HtmlWindow):
-     def OnLinkClicked(self, link):
-         webbrowser.open(link.GetHref())
+    return playlist, playback_status
