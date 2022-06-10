@@ -95,6 +95,9 @@ run.lastMixxxPlaylist = None
 
 def getplaylist(sqliteconn, maxtandalength):
     new_playlist = []
+
+    # hidden = 1: Auto DJ
+    # hidden = 2: History
     playlist_sql = \
         "select CASE pt.position" \
         "  when (select max(position) from PlaylistTracks where playlist_id = pl.id) THEN 1" \
