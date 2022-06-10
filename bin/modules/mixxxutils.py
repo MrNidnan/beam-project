@@ -35,8 +35,8 @@ import logging
 ###############################################################
 
 
-class MixxxSqlite:
-    sqlitePath = ""
+# class MixxxSqlite:
+#   sqlitePath = ""
 
 def run(maxtandalength, lastlplaylist, sqlitePath):
     # lastplaylist gets updated only after next data processing
@@ -47,7 +47,9 @@ def run(maxtandalength, lastlplaylist, sqlitePath):
         sqliteconn = sqlite3.connect(sqlitePath)
         try:
             playlist = getplaylist(sqliteconn, maxtandalength)
+            playback_status = 'Playing'
 
+            '''
             # if (not the first round) and (playlist changed)
             if run.lastMixxxPlaylist and (playlist != run.lastMixxxPlaylist):
                 if not run.currentmod:
@@ -72,13 +74,14 @@ def run(maxtandalength, lastlplaylist, sqlitePath):
 
             # remember the last playlist for the next round to detect modifications or switchover
             run.lastMixxxPlaylist = playlist
+            '''
 
             return playlist, playback_status
         finally:
             sqliteconn.close()
     except Exception as e:
         # logging.error(e, exc_info=True)
-        return [], "Not installed"
+        return [], "No database"
 
 
 # Static for skipping refresh until next normal switch when the playlist got modified by hand
@@ -99,46 +102,54 @@ def getplaylist(sqliteconn, maxtandalength):
     # hidden = 1: Auto DJ
     # hidden = 2: History
     playlist_sql = \
-        "select CASE pt.position" \
-        "  when (select max(position) from PlaylistTracks where playlist_id = pl.id) THEN 1" \
-        "  ELSE pt.position+1" \
-        "  END" \
+        "select" \
+        "       case pl.hidden" \
+        "         when 2 THEN 1" \
+        "         else pt.position+1" \
+        "       end" \
+        "       pos" \
         "     , li.id, li.artist, li.album, li.title, li.genre, li.comment, li.composer" \
         "     , li.year, li.album_artist, tl.location" \
         "  from Playlists pl" \
         "  join PlaylistTracks pt ON pt.playlist_id = pl.id" \
         "  join library li ON pt.track_id = li.id" \
         "  join track_locations tl ON tl.id = li.location" \
-        " where pl.name = 'Auto DJ'" \
-        " order by 1"
+        " where (pl.id = (select max(id) from Playlists where hidden = 2)" \
+        "        and pt.position = (select max(position) from PlaylistTracks where playlist_id=pl.id)" \
+        "       )" \
+        "    or (pl.hidden = 1)" \
+        " order by pos" \
 
     cursor = sqliteconn.cursor()
     try:
         cursor.execute(playlist_sql)
 
         curr_track_arr = cursor.fetchmany(maxtandalength + 2)
-        for currTrack in curr_track_arr:
-            playlist_song = SongObject()
+        # if not empty and at least the last one in the history
+        if len(curr_track_arr) > 0 and curr_track_arr[0][0] == 1:
+            for currTrack in curr_track_arr:
+                playlist_song = SongObject()
 
-            playlist_song.Artist = currTrack[2]
-            playlist_song.Album = currTrack[3]
-            playlist_song.Title = currTrack[4]
-            playlist_song.Genre = currTrack[5]
-            playlist_song.Comment = currTrack[6]
-            playlist_song.Composer = currTrack[7]
-            playlist_song.Year = currTrack[8]
-            # playlist_song._Singer Defined by beam
-            playlist_song.AlbumArtist = currTrack[9]
-            # playlist_song.Performer   = "Performer"
-            # playlist_song.IsCortina   Defined by beam
-            # !!! provisorisch direkt Path übergeben
-            playlist_song.FilePath = currTrack[10]
-            # playlist_song.FileUrl = "file://" + urllib.request.pathname2url(currTrack[10])
+                playlist_song.Artist = currTrack[2]
+                playlist_song.Album = currTrack[3]
+                playlist_song.Title = currTrack[4]
+                playlist_song.Genre = currTrack[5]
+                playlist_song.Comment = currTrack[6]
+                playlist_song.Composer = currTrack[7]
+                playlist_song.Year = currTrack[8]
+                # playlist_song._Singer Defined by beam
+                playlist_song.AlbumArtist = currTrack[9]
+                # playlist_song.Performer   = "Performer"
+                # playlist_song.IsCortina   Defined by beam
+                # !!! provisorisch direkt Path übergeben
+                playlist_song.FilePath = currTrack[10]
+                # playlist_song.FileUrl = "file://" + urllib.request.pathname2url(currTrack[10])
 
-            # for compare of changes
-            playlist_song.sanitizeFields()
+                # for compare of changes
+                playlist_song.sanitizeFields()
 
-            new_playlist.append(playlist_song)
+                new_playlist.append(playlist_song)
+
     finally:
         cursor.close()
 
