@@ -42,7 +42,7 @@ from copy import deepcopy
 if platform.system() == 'Linux':
     from bin.modules.lin import audaciousmodule, rhythmboxmodule, clementinemodule, bansheemodule, spotifymodule, mixxxmodule, strawberrymodule
 if platform.system() == 'Windows':
-    from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule
+    from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule, jrivermodule
 if platform.system() == 'Darwin':
     from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule
 from bin.modules import icecastmodule
@@ -131,6 +131,9 @@ class NowPlayingData:
                 pass
             if currentSettings._moduleSelected == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings._maxTandaLength, self.rawPlaylist)
+            if currentSettings._moduleSelected == 'JRiver':
+                self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings._maxTandaLength)
+
 
         # LINUX
         if platform.system() == 'Linux':

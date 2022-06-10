@@ -49,26 +49,34 @@ def run(MaxTandaLength):
     #
     # Player Status
     #
-    if not applicationrunning("foobar2000.exe"):
+    if not applicationrunning("Media Center 29.exe"):
         playbackStatus = 'PlayerNotRunning'
         return playlist, playbackStatus
 
     pythoncom.CoInitialize()
     try:
-        progID = "Foobar2000.Application.0.7"
-        foobarComObj = win32com.client.Dispatch(progID)
+        progID = "MediaJukebox Application"
+        mjautomation = win32com.client.Dispatch(progID)
+
+        mjplayback  = mjautomation.GetPlayback();
+        mjstate = mjplayback.State;
 
         # Playback Status
-        if not foobarComObj.Playback.IsPlaying:
-            playbackStatus = 'Stopped'
+        if mjstate == 0:
+            playbackStatus = 'Stopped';
         else:
-            if foobarComObj.Playback.IsPaused:
-                playbackStatus = 'Paused'
+            if mjstate == 1:
+                playbackStatus = 'Paused';
             else:
-                playbackStatus = 'Playing'
-                playlist.append(getSongAt(foobarComObj, 1))
-
-        # ??? foobarComObj..Quit()
+                if mjstate == 2:
+                    playbackStatus = 'Playing';
+                    mjplaylist = mjautomation.GetCurPlaylist();
+                    minpos = int(mjplaylist.Position);
+                    maxpos = int(mjplaylist.GetNumberFiles());
+                    for songpos in range (minpos, maxpos):
+                      playlist.append(getSongAt(mjplaylist, songpos))
+                else:
+                    playbackStatus = 'Unknown';
     finally:
         pythoncom.CoUninitialize()
 
@@ -80,22 +88,23 @@ def run(MaxTandaLength):
 #
 ###############################################################
 
-def getSongAt(Foobar, songPosition):
+def getSongAt(mjplaylist, songpos):
+
+    mjfile = mjplaylist.GetFile(songpos);
+
     retSong = SongObject()
-
-    retSong.Artist      = Foobar.Playback.FormatTitle("[%artist%]")
-    retSong.Album       = Foobar.Playback.FormatTitle("[%album%]")
-    retSong.Title       = Foobar.Playback.FormatTitle("[%title%]")
-    retSong.Genre       = Foobar.Playback.FormatTitle("[%genre%]")
-    retSong.Comment     = Foobar.Playback.FormatTitle("[%comment%]")
-    retSong.Composer    = Foobar.Playback.FormatTitle("[%composer%]")
-    retSong.Year        = Foobar.Playback.FormatTitle("[%date%]")
+    retSong.Artist      = mjfile.Artist;
+    retSong.Album       = mjfile.Album;
+    retSong.Title       = mjfile.Name;
+    retSong.Genre       = mjfile.Genre;
+    retSong.Comment     = mjfile.Comment;
+    # retSong.Composer    = mjfile.Composer;
+    retSong.Year        = mjfile.Year;
     #retSong._Singer     Defined by beam
-    retSong.AlbumArtist = Foobar.Playback.FormatTitle("[%album artist%]")
-    retSong.Performer   = Foobar.Playback.FormatTitle("[%performer%]")
+    retSong.AlbumArtist = mjfile.AlbumArtist;
+    # retSong.Performer   = mjfile.Performer;
     #retSong.IsCortina   Defined by beam
+    retSong.FilePath     = mjfile.Filename;
+    # 'C:\\Users\\DJ\\Music\\Angélique Kidjo\\Fifa\\Bitchifi - Angélique Kidjo.mp3'
 
-    retSong.FilePath     = Foobar.Playback.FormatTitle("[%path%]")
-    # 'C:\\Users\\DJ\\Tango\\Todays Tango\\Cola \'e Paja - Orquesta Típica Porteña - 1928-04-28.mp3'
-    
     return retSong
