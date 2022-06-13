@@ -1,6 +1,6 @@
 {
   "comment": "This JSON files contains the string resources to be used by Beam",
-  "version": "0.5.0.2",
+  "version": "0.5.0.3",
   "configfilename": "beamconfig.json",
   "logfilename": "beamlog.txt",
   "mainframetitle": "Beam",

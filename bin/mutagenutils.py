@@ -35,6 +35,8 @@ from mutagen import File
 from mutagen.apev2 import APEv2
 from mutagen.flac import FLAC
 from mutagen.id3 import ID3
+from mutagen.mp4 import MP4
+from mutagen.mp4 import MP4Cover
 
 
 ###############################################################
@@ -121,6 +123,11 @@ def readSongObject(filePath):
 def readCoverArtImage(filePath):
     logging.debug("readCoverArtImage(" + filePath + ")")
     coverArtImage = None
+    bitmapType = None
+
+    iswxlog = wx.Log.IsEnabled
+    if iswxlog:
+        wx.Log.EnableLogging(enable=False)
 
     if not coverArtImage:
         try:
@@ -140,7 +147,25 @@ def readCoverArtImage(filePath):
                     logging.warning("Unkown mime type: " + apicTag.mime.lower())
                     bitmapType = wx.BITMAP_TYPE_ANY
                 coverArtImage = wx.Image(BytesIO(data), bitmapType)
-        except:
+        except Exception as e:
+            pass
+
+    if not coverArtImage:
+        try:
+            mp4Frame = MP4(filePath);
+            tags = mp4Frame.tags;
+            covr = tags['covr'][0];
+
+            if covr.imageformat == MP4Cover.FORMAT_JPEG:
+                bitmapType = wx.BITMAP_TYPE_JPEG
+            if covr.imageformat == MP4Cover.FORMAT_PNG:
+                bitmapType = wx.BITMAP_TYPE_PNG
+            if not bitmapType:
+                logging.warning("Unkown MP4Cover.FORMAT: " + covr.imageformat)
+                bitmapType = wx.BITMAP_TYPE_ANY
+
+            coverArtImage = wx.Image(BytesIO(covr), bitmapType);
+        except Exception as e:
             pass
 
     if not coverArtImage:
@@ -159,6 +184,8 @@ def readCoverArtImage(filePath):
                 if not bitmapType:
                     logging.warning("Unkown mime type: " + pict.mime.lower())
                     bitmapType = wx.BITMAP_TYPE_ANY
+                # Suppress warning diaglog(!) "iCCP: known incorrect sRGB profile"
+                # from libpng on Tango Tunes cover art in debugger
                 coverArtImage = wx.Image(BytesIO(pict.data), bitmapType)
         except Exception as e:
             pass
@@ -241,6 +268,9 @@ def readCoverArtImage(filePath):
                             break
             except:
                 pass
+
+        if iswxlog:
+            wx.Log.EnableLogging(enable=True)
 
     return coverArtImage
 
