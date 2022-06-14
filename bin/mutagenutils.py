@@ -257,14 +257,15 @@ def readCoverArtImage(filePath):
             except:
                 pass
 
+        # read fist file that is jpg
         if not coverArtImage:
             try:
                 fileDir, fileName = os.path.split(filePath)
                 for fileName in os.listdir(fileDir):
                     if fileName.endswith(".jpg"):
                         imagePath = os.path.join(fileDir, fileName)
-                        coverArtImage = wx.Image(imagePath, wx.BITMAP_TYPE_JPEG)
-                        if coverArtImage:
+                        if os.path.isfile(imagePath):
+                            coverArtImage = wx.Image(imagePath, wx.BITMAP_TYPE_JPEG)
                             break
             except:
                 pass

@@ -28,6 +28,7 @@
 import wx, os
 from bin.dialogs.editlayoutdialog import EditLayoutDialog
 from bin.dialogs.preferencespanels.timercombobox import TimerComboBox
+from bin.beamutils import getRelativePath
 
 ###################################################################
 #                      DefaultLayout                              #
@@ -149,13 +150,20 @@ class DefaultLayoutPanel(wx.Panel):
         # BROWSE BACKGROUND #
         #####################
     def BrowseBackgroundImage(self, event):
-        appPath = getBeamHomePath()
+        # appPath = getBeamHomePath()
+# !!! current path as default?
+        backgroundPath = self.BeamSettings._moods[0]['Background']
         openFileDialog = wx.FileDialog(self, "Set new background image",
-                                       os.path.join(appPath, 'resources', 'backgrounds'), "",
+                                       # os.path.join(appPath, 'resources', 'backgrounds'),
+                                       backgroundPath,
+                                       "",
                                        "Image files(*.png,*.jpg)|*.png;*.jpg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:
-            self.BeamSettings._moods[0]['Background'] = openFileDialog.GetPath()
+            backgroundPath = openFileDialog.GetPath()
+            # !!! Sanitize for temporary home of execcutable
+            relativePath = getRelativePath(backgroundPath)
+            self.BeamSettings._moods[0]['Background'] = relativePath
             # change current background
             self.OnRotateBackground()
             openFileDialog.Destroy()

@@ -56,6 +56,18 @@ def getBeamHomePath():
     # print(os.listdir(appPath))
     return apphomepath
 
+
+
+def getRelativePath(filepath):
+    ## userhomepath = getUserHomePath()
+    ## beamconfigpath = os.path.join(os.path.expanduser("~"), ".beam")
+
+    beamhomepath = os.path.join(getBeamHomePath(), '');
+    if filepath.startswith(beamhomepath):
+        filepath = filepath.removeprefix(beamhomepath)
+
+    return filepath
+
 def getBeamResourcesPath():
    return os.path.join(getBeamHomePath(), "resources")
 
@@ -66,6 +78,8 @@ def getBeamConfigPath():
     beamconfigpath = os.path.join(os.path.expanduser("~"), ".beam")
 
     return beamconfigpath
+
+
 
 
 

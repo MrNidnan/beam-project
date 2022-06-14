@@ -344,12 +344,18 @@ class EditMoodFrame(wx.Frame):
     # Browse for background
     #
     def BrowseMoodBackground(self, event):
+        backgroundPath = self.Settings[u'Background']
         openFileDialog = wx.FileDialog(self, "Set new background image for mood",
-                                       os.path.join(os.getcwd(), 'resources', 'backgrounds'), "",
+                                       # os.path.join(os.getcwd(), 'resources', 'backgrounds'),
+                                       backgroundPath,
+                                       "",
                                        "Image files(*.png,*.jpg)|*.png;*.jpg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:
-            self.Settings[u'Background'] = openFileDialog.GetPath()
+            backgroundPath = openFileDialog.GetPath()
+            # !!! Sanitize for temporary home of execcutable
+            relativePath = getRelativePath(backgroundPath)
+            self.Settings[u'Background'] = relativePath
             (path, backgroundfile) = os.path.split(self.Settings[u'Background'])
             self.rotateBackgroundFunction()
             openFileDialog.Destroy()
