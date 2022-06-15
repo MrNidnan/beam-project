@@ -187,7 +187,8 @@ class BeamSettings:
     #
     def __readConfig(self, beamConfigData, defaultConfigData):
 
-        # copies values and dicts from beam to default config, but not lists
+        # copies values and dicts from user config to default config, but not lists
+        # so new values in lists get created on apply/save of user config
         mergeDict(beamConfigData, defaultConfigData)
 
         self._moduleSelected        = defaultConfigData['Module']         # Player to read from

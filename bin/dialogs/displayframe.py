@@ -30,6 +30,9 @@ from bin.beamsettings import *
 from bin.dialogs.displaypanel import DisplayPanel
 
 
+#
+# Frame that gets displayed on the beamer
+#
 class DisplayFrame(wx.Frame):
 
     # Called by beam.py
@@ -110,7 +113,7 @@ class DisplayFrame(wx.Frame):
                 if self.IsFullScreen():
                     self.ShowFullScreen(False)
                 # else:
-                #    self.onClose(event)
+                #    self.onCancel(event)
                 # event.Skip()
             if keyCode == wx.WXK_F11:
                 self.ShowFullScreen(not self.IsFullScreen())

@@ -28,18 +28,21 @@
 import wx, os
 from bin.dialogs.editmoodframe import EditMoodFrame
 
-###################################################################
-#                           MOODS                                 #
-###################################################################
+#
+# Panel for mood parameter and
+# to list the moods inside the main frame
+# with BuildMoodList
+#
+
 class MoodsPanel(wx.Panel):
-    def __init__(self, parent, BeamSettings):
+    def __init__(self, parent, mainFrame, BeamSettings):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         
         #############
         # VARIABLES #
         #############
         self.BeamSettings = BeamSettings
-        self.parent = parent
+        self.mainFrame = mainFrame
         self.MoodRows = []
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
 
@@ -76,6 +79,7 @@ class MoodsPanel(wx.Panel):
         self.MoodList.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.MoodList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditMood)
         self.MoodList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckMood)
+        # List all configured moods
         self.BuildMoodList()
         
         ################
@@ -107,6 +111,8 @@ class MoodsPanel(wx.Panel):
 
 
 
+    def updateSettings(self):
+        self.mainFrame.updateSettings();
 
 ###################################################################
 #                           EVENTS                                #
@@ -152,14 +158,16 @@ class MoodsPanel(wx.Panel):
         self.EditMood.Show()
 
     def OnEditMood(self, event):
-        RowSelected = self.MoodList.GetSelection()+1
+        # V0.5.0.5 including default
+        RowSelected = self.MoodList.GetSelection()
         if RowSelected>-1:
             self.MoodRule = EditMoodFrame(self, RowSelected, "Edit mood")
             self.MoodRule.Show()
 
     def OnDelMood(self, event):
         RowSelected = self.MoodList.GetSelection()
-        if RowSelected>-1:
+        # if not 'Default'
+        if RowSelected > 0:
             LineToDelete = self.MoodList.GetString(RowSelected)
             dlg = wx.MessageDialog(self,
                 "Do you really want to delete '"+LineToDelete+"' ?",
@@ -167,35 +175,43 @@ class MoodsPanel(wx.Panel):
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_OK:
-                self.BeamSettings._moods.pop(RowSelected+1)
+                # V0.5.0.5 including default
+                self.BeamSettings._moods.pop(RowSelected)
+            # List all configured moods
             self.BuildMoodList()
     
         #####################
         # LAYOUT CHECKBOXES #
         #####################
     def OnCheckMood(self, event):
-        for i in range(0, len(self.BeamSettings._moods)-1):
-            mood = self.BeamSettings._moods[i+1]
+        # V0.5.0.5 including default
+        for i in range(0, len(self.BeamSettings._moods)):
+            # 'Default' can not get uncecked
+            if i == 0:
+                self.MoodList.Check(i, check=True)
+
+            mood = self.BeamSettings._moods[i]
             if self.MoodList.IsChecked(i):
                 mood['Active'] = "yes"
             else:
                 mood['Active'] = "no"
+        # List all configured moods
         self.BuildMoodList()
 
-        ####################
-        # BUILD LAYOUTLIST #
-        ####################
+    # List all configured moods
     def BuildMoodList(self):
         self.MoodRows = []
-        for i in range(0, len(self.BeamSettings._moods)-1):
-            mood = self.BeamSettings._moods[i+1]
+        # V0.5.0.5 including default
+        # for i in range(0, len(self.BeamSettings._moods)-1):
+        for i in range(0, len(self.BeamSettings._moods)):
+            # mood = self.BeamSettings._moods[i+1]
+            mood = self.BeamSettings._moods[i]
             self.MoodRows.append(str(mood['Name']))
         self.MoodList.Set(self.MoodRows)
         # Check the rules
-        for i in range(0, len(self.BeamSettings._moods)-1):
-            moods = self.BeamSettings._moods[i+1]
+        for i in range(0, len(self.BeamSettings._moods)):
+            moods = self.BeamSettings._moods[i]
             if moods['Active'] == "yes":
                 self.MoodList.Check(i, check=True)
             else:
                 self.MoodList.Check(i, check=False)
-        # Update Main window

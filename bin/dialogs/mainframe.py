@@ -120,16 +120,16 @@ class MainFrame(wx.Frame):
         #################
         # LISTBOOK MENU #
         #################
-        listBookMenu = ListBookMenu(panel, beamSettings, self.displayData)
+        listBookMenu = ListBookMenu(panel, self, beamSettings)
         self.previewPanel = listBookMenu.pages[0][0];
 
         
         ###########
         # BUTTONS #
         ###########
-        self.applyBtn = wx.Button(panel, label="Apply")
-        self.applyBtn.Bind(wx.EVT_BUTTON, self.onApply)
-        hbox.Add(self.applyBtn, flag=wx.LEFT | wx.TOP, border=10)
+        self.saveBtn = wx.Button(panel, label="Save")
+        self.saveBtn.Bind(wx.EVT_BUTTON, self.onSave)
+        hbox.Add(self.saveBtn, flag=wx.LEFT | wx.TOP, border=10)
 
         self.displayBtn = wx.Button(panel, label="Display")
         self.displayBtn.Bind(wx.EVT_BUTTON, self.onDisplay)
@@ -202,7 +202,7 @@ class MainFrame(wx.Frame):
             logging.error(e, exc_info=True)
 
 
-    def onApply(self, event):
+    def onSave(self, event):
         try:
             # Save settings
             beamSettings.saveConfig()
@@ -224,7 +224,7 @@ class MainFrame(wx.Frame):
             logging.error(e, exc_info=True)
 
 
-
+    '''
     #
     #
     #
@@ -238,8 +238,6 @@ class MainFrame(wx.Frame):
             #    self.rotateBackground()
         except Exception as e:
             logging.error(e, exc_info=True)
-
-
     '''
     #
     # Hide/show statusbar
@@ -253,7 +251,7 @@ class MainFrame(wx.Frame):
                 self.statusbar.Hide()
         except Exception as e:
             logging.error(e, exc_info=True)
-    '''
+
 
     # UPDATE INFO FROM PREFERENCES WINDOW
     def updateSettings(self):
@@ -286,9 +284,10 @@ class ListBookMenu(wx.Listbook):
 
     # pages = []
 
-    def __init__(self, parent, beamSettings, displayData):
+    def __init__(self, parent, mainFrame, beamSettings):
         wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
-        
+
+        displayData = mainFrame.displayData
         ##########
         # IMAGES #
         ##########
@@ -310,8 +309,8 @@ class ListBookMenu(wx.Listbook):
                     (DisplayPanel(self, displayData), "Preview"),
                     (BasicSettingsPanel(self, beamSettings), "Settings"),
                     (DefaultLayoutPanel(self, beamSettings), "Layout"),
-                    (MoodsPanel(self, beamSettings), "Moods"),
-                    (RulesPanel(self, beamSettings), "Rules"),
+                    (MoodsPanel(self, mainFrame, beamSettings), "Moods"),
+                    (RulesPanel(self, mainFrame, beamSettings), "Rules"),
                     (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")
                  ]
         ImId=0

@@ -26,7 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 import wx, os
-from bin.dialogs.editlayoutdialog import EditLayoutDialog
+from bin.dialogs.editlayoutitemdialog import EditLayoutItemDialog
 from bin.dialogs.preferencespanels.timercombobox import TimerComboBox
 from bin.beamutils import getRelativePath
 
@@ -203,17 +203,17 @@ class DefaultLayoutPanel(wx.Panel):
         # LAYOUT BUTTONS #
         ##################
     def OnAddLayout(self, event):
-        self.EditLayout = EditLayoutDialog(self, len(self.DisplayRows), "Add layout item", self.BeamSettings._moods[0]['Display'])
+        self.EditLayout = EditLayoutItemDialog(self, len(self.DisplayRows), "Add layout item", self.BeamSettings._moods[0]['Display'])
         self.EditLayout.Show()
     
     def OnEditLayout(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected>-1:
-            self.EditLayout = EditLayoutDialog(self, RowSelected, "Edit layout item", self.BeamSettings._moods[0]['Display'])
+            self.EditLayout = EditLayoutItemDialog(self, RowSelected, "Edit layout item", self.BeamSettings._moods[0]['Display'])
             self.EditLayout.Show()
     def OnDelLayout(self, event):
         RowSelected = self.LayoutList.GetSelection()
-        if RowSelected>-1:
+        if RowSelected >= 0:
             LineToDelete = self.LayoutList.GetString(RowSelected)
             dlg = wx.MessageDialog(self,
             "Do you really want to delete '"+LineToDelete+"' ?",

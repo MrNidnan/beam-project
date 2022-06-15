@@ -299,7 +299,7 @@ class NowPlayingData:
             self.RotateBackground = currentRule['RotateBackground']
             self.rotatebackgroundseconds = currentRule['RotateTimer']
         else:
-            # by EditLayoutDialog
+            # by EditLayoutItemDialog
             defaultMood = currentSettings._moods[0]
             self.CurrentMood = defaultMood['Name']
             self.DisplaySettings = defaultMood['Display']

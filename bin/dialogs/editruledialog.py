@@ -44,10 +44,10 @@ class EditRuleDialog(wx.Dialog):
         self.RowSelected    = RowSelected
         self.mode           = mode
 
-        self.ButtonSaveRule     = wx.Button(self.EditRulePanel, label="Save")
-        self.ButtonCancelRule   = wx.Button(self.EditRulePanel, label="Cancel")
+        self.ButtonSaveRule     = wx.Button(self.EditRulePanel, label="OK")
+        # self.ButtonCancelRule   = wx.Button(self.EditRulePanel, label="Cancel")
         self.ButtonSaveRule.Bind(wx.EVT_BUTTON, self.OnSaveRuleItem)
-        self.ButtonCancelRule.Bind(wx.EVT_BUTTON, self.OnCancelRuleItem)
+        # self.ButtonCancelRule.Bind(wx.EVT_BUTTON, self.OnCancelRuleItem)
         self.InputFields    = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer"]
         self.OutputFields   = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer", "%Singer"]
 
@@ -102,7 +102,7 @@ class EditRuleDialog(wx.Dialog):
         # self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
         self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL, border=10)
         # self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
-        self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL, border=10)
+        # self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL, border=10)
 
         self.vbox.Add(InfoGrid, flag=wx.ALL, border=10)
         self.vbox.Add(self.hbox, flag=wx.ALL | wx.ALIGN_RIGHT)
@@ -286,9 +286,9 @@ class EditRuleDialog(wx.Dialog):
                 beamSettings._rules.insert(RuleOrderBox, NewRule)
         self.Destroy()
         self.parent.BuildRuleList()
-#
-# CANCEL
-#
-    def OnCancelRuleItem(self, event):
-        self.Destroy()
+    #
+    # CANCEL
+    #
+    # def OnCancelRuleItem(self, event):
+    #    self.Destroy()
 

@@ -32,10 +32,9 @@ import wx, wx.html
 
 
 #
-# LAYOUT WINDOW-CLASS
+# Edit one layout item / tag
 #
-#
-class EditLayoutDialog(wx.Dialog):
+class EditLayoutItemDialog(wx.Dialog):
     def __init__(self, parent, RowSelected, mode, LayoutList):
         self.parent             = parent
         x, y = self.parent.GetScreenPosition()
@@ -48,9 +47,9 @@ class EditLayoutDialog(wx.Dialog):
         # List of items do display and edit
 
         self.ButtonSaveLayout   = wx.Button(self.EditLayoutPanel, label="Save")
-        self.ButtonCancelLayout     = wx.Button(self.EditLayoutPanel, label="Cancel")
+        # self.ButtonCancelLayout     = wx.Button(self.EditLayoutPanel, label="Cancel")
         self.ButtonSaveLayout.Bind(wx.EVT_BUTTON, self.OnSaveLayoutItem)
-        self.ButtonCancelLayout.Bind(wx.EVT_BUTTON, self.OnCancelLayoutItem)
+        # self.ButtonCancelLayout.Bind(wx.EVT_BUTTON, self.OnCancelLayoutItem)
 
         Fonts   = ["Decorative","Default","Modern","Roman","Script","Swiss","Teletype"]
         
@@ -126,7 +125,7 @@ class EditLayoutDialog(wx.Dialog):
         # self.hboxLayout.Add(self.ButtonSaveLayout, 0, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.ALIGN_RIGHT, border=10)
         self.hboxLayout.Add(self.ButtonSaveLayout, 0, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         # self.hboxLayout.Add(self.ButtonCancelLayout, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
-        self.hboxLayout.Add(self.ButtonCancelLayout, 0, flag=wx.ALL, border=10)
+        # self.hboxLayout.Add(self.ButtonCancelLayout, 0, flag=wx.ALL, border=10)
 
         self.vboxLayout.Add(wx.StaticText(self.EditLayoutPanel, label="Label"), 0, flag=wx.ALL, border=10)
         self.vboxLayout.Add(self.LabelText, 0, flag=wx.LEFT | wx.RIGHT, border=10)
@@ -188,10 +187,10 @@ class EditLayoutDialog(wx.Dialog):
         self.parent.BuildLayoutList()
         self.Destroy()
 
-#
-# CANCEL
-#
-    def OnCancelLayoutItem(self, event):
-        self.Destroy()
+    #
+    # CANCEL
+    #
+    # def OnCancelLayoutItem(self, event):
+    #    self.Destroy()
 
 

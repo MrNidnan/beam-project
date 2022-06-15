@@ -32,14 +32,14 @@ from bin.dialogs.editruledialog import EditRuleDialog
 #                      Rules                           #
 ########################################################
 class RulesPanel(wx.Panel):
-    def __init__(self, parent, BeamSettings):
+    def __init__(self, parent, mainFrame, BeamSettings):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         
         #############
         # VARIABLES #
         #############
         self.BeamSettings = BeamSettings
-        self.parent = parent
+        self.mainFrame = mainFrame
         self.RuleRows = []
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
 
@@ -78,6 +78,9 @@ class RulesPanel(wx.Panel):
         sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         self.SetSizer(sizer)
 
+
+    def updateSettings(self):
+        self.mainFrame.updateSettings();
 
 ###################################################################
 #                           EVENTS                                #
