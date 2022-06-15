@@ -63,6 +63,7 @@ class NowPlayingData:
         self.currentPlaylist = []
         self.rawPlaylist = []
         self.playlistChanged = False
+        self.playlistchangetime = 0
         
         self.prevPlayedSong = SongObject()
         self.nextTandaSong = SongObject()
@@ -74,8 +75,9 @@ class NowPlayingData:
         self.PlaybackStatus = ""
         self.StatusMessage = ""
         self.PreviousPlaybackStatus = ""
-        self.CurrentMood =""
-        self.PreviousMood = ""
+        self.currentMood = None
+        self.CurrentMoodName = ""
+        self.PreviousMoodName = ""
         self.BackgroundPath = ""
         self.RotateBackground = None
         # in processData() set to currentRule['RotateBackground'] or defaultMood['RotateBackground']
@@ -196,6 +198,7 @@ class NowPlayingData:
         else:
             self.rawPlaylist = deepcopy(self.currentPlaylist)
             self.playlistChanged  = True
+            self.playlistchangetime = time.time()
 
         logging.debug("Data extracted from " + currentSettings._moduleSelected  + ": " + self.StatusMessage)
         if self.PreviousPlaybackStatus == "":
@@ -268,46 +271,35 @@ class NowPlayingData:
         else:
             MoodStatus = "Not Playing"
         
-        applyMood = None
+        applyidx = 0 # index default mood
         for i in range(1, len(currentSettings._moods)):
-            currentRule = currentSettings._moods[i]
+            currentMood = currentSettings._moods[i]
             try:
-                if currentRule['Type'] == 'Mood' and currentRule['Active'] == 'yes' and str(currentRule['PlayState']) == str(MoodStatus):
+                if currentMood['Type'] == 'Mood' and currentMood['Active'] == 'yes' and str(currentMood['PlayState']) == str(MoodStatus):
                     # Only apply Mood for current song
-                    if currentRule['Field2'] == 'is':
-                        if eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower() == str(currentRule['Field3']).lower():
-                            applyMood = i
-                    if currentRule['Field2'] == 'is not':
-                        if eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower() not in str("["+currentRule['Field3'].lower()+"]"):
-                            applyMood = i
-                    if currentRule['Field2'] == 'contains':
-                        if str(currentRule['Field3']).lower() in eval(str(currentRule['Field1']).replace("%"," currentSong.")).lower():
-                            applyMood = i
+                    if currentMood['Field2'] == 'is':
+                        if eval(str(currentMood['Field1']).replace("%"," currentSong.")).lower() == str(currentMood['Field3']).lower():
+                            applyidx = i
+                    if currentMood['Field2'] == 'is not':
+                        if eval(str(currentMood['Field1']).replace("%"," currentSong.")).lower() not in str("["+currentMood['Field3'].lower()+"]"):
+                            applyidx = i
+                    if currentMood['Field2'] == 'contains':
+                        if str(currentMood['Field3']).lower() in eval(str(currentMood['Field1']).replace("%"," currentSong.")).lower():
+                            applyidx = i
             except Exception as e:
                 logging.info(e, exc_info=True)
 
         #
         # Apply mood layout and background or default mood
         #
-        if applyMood:
-            # By EditMoodDialog
-            currentRule = currentSettings._moods[applyMood]
-            self.CurrentMood = currentRule['Name']
-            self.DisplaySettings = currentRule['Display']
-            appPath = getBeamHomePath()
-            self.BackgroundPath = os.path.join(appPath, currentRule['Background'])
-            self.RotateBackground = currentRule['RotateBackground']
-            self.rotatebackgroundseconds = currentRule['RotateTimer']
-        else:
-            # by EditLayoutItemDialog
-            defaultMood = currentSettings._moods[0]
-            self.CurrentMood = defaultMood['Name']
-            self.DisplaySettings = defaultMood['Display']
-            appPath = getBeamHomePath()
-            self.BackgroundPath = os.path.join(appPath, defaultMood['Background'])
-            self.RotateBackground = defaultMood['RotateBackground']
-            self.rotatebackgroundseconds = defaultMood['RotateTimer']
-
+        # By EditMoodDialog
+        self.currentMood = currentSettings._moods[applyidx]
+        self.CurrentMoodName = self.currentMood['Name']
+        self.DisplaySettings = self.currentMood['Display']
+        appPath = getBeamHomePath()
+        self.BackgroundPath = os.path.join(appPath, self.currentMood['Background'])
+        self.RotateBackground = self.currentMood['RotateBackground']
+        self.rotatebackgroundseconds = self.currentMood['RotateTimer']
 
         ###############################################################
         #
@@ -494,7 +486,15 @@ class NowPlayingData:
             #current tanda count
         self.convDict['%CurrentTandaLength'] = self.SinceLastCortinaCount + self.TillNextCortinaCount - 1 
 
-        
+    def isDisplayTimeExpired(self):
+        timenow = time.time()
+        timechanged = self.playlistchangetime
+        displaytimer = 0;
+        if self.currentMood:
+            displaytimer = int(self.currentMood['DisplayTimer'])
+        isexpired = (timechanged == 0) or ((displaytimer > 0) and (timenow > (timechanged + displaytimer)))
+
+        return isexpired
 
 
 

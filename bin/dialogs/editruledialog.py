@@ -36,17 +36,19 @@ from bin.beamsettings import *
 #
 #
 class EditRuleDialog(wx.Dialog):
-    def __init__(self, parent, RowSelected, mode):
-        self.parent             = parent
-        x,y                     = self.parent.GetScreenPosition()
-        self.EditRuleDialog     = wx.Dialog.__init__(self, parent, title=mode, pos = (x+50, y+50))
+    def __init__(self, rulesPanel, RowSelected, mode):
+        xpos,ypos  = rulesPanel.GetScreenPosition()
+        # self.EditRuleDialog     = wx.Dialog.__init__(self, parent, title=mode, pos = (xpos+50, ypos+50))
+        wx.Dialog.__init__(self, rulesPanel, title=mode, pos=(xpos + 50, ypos + 50))
+
+        self.rulesPanel = rulesPanel
         self.EditRulePanel  = wx.Panel(self)
         self.RowSelected    = RowSelected
         self.mode           = mode
 
-        self.ButtonSaveRule     = wx.Button(self.EditRulePanel, label="OK")
+        self.ButtonOK     = wx.Button(self.EditRulePanel, label="OK")
         # self.ButtonCancelRule   = wx.Button(self.EditRulePanel, label="Cancel")
-        self.ButtonSaveRule.Bind(wx.EVT_BUTTON, self.OnSaveRuleItem)
+        self.ButtonOK.Bind(wx.EVT_BUTTON, self.OnButtonOK)
         # self.ButtonCancelRule.Bind(wx.EVT_BUTTON, self.OnCancelRuleItem)
         self.InputFields    = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer"]
         self.OutputFields   = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer", "%Singer"]
@@ -100,7 +102,7 @@ class EditRuleDialog(wx.Dialog):
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         # self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
-        self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL, border=10)
+        self.hbox.Add(self.ButtonOK, 0, flag=wx.ALL, border=10)
         # self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
         # self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL, border=10)
 
@@ -248,7 +250,7 @@ class EditRuleDialog(wx.Dialog):
 #
 # SAVE
 #
-    def OnSaveRuleItem(self, event):
+    def OnButtonOK(self, event):
         RuleOrderBox = int(self.RuleOrder.GetValue())-1
         RuleSelected = self.RuleSelectDropdown.GetValue()
 
@@ -284,8 +286,10 @@ class EditRuleDialog(wx.Dialog):
             else:
                 beamSettings._rules.pop(self.RowSelected) #Move up and down in list
                 beamSettings._rules.insert(RuleOrderBox, NewRule)
+
+        self.rulesPanel.BuildRuleList()
+        self.rulesPanel.updateSettings()
         self.Destroy()
-        self.parent.BuildRuleList()
     #
     # CANCEL
     #

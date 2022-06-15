@@ -308,7 +308,7 @@ class ListBookMenu(wx.Listbook):
                     # preview must be first in array
                     (DisplayPanel(self, displayData), "Preview"),
                     (BasicSettingsPanel(self, beamSettings), "Settings"),
-                    (DefaultLayoutPanel(self, beamSettings), "Layout"),
+                    # (DefaultLayoutPanel(self, beamSettings), "Layout"),
                     (MoodsPanel(self, mainFrame, beamSettings), "Moods"),
                     (RulesPanel(self, mainFrame, beamSettings), "Rules"),
                     (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")

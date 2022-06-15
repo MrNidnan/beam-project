@@ -32,6 +32,7 @@ import logging
 import os
 from bin.beamutils import *
 from bin.beamstrings import BeamStrings
+from copy import deepcopy
 
 #
 # On start created as global object beamsettings.beamSettings
@@ -80,6 +81,7 @@ class BeamSettings:
         self.__showStatusbar        = None
         self._allModulesSettings    = None
         self._rules                 = None
+        self._moods                 = None
 
         # self.applicationpath = getBeamHomePath()
         stringsfilename = os.path.join(getBeamResourcesPath(), 'json', 'strings.json')
@@ -113,7 +115,9 @@ class BeamSettings:
         defaultConfigData = self.__loadConfigData(defaultconfigfile)
 
         # merges new properties from defaultConfigData into beamConfigData
+        # and sets the instance properties
         self.__readConfig(beamConfigData, defaultConfigData)
+
         return
 
     def saveConfig(self):
@@ -189,36 +193,35 @@ class BeamSettings:
 
         # copies values and dicts from user config to default config, but not lists
         # so new values in lists get created on apply/save of user config
-        mergeDict(beamConfigData, defaultConfigData)
+        # mergeDict(beamConfigData, defaultConfigData)
+        complementDict(defaultConfigData, beamConfigData)
 
-        self._moduleSelected        = defaultConfigData['Module']         # Player to read from
-        self._maxTandaLength        = defaultConfigData['MaxTandaLength'] # Longest tandas, optimize for performance
-        self._updtime               = defaultConfigData['Updtime']        # mSec between reading
-        self._moodTransition        = defaultConfigData['MoodTransition']
-        self._moodTransitionSpeed   = defaultConfigData['MoodTransitionSpeed']
-        self.__showStatusbar         = defaultConfigData['ShowStatusbar']
-        self._logging               = defaultConfigData['Logging']
-        self._logPath               = defaultConfigData['LogPath']
+        self._moduleSelected        = beamConfigData['Module']         # Player to read from
+        self._maxTandaLength        = beamConfigData['MaxTandaLength'] # Longest tandas, optimize for performance
+        self._updtime               = beamConfigData['Updtime']        # mSec between reading
+        self._moodTransition        = beamConfigData['MoodTransition']
+        self._moodTransitionSpeed   = beamConfigData['MoodTransitionSpeed']
+        self.__showStatusbar         = beamConfigData['ShowStatusbar']
+        self._logging               = beamConfigData['Logging']
+        self._logPath               = beamConfigData['LogPath']
         if self._logPath == '':
             self._logPath = getBeamConfigPath()
-        self._loglevel           = defaultConfigData['LogLevel']
+        self._loglevel           = beamConfigData['LogLevel']
 
-        # does not work
-        # mergedConfigData = beamConfigData.expand(defaultConfigData)
-        # AttributeError: 'dict' object has no attribute 'expand'
-
-        # mergedConfigData = mergeDict(defaultConfigData, beamConfigData)
-        # mergedConfigData = mergeDict(beamConfigData, defaultConfigData)
-        # Dictionaries
-        # ModulesSettings from default config
-        # does not work properly
-        # self._allModulesSettings    = defaultConfigData['AllModules']
-
-        self._allModulesSettings    = defaultConfigData['AllModules']
+        # take new modules from default config
+        beamConfigData['AllModules'] = deepcopy(defaultConfigData['AllModules'])
+        self._allModulesSettings    = beamConfigData['AllModules']
         # self._rules                 = self.__extractSetting(beamConfigData, defaultConfigData, 'Rules')
+
         self._rules                 = beamConfigData['Rules']
         # self._moods                 = self.__extractSetting(beamConfigData, defaultConfigData, 'Moods')
-        self._moods                 = beamConfigData['Moods']
+
+        # add new properties from default to all moods
+        for idx in range(0, len(beamConfigData['Moods'])):
+            defMood = deepcopy(defaultConfigData['Moods'][0])
+            idxMood = beamConfigData['Moods'][idx]
+            complementDict(defMood, idxMood)
+        self._moods = beamConfigData['Moods']
 
         # Set OS-specific variables
         if platform.system() == 'Linux':
@@ -228,7 +231,7 @@ class BeamSettings:
         if platform.system() == 'Windows':
             tmp = self._allModulesSettings[1]
             self._preferencesSize = (500, 500)
-            self._moodSize = (420,550)
+            self._moodSize = (420,600)
         if platform.system() == 'Darwin':
             tmp = self._allModulesSettings[2]
             self._preferencesSize = (400, 600)

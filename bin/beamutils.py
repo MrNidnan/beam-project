@@ -130,6 +130,17 @@ def mergeDict(sourceDict, targetDict):
     return targetDict
 
 
+def complementDict(sourceDict, targetDict):
+    for key, value in sourceDict.items():
+        # Add new key values
+        if key not in targetDict:
+            # insert key
+            targetDict[key] = sourceDict[key]
+            continue
+
+    return targetDict
+
+
 def updateList(original, update):
     # Make sure the order is equal, otherwise it is hard to compare the items.
     assert len(original) == len(update), "Can only handle equal length lists."

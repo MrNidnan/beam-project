@@ -26,7 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 import wx, os
-from bin.dialogs.editmoodframe import EditMoodFrame
+from bin.dialogs.editmooddialog import EditMoodDialog
 
 #
 # Panel for mood parameter and
@@ -85,16 +85,16 @@ class MoodsPanel(wx.Panel):
         ################
         # MOOD BUTTONS #
         ################
-        self.AddMood    = wx.Button(self, label="Add")
-        self.DelMood    = wx.Button(self, label="Delete")
-        self.EditMood   = wx.Button(self, label="Edit")
-        self.AddMood.Bind(wx.EVT_BUTTON, self.OnAddMood)
-        self.EditMood.Bind(wx.EVT_BUTTON, self.OnEditMood)
-        self.DelMood.Bind(wx.EVT_BUTTON, self.OnDelMood)
+        self.AddMoodButton    = wx.Button(self, label="Add")
+        self.DelMoodButton    = wx.Button(self, label="Delete")
+        self.EditMoodButton   = wx.Button(self, label="Edit")
+        self.AddMoodButton.Bind(wx.EVT_BUTTON, self.OnAddMood)
+        self.EditMoodButton.Bind(wx.EVT_BUTTON, self.OnEditMood)
+        self.DelMoodButton.Bind(wx.EVT_BUTTON, self.OnDelMood)
         sizerbuttons    = wx.BoxSizer(wx.HORIZONTAL)
-        sizerbuttons.Add(self.AddMood, flag=wx.RIGHT | wx.TOP, border=10)
-        sizerbuttons.Add(self.DelMood, flag=wx.RIGHT | wx.TOP, border=10)
-        sizerbuttons.Add(self.EditMood, flag=wx.RIGHT | wx.TOP, border=10)
+        sizerbuttons.Add(self.AddMoodButton, flag=wx.RIGHT | wx.TOP, border=10)
+        sizerbuttons.Add(self.DelMoodButton, flag=wx.RIGHT | wx.TOP, border=10)
+        sizerbuttons.Add(self.EditMoodButton, flag=wx.RIGHT | wx.TOP, border=10)
     
     
         ##############
@@ -154,29 +154,29 @@ class MoodsPanel(wx.Panel):
         # LAYOUT BUTTONS #
         ##################
     def OnAddMood(self, event):
-        self.EditMood = EditMoodFrame(self, self.MoodList.GetCount() + 1, "Add mood")
-        self.EditMood.Show()
+        self.EditMoodButton = EditMoodDialog(self, self.MoodList.GetCount() + 1, "Add mood")
+        self.EditMoodButton.Show()
 
     def OnEditMood(self, event):
         # V0.5.0.5 including default
         RowSelected = self.MoodList.GetSelection()
         if RowSelected>-1:
-            self.MoodRule = EditMoodFrame(self, RowSelected, "Edit mood")
+            self.MoodRule = EditMoodDialog(self, RowSelected, "Edit mood")
             self.MoodRule.Show()
 
     def OnDelMood(self, event):
-        RowSelected = self.MoodList.GetSelection()
-        # if not 'Default'
-        if RowSelected > 0:
-            LineToDelete = self.MoodList.GetString(RowSelected)
-            dlg = wx.MessageDialog(self,
-                "Do you really want to delete '"+LineToDelete+"' ?",
+        selrow = self.MoodList.GetSelection()
+        # Do not delete 0 'Default'
+        if selrow > 0:
+            moodName = self.MoodList.GetString(selrow)
+            deleteDialog = wx.MessageDialog(self,
+                "Do you really want to delete '"+moodName+"' ?",
                 "Confirm deletion", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
-            result = dlg.ShowModal()
-            dlg.Destroy()
+            result = deleteDialog.ShowModal()
+            deleteDialog.Destroy()
             if result == wx.ID_OK:
-                # V0.5.0.5 including default
-                self.BeamSettings._moods.pop(RowSelected)
+                self.BeamSettings._moods.pop(selrow)
+                # points to self.BeamSettings._moods[x]
             # List all configured moods
             self.BuildMoodList()
     

@@ -38,15 +38,16 @@ from copy import deepcopy
 # Mood layout edit window
 #
 
-class EditMoodFrame(wx.Frame):
+class EditMoodDialog(wx.Dialog):
     def __init__(self, moodsPanel, RowSelected, mode):
+        xpos,ypos = moodsPanel.GetScreenPosition()
+        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), size=moodsPanel.BeamSettings._moodSize)
+#        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
+#                          size=self.moodsPanel.BeamSettings._moodSize,
+#                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
 
         # MoodsPanel
         self.moodsPanel = moodsPanel
-
-        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(self.moodsPanel.GetScreenPosition() + (50, 50)),
-                          size=self.moodsPanel.BeamSettings._moodSize,
-                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         self.RowSelected = RowSelected
         self.mode = mode
         self.EditMood = {}
@@ -54,18 +55,34 @@ class EditMoodFrame(wx.Frame):
         # Define choices
         self.Fields = ["%Artist", "%Album", "%Title", "%Genre", "%Comment", "%Composer", "%Year", "%AlbumArtist",
                        "%Performer", "%Singer", "%IsCortina"]
+
+        # Create a new default setting
+        '''
+        defLayoutItems = deepcopy(beamSettings._moods[0]['Display']) # LayoutItems[]
+        defaultMood = ({
+                        "Name": "My Mood",
+                        "Type": "Mood",
+                        "Active": "yes",
+                        "Field1": "%Title",
+                        "Field2": "contains",
+                        "Field3": "something",
+                        "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg",
+                        "RotateBackground": "no",
+                        "RotateTimer": 30,
+                        "DisplayTimer": 0,
+                        "PlayState": "Playing",
+                        "Display": defLayoutItems
+                      })
+        '''
+
         # Get item
         if self.RowSelected < len(beamSettings._moods):
             # Get the properties of the selected item
+            # DefaultDisplay is a list and does not get erged
             self.EditMood = beamSettings._moods[self.RowSelected]
         else:
-            # Create a new default setting
-            DefaultDisplay = deepcopy(beamSettings._moods[0]['Display'])
-            self.EditMood = ({"Active": "yes", "Field3": "something", "Field2": "contains", "Field1": "%Title",
-                              "Type": "Mood", "Name": "My Mood", "RotateBackground": "no", "RotateTimer": 30,
-                              "Background": "resources/backgrounds/bg1920x1080px_darkGreen.jpg",
-                              "PlayState": "Playing",
-                              "Display": DefaultDisplay})
+            self.EditMood = deepcopy(beamSettings._moods[0])
+            self.EditMood["Name"] = "New Mood"
 
         # Build the panel
         self.panel = wx.Panel(self)
@@ -74,11 +91,11 @@ class EditMoodFrame(wx.Frame):
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
 
         # Save/Cancel-buttons
-        self.button_ok = wx.Button(self.panel, label="OK")
+        self.OkButton = wx.Button(self.panel, label="OK")
         # self.button_cancel = wx.Button(self.panel, label="Cancel")
-        self.button_ok.Bind(wx.EVT_BUTTON, self.onSave)
+        self.OkButton.Bind(wx.EVT_BUTTON, self.OnOk)
         # self.button_cancel.Bind(wx.EVT_BUTTON, self.onCancel)
-        self.hbox.Add(self.button_ok, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
+        self.hbox.Add(self.OkButton, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
         # self.hbox.Add(self.button_cancel, flag=wx.LEFT | wx.BOTTOM | wx.TOP | wx.RIGHT, border=10)
 
         # Description Settings
@@ -87,14 +104,15 @@ class EditMoodFrame(wx.Frame):
         self.vbox.Add(PropertiesText, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
 
         # Add settings
-        self.vbox.Add(self.MoodSettings(), flag=wx.LEFT, border=20)
+        propertiesGrid = self.CreatePropertiesGrid()
+        self.vbox.Add(propertiesGrid, flag=wx.LEFT, border=20)
 
-        # Description Layout and background
+        # Background
         BackgroundText = wx.StaticText(self.panel, -1, "Background")
         BackgroundText.SetFont(font)
 
         BackgroundDesc = wx.StaticText(self.panel, -1, "Select background image (1920x1080 recommended)")
-        self.MoodBackground = wx.Button(self.panel, label="Browse")
+        self.BrowseBackgroundButton = wx.Button(self.panel, label="Browse")
         self.currentBackground = wx.StaticText(self.panel, -1, "")
 
         self.ChangeBackgroundBox = wx.CheckBox(self.panel, label='Change Background: ')
@@ -120,7 +138,7 @@ class EditMoodFrame(wx.Frame):
         self.rotateBackgroundFunction()
         BackgroundSizer = wx.BoxSizer(wx.HORIZONTAL)
         RandomSizer = wx.BoxSizer(wx.HORIZONTAL)
-        BackgroundSizer.Add(self.MoodBackground, flag=wx.RIGHT, border=10)
+        BackgroundSizer.Add(self.BrowseBackgroundButton, flag=wx.RIGHT, border=10)
         BackgroundSizer.Add(self.currentBackground)
         RandomSizer.Add(self.ChangeBackgroundBox, flag=wx.RIGHT, border=10)
         RandomSizer.Add(self.BackgroundTimerBox)
@@ -133,11 +151,16 @@ class EditMoodFrame(wx.Frame):
         descriptionSizer.Add(self.RandomBackgroundBox, flag=wx.LEFT, border=10)
         self.vbox.Add(descriptionSizer, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
 
-        # Add Layout
-        LayoutText = wx.StaticText(self.panel, -1, "Layout")
-        LayoutText.SetFont(font)
+        # Layout
         self.LayoutSettings()
-        self.vbox.Add(LayoutText, flag=wx.LEFT | wx.BOTTOM, border=10)
+        layoutText = wx.StaticText(self.panel, -1, "Layout")
+        layoutText.SetFont(font)
+        self.vbox.Add(layoutText, flag=wx.LEFT | wx.BOTTOM, border=10)
+
+        displayTimerText = wx.StaticText(self.panel, -1, "Display Timer")
+        self.vbox.Add(displayTimerText, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.vbox.Add(self.DisplayTimerField, flag=wx.LEFT | wx.BOTTOM, border=10)
+
         self.vbox.Add(self.LayoutList, 1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=10)
         self.vbox.Add(self.sizerbuttons, flag=wx.LEFT | wx.BOTTOM, border=10)
 
@@ -146,9 +169,9 @@ class EditMoodFrame(wx.Frame):
         self.panel.SetSizer(self.vbox)
 
     #
-    # MOOD MAIN SETTINGS
+    # Crates fields and sets values
     #
-    def MoodSettings(self):
+    def CreatePropertiesGrid(self):
 
         # Create the fields
 
@@ -173,8 +196,8 @@ class EditMoodFrame(wx.Frame):
             self.IsIsNotField.Disable()
             self.OutputField.Disable()
 
-        InfoGrid = wx.FlexGridSizer(6, 3, 5, 5)
-        InfoGrid.AddMany([(wx.StaticText(self.panel, label="Name"), 0, wx.EXPAND),
+        propertiesGrid = wx.FlexGridSizer(6, 3, 5, 5)
+        propertiesGrid.AddMany([(wx.StaticText(self.panel, label="Name"), 0, wx.EXPAND),
                           (wx.StaticText(self.panel, label="Mood state"), 0, wx.EXPAND),
                           (wx.StaticText(self.panel, label="Mood order"), 0, wx.EXPAND),
                           (self.MoodNameField, 0, wx.EXPAND),
@@ -188,7 +211,7 @@ class EditMoodFrame(wx.Frame):
                           (self.OutputField, 0, wx.EXPAND)
                           ])
 
-        return InfoGrid
+        return propertiesGrid
 
     #
     # MOOD LAYOUT LIST
@@ -197,27 +220,30 @@ class EditMoodFrame(wx.Frame):
 
         self.DisplayRows = []
 
-        self.AddLayout = wx.Button(self.panel, label="Add")
-        self.DelLayout = wx.Button(self.panel, label="Delete")
-        self.EditLayout = wx.Button(self.panel, label="Edit")
+        self.AddLayoutItemButton = wx.Button(self.panel, label="Add")
+        self.DelLayoutItemButton = wx.Button(self.panel, label="Delete")
+        self.EditLayoutItemButton = wx.Button(self.panel, label="Edit")
 
         self.sizerbuttons = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizerbuttons.Add(self.AddLayout, flag=wx.RIGHT | wx.TOP, border=10)
-        self.sizerbuttons.Add(self.DelLayout, flag=wx.RIGHT | wx.TOP, border=10)
-        self.sizerbuttons.Add(self.EditLayout, flag=wx.RIGHT | wx.TOP, border=10)
+        self.sizerbuttons.Add(self.AddLayoutItemButton, flag=wx.RIGHT | wx.TOP, border=10)
+        self.sizerbuttons.Add(self.DelLayoutItemButton, flag=wx.RIGHT | wx.TOP, border=10)
+        self.sizerbuttons.Add(self.EditLayoutItemButton, flag=wx.RIGHT | wx.TOP, border=10)
+
+        displaytimer= int(self.EditMood['DisplayTimer'])
+        self.DisplayTimerField = wx.SpinCtrl(self.panel, value=str(displaytimer), min=0)
 
         self.LayoutList = wx.CheckListBox(self.panel, -1, size=wx.DefaultSize, choices=[], style=wx.LB_NEEDED_SB)
         self.LayoutList.SetBackgroundColour(wx.Colour(255, 255, 255))
-        self.LayoutList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditLayout)
+        self.LayoutList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditLayoutItem)
         self.LayoutList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckLayout)
 
         # Load data into table
         self.BuildLayoutList()
 
-        self.AddLayout.Bind(wx.EVT_BUTTON, self.OnAddLayout)
-        self.EditLayout.Bind(wx.EVT_BUTTON, self.OnEditLayout)
-        self.DelLayout.Bind(wx.EVT_BUTTON, self.OnDelLayout)
-        self.MoodBackground.Bind(wx.EVT_BUTTON, self.BrowseMoodBackground)
+        self.AddLayoutItemButton.Bind(wx.EVT_BUTTON, self.OnAddLayoutItem)
+        self.EditLayoutItemButton.Bind(wx.EVT_BUTTON, self.OnEditLayoutItem)
+        self.DelLayoutItemButton.Bind(wx.EVT_BUTTON, self.OnDelLayoutItem)
+        self.BrowseBackgroundButton.Bind(wx.EVT_BUTTON, self.OnBrowseBackground)
 
         return
 
@@ -225,6 +251,7 @@ class EditMoodFrame(wx.Frame):
     # BUILD LIST AND CHECK
     #
     def BuildLayoutList(self):
+
         self.DisplayRows = []
         MoodLayout = self.EditMood['Display']
         for i in range(0, len(MoodLayout)):
@@ -237,6 +264,7 @@ class EditMoodFrame(wx.Frame):
                 self.LayoutList.Check(i, check=True)
             else:
                 self.LayoutList.Check(i, check=False)
+
 
     def OnCheckLayout(self, event):
         MoodLayout = self.EditMood['Display']
@@ -297,17 +325,17 @@ class EditMoodFrame(wx.Frame):
     #
     # LAYOUT BUTTONS
     #
-    def OnAddLayout(self, event):
-        self.EditLayout = EditLayoutItemDialog(self, len(self.DisplayRows), "Add layout item", self.EditMood['Display'])
-        self.EditLayout.Show()
+    def OnAddLayoutItem(self, event):
+        self.EditLayoutItemButton = EditLayoutItemDialog(self, len(self.DisplayRows), "Add layout item", self.EditMood['Display'])
+        self.EditLayoutItemButton.Show()
 
-    def OnEditLayout(self, event):
+    def OnEditLayoutItem(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected > -1:
-            self.EditLayout = EditLayoutItemDialog(self, RowSelected, "Edit layout item", self.EditMood['Display'])
-            self.EditLayout.Show()
+            self.EditLayoutItemButton = EditLayoutItemDialog(self, RowSelected, "Edit layout item", self.EditMood['Display'])
+            self.EditLayoutItemButton.Show()
 
-    def OnDelLayout(self, event):
+    def OnDelLayoutItem(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected >= 0:
             LineToDelete = self.LayoutList.GetString(RowSelected)
@@ -323,13 +351,15 @@ class EditMoodFrame(wx.Frame):
     #
     # Save mood layout
     #
-    def onSave(self, e):
+    def OnOk(self, e):
         # Get Settings
         self.EditMood['Name'] = self.MoodNameField.GetValue()
         self.EditMood['PlayState'] = self.MoodStateField.GetValue()
         self.EditMood['Field1'] = self.InputID3Field.GetValue()
         self.EditMood['Field2'] = self.IsIsNotField.GetValue()
         self.EditMood['Field3'] = self.OutputField.GetValue()
+        self.EditMood['DisplayTimer'] = self.DisplayTimerField.GetValue()
+
         moodorder = int(self.MoodOrderField.GetValue())
         # Place settings in moods
         if self.mode == "Add mood":
@@ -357,7 +387,7 @@ class EditMoodFrame(wx.Frame):
     #
     # Browse for background
     #
-    def BrowseMoodBackground(self, event):
+    def OnBrowseBackground(self, event):
         backgroundPath = self.EditMood['Background']
         openFileDialog = wx.FileDialog(self, "Set new background image for mood",
                                        # os.path.join(os.getcwd(), 'resources', 'backgrounds'),
