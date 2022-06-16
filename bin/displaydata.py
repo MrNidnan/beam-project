@@ -191,7 +191,7 @@ class DisplayData():
             # in seconds
             self.rotatebackgroundseconds = self.nowPlayingData.rotatebackgroundseconds
 
-            self.mainFrame.SetStatusText(beamSettings._moduleSelected + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMoodName)
+            self.mainFrame.SetStatusText(beamSettings.getSelectedModuleName() + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMoodName)
 
             if (self.previousMoodName != self.currentMoodName):
                 self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
@@ -224,10 +224,10 @@ class DisplayData():
             # Stop RotateBackground timer if it is running
             self.mainFrame.RotateBackgroundTimer.Stop()
             # Select Mood transition and start changing
-            if beamSettings._moodTransition == 'Fade directly':
+            if beamSettings.getMoodTransition() == 'Fade directly':
                 self.currentTransition = 'FadeDirect'
                 self.initiateTransition()
-            elif beamSettings._moodTransition == 'Fade to black':
+            elif beamSettings.getMoodTransition() == 'Fade to black':
                 self.currentTransition = 'FadeToBlack'
                 self.initiateTransition()
             else:
@@ -240,7 +240,7 @@ class DisplayData():
             return
 
         if TransitionType == 'SongChange':
-            if beamSettings._moodTransition == 'No transition':
+            if beamSettings.getMoodTransition() == 'No transition':
                 self.currentTransition = ''
                 self.initiateTransition()
             else:
@@ -254,7 +254,7 @@ class DisplayData():
     ########################################################
     def initiateTransition(self):
 
-        self.transitionSpeed = int(int(beamSettings._moodTransitionSpeed) / 100)
+        self.transitionSpeed = int(int(beamSettings.getMoodTransitionSpeed()) / 100)
         self.delta = float(1 / float(self.transitionSpeed))
 
         # FADE DIRECTLY
@@ -430,7 +430,7 @@ class DisplayData():
                 pass
 
         # Start the transition
-        if beamSettings._moodTransition == 'No transition':
+        if beamSettings.getMoodTransition() == 'No transition':
             self.currentTransition = ''
             self.initiateTransition()
         else:

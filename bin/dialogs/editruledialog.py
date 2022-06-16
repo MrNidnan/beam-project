@@ -55,9 +55,9 @@ class EditRuleDialog(wx.Dialog):
 
 
     # Check if it is a new line
-        if self.RowSelected<len(beamSettings._rules):
+        if self.RowSelected<len(beamSettings.getRules()):
             # Get the properties of the selected item
-            self.Settings   = beamSettings._rules[self.RowSelected]
+            self.Settings   = beamSettings.getRules()[self.RowSelected]
         else:
             # Create a new default setting
             self.Settings   = ({"Type": "Copy", "Field1": "%Comment","Field2": "%Singer", "Active": "yes"})
@@ -277,15 +277,15 @@ class EditRuleDialog(wx.Dialog):
         # Decide where NewRule goes into the vector self.Settings
         if self.mode == "Add rule":
             if RuleOrderBox < self.RowSelected:
-                beamSettings._rules.insert(RuleOrderBox, NewRule) #Insert in at position
+                beamSettings.getRules().insert(RuleOrderBox, NewRule) #Insert in at position
             else:
-                beamSettings._rules.append(NewRule) # Append in the end
+                beamSettings.getRules().append(NewRule) # Append in the end
         else: #Edit rule
             if RuleOrderBox == self.RowSelected:
-                beamSettings._rules[RuleOrderBox] = NewRule # Overwrite
+                beamSettings.getRules()[RuleOrderBox] = NewRule # Overwrite
             else:
-                beamSettings._rules.pop(self.RowSelected) #Move up and down in list
-                beamSettings._rules.insert(RuleOrderBox, NewRule)
+                beamSettings.getRules().pop(self.RowSelected) #Move up and down in list
+                beamSettings.getRules().insert(RuleOrderBox, NewRule)
 
         self.rulesPanel.BuildRuleList()
         self.rulesPanel.updateSettings()

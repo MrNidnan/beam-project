@@ -49,9 +49,9 @@ try:
     # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
     beamSettings.loadConfig()
     # now beamconfig.json is read, from config or home dir
-    setLogLevel(beamSettings._loglevel)
+    setLogLevel(beamSettings.getLogLevel())
 
-    logpath = beamSettings._logPath
+    logpath = beamSettings.getLogPath()
     try:
         if not os.path.isdir(logpath):
             logging.info("Beam: '" + logpath + "' does not exist, creating it for logging.")

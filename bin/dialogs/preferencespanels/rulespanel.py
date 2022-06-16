@@ -109,7 +109,7 @@ class RulesPanel(wx.Panel):
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_OK:
-                self.BeamSettings._rules.pop(RowSelected)
+                self.BeamSettings.getRules().pop(RowSelected)
                 self.BuildRuleList()
 
 
@@ -117,8 +117,8 @@ class RulesPanel(wx.Panel):
     # LAYOUT CHECKBOXES #
     #####################
     def OnCheckRule(self, event):
-        for i in range(0, len(self.BeamSettings._rules)):
-            rule = self.BeamSettings._rules[i]
+        for i in range(0, len(self.BeamSettings.getRules())):
+            rule = self.BeamSettings.getRules()[i]
             if self.RuleList.IsChecked(i):
                 rule['Active'] = "yes"
             else:
@@ -130,8 +130,8 @@ class RulesPanel(wx.Panel):
     #####################
     def BuildRuleList(self):
         self.RuleRows = []
-        for i in range(0, len(self.BeamSettings._rules)):
-            rule = self.BeamSettings._rules[i]
+        for i in range(0, len(self.BeamSettings.getRules())):
+            rule = self.BeamSettings.getRules()[i]
             if rule['Type'] == "Copy":
                 self.RuleRows.append(str('Copy '+rule['Field1']+' to '+rule['Field2']))
             
@@ -155,8 +155,8 @@ class RulesPanel(wx.Panel):
                     self.RuleRows.append(str("Ignore song if "+rule['Field1']+' contains '+rule['Field3']))
         self.RuleList.Set(self.RuleRows)
         # Check the rules
-        for i in range(0, len(self.BeamSettings._rules)):
-            rule = self.BeamSettings._rules[i]
+        for i in range(0, len(self.BeamSettings.getRules())):
+            rule = self.BeamSettings.getRules()[i]
             if rule['Active'] == "yes":
                 self.RuleList.Check(i, check=True)
             else:

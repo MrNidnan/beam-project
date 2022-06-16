@@ -72,7 +72,7 @@ class MainFrame(wx.Frame):
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.displayData.updateData, self.timer)
         # pyinstaller TypeError: Timer.Start(): argument 1 has unexpected type 'str'
-        self.timer.Start(beamSettings._updtime)  # Refresh time in ms from config, default 6311
+        self.timer.Start(beamSettings.getUpdtime())  # Refresh time in ms from config, default 6311
 
         # faders
         self.TransitionTimer = wx.Timer(self)
@@ -205,7 +205,7 @@ class MainFrame(wx.Frame):
     def onSave(self, event):
         try:
             # Save settings
-            beamSettings.saveConfig()
+            beamSettings.dumpConfig()
             # Reload settings in main-window
             self.updateSettings()
         except Exception as e:
@@ -245,7 +245,7 @@ class MainFrame(wx.Frame):
     def showStatusBar(self):
         try:
             self.triggerResizeBackground = True
-            if beamSettings.__showStatusbar == 'True':
+            if beamSettings.getShowStatusbar() == 'True':
                 self.statusbar.Show()
             else:
                 self.statusbar.Hide()

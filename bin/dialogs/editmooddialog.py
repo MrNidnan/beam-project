@@ -76,12 +76,12 @@ class EditMoodDialog(wx.Dialog):
         '''
 
         # Get item
-        if self.RowSelected < len(beamSettings._moods):
+        if self.RowSelected < len(beamSettings.getMoods()):
             # Get the properties of the selected item
             # DefaultDisplay is a list and does not get erged
-            self.EditMood = beamSettings._moods[self.RowSelected]
+            self.EditMood = beamSettings.getMoods()[self.RowSelected]
         else:
-            self.EditMood = deepcopy(beamSettings._moods[0])
+            self.EditMood = deepcopy(beamSettings.getMoods()[0])
             self.EditMood["Name"] = "New Mood"
 
         # Build the panel
@@ -364,15 +364,15 @@ class EditMoodDialog(wx.Dialog):
         # Place settings in moods
         if self.mode == "Add mood":
             if moodorder < self.RowSelected:
-                beamSettings._moods.insert(moodorder, self.EditMood)  # Insert in at position
+                beamSettings.getMoods().insert(moodorder, self.EditMood)  # Insert in at position
             else:
-                beamSettings._moods.append(self.EditMood)  # Append in the end
+                beamSettings.getMoods().append(self.EditMood)  # Append in the end
         else:  # Edit mood
             if moodorder == self.RowSelected:
-                beamSettings._moods[moodorder] = self.EditMood  # Overwrite
+                beamSettings.getMoods()[moodorder] = self.EditMood  # Overwrite
             else:
-                beamSettings._moods.pop(self.RowSelected)  # Move up and down in list
-                beamSettings._moods.insert(moodorder, self.EditMood)
+                beamSettings.getMoods().pop(self.RowSelected)  # Move up and down in list
+                beamSettings.getMoods().insert(moodorder, self.EditMood)
 
         self.moodsPanel.BuildMoodList()
         self.moodsPanel.updateSettings()

@@ -57,8 +57,8 @@ class MoodsPanel(wx.Panel):
         ###################
         moodtransition = wx.StaticText(self, -1, "Mood transition")
         moodtransition.SetFont(font)
-        self.TransitionDropdown = wx.ComboBox(self,value=self.BeamSettings._moodTransition, choices=['No transition', 'Fade directly','Fade to black'], style=wx.CB_READONLY)
-        self.TransitionSpeed = wx.Slider(self, -1, int(self.BeamSettings._moodTransitionSpeed), 500, 5000,(0,0), (233,-1), wx.SL_HORIZONTAL)
+        self.TransitionDropdown = wx.ComboBox(self,value=self.BeamSettings.getMoodTransition(), choices=['No transition', 'Fade directly','Fade to black'], style=wx.CB_READONLY)
+        self.TransitionSpeed = wx.Slider(self, -1, int(self.BeamSettings.getMoodTransitionSpeed()), 500, 5000,(0,0), (233,-1), wx.SL_HORIZONTAL)
         self.TransitionSpeedLabel = wx.StaticText(self, -1, "")
         self.TransitionDropdown.Bind(wx.EVT_COMBOBOX, self.OnTransitionDropdown)
         self.TransitionSpeed.Bind(wx.EVT_SCROLL, self.OnTransitionSpeedScroll)
@@ -123,21 +123,21 @@ class MoodsPanel(wx.Panel):
         ##############
     def OnTransitionSpeedScroll(self, e):
         obj = e.GetEventObject()
-        self.BeamSettings._moodTransitionSpeed = obj.GetValue()
+        self.BeamSettings.setMoodTransitionSpeed(obj.GetValue())
         self.updateMoodTransition()
 
     def OnTransitionDropdown(self, e):
         obj = e.GetEventObject()
-        self.BeamSettings._moodTransition = obj.GetValue()
+        self.BeamSettings.setMoodTransition(obj.GetValue())
         self.updateMoodTransition()
 
     def updateMoodTransition(self):
-        if self.BeamSettings._moodTransition == "No transition":
+        if self.BeamSettings.getMoodTransition() == "No transition":
             self.TransitionSpeed.Enable(False)
         else:
             self.TransitionSpeed.Enable(True)
 
-        Timervalue = round(float(self.BeamSettings._moodTransitionSpeed)/1000,1)
+        Timervalue = round(float(self.BeamSettings.getMoodTransitionSpeed())/1000,1)
         if Timervalue < float(1.5):
             # Fast
             self.TransitionSpeedLabel.SetLabel(str(Timervalue) + " sec (Fast)")
@@ -175,8 +175,8 @@ class MoodsPanel(wx.Panel):
             result = deleteDialog.ShowModal()
             deleteDialog.Destroy()
             if result == wx.ID_OK:
-                self.BeamSettings._moods.pop(selrow)
-                # points to self.BeamSettings._moods[x]
+                self.BeamSettings.getMoods().pop(selrow)
+                # points to self.BeamSettings.getMoods()[x]
             # List all configured moods
             self.BuildMoodList()
     
@@ -185,12 +185,12 @@ class MoodsPanel(wx.Panel):
         #####################
     def OnCheckMood(self, event):
         # V0.5.0.5 including default
-        for i in range(0, len(self.BeamSettings._moods)):
+        for i in range(0, len(self.BeamSettings.getMoods())):
             # 'Default' can not get uncecked
             if i == 0:
                 self.MoodList.Check(i, check=True)
 
-            mood = self.BeamSettings._moods[i]
+            mood = self.BeamSettings.getMoods()[i]
             if self.MoodList.IsChecked(i):
                 mood['Active'] = "yes"
             else:
@@ -202,15 +202,15 @@ class MoodsPanel(wx.Panel):
     def BuildMoodList(self):
         self.MoodRows = []
         # V0.5.0.5 including default
-        # for i in range(0, len(self.BeamSettings._moods)-1):
-        for i in range(0, len(self.BeamSettings._moods)):
-            # mood = self.BeamSettings._moods[i+1]
-            mood = self.BeamSettings._moods[i]
+        # for i in range(0, len(self.BeamSettings.getMoods())-1):
+        for i in range(0, len(self.BeamSettings.getMoods())):
+            # mood = self.BeamSettings.getMoods()[i+1]
+            mood = self.BeamSettings.getMoods()[i]
             self.MoodRows.append(str(mood['Name']))
         self.MoodList.Set(self.MoodRows)
         # Check the rules
-        for i in range(0, len(self.BeamSettings._moods)):
-            moods = self.BeamSettings._moods[i]
+        for i in range(0, len(self.BeamSettings.getMoods())):
+            moods = self.BeamSettings.getMoods()[i]
             if moods['Active'] == "yes":
                 self.MoodList.Check(i, check=True)
             else:
