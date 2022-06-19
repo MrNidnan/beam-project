@@ -29,10 +29,9 @@ import wx.lib.delayedresult
 
 from bin.beamsettings import *
 from bin.displaydata import DisplayData
-from bin.dialogs.displaypanel import DisplayPanel
+from bin.dialogs.preferencespanels.displaypanel import DisplayPanel
 
 from bin.dialogs.preferencespanels.basicsettingspanel import BasicSettingsPanel
-from bin.dialogs.preferencespanels.defaultlayoutpanel import DefaultLayoutPanel
 from bin.dialogs.preferencespanels.moodspanel import MoodsPanel
 from bin.dialogs.preferencespanels.rulespanel import RulesPanel
 from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel

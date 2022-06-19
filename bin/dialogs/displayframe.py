@@ -27,7 +27,7 @@
 import wx.html
 import wx.lib.delayedresult
 from bin.beamsettings import *
-from bin.dialogs.displaypanel import DisplayPanel
+from bin.dialogs.preferencespanels.displaypanel import DisplayPanel
 
 
 #

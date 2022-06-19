@@ -208,6 +208,10 @@ class NowPlayingData:
 
     ###############################################################
     #
+    # Dispatches to the selected module run()
+    # gets called by DisplayData.processDataThread()
+    # started by DisplayData.processData() by startWorker()
+    #
     # Apply rules and moods
     # Create display strings
     #

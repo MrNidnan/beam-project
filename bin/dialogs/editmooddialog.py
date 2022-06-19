@@ -178,7 +178,8 @@ class EditMoodDialog(wx.Dialog):
         self.MoodNameField = wx.TextCtrl(self.panel, value=self.EditMood['Name'], size=(120, -1))
         self.MoodStateField = wx.ComboBox(self.panel, value=self.EditMood['PlayState'], choices=["Playing", "Not Playing"],
                                           size=(120, -1), style=wx.CB_READONLY)
-        self.MoodOrderField = wx.SpinCtrl(self.panel, value=str(self.RowSelected), min=0, max=99)
+        # min > 0 not to push away the default mood
+        self.MoodOrderField = wx.SpinCtrl(self.panel, value=str(self.RowSelected), min=1, max=99)
         self.InputID3Field = wx.ComboBox(self.panel, size=(120, -1), value=self.EditMood['Field1'],
                                          choices=self.Fields, style=wx.CB_READONLY)
         self.IsIsNotField = wx.ComboBox(self.panel, value=self.EditMood['Field2'], choices=["is", "is not", "contains"],
@@ -361,6 +362,10 @@ class EditMoodDialog(wx.Dialog):
         self.EditMood['DisplayTimer'] = self.DisplayTimerField.GetValue()
 
         moodorder = int(self.MoodOrderField.GetValue())
+        if self.EditMood['Name'] == 'Default':
+            # Got set to 1 as in of spin button
+            moodorder = 0
+
         # Place settings in moods
         if self.mode == "Add mood":
             if moodorder < self.RowSelected:

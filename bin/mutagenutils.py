@@ -56,62 +56,60 @@ def readSongObject(filePath):
         songObject.ModuleMessage = "Error reading file", filePath
         raise NameError("Error reading file", filePath)
 
-    # if platform.system() == 'Windows':
-    #     Formating = 'latin-1'
-    # else:
-    #     Formating = 'utf-8'
-
-    try:
+    if "artist" in audio:
+        # MP3, MP4, FLAC
         songObject.Artist = audio["artist"][0]
-    except:
-        songObject.Artist = ""
+    else:
+        # AIF
+        if "TPE1" in audio:
+            songObject.Artist = audio["TPE1"][0]
 
-    try:
+    if "album" in audio:
         songObject.Album = audio["album"][0]
-    except:
-        songObject.Album = ""
+    else:
+        if "TALB" in audio:
+            songObject.Album = audio["TALB"][0]
 
-    try:
+    if "title" in audio:
         songObject.Title = audio["title"][0]
-    except:
-        songObject.Title = ""
+    else:
+        if "TIT2" in audio:
+            songObject.Title = audio["TIT2"][0]
 
-    try:
+    if "genre" in audio:
         songObject.Genre = audio["genre"][0]
-    except:
-        songObject.Genre = ""
+    else:
+        if "TCON" in audio:
+            songObject.Genre = audio["TCON"][0]
 
-    try:
+    if "comment" in audio:
         songObject.Comment = audio["comment"][0]
-    except:
-        try:
+    else:
+        if 'COMM::eng' in audioRaw:
             songObject.Comment = audioRaw['COMM::eng'][0]
-        except:
-            songObject.Comment = ""
 
-    try:
+    if "composer" in audio:
         songObject.Composer = audio["composer"][0]
-    except:
-        songObject.Composer = ""
+    else:
+        if "TCOM" in audio:
+            songObject.Composer = audio["TCOM"][0]
 
-    try:
+    # ??? year
+    if "date" in audio:
         songObject.Year = audio["date"][0]
-    except:
-        songObject.Year = ""
+    else:
+        if "TDRC" in audio:
+            songObject.Year = audio["TDRC"][0]
 
-    songObject.Singer = ""
-
-    try:
+    if "albumartist" in audio:
         songObject.AlbumArtist = audio["albumartist"][0]
-    except:
-        songObject.AlbumArtist = ""
+    else:
+        if "TPE2" in audio:
+            songObject.AlbumArtist = audio["TPE2"][0]
 
-    try:
+    if "performer" in audio:
         songObject.Performer = audio["performer"][0]
-    except:
-        songObject.Performer = ""
 
-    songObject.IsCortina = "no"
     songObject.FilePath = filePath
 
     return songObject

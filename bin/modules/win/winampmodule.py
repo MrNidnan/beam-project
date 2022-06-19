@@ -33,7 +33,10 @@ from .winampplayer import WinampPlayer
 ###############################################################
 from ...mutagenutils import readSongObject
 
-
+#
+# module gets the filename from WinAMP
+# and reads the tags from there
+#
 def run(MaxTandaLength):
 
 
