@@ -56,43 +56,67 @@ def readSongObject(filePath):
         songObject.ModuleMessage = "Error reading file", filePath
         raise NameError("Error reading file", filePath)
 
+    # for key in audio:
+    #    attr = audio[key][0]
+    #    logging.debug(key)
+    #    logging.debug(attr)
+
     if "artist" in audio:
-        # MP3, MP4, FLAC
+        # MP3/ID3v2, MP4, FLAC
         songObject.Artist = audio["artist"][0]
     else:
         # AIF
         if "TPE1" in audio:
             songObject.Artist = audio["TPE1"][0]
+        else: # WMA/ASF
+            if "Author" in audio:
+                # WMA/ASF
+                songObject.Artist = audio["Author"][0].value
 
     if "album" in audio:
         songObject.Album = audio["album"][0]
     else:
         if "TALB" in audio:
             songObject.Album = audio["TALB"][0]
+        else:
+            if "WM/AlbumTitle" in audio:
+                songObject.Album = audio["WM/AlbumTitle"][0].value
 
     if "title" in audio:
         songObject.Title = audio["title"][0]
     else:
         if "TIT2" in audio:
             songObject.Title = audio["TIT2"][0]
+        else:
+            if "Title" in audio:
+                songObject.Title = audio["Title"][0].value
 
     if "genre" in audio:
         songObject.Genre = audio["genre"][0]
     else:
         if "TCON" in audio:
             songObject.Genre = audio["TCON"][0]
+        else:
+            if "WM/Genre" in audio:
+                songObject.Genre = audio["WM/Genre"][0].value
 
     if "comment" in audio:
         songObject.Comment = audio["comment"][0]
     else:
-        if 'COMM::eng' in audioRaw:
-            songObject.Comment = audioRaw['COMM::eng'][0]
+        if "COMM::eng" in audioRaw:
+            songObject.Comment = audioRaw["COMM::eng"][0]
+        else:
+            if 'Description' in audioRaw:
+                songObject.Comment = audioRaw["Description"][0].value
 
     if "composer" in audio:
         songObject.Composer = audio["composer"][0]
     else:
         if "TCOM" in audio:
             songObject.Composer = audio["TCOM"][0]
+        else:
+            if "WM/Composer" in audio:
+                songObject.Composer = audio["WM/Composer"][0].value
 
     # ??? year
     if "date" in audio:
@@ -100,12 +124,18 @@ def readSongObject(filePath):
     else:
         if "TDRC" in audio:
             songObject.Year = audio["TDRC"][0]
+        else:
+            if "WM/Year" in audio:
+                songObject.Year = audio["WM/Year"][0].value
 
     if "albumartist" in audio:
         songObject.AlbumArtist = audio["albumartist"][0]
     else:
         if "TPE2" in audio:
             songObject.AlbumArtist = audio["TPE2"][0]
+        else:
+            if "WM/AlbumArtist" in audio:
+                songObject.AlbumArtist = audio["WM/AlbumArtist"][0].value
 
     if "performer" in audio:
         songObject.Performer = audio["performer"][0]

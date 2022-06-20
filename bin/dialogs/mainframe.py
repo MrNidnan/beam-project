@@ -291,7 +291,8 @@ class ListBookMenu(wx.Listbook):
         # IMAGES #
         ##########
         imagelist = wx.ImageList(32,32)
-        urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         for urls in urllist:
             appPath = getBeamHomePath()
             # /resources/icons/preferences
@@ -308,7 +309,7 @@ class ListBookMenu(wx.Listbook):
                     (DisplayPanel(self, displayData), "Preview"),
                     (BasicSettingsPanel(self, beamSettings), "Settings"),
                     # (DefaultLayoutPanel(self, beamSettings), "Layout"),
-                    (MoodsPanel(self, mainFrame, beamSettings), "Moods"),
+                    (MoodsPanel(self, mainFrame, beamSettings), "Layout"),
                     (RulesPanel(self, mainFrame, beamSettings), "Rules"),
                     (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")
                  ]
