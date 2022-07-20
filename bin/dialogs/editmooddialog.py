@@ -323,6 +323,8 @@ class EditMoodDialog(wx.Dialog):
         else:
             self.currentBackground.SetLabel("Images from folder: " + os.path.split(path)[1])
 
+
+
     #
     # LAYOUT BUTTONS
     #
@@ -402,7 +404,7 @@ class EditMoodDialog(wx.Dialog):
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_OK:
             backgroundPath = openFileDialog.GetPath()
-            # !!! Sanitize for temporary home of execcutable
+            # Sanitize for temporary home of execcutable
             relativePath = getRelativePath(backgroundPath)
             self.EditMood['Background'] = relativePath
             (path, backgroundfile) = os.path.split(self.EditMood['Background'])

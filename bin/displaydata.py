@@ -193,8 +193,10 @@ class DisplayData():
 
             self.mainFrame.SetStatusText(beamSettings.getSelectedModuleName() + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMoodName)
 
+            # BackgroundPath can get changed by EditMoodDialog
+            self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
             if (self.previousMoodName != self.currentMoodName):
-                self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
+                # self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
                 self.startTransition('MoodChange')
             else:
                 self.startTransition('SongChange')

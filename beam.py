@@ -24,15 +24,11 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-import logging
-from logging import *
-
-from bin.beamutils import *
 
 # initializes public variables of beamsettings.beamSettings
 # from stringResuorces by BeamSettings() __init__
 from bin.beamsettings import *
-from bin.dialogs.mainframe import MainFrame
+from bin.mainframe import MainFrame
 
 try:
     # beam config did not get loaded here

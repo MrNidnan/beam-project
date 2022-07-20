@@ -292,7 +292,8 @@ class ListBookMenu(wx.Listbook):
         ##########
         imagelist = wx.ImageList(32,32)
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
-        urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        urllist = ["2-DefaultDisplay32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         for urls in urllist:
             appPath = getBeamHomePath()
             # /resources/icons/preferences
