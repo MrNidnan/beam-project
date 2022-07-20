@@ -56,6 +56,18 @@ def getBeamHomePath():
     # print(os.listdir(appPath))
     return apphomepath
 
+
+
+def getRelativePath(filepath):
+    ## userhomepath = getUserHomePath()
+    ## beamconfigpath = os.path.join(os.path.expanduser("~"), ".beam")
+
+    beamhomepath = os.path.join(getBeamHomePath(), '');
+    if filepath.startswith(beamhomepath):
+        filepath = filepath.removeprefix(beamhomepath)
+
+    return filepath
+
 def getBeamResourcesPath():
    return os.path.join(getBeamHomePath(), "resources")
 
@@ -66,6 +78,8 @@ def getBeamConfigPath():
     beamconfigpath = os.path.join(os.path.expanduser("~"), ".beam")
 
     return beamconfigpath
+
+
 
 
 
@@ -116,6 +130,17 @@ def mergeDict(sourceDict, targetDict):
     return targetDict
 
 
+def complementDict(sourceDict, targetDict):
+    for key, value in sourceDict.items():
+        # Add new key values
+        if key not in targetDict:
+            # insert key
+            targetDict[key] = sourceDict[key]
+            continue
+
+    return targetDict
+
+
 def updateList(original, update):
     # Make sure the order is equal, otherwise it is hard to compare the items.
     assert len(original) == len(update), "Can only handle equal length lists."
@@ -129,4 +154,5 @@ def updateList(original, update):
             original[idx] = updateList(original[idx], update[idx])
         if isinstance(val_original, (str, int, float)):
             original[idx] = val_update
+
     return original

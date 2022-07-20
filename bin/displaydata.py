@@ -68,8 +68,8 @@ class DisplayData():
         self.currentDisplayRows = []
         self.currentDisplaySettings = []
         self.currentPlaybackStatus = ""
-        self.previousMood = ""
-        self.currentMood = ""
+        self.previousMoodName = ""
+        self.currentMoodName = ""
 
         # self.backgroundImage = wx.EmptyBitmap(800,600)
         self.backgroundImage = wx.Bitmap(800,600)
@@ -141,6 +141,13 @@ class DisplayData():
             if self.nowPlayingData.playlistChanged:
                 # Only update if playlist has changed
                 self.processData()
+
+            if (self.nowPlayingData.playlistchangetime > 0) and self.nowPlayingData.isDisplayTimeExpired():
+                # erase
+                self.mainFrame.refreshDisplay()
+                # refresh only once, keeps expired if 0
+                self.nowPlayingData.playlistchangetime = 0
+
         except Exception as e:
             logging.error(e, exc_info=True)
 
@@ -175,8 +182,8 @@ class DisplayData():
             self.currentCoverArtImage = self.nowPlayingData.currentCoverArtImage
             self.currentPlaybackStatus = self.nowPlayingData.StatusMessage
 
-            self.previousMood = deepcopy(self.currentMood)
-            self.currentMood = self.nowPlayingData.CurrentMood
+            self.previousMoodName = deepcopy(self.currentMoodName)
+            self.currentMoodName = self.nowPlayingData.CurrentMoodName
             self.currentDisplaySettings = self.nowPlayingData.DisplaySettings
             # can be "no", "linear", "random"
             ## set in __updateMood()
@@ -184,10 +191,12 @@ class DisplayData():
             # in seconds
             self.rotatebackgroundseconds = self.nowPlayingData.rotatebackgroundseconds
 
-            self.mainFrame.SetStatusText(beamSettings._moduleSelected + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMood)
+            self.mainFrame.SetStatusText(beamSettings.getSelectedModuleName() + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMoodName)
 
-            if (self.previousMood != self.currentMood):
-                self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
+            # BackgroundPath can get changed by EditMoodDialog
+            self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
+            if (self.previousMoodName != self.currentMoodName):
+                # self._currentBackgroundPath = self.nowPlayingData.BackgroundPath
                 self.startTransition('MoodChange')
             else:
                 self.startTransition('SongChange')
@@ -217,10 +226,10 @@ class DisplayData():
             # Stop RotateBackground timer if it is running
             self.mainFrame.RotateBackgroundTimer.Stop()
             # Select Mood transition and start changing
-            if beamSettings._moodTransition == 'Fade directly':
+            if beamSettings.getMoodTransition() == 'Fade directly':
                 self.currentTransition = 'FadeDirect'
                 self.initiateTransition()
-            elif beamSettings._moodTransition == 'Fade to black':
+            elif beamSettings.getMoodTransition() == 'Fade to black':
                 self.currentTransition = 'FadeToBlack'
                 self.initiateTransition()
             else:
@@ -233,7 +242,7 @@ class DisplayData():
             return
 
         if TransitionType == 'SongChange':
-            if beamSettings._moodTransition == 'No transition':
+            if beamSettings.getMoodTransition() == 'No transition':
                 self.currentTransition = ''
                 self.initiateTransition()
             else:
@@ -247,7 +256,7 @@ class DisplayData():
     ########################################################
     def initiateTransition(self):
 
-        self.transitionSpeed = int(int(beamSettings._moodTransitionSpeed) / 100)
+        self.transitionSpeed = int(int(beamSettings.getMoodTransitionSpeed()) / 100)
         self.delta = float(1 / float(self.transitionSpeed))
 
         # FADE DIRECTLY
@@ -423,7 +432,7 @@ class DisplayData():
                 pass
 
         # Start the transition
-        if beamSettings._moodTransition == 'No transition':
+        if beamSettings.getMoodTransition() == 'No transition':
             self.currentTransition = ''
             self.initiateTransition()
         else:

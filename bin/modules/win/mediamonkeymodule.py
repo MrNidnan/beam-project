@@ -157,13 +157,15 @@ def getSongAt(MediaMonkey, songPosition):
         # Does not work with MM5
         Track = MediaMonkey.Player.CurrentPlaylist.Item(songPosition)
 
+    # http://www.mediamonkey.com/wiki/SDBSongData
     retSong.Artist      = Track.ArtistName
     retSong.Album       = Track.AlbumName
     retSong.Title       = Track.Title
     retSong.Genre       = Track.Genre
     retSong.Comment     = Track.Comment
     retSong.Composer    = Track.Author
-    retSong.Year        = Track.Year
+    # Only 0 in Track
+    # retSong.Year        = Track.Year
     #retSong._Singer     Defined by beam
     retSong.AlbumArtist = Track.AlbumArtistName
     #retSong.Performer  = (Track.Performer) # Does not exist for iTunes?

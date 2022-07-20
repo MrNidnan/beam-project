@@ -29,10 +29,9 @@ import wx.lib.delayedresult
 
 from bin.beamsettings import *
 from bin.displaydata import DisplayData
-from bin.dialogs.displaypanel import DisplayPanel
+from bin.dialogs.preferencespanels.displaypanel import DisplayPanel
 
 from bin.dialogs.preferencespanels.basicsettingspanel import BasicSettingsPanel
-from bin.dialogs.preferencespanels.defaultlayoutpanel import DefaultLayoutPanel
 from bin.dialogs.preferencespanels.moodspanel import MoodsPanel
 from bin.dialogs.preferencespanels.rulespanel import RulesPanel
 from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel
@@ -72,7 +71,7 @@ class MainFrame(wx.Frame):
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.displayData.updateData, self.timer)
         # pyinstaller TypeError: Timer.Start(): argument 1 has unexpected type 'str'
-        self.timer.Start(beamSettings._updtime)  # Refresh time in ms from config, default 6311
+        self.timer.Start(beamSettings.getUpdtime())  # Refresh time in ms from config, default 6311
 
         # faders
         self.TransitionTimer = wx.Timer(self)
@@ -120,16 +119,16 @@ class MainFrame(wx.Frame):
         #################
         # LISTBOOK MENU #
         #################
-        listBookMenu = ListBookMenu(panel, beamSettings, self.displayData)
+        listBookMenu = ListBookMenu(panel, self, beamSettings)
         self.previewPanel = listBookMenu.pages[0][0];
 
         
         ###########
         # BUTTONS #
         ###########
-        self.applyBtn = wx.Button(panel, label="Apply")
-        self.applyBtn.Bind(wx.EVT_BUTTON, self.onApply)
-        hbox.Add(self.applyBtn, flag=wx.LEFT | wx.TOP, border=10)
+        self.saveBtn = wx.Button(panel, label="Save")
+        self.saveBtn.Bind(wx.EVT_BUTTON, self.onSave)
+        hbox.Add(self.saveBtn, flag=wx.LEFT | wx.TOP, border=10)
 
         self.displayBtn = wx.Button(panel, label="Display")
         self.displayBtn.Bind(wx.EVT_BUTTON, self.onDisplay)
@@ -202,10 +201,10 @@ class MainFrame(wx.Frame):
             logging.error(e, exc_info=True)
 
 
-    def onApply(self, event):
+    def onSave(self, event):
         try:
             # Save settings
-            beamSettings.saveConfig()
+            beamSettings.dumpConfig()
             # Reload settings in main-window
             self.updateSettings()
         except Exception as e:
@@ -224,7 +223,7 @@ class MainFrame(wx.Frame):
             logging.error(e, exc_info=True)
 
 
-
+    '''
     #
     #
     #
@@ -238,8 +237,6 @@ class MainFrame(wx.Frame):
             #    self.rotateBackground()
         except Exception as e:
             logging.error(e, exc_info=True)
-
-
     '''
     #
     # Hide/show statusbar
@@ -247,13 +244,13 @@ class MainFrame(wx.Frame):
     def showStatusBar(self):
         try:
             self.triggerResizeBackground = True
-            if beamSettings.__showStatusbar == 'True':
+            if beamSettings.getShowStatusbar() == 'True':
                 self.statusbar.Show()
             else:
                 self.statusbar.Hide()
         except Exception as e:
             logging.error(e, exc_info=True)
-    '''
+
 
     # UPDATE INFO FROM PREFERENCES WINDOW
     def updateSettings(self):
@@ -286,14 +283,17 @@ class ListBookMenu(wx.Listbook):
 
     # pages = []
 
-    def __init__(self, parent, beamSettings, displayData):
+    def __init__(self, parent, mainFrame, beamSettings):
         wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
-        
+
+        displayData = mainFrame.displayData
         ##########
         # IMAGES #
         ##########
         imagelist = wx.ImageList(32,32)
-        urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        urllist = ["2-DefaultDisplay32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         for urls in urllist:
             appPath = getBeamHomePath()
             # /resources/icons/preferences
@@ -309,9 +309,9 @@ class ListBookMenu(wx.Listbook):
                     # preview must be first in array
                     (DisplayPanel(self, displayData), "Preview"),
                     (BasicSettingsPanel(self, beamSettings), "Settings"),
-                    (DefaultLayoutPanel(self, beamSettings), "Layout"),
-                    (MoodsPanel(self, beamSettings), "Moods"),
-                    (RulesPanel(self, beamSettings), "Rules"),
+                    # (DefaultLayoutPanel(self, beamSettings), "Layout"),
+                    (MoodsPanel(self, mainFrame, beamSettings), "Layout"),
+                    (RulesPanel(self, mainFrame, beamSettings), "Rules"),
                     (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")
                  ]
         ImId=0

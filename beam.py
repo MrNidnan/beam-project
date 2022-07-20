@@ -24,15 +24,11 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-import logging
-from logging import *
-
-from bin.beamutils import *
 
 # initializes public variables of beamsettings.beamSettings
 # from stringResuorces by BeamSettings() __init__
 from bin.beamsettings import *
-from bin.dialogs.mainframe import MainFrame
+from bin.mainframe import MainFrame
 
 try:
     # beam config did not get loaded here
@@ -49,9 +45,9 @@ try:
     # Reads into ConfigData (beamconfig) and OriginalConfigData (beamhome)
     beamSettings.loadConfig()
     # now beamconfig.json is read, from config or home dir
-    setLogLevel(beamSettings._loglevel)
+    setLogLevel(beamSettings.getLogLevel())
 
-    logpath = beamSettings._logPath
+    logpath = beamSettings.getLogPath()
     try:
         if not os.path.isdir(logpath):
             logging.info("Beam: '" + logpath + "' does not exist, creating it for logging.")

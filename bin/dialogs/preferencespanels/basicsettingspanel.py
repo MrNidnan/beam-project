@@ -54,8 +54,8 @@ class BasicSettingsPanel(wx.Panel):
         
         mediadescription = wx.StaticText(self, wx.ID_ANY, "Select mediaplayer to display information from")
         self.ModuleSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
-                                                  value = self.BeamSettings._moduleSelected,
-                                                  choices = self.BeamSettings._currentModules,
+                                                  value = self.BeamSettings.getSelectedModuleName(),
+                                                  choices = self.BeamSettings._moduleNames,
                                                   style=wx.CB_READONLY)
         self.ModuleSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectMediaPlayer)
         vbox.Add(mediaplayer, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
@@ -76,7 +76,7 @@ class BasicSettingsPanel(wx.Panel):
         # REFRESH TIME #
         ################
         refreshtime = wx.StaticText(self, -1, "Mediaplayer Refresh Time")
-        self.RefreshTime = wx.Slider(self, -1, int(self.BeamSettings._updtime), 500, 10000, (0, 0), (233, -1), wx.SL_HORIZONTAL)
+        self.RefreshTime = wx.Slider(self, -1, int(self.BeamSettings.getUpdtime()), 500, 10000, (0, 0), (233, -1), wx.SL_HORIZONTAL)
         self.RefreshTimeLabel = wx.StaticText(self, -1, "")
         self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
         vbox.Add(refreshtime, flag=wx.LEFT, border=20)
@@ -90,7 +90,7 @@ class BasicSettingsPanel(wx.Panel):
         # TANDA LENGTH #
         ################
         tandalength = wx.StaticText(self, -1, "Max. Tanda Length")
-        self.TandaLength = wx.Slider(self, -1, self.BeamSettings._maxTandaLength, 0, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
+        self.TandaLength = wx.Slider(self, -1, self.BeamSettings.getMaxTandaLength(), 0, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
         self.TandaLengthLabel = wx.StaticText(self, -1, "")
         self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
         self.OnTandaLengthScroll()
@@ -124,7 +124,7 @@ class BasicSettingsPanel(wx.Panel):
 
         logleveldescription = wx.StaticText(self, wx.ID_ANY, "Select Log Level")
         self.LogLevelSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
-                                                    value=self.BeamSettings._loglevel,
+                                                    value=self.BeamSettings.getLogLevel(),
                                                     choices=logLevelList,
                                                     style=wx.CB_READONLY)
         self.LogLevelSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectLogLevel)
@@ -148,19 +148,19 @@ class BasicSettingsPanel(wx.Panel):
 ###################################################################
 
     def OnSelectMediaPlayer(self, event):
-        self.BeamSettings._moduleSelected = self.ModuleSelectorDropdown.GetValue()
+        self.BeamSettings.setSelectedModuleName(self.ModuleSelectorDropdown.GetValue())
 
     def OnSelectLogLevel(self, event):
-        self.BeamSettings._loglevel = self.LogLevelSelectorDropdown.GetValue()
-        setLogLevel(self.BeamSettings._loglevel)
+        self.BeamSettings.setLogLevel(self.LogLevelSelectorDropdown.GetValue())
+        setLogLevel(self.BeamSettings.getLogLevel())
 
     ################
     # REFRESH TIME #
     ################
     def OnRefreshTimerScroll(self, event = wx.EVT_SCROLL):
-        self.BeamSettings._updtime = self.RefreshTime.GetValue()
+        self.BeamSettings.setUpdtime(self.RefreshTime.GetValue())
         
-        Timervalue = round(float(self.BeamSettings._updtime) / 1000, 1)
+        Timervalue = round(float(self.BeamSettings.getUpdtime()) / 1000, 1)
         if Timervalue < float(2.0):
             # Fast
             self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Fast)")
@@ -175,9 +175,9 @@ class BasicSettingsPanel(wx.Panel):
     # TANDA LENGTH #
     ################
     def OnTandaLengthScroll(self, event = wx.EVT_SCROLL):
-        self.BeamSettings._maxTandaLength = self.TandaLength.GetValue()
-        if self.BeamSettings._maxTandaLength > 0:
-            self.TandaLengthLabel.SetLabel(str(self.BeamSettings._maxTandaLength) + " songs")
+        self.BeamSettings.setMaxTandaLength( self.TandaLength.GetValue())
+        if self.BeamSettings.getMaxTandaLength() > 0:
+            self.TandaLengthLabel.SetLabel(str(self.BeamSettings.getMaxTandaLength()) + " songs")
         else:
             self.TandaLengthLabel.SetLabel("No preview")
 
@@ -186,9 +186,9 @@ class BasicSettingsPanel(wx.Panel):
     ################
     def OnLoggingBox(self, event):
         if self.LogCheckBox.GetValue():
-            self.BeamSettings._logging = 'True'
+            self.BeamSettings.setLogging('True')
         else:
-            self.BeamSettings._logging = 'False'
+            self.BeamSettings.setLogging('False')
 
 
 ###################################################################

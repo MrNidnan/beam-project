@@ -33,43 +33,31 @@ import wx, os, platform
 class TagsPreviewPanel(wx.Panel):
     def __init__(self, parent, BeamSettings, nowPlayingDataModel):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
 
-        #############
-        # VARIABLES #
-        #############
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         Tags = []
         self.nowPlayingDataModel = nowPlayingDataModel
 
-        ###############
-        # DESCRIPTION #
-        ###############
+        # Caption
         tagpreview = wx.StaticText(self, -1, "Tags preview")
         tagpreview.SetFont(font)
         description = wx.StaticText(self, -1, "Here are all available tags and their values displayed.")
         description.Wrap(380)
 
-        ##################
-        # REFRESH BUTTON #
-        ##################
+        # REFRESH BUTTON
         self.refreshButton = wx.Button(self, label="Refresh")
-        self.refreshButton.Bind(wx.EVT_BUTTON, self.OnTagDropdown)
+        self.refreshButton.Bind(wx.EVT_BUTTON, self.DoRefresh)
 
-        #################
-        # TAGS SELECTOR #
-        #################
+        # Tag type selector
         self.TagDropdown = wx.ComboBox(self,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda", "Misc"], style=wx.CB_READONLY)
-        self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.OnTagDropdown)
+        self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.DoRefresh)
 
-        #############
-        # TAGS LIST #
-        #############
+        # List of tags
         self.TagsList = wx.ListBox(self, -1, size=wx.DefaultSize, choices=Tags, style= wx.LB_NEEDED_SB)
-        self.OnTagDropdown()
+        self.DoRefresh(None)
 
-        ##############
-        # SET SIZERS #
-        ##############
+        # Sizers
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         vbox.Add(tagpreview, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
@@ -81,21 +69,16 @@ class TagsPreviewPanel(wx.Panel):
 
         self.SetSizer(vbox)
 
-
-###################################################################
-#                           EVENTS                                #
-###################################################################
-
-        #################
-        # TAGS DROPDOWN #
-        #################
-    def OnTagDropdown(self, event = wx.EVT_COMBOBOX):
+    def OnPaint(self, event):
         TagsSelected = self.TagDropdown.GetValue()
         self.BuildTagsList(TagsSelected)
 
-        ###################
-        # BUILD TAGS LIST #
-        ###################
+
+    def DoRefresh(self, event):
+        TagsSelected = self.TagDropdown.GetValue()
+        self.BuildTagsList(TagsSelected)
+
+
     def BuildTagsList(self, TagsSelected):
         attributes = ['Artist', 'Album', 'AlbumArtist','Title','Genre','Comment','Composer','Year', 'Singer'
                       ,'Performer','IsCortina']

@@ -35,6 +35,8 @@ from mutagen import File
 from mutagen.apev2 import APEv2
 from mutagen.flac import FLAC
 from mutagen.id3 import ID3
+from mutagen.mp4 import MP4
+from mutagen.mp4 import MP4Cover
 
 
 ###############################################################
@@ -54,62 +56,90 @@ def readSongObject(filePath):
         songObject.ModuleMessage = "Error reading file", filePath
         raise NameError("Error reading file", filePath)
 
-    # if platform.system() == 'Windows':
-    #     Formating = 'latin-1'
-    # else:
-    #     Formating = 'utf-8'
+    # for key in audio:
+    #    attr = audio[key][0]
+    #    logging.debug(key)
+    #    logging.debug(attr)
 
-    try:
+    if "artist" in audio:
+        # MP3/ID3v2, MP4, FLAC
         songObject.Artist = audio["artist"][0]
-    except:
-        songObject.Artist = ""
+    else:
+        # AIF
+        if "TPE1" in audio:
+            songObject.Artist = audio["TPE1"][0]
+        else: # WMA/ASF
+            if "Author" in audio:
+                # WMA/ASF
+                songObject.Artist = audio["Author"][0].value
 
-    try:
+    if "album" in audio:
         songObject.Album = audio["album"][0]
-    except:
-        songObject.Album = ""
+    else:
+        if "TALB" in audio:
+            songObject.Album = audio["TALB"][0]
+        else:
+            if "WM/AlbumTitle" in audio:
+                songObject.Album = audio["WM/AlbumTitle"][0].value
 
-    try:
+    if "title" in audio:
         songObject.Title = audio["title"][0]
-    except:
-        songObject.Title = ""
+    else:
+        if "TIT2" in audio:
+            songObject.Title = audio["TIT2"][0]
+        else:
+            if "Title" in audio:
+                songObject.Title = audio["Title"][0].value
 
-    try:
+    if "genre" in audio:
         songObject.Genre = audio["genre"][0]
-    except:
-        songObject.Genre = ""
+    else:
+        if "TCON" in audio:
+            songObject.Genre = audio["TCON"][0]
+        else:
+            if "WM/Genre" in audio:
+                songObject.Genre = audio["WM/Genre"][0].value
 
-    try:
+    if "comment" in audio:
         songObject.Comment = audio["comment"][0]
-    except:
-        try:
-            songObject.Comment = audioRaw['COMM::eng'][0]
-        except:
-            songObject.Comment = ""
+    else:
+        if "COMM::eng" in audioRaw:
+            songObject.Comment = audioRaw["COMM::eng"][0]
+        else:
+            if 'Description' in audioRaw:
+                songObject.Comment = audioRaw["Description"][0].value
 
-    try:
+    if "composer" in audio:
         songObject.Composer = audio["composer"][0]
-    except:
-        songObject.Composer = ""
+    else:
+        if "TCOM" in audio:
+            songObject.Composer = audio["TCOM"][0]
+        else:
+            if "WM/Composer" in audio:
+                songObject.Composer = audio["WM/Composer"][0].value
 
-    try:
+    # ??? year
+    if "date" in audio:
         songObject.Year = audio["date"][0]
-    except:
-        songObject.Year = ""
+    else:
+        if "TDRC" in audio:
+            songObject.Year = audio["TDRC"][0]
+        else:
+            if "WM/Year" in audio:
+                songObject.Year = audio["WM/Year"][0].value
 
-    songObject.Singer = ""
-
-    try:
+    if "albumartist" in audio:
         songObject.AlbumArtist = audio["albumartist"][0]
-    except:
-        songObject.AlbumArtist = ""
+    else:
+        if "TPE2" in audio:
+            songObject.AlbumArtist = audio["TPE2"][0]
+        else:
+            if "WM/AlbumArtist" in audio:
+                songObject.AlbumArtist = audio["WM/AlbumArtist"][0].value
 
-    try:
+    if "performer" in audio:
         songObject.Performer = audio["performer"][0]
-    except:
-        songObject.Performer = ""
 
-    songObject.IsCortina = "no"
     songObject.FilePath = filePath
 
     return songObject
@@ -121,6 +151,11 @@ def readSongObject(filePath):
 def readCoverArtImage(filePath):
     logging.debug("readCoverArtImage(" + filePath + ")")
     coverArtImage = None
+    bitmapType = None
+
+    iswxlog = wx.Log.IsEnabled
+    if iswxlog:
+        wx.Log.EnableLogging(enable=False)
 
     if not coverArtImage:
         try:
@@ -140,7 +175,25 @@ def readCoverArtImage(filePath):
                     logging.warning("Unkown mime type: " + apicTag.mime.lower())
                     bitmapType = wx.BITMAP_TYPE_ANY
                 coverArtImage = wx.Image(BytesIO(data), bitmapType)
-        except:
+        except Exception as e:
+            pass
+
+    if not coverArtImage:
+        try:
+            mp4Frame = MP4(filePath);
+            tags = mp4Frame.tags;
+            covr = tags['covr'][0];
+
+            if covr.imageformat == MP4Cover.FORMAT_JPEG:
+                bitmapType = wx.BITMAP_TYPE_JPEG
+            if covr.imageformat == MP4Cover.FORMAT_PNG:
+                bitmapType = wx.BITMAP_TYPE_PNG
+            if not bitmapType:
+                logging.warning("Unkown MP4Cover.FORMAT: " + covr.imageformat)
+                bitmapType = wx.BITMAP_TYPE_ANY
+
+            coverArtImage = wx.Image(BytesIO(covr), bitmapType);
+        except Exception as e:
             pass
 
     if not coverArtImage:
@@ -159,6 +212,8 @@ def readCoverArtImage(filePath):
                 if not bitmapType:
                     logging.warning("Unkown mime type: " + pict.mime.lower())
                     bitmapType = wx.BITMAP_TYPE_ANY
+                # Suppress warning diaglog(!) "iCCP: known incorrect sRGB profile"
+                # from libpng on Tango Tunes cover art in debugger
                 coverArtImage = wx.Image(BytesIO(pict.data), bitmapType)
         except Exception as e:
             pass
@@ -230,17 +285,21 @@ def readCoverArtImage(filePath):
             except:
                 pass
 
+        # read fist file that is jpg
         if not coverArtImage:
             try:
                 fileDir, fileName = os.path.split(filePath)
                 for fileName in os.listdir(fileDir):
                     if fileName.endswith(".jpg"):
                         imagePath = os.path.join(fileDir, fileName)
-                        coverArtImage = wx.Image(imagePath, wx.BITMAP_TYPE_JPEG)
-                        if coverArtImage:
+                        if os.path.isfile(imagePath):
+                            coverArtImage = wx.Image(imagePath, wx.BITMAP_TYPE_JPEG)
                             break
             except:
                 pass
+
+        if iswxlog:
+            wx.Log.EnableLogging(enable=True)
 
     return coverArtImage
 

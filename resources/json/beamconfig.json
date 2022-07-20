@@ -33,7 +33,8 @@
         "Spotify",
         "Winamp",
         "Mixxx",
-        "Icecast"
+        "Icecast",
+        "JRiver"
       ],
       "System": "Windows"
     },
@@ -115,6 +116,7 @@
       "Type": "Default",
       "RotateBackground": "no",
       "RotateTimer": 1200,
+      "DisplayTimer": 0,
       "Display": [
         {
           "Field": "\u266a Previous song: %PreviousTitle",
@@ -241,6 +243,7 @@
       "Type": "Mood",
       "RotateBackground": "no",
       "RotateTimer": 30,
+      "DisplayTimer": 0,
       "Display": [
         {
           "Style": "Italic",
@@ -302,6 +305,7 @@
       "Active": "no",
       "RotateBackground": "no",
       "RotateTimer": 30,
+      "DisplayTimer": 0,
       "Type": "Mood",
       "Display": [
         {
@@ -428,6 +432,7 @@
       "Active": "no",
       "RotateBackground": "no",
       "RotateTimer": 30,
+      "DisplayTimer": 0,
       "Type": "Mood",
       "Display": [
         {
@@ -554,6 +559,7 @@
       "Active": "no",
       "RotateBackground": "linear",
       "RotateTimer": 30,
+      "DisplayTimer": 0,
       "Type": "Mood",
       "Display": [
         {

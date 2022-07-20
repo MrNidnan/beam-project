@@ -26,13 +26,14 @@
 # This Python file uses the following encoding: utf-8
 import wx.html
 import wx.lib.delayedresult
+import time
 from bin.beamsettings import *
 
 
-##################################################
-# MAIN WINDOW - FRAME
-##################################################
-
+#
+# Panel that gets displayt as preview in mainFrame
+# and to disply on beamer in displayFrame
+#
 class DisplayPanel(wx.Panel):
 
     # Called by beam.py
@@ -63,18 +64,10 @@ class DisplayPanel(wx.Panel):
         ########################## END FRAME INITIALIZATION #########################
 
 
-
 ########################################################
-#                                                      #
-#                                                      #
-#                 WINDOW DRAWING                       #
-#                                                      #
-#                                                      #
+# Events
 ########################################################
 
-########################################################
-# Painter
-########################################################
     def OnSize(self, size):
         # self.SetSize(self.GetParent().GetCientSize() );
         self.displayData.triggerResizeBackground = True
@@ -90,6 +83,7 @@ class DisplayPanel(wx.Panel):
         except:
             dc = pdc
         self.Draw(dc)
+
 
 ########################################################
 # Draw background
@@ -158,7 +152,6 @@ class DisplayPanel(wx.Panel):
             horizontalPosition = (cliWidth - size) / 2
         else:
             raise Exception("Unknown alignment" + Settings['Alignment'])
-
 
 
         if self.displayData.currentCoverArtImage:
@@ -319,6 +312,8 @@ class DisplayPanel(wx.Panel):
             return
         dc.Clear()
         self.drawBackgroundBitmap(dc)
-        self.drawItems(dc)
+
+        if not self.nowPlayingData.isDisplayTimeExpired():
+            self.drawItems(dc)
 
 

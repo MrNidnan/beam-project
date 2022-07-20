@@ -36,26 +36,28 @@ from bin.beamsettings import *
 #
 #
 class EditRuleDialog(wx.Dialog):
-    def __init__(self, parent, RowSelected, mode):
-        self.parent             = parent
-        x,y                     = self.parent.GetScreenPosition()
-        self.EditRuleDialog     = wx.Dialog.__init__(self, parent, title=mode, pos = (x+50, y+50))
+    def __init__(self, rulesPanel, RowSelected, mode):
+        xpos,ypos  = rulesPanel.GetScreenPosition()
+        # self.EditRuleDialog     = wx.Dialog.__init__(self, parent, title=mode, pos = (xpos+50, ypos+50))
+        wx.Dialog.__init__(self, rulesPanel, title=mode, pos=(xpos + 50, ypos + 50))
+
+        self.rulesPanel = rulesPanel
         self.EditRulePanel  = wx.Panel(self)
         self.RowSelected    = RowSelected
         self.mode           = mode
 
-        self.ButtonSaveRule     = wx.Button(self.EditRulePanel, label="Save")
-        self.ButtonCancelRule   = wx.Button(self.EditRulePanel, label="Cancel")
-        self.ButtonSaveRule.Bind(wx.EVT_BUTTON, self.OnSaveRuleItem)
-        self.ButtonCancelRule.Bind(wx.EVT_BUTTON, self.OnCancelRuleItem)
+        self.ButtonOK     = wx.Button(self.EditRulePanel, label="OK")
+        # self.ButtonCancelRule   = wx.Button(self.EditRulePanel, label="Cancel")
+        self.ButtonOK.Bind(wx.EVT_BUTTON, self.OnButtonOK)
+        # self.ButtonCancelRule.Bind(wx.EVT_BUTTON, self.OnCancelRuleItem)
         self.InputFields    = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer"]
         self.OutputFields   = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer", "%Singer"]
 
 
     # Check if it is a new line
-        if self.RowSelected<len(beamSettings._rules):
+        if self.RowSelected<len(beamSettings.getRules()):
             # Get the properties of the selected item
-            self.Settings   = beamSettings._rules[self.RowSelected]
+            self.Settings   = beamSettings.getRules()[self.RowSelected]
         else:
             # Create a new default setting
             self.Settings   = ({"Type": "Copy", "Field1": "%Comment","Field2": "%Singer", "Active": "yes"})
@@ -100,9 +102,9 @@ class EditRuleDialog(wx.Dialog):
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         # self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
-        self.hbox.Add(self.ButtonSaveRule, 0, flag=wx.ALL, border=10)
+        self.hbox.Add(self.ButtonOK, 0, flag=wx.ALL, border=10)
         # self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL | wx.ALIGN_RIGHT, border=10)
-        self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL, border=10)
+        # self.hbox.Add(self.ButtonCancelRule, 0, flag=wx.ALL, border=10)
 
         self.vbox.Add(InfoGrid, flag=wx.ALL, border=10)
         self.vbox.Add(self.hbox, flag=wx.ALL | wx.ALIGN_RIGHT)
@@ -248,7 +250,7 @@ class EditRuleDialog(wx.Dialog):
 #
 # SAVE
 #
-    def OnSaveRuleItem(self, event):
+    def OnButtonOK(self, event):
         RuleOrderBox = int(self.RuleOrder.GetValue())-1
         RuleSelected = self.RuleSelectDropdown.GetValue()
 
@@ -275,20 +277,22 @@ class EditRuleDialog(wx.Dialog):
         # Decide where NewRule goes into the vector self.Settings
         if self.mode == "Add rule":
             if RuleOrderBox < self.RowSelected:
-                beamSettings._rules.insert(RuleOrderBox, NewRule) #Insert in at position
+                beamSettings.getRules().insert(RuleOrderBox, NewRule) #Insert in at position
             else:
-                beamSettings._rules.append(NewRule) # Append in the end
+                beamSettings.getRules().append(NewRule) # Append in the end
         else: #Edit rule
             if RuleOrderBox == self.RowSelected:
-                beamSettings._rules[RuleOrderBox] = NewRule # Overwrite
+                beamSettings.getRules()[RuleOrderBox] = NewRule # Overwrite
             else:
-                beamSettings._rules.pop(self.RowSelected) #Move up and down in list
-                beamSettings._rules.insert(RuleOrderBox, NewRule)
+                beamSettings.getRules().pop(self.RowSelected) #Move up and down in list
+                beamSettings.getRules().insert(RuleOrderBox, NewRule)
+
+        self.rulesPanel.BuildRuleList()
+        self.rulesPanel.updateSettings()
         self.Destroy()
-        self.parent.BuildRuleList()
-#
-# CANCEL
-#
-    def OnCancelRuleItem(self, event):
-        self.Destroy()
+    #
+    # CANCEL
+    #
+    # def OnCancelRuleItem(self, event):
+    #    self.Destroy()
 
