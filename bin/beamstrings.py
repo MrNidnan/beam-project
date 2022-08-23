@@ -27,6 +27,7 @@
 
 import json
 
+
 #
 # On start created as global object beamsettings.beamSettings
 # stringResources[] must be initialized before

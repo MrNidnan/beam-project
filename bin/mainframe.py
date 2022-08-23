@@ -120,7 +120,7 @@ class MainFrame(wx.Frame):
         # LISTBOOK MENU #
         #################
         listBookMenu = ListBookMenu(panel, self, beamSettings)
-        self.previewPanel = listBookMenu.pages[0][0];
+        self.previewPanel = listBookMenu.pages[0][0]
 
         
         ###########

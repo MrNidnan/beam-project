@@ -53,7 +53,7 @@ class RulesPanel(wx.Panel):
         # RULE LIST #
         #############
         self.RuleList = wx.CheckListBox(self,-1, size=wx.DefaultSize, choices=self.RuleRows, style= wx.LB_NEEDED_SB)
-        self.RuleList.SetBackgroundColour(wx.Colour(255, 255, 255))
+        self.RuleList.SetBackgroundColour(wx.Colour(128, 128, 128))
         self.RuleList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditRule)
         self.RuleList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckRule)
         self.BuildRuleList()

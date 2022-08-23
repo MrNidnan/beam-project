@@ -102,10 +102,12 @@ class DisplayPanel(wx.Panel):
             aspectRatioBackground = float(self.displayData.BackgroundImageHeight) / float(self.displayData.BackgroundImageWidth)
             if aspectRatioWindow >= aspectRatioBackground:
                 # Window is too tall, scale to height
-                Image = Image.Scale(cliHeight*self.displayData.BackgroundImageWidth / self.displayData.BackgroundImageHeight, cliHeight, wx.IMAGE_QUALITY_NORMAL)
+                # PRS integered argument
+                Image = Image.Scale(int(cliHeight*self.displayData.BackgroundImageWidth / self.displayData.BackgroundImageHeight), cliHeight, wx.IMAGE_QUALITY_NORMAL)
             else:
                 # Window is too wide, scale to width
-                Image = Image.Scale(cliWidth, cliWidth*self.displayData.BackgroundImageHeight / self.displayData.BackgroundImageWidth, wx.IMAGE_QUALITY_NORMAL)
+                # PRS integered argument
+                Image = Image.Scale(cliWidth, int(cliWidth*self.displayData.BackgroundImageHeight / self.displayData.BackgroundImageWidth), wx.IMAGE_QUALITY_NORMAL)
             # Fader
             if self.displayData.alpha <1 or self.displayData.red <1 or self.displayData.blue <1 or self.displayData.green <1:
                 Image = Image.AdjustChannels(self.displayData.red, self.displayData.green, self.displayData.blue, self.displayData.alpha)
@@ -120,9 +122,10 @@ class DisplayPanel(wx.Panel):
 
             
         # Position the image and draw it
+        # PRS integered argument
         resizedWidth, resizedHeight = self.modifiedBitmap.GetSize()
-        self.xPosResized = (cliWidth - resizedWidth)/2
-        self.yPosResized = (cliHeight - resizedHeight)/2
+        self.xPosResized = int((cliWidth - resizedWidth)/2)
+        self.yPosResized = int((cliHeight - resizedHeight)/2)
         dc.DrawBitmap(self.modifiedBitmap, self.xPosResized, self.yPosResized, True)
 
 ########################################################
@@ -181,8 +184,9 @@ class DisplayPanel(wx.Panel):
         text = self.displayData.currentDisplayRows[j]
         Settings = self.displayData.currentDisplaySettings[j]
 
-        # Get text size and position
-        Size = Settings['Size'] * cliHeight / 100
+        # Get text size and position 
+        # PRS integered size
+        Size = int(Settings['Size'] * cliHeight / 100)
         HeightPosition = int(Settings['Position'][0] * cliHeight / 100)
 
         # Set font from settings
@@ -277,7 +281,8 @@ class DisplayPanel(wx.Panel):
             raise Exception("Unknown alignment" + Settings['Alignment'])
 
         # Draw the text
-        dc.DrawText(text, WidthPosition, HeightPosition)
+        # PRS integered argument
+        dc.DrawText(text, int(WidthPosition), int(HeightPosition))
 
 
     def drawItems(self, dc):
