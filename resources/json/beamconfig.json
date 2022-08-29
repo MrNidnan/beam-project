@@ -3,6 +3,8 @@
   "Comment": "This is a configuration file for Beam",
   "Author": "Mikael Holber & Horia Uifaleanu - 2015",
   "Module": "",
+  "DMXdevice": "",
+  "DMXuniverse": 1,
   "MaxTandaLength": 4,
   "Updtime": 4000,
   "MoodTransition": "Fade to black",
@@ -117,6 +119,7 @@
       "RotateBackground": "no",
       "RotateTimer": 1200,
       "DisplayTimer": 0,
+      "DMXcolour": "red",
       "Display": [
         {
           "Field": "\u266a Previous song: %PreviousTitle",
@@ -597,6 +600,28 @@
           "TextFlow": "Cut"
         }
       ]
+    }
+  ],
+   "DMX": [
+    {
+      "Devices": [
+        "None",
+       "ADJ: UB 6H"
+      ],
+      "System": "Linux"
+    },
+    {
+      "Devices": [
+        "None"
+      ],
+      "System": "Windows"
+    },
+    {
+      "Devices": [
+        "None",
+        "ADJ: UB 6H"
+      ],
+      "System": "Mac"
     }
   ]
 }

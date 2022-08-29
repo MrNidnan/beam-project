@@ -55,7 +55,7 @@ class MoodsPanel(wx.Panel):
         ###################
         # MOOD TRANSITION #
         ###################
-        moodtransition = wx.StaticText(self, -1, "Mood transition")
+        moodtransition = wx.StaticText(self, -1, "Mood_transition                     ")
         moodtransition.SetFont(font)
         self.TransitionDropdown = wx.ComboBox(self,value=self.BeamSettings.getMoodTransition(), choices=['No transition', 'Fade directly','Fade to black'], style=wx.CB_READONLY)
         self.TransitionSpeed = wx.Slider(self, -1, int(self.BeamSettings.getMoodTransitionSpeed()), 500, 5000,(0,0), (233,-1), wx.SL_HORIZONTAL)

@@ -304,6 +304,7 @@ class NowPlayingData:
         self.BackgroundPath = os.path.join(appPath, self.currentMood['Background'])
         self.RotateBackground = self.currentMood['RotateBackground']
         self.rotatebackgroundseconds = self.currentMood['RotateTimer']
+        self.currentDMXcolour = self.currentMood['DMXcolour']
 
         ###############################################################
         #
@@ -356,6 +357,22 @@ class NowPlayingData:
 
         logging.debug("...data got filtered: ")
     
+        #######################################
+        # Run DMX command
+        #######################################
+        currentDMXcolour = self.currentDMXcolour
+        if platform.system() == 'Linux':
+            from bin.DMX.lin import adj_ub_6h
+            if currentSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+                logging.debug("... DMX colour: " + currentDMXcolour)
+                adj_ub_6h.setColour(currentDMXcolour)
+
+        if platform.system() == 'Windows':
+            from bin.DMX.win import placebo
+        if platform.system() == 'Darwin':
+            from bin.DMX.mac import adj_ub_6h
+            if currentSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+                adj_ub_6h.setColour(currentDMXcolour)
 
 ########################################################
 # Conversion dictionary

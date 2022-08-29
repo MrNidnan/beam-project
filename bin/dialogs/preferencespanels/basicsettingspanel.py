@@ -28,6 +28,7 @@
 import wx
 from bin.beamutils import *
 
+
 ###################################################################
 #                      BasicSettingsTab                           #
 ###################################################################
@@ -132,6 +133,22 @@ class BasicSettingsPanel(wx.Panel):
         vbox.Add(logleveldescription, flag=wx.LEFT, border=20)
         vbox.Add(self.LogLevelSelectorDropdown, flag=wx.LEFT, border=20)
 
+        #########################
+        # DMX Device SELECTOR #
+        #########################
+        dmxdevice = wx.StaticText(self, wx.ID_ANY, "DMX        ")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        dmxdevice.SetFont(font)
+
+        dmxdescription = wx.StaticText(self, wx.ID_ANY, "Select the DMX enabled device")
+        self.DMXdeviceSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
+                                                   value=self.BeamSettings.getSelectedDMXdeviceName(),
+                                                   choices=self.BeamSettings._DMXdeviceNames,
+                                                   style=wx.CB_READONLY)
+        self.DMXdeviceSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectDMXdevice)
+        vbox.Add(dmxdevice, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        vbox.Add(dmxdescription, flag=wx.LEFT, border=20)
+        vbox.Add(self.DMXdeviceSelectorDropdown, flag=wx.LEFT, border=20)
 
         ##############
         # SET SIZERS #
@@ -149,6 +166,8 @@ class BasicSettingsPanel(wx.Panel):
 
     def OnSelectMediaPlayer(self, event):
         self.BeamSettings.setSelectedModuleName(self.ModuleSelectorDropdown.GetValue())
+    def OnSelectDMXdevice(self, event):
+        self.BeamSettings.setSelectedDMXdeviceName(self.DMXdeviceSelectorDropdown.GetValue())
 
     def OnSelectLogLevel(self, event):
         self.BeamSettings.setLogLevel(self.LogLevelSelectorDropdown.GetValue())
