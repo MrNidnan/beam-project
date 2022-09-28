@@ -120,6 +120,7 @@ class MainFrame(wx.Frame):
         # LISTBOOK MENU #
         #################
         listBookMenu = ListBookMenu(panel, self, beamSettings)
+        #listBookMenu.SetBackgroundColour(wx.Colour(136,136,136))
         self.previewPanel = listBookMenu.pages[0][0]
 
         
@@ -291,6 +292,7 @@ class ListBookMenu(wx.Listbook):
         # IMAGES #
         ##########
         imagelist = wx.ImageList(32,32)
+
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         urllist = ["2-DefaultDisplay32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]

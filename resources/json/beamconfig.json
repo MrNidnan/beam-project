@@ -104,8 +104,15 @@
       "Field1": "%Title",
       "Type": "Ignore",
       "Field3": "silent"
+    },
+    {
+      "Type": "Replace",
+      "Field1": "%Artist",
+      "Active": "yes",
+      "Field2": "Se\u00f1or del Tango",
+      "Field3": "Sarli"
     }
-  ],
+ ],
   "Moods": [
     {
       "PlayState": "-",

@@ -64,7 +64,7 @@ class EditRuleDialog(wx.Dialog):
 
         # Build the static elements
         self.InputID3Field      = wx.ComboBox(self.EditRulePanel, size=(150,-1), value=self.Settings['Field1'], choices=self.InputFields, style=wx.CB_READONLY)
-        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(100,-1), value=self.Settings['Type'], choices=['Copy','Cortina','Parse', 'Ignore'], style=wx.CB_READONLY)
+        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(100,-1), value=self.Settings['Type'], choices=['Copy','Cortina','Parse', 'Ignore','Replace'], style=wx.CB_READONLY)
         self.RuleSelectDropdown.Bind(wx.EVT_COMBOBOX, self.ChangeRuleType)
         self.RuleOrder          = wx.SpinCtrl(self.EditRulePanel, value=str(self.RowSelected+1), min=1, max=99)
 
@@ -167,7 +167,37 @@ class EditRuleDialog(wx.Dialog):
             self.DynamicFieldLabel3.Show()
             self.OutputField3.Show()
 
-##############################################
+        ########################################
+        if RuleSelected == 'Replace':
+            self.DynamicFieldLabel1.SetLabel('Output field')
+            self.DynamicFieldLabel2.SetLabel('Replace with')
+            self.DynamicFieldLabel3.SetLabel('Search for')
+            self.DynamicFieldLabel4.SetLabel('')
+            # Remove fields that are not to be shown
+            self.RemoveDynamicElements()
+
+            # Add correct fields
+            self.OutputField1 = wx.ComboBox(self.EditRulePanel, value="%Artist", size=(150, -1),
+                                                choices=self.OutputFields, style=wx.CB_READONLY)
+            self.sizer1.Add(self.OutputField1)
+            self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="Señor del Tango", size=(150, -1))
+            self.sizer2.Add(self.OutputField2)
+            self.OutputField3 = wx.TextCtrl(self.EditRulePanel, value="Sarli", size=(150, -1))
+            self.sizer3.Add(self.OutputField3)
+
+            if self.Settings['Type'] == 'Replace':
+                self.OutputField1.SetStringSelection(self.Settings['Field1'])
+                self.OutputField2.SetValue(self.Settings['Field2'])
+                self.OutputField3.SetValue(self.Settings['Field3'])
+            else:
+                self.OutputField1.SetStringSelection("%Artist")
+                self.OutputField2.SetValue("Señor del Tango")
+                self.OutputField3.SetValue("Sarli")
+            # Show Fields
+            self.DynamicFieldLabel3.Show()
+            self.OutputField3.Show()
+
+        ##############################################
         if RuleSelected == 'Cortina':
             self.DynamicFieldLabel1.SetLabel('')
             self.DynamicFieldLabel2.SetLabel('Value(s)')
@@ -239,7 +269,11 @@ class EditRuleDialog(wx.Dialog):
             self.IsIsNot.Hide()
         except: pass
         try:
-            self.sizer2.Remove(self.OutputField3)
+            self.sizer2.Remove(self.OutputField2)
+            self.OutputField2.Hide()
+        except: pass
+        try:
+            self.sizer3.Remove(self.OutputField3)
             self.OutputField3.Hide()
         except: pass
         try:
@@ -266,6 +300,10 @@ class EditRuleDialog(wx.Dialog):
             NewRule['Field2']      = self.OutputField3.GetValue()
             NewRule['Field3']      = self.OutputField1.GetValue()
             NewRule['Field4']      = self.OutputField2.GetValue()
+        if RuleSelected == 'Replace':
+            NewRule['Field1']      = self.OutputField1.GetValue()
+            NewRule['Field2']      = self.OutputField2.GetValue()
+            NewRule['Field3']      = self.OutputField3.GetValue()
         if RuleSelected == 'Cortina':
             NewRule['Field2']      = self.IsIsNot.GetValue()
             NewRule['Field3']      = self.OutputField2.GetValue()

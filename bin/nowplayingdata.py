@@ -254,6 +254,7 @@ class NowPlayingData:
             # Check if song is cortina
             if self.currentPlaylist[i].IsCortina == "yes" and not self.currentPlaylist[i+1].IsCortina == "yes":
                 self.nextTandaSong = deepcopy(self.currentPlaylist[i+1])
+                self.nextTandaSong.applySongRules(currentSettings.getRules())
                 break
             else:
                 self.TillNextCortinaCount = self.TillNextCortinaCount + 1
