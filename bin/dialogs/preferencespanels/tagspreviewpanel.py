@@ -26,6 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 import wx, os, platform
+import logging
 
 ########################################################
 #                   TagsPreview                        #
@@ -100,6 +101,7 @@ class TagsPreviewPanel(wx.Panel):
         if not TagsSelected == 'Misc':
             try:
                 for i in range(0,len(attributes)):
+                    logging.debug("Iterating on " + str(i) + " "+ preTag+attributes[i] + " " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
                     if platform.system() == 'Darwin':
                         displayList.append((preTag+attributes[i]+": ").decode('utf-8') + self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
                     else:
