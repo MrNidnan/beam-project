@@ -1,4 +1,4 @@
-!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #    Copyright (C) 2022 Piotr R. Sidorowicz http://http://www.beam-project.com
 #
@@ -27,9 +27,9 @@
 
 import logging
 
-def startDMXserver ()
+def startDMXserver ():
         logging.info("Does nothing", exc_info=True)
 
-def stopDMXserver()
+def stopDMXserver():
         logging.info("Does nothing", exc_info=True)
 
