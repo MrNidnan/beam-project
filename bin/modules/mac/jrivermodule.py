@@ -72,7 +72,7 @@ def run(MaxTandaLength):
             response.close()
 
         # header:  < MPL Version = "2.0" Title = "MCWS - Files - 123145321799680" PathSeparator = "/" >
-        # value can change with every readout "123145321799680" --> drop this for the hash
+        # value "123145321799680" (example) can change with every readout
 
         xml = ET.fromstring(resp)
 
