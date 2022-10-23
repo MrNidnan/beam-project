@@ -188,6 +188,8 @@ class NowPlayingData:
                     self.currentPlaylist, self.PlaybackStatus  = embracemodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
             if currentSettings.getSelectedModuleName() == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
+            if currentSettings.getSelectedModuleName() == 'JRiver':
+                self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings.getMaxTandaLength())
 
         # for all platforms
         if currentSettings.getSelectedModuleName() == 'Icecast':
