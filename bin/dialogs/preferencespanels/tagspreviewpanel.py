@@ -103,7 +103,9 @@ class TagsPreviewPanel(wx.Panel):
                 for i in range(0,len(attributes)):
                     logging.debug("Iterating on " + str(i) + " "+ preTag+attributes[i] + " " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
                     if platform.system() == 'Darwin':
-                        displayList.append((preTag+attributes[i]+": ").decode('utf-8') + self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
+                        # displayList.append((preTag+attributes[i]+": ").decode('utf-8') + self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
+                        # Jriver and iTunes need this, not tested with other apps !!!! HE 2022-Oct-23
+                        displayList.append(preTag + attributes[i] + ": " + str(self.nowPlayingDataModel.convDict[preTag + attributes[i]]))
                     else:
                         displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
             except:
