@@ -27,8 +27,8 @@
 
 import wx
 
+from bin.DMX import olamodule, dmxmodule
 from bin.beamutils import *
-from bin.DMX import *
 
 ###################################################################
 #                      DMXcontrolsTab                           #
@@ -41,13 +41,15 @@ class DMXcontrolsPanel(wx.Panel):
         # VARIABLES #
         #############
         self.BeamSettings = BeamSettings
-        self.CurrentColour = 'None'
+        self.U1CurrentColour = 'None'
+        self.U2CurrentColour = 'None'
 
         ##########
         # SIZERS #
         ##########
         vbox = wx.BoxSizer(wx.VERTICAL)
-        hbox = wx.BoxSizer(wx.HORIZONTAL)  # For buttons
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)  # For buttons
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)  # For buttons
 
         #########################
         # DMX CONTROL SELECTOR  #
@@ -57,26 +59,45 @@ class DMXcontrolsPanel(wx.Panel):
         dmxplayer.SetFont(font)
         
         dmxdescription = wx.StaticText(self, wx.ID_ANY, "Select desired light pattern")
-        dmxDevice = adj_ub_6h.DMXdevice()
-        self.DMXpatternSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
-                                                      value=self.CurrentColour,
-                                                    choices=dmxDevice.GetPaletteList(),
+        U1description = wx.StaticText(self, wx.ID_ANY, "Universe 1")
+        U2description = wx.StaticText(self, wx.ID_ANY, "Universe 2")
+        dmxU1Device = dmxmodule.DMXdevice(self.BeamSettings.getSelectedU1DMXdeviceName())
+        self.U1DMXpatternSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
+                                                      value=self.U1CurrentColour,
+                                                    choices=dmxU1Device.GetPaletteList(),
                                                     style=wx.CB_READONLY)
-        self.DMXpatternSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectDMXpattern)
+        if self.BeamSettings.getSelectedU1DMXdeviceName() == 'None': device = self.U1DMXpatternSelectorDropdown.Disable()
+        self.U1DMXpatternSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectU1DMXpattern)
+        dmxU2Device = dmxmodule.DMXdevice(self.BeamSettings.getSelectedU2DMXdeviceName())
+        self.U2DMXpatternSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
+                                                      value=self.U2CurrentColour,
+                                                    choices=dmxU2Device.GetPaletteList(),
+                                                    style=wx.CB_READONLY)
+        if self.BeamSettings.getSelectedU2DMXdeviceName() == 'None': device = self.U2DMXpatternSelectorDropdown.Disable()
+        self.U2DMXpatternSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectU2DMXpattern)
         vbox.Add(dmxplayer, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         vbox.Add(dmxdescription, flag=wx.LEFT, border=20)
-        hbox.Add(self.DMXpatternSelectorDropdown, flag=wx.LEFT | wx.TOP, border=20)
+        hbox1.Add(U1description, flag=wx.LEFT | wx.TOP, border=20)
+        hbox1.Add(self.U1DMXpatternSelectorDropdown, flag=wx.LEFT | wx.TOP, border=20)
+        hbox2.Add(U2description, flag=wx.LEFT | wx.TOP, border=20)
+        hbox2.Add(self.U2DMXpatternSelectorDropdown, flag=wx.LEFT | wx.TOP, border=20)
 
         ###########
         # BUTTONS #
         ###########
-        self.runBtn = wx.Button(self, label="Run Pattern")
-        self.runBtn.Bind(wx.EVT_BUTTON, self.onRun)
-        hbox.Add(self.runBtn, flag=wx.ALL, border=20)
+        self.runU1Btn = wx.Button(self, label="Run Pattern")
+        self.runU1Btn.Bind(wx.EVT_BUTTON, self.onU1Run)
+        if self.BeamSettings.getSelectedU1DMXdeviceName() == 'None': device = self.runU1Btn.Disable()
+        hbox1.Add(self.runU1Btn, flag=wx.ALL, border=20)
+        self.runU2Btn = wx.Button(self, label="Run Pattern")
+        if self.BeamSettings.getSelectedU2DMXdeviceName() == 'None': device = self.runU2Btn.Disable()
+        self.runU2Btn.Bind(wx.EVT_BUTTON, self.onU2Run)
+        hbox2.Add(self.runU2Btn, flag=wx.ALL, border=20)
 
 
 
-        vbox.Add(hbox, flag=wx.LEFT)
+        vbox.Add(hbox1, flag=wx.LEFT)
+        vbox.Add(hbox2, flag=wx.LEFT)
         ##############
         # SET SIZERS #
         ##############
@@ -92,15 +113,24 @@ class DMXcontrolsPanel(wx.Panel):
 #                           EVENTS                                #
 ###################################################################
 
-    def OnSelectDMXpattern(self, event):
-        self.CurrentColour = self.DMXpatternSelectorDropdown.GetValue()
+    def OnSelectU1DMXpattern(self, event):
+        self.U1CurrentColour = self.U1DMXpatternSelectorDropdown.GetValue()
+    def OnSelectU2DMXpattern(self, event):
+        self.U2CurrentColour = self.U2DMXpatternSelectorDropdown.GetValue()
 
-    def onRun (self, event):
-        device = adj_ub_6h.DMXdevice()
-        palette = device.GetPalette()
-        colourpattern = palette[self.CurrentColour]
-        DMXuniverse = device.GetUniverse()
-        olamodule.sendDMXrequest(DMXuniverse, colourpattern)
+    def onU1Run (self, event):
+        device = None
+        device = dmxmodule.DMXdevice(self.BeamSettings.getSelectedU1DMXdeviceName())
+        if device is not None:
+            colourpattern = device.GetPattern(self.U1CurrentColour)
+            olamodule.sendDMXrequest(1, colourpattern)
+
+    def onU2Run (self, event):
+        device = None
+        device = dmxmodule.DMXdevice(self.BeamSettings.getSelectedU2DMXdeviceName())
+        if device is not None:
+            colourpattern = device.GetPattern(self.U2CurrentColour)
+            olamodule.sendDMXrequest(2, colourpattern)
 
 
 ###################################################################

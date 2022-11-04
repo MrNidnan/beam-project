@@ -32,6 +32,7 @@ import logging
 import os
 from bin.beamutils import *
 from bin.beamstrings import BeamStrings
+from bin.DMX.dmxmodule import DMXlibrary
 from copy import deepcopy
 
 #
@@ -84,8 +85,16 @@ class BeamSettings:
         stringsfilename = os.path.join(getBeamResourcesPath(), 'json', 'strings.json')
         self._beamStrings = BeamStrings(stringsfilename)
 
+        # load dmx device definitions from dmxdevicedefs.json
+        dmxdevdefsfilename = os.path.join(getBeamResourcesPath(), 'json', 'dmxdevicedefs.json')
+        self._dmxDefinitions = DMXlibrary(dmxdevdefsfilename)
+
     def getString(self, key):
         return self._beamStrings.getString(key)
+    def getDMXdeviceDict(self):
+        return self._dmxDefinitions
+    def getDMXdeviceList(self):
+        return self._dmxDefinitions.getDeviceList()
 
     def getSelectedModuleName(self):
         return self._beamConfigData['Module']
@@ -137,16 +146,29 @@ class BeamSettings:
     def getShowStatusbar(self):
         return self._beamConfigData['ShowStatusbar']
 
-    def getSelectedDMXdeviceName(self):
-        return self._beamConfigData['DMXdevice']
+    # def getDMXdeviceName(self):
+    #     return self._dmxDefinitions.
+    #
+    # def setSelectedDMXdeviceName(self, deviceName):
+    #     self._beamConfigData['DMXdevice'] = deviceName
 
-    def setSelectedDMXdeviceName(self, deviceName):
-        self._beamConfigData['DMXdevice'] = deviceName
-    def getDMXuniverse(self):
-        return self._beamConfigData['DMXuniverse']
+    def getSelectedU1DMXdeviceName(self):
+        return self._beamConfigData['U1_DMXdevice']
 
-    def setdDMXuniverse(self, universe):
-        self._beamConfigData['DMXuniverse'] = universe
+    def setSelectedU1DMXdeviceName(self, deviceName):
+        self._beamConfigData['U1_DMXdevice'] = deviceName
+
+    def getSelectedU2DMXdeviceName(self):
+        return self._beamConfigData['U2_DMXdevice']
+
+    def setSelectedU2DMXdeviceName(self, deviceName):
+        self._beamConfigData['U2_DMXdevice'] = deviceName
+
+    # def getDMXuniverse(self):
+    #     return self._beamConfigData['DMXuniverse']
+    #
+    # def setdDMXuniverse(self, universe):
+    #     self._beamConfigData['DMXuniverse'] = universe
 
     def getBeamConfigFilePath(self):
         configfilepath = os.path.join(getBeamConfigPath(), self.getString("configfilename"))
@@ -249,26 +271,25 @@ class BeamSettings:
 # ??? complement rules?
 
         # Set OS-specific variables
-        if platform.system() == 'Linux':
+        if platform.system() == 'Linux' or platform.system() == 'Darwin' :
             osModuleNames = self._beamConfigData['AllModules'][0]['Modules']
-            osDMXdeviceNames = self._beamConfigData['DMX'][0]['Devices']
+            osU1DMXdeviceName = self.getDMXdeviceList()
+            osU2DMXdeviceName = self.getDMXdeviceList()
             self._preferencesSize = (500, 500)
             self._moodSize = (480,800)
         if platform.system() == 'Windows':
             osModuleNames = self._beamConfigData['AllModules'][1]['Modules']
-            osDMXdeviceNames = self._beamConfigData['DMX'][1]['Devices']
+            # osDMXdeviceNames = self._beamConfigData['DMX'][1]['Devices']
+            osU1DMXdeviceName = self._beamConfigData['DMX'][1]['U1_Device']
+            osU2DMXdeviceName = self._beamConfigData['DMX'][1]['U2_Device']
             self._preferencesSize = (500, 500)
             self._moodSize = (420,800)
-        if platform.system() == 'Darwin':
-            osModuleNames = self._beamConfigData['AllModules'][2]['Modules']
-            osDMXdeviceNames = self._beamConfigData['DMX'][2]['Devices']
-            self._preferencesSize = (400, 600)
-            self._moodSize = (400,750)
 
         # module names available for this OS
         # self._moduleNames = [s for s in osModuleNames['Modules']]
         self._moduleNames = osModuleNames
-        self._DMXdeviceNames = osDMXdeviceNames
+        self._U1DMXdeviceName = osU1DMXdeviceName
+        self._U2DMXdeviceName = osU2DMXdeviceName
 
         # set "internal" variables
 # !!! replace by access functions
@@ -277,12 +298,16 @@ class BeamSettings:
             logging.warning("BeamSettings.__setConfigData(): selected module '" + self.getSelectedModuleName() + "' does not exist")
             self.setSelectedModuleName(self._moduleNames[0])
 
-        if self.getSelectedDMXdeviceName() not in self._DMXdeviceNames:
+        if self.getSelectedU1DMXdeviceName() not in self._U1DMXdeviceName:
             logging.warning(
-                "BeamSettings.__setConfigData(): selected DMX device '" + self.getSelectedDMXdeviceName() + "' does not exist")
-            self.setSelectedDMXdeviceName(self._DMXdeviceNames[0])
+                "BeamSettings.__setConfigData(): selected DMX device '" + self.getSelectedU1DMXdeviceName() + "' does not exist")
+            self.setSelectedU1DMXdeviceName(self._U1DMXdeviceName[0])
 
-        # self._maxTandaLength        = self._beamConfigData['MaxTandaLength'] # Longest tandas, optimize for performance
+        if self.getSelectedU2DMXdeviceName() not in self._U2DMXdeviceName:
+            logging.warning(
+                "BeamSettings.__setConfigData(): selected DMX device '" + self.getSelectedU2DMXdeviceName() + "' does not exist")
+            self.setSelectedU2DMXdeviceName(self._U2DMXdeviceName[0])
+
         # self._updtime               = self._beamConfigData['Updtime']        # mSec between reading
         # self._moodTransition        = self._beamConfigData['MoodTransition']
         # self._moodTransitionSpeed   = self._beamConfigData['MoodTransitionSpeed']

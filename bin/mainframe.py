@@ -297,7 +297,7 @@ class ListBookMenu(wx.Listbook):
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         urllist = ["2-DefaultDisplay32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
-        if beamSettings.getSelectedDMXdeviceName() != 'None': urllist.append("6-DMXcontrols32.png")
+        if beamSettings.getSelectedU1DMXdeviceName() != 'None' or beamSettings.getSelectedU2DMXdeviceName() != 'None' : urllist.append("6-DMXcontrols32.png")
         for urls in urllist:
             appPath = getBeamHomePath()
             # /resources/icons/preferences
@@ -318,7 +318,7 @@ class ListBookMenu(wx.Listbook):
                     (RulesPanel(self, mainFrame, beamSettings), "Rules"),
                     (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")
                  ]
-        if beamSettings.getSelectedDMXdeviceName() != 'None': self.pages.append((DMXcontrolsPanel(self, beamSettings), "DMX"))
+        if beamSettings.getSelectedU1DMXdeviceName() != 'None' or beamSettings.getSelectedU2DMXdeviceName() != 'None' : self.pages.append((DMXcontrolsPanel(self, beamSettings), "DMX"))
         ImId=0
         for page, label in self.pages:
             self.AddPage(page,label,imageId=ImId)

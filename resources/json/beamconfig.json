@@ -4,6 +4,8 @@
   "Author": "Mikael Holber & Horia Uifaleanu - 2015",
   "Module": "",
   "DMXdevice": "",
+  "U1_DMXdevice": "",
+  "U2_DMXdevice": "",
   "DMXuniverse": 1,
   "MaxTandaLength": 4,
   "Updtime": 4000,
@@ -615,16 +617,38 @@
         "None",
         "ADJ: UB 6H"
       ],
+      "U1_Device": [
+        "None",
+        "ADJ: UB 6H"
+      ],
+      "U2_Device": [
+        "None",
+        "ADJ: UB 6H"
+      ],
       "System": "Linux"
     },
     {
       "Devices": [
         "None"
       ],
+      "U1_Device": [
+        "None"
+      ],
+      "U2_Device": [
+        "None"
+      ],
       "System": "Windows"
     },
     {
       "Devices": [
+        "None",
+        "ADJ: UB 6H"
+      ],
+      "U1_Device": [
+        "None",
+        "ADJ: UB 6H"
+      ],
+      "U2_Device": [
         "None",
         "ADJ: UB 6H"
       ],

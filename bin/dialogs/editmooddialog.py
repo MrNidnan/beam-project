@@ -28,7 +28,7 @@
 import wx
 import os
 
-from bin.DMX import adj_ub_6h
+from bin.DMX import dmxmodule
 from bin.beamsettings import *
 from bin.dialogs.editlayoutitemdialog import EditLayoutItemDialog
 from copy import deepcopy
@@ -154,14 +154,22 @@ class EditMoodDialog(wx.Dialog):
         self.vbox.Add(descriptionSizer, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
 
         # DMX
-        dmxDevice = adj_ub_6h.DMXdevice()
-        dmxText = wx.StaticText(self.panel, -1, 'DMX colour')
-        dmxText.SetFont(font)
-        self.vbox.Add(dmxText, flag=wx.LEFT | wx.BOTTOM, border=10)
-        self.DMXcolourDropdown = wx.ComboBox(self.panel, value=self.EditMood['DMXcolour'],
-                                             choices=dmxDevice.GetPaletteList(),
+        dmxU1Device = dmxmodule.DMXdevice(beamSettings.getSelectedU1DMXdeviceName())
+        dmxU1Text = wx.StaticText(self.panel, -1, 'U1 DMX colour')
+        dmxU1Text.SetFont(font)
+        self.vbox.Add(dmxU1Text, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.U1DMXcolourDropdown = wx.ComboBox(self.panel, value=self.EditMood['U1DMXcolour'],
+                                             choices=dmxU1Device.GetPaletteList(),
                                              style=wx.CB_READONLY)
-        self.vbox.Add(self.DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.vbox.Add(self.U1DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM, border=10)
+        dmxU2Device = dmxmodule.DMXdevice(beamSettings.getSelectedU2DMXdeviceName())
+        dmxU2Text = wx.StaticText(self.panel, -1, 'U2 DMX colour')
+        dmxU2Text.SetFont(font)
+        self.vbox.Add(dmxU2Text, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.U2DMXcolourDropdown = wx.ComboBox(self.panel, value=self.EditMood['U2DMXcolour'],
+                                             choices=dmxU2Device.GetPaletteList(),
+                                             style=wx.CB_READONLY)
+        self.vbox.Add(self.U2DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM, border=10)
 
         # Layout
         self.LayoutSettings()
@@ -375,7 +383,8 @@ class EditMoodDialog(wx.Dialog):
         self.EditMood['Field2'] = self.IsIsNotField.GetValue()
         self.EditMood['Field3'] = self.OutputField.GetValue()
         self.EditMood['DisplayTimer'] = self.DisplayTimerField.GetValue()
-        self.EditMood['DMXcolour'] = self.DMXcolourDropdown.GetValue()
+        self.EditMood['U1DMXcolour'] = self.U1DMXcolourDropdown.GetValue()
+        self.EditMood['U2DMXcolour'] = self.U2DMXcolourDropdown.GetValue()
         self.EditMood['Type'] = 'Default' if self.EditMood['Name'] == 'Default' else 'Mood'
 
         moodorder = int(self.MoodOrderField.GetValue())

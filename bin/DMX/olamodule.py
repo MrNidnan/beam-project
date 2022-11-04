@@ -75,7 +75,7 @@ def DmxSent(status):
     if status.Succeeded():
         logging.debug("...DmxSent: Success!")
     else:
-        logging.debug("Error: " + status.message)
+        logging.debug("Error: " + str(status.message))
 
     global wrapper
 
@@ -97,3 +97,16 @@ def sendDMXrequest (universe: object, datalist: object) -> object:
     client.SendDmx(universe, data, DmxSent)
     wrapper.Run()
 
+## Broken. Do not use. Here be dragons
+# def NewData(data):
+#     logging.debug("...DmxReceived: " + list(data))
+#
+#     return ''
+#
+# def getDMXdata (universe: object) -> object:
+#     global wrapper
+#
+#     wrapper = ClientWrapper()
+#     client = wrapper.Client()
+#     client.RegisterUniverse(universe, client.REGISTER, NewData)
+#     wrapper.Run()

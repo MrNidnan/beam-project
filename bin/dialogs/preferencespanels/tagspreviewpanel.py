@@ -41,7 +41,7 @@ class TagsPreviewPanel(wx.Panel):
         self.nowPlayingDataModel = nowPlayingDataModel
 
         # Caption
-        tagpreview = wx.StaticText(self, -1, "Tags preview")
+        tagpreview = wx.StaticText(self, -1, "Tags preview               ")
         tagpreview.SetFont(font)
         description = wx.StaticText(self, -1, "Here are all available tags and their values displayed.")
         description.Wrap(380)
@@ -55,9 +55,11 @@ class TagsPreviewPanel(wx.Panel):
         self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.DoRefresh)
 
         # List of tags
-        self.TagsList = wx.ListBox(self, -1, size=wx.DefaultSize, choices=Tags, style= wx.LB_NEEDED_SB)
+        #self.TagsList = wx.ListBox(self, -1, size=wx.DefaultSize, choices=Tags, style= wx.LB_NEEDED_SB)
+        self.TagsList = wx.ListCtrl(self, -1, size=wx.DefaultSize, style= wx.LC_REPORT)
+        self.TagsList.InsertColumn(0, 'Tag', width=240)
+        self.TagsList.InsertColumn(1, 'Value', width=500)
         self.DoRefresh(None)
-
         # Sizers
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -81,9 +83,11 @@ class TagsPreviewPanel(wx.Panel):
 
 
     def BuildTagsList(self, TagsSelected):
+        self.TagsList.DeleteAllItems()
         attributes = ['Artist', 'Album', 'AlbumArtist','Title','Genre','Comment','Composer','Year', 'Singer'
                       ,'Performer','IsCortina']
-        additionalTags = ['%Hour','%Min','%DateDay','%DateMonth','%DateYear','%LongDate','%SongsSinceLastCortina','%CurrentTandaSongsRemaining','%CurrentTandaLength']
+        additionalTags = ['%Hour','%Min','%DateDay','%DateMonth','%DateYear','%LongDate','%SongsSinceLastCortina'
+                        ,'%CurrentTandaSongsRemaining','%CurrentTandaLength']
         displayList = []
 
         if TagsSelected == "Current Song":
@@ -96,18 +100,45 @@ class TagsPreviewPanel(wx.Panel):
             preTag = '%NextTanda'
         else:
             for i in range(0, len(additionalTags)):
-                displayList.append(additionalTags[i]+ ":  " + str(self.nowPlayingDataModel.convDict[additionalTags[i]]))
+                try:
+                    #displayList.append(additionalTags[i]+ ":  " + str(self.nowPlayingDataModel.convDict[additionalTags[i]]))
+                    if platform.system() == 'Darwin':
+                        index = self.TagsList.InsertItem(i, (additionalTags[i]).decode('utf-8'))
+                        self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[additionalTags[i]].decode('utf-8'))
+                    else:
+                        index = self.TagsList.InsertItem(i, additionalTags[i])
+                        self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[additionalTags[i]])
+                except:
+                    if platform.system() == 'Darwin':
+                        index = self.TagsList.InsertItem(i, additionalTags[i])
+                        self.TagsList.SetItem(index, 1, str(' '))
+                    else:
+                        index = self.TagsList.InsertItem(i, additionalTags[i])
+                        self.TagsList.SetItem(index, 1, str(' '))
+
 
         if not TagsSelected == 'Misc':
-            try:
-                for i in range(0,len(attributes)):
-                    logging.debug("Iterating on " + str(i) + " "+ preTag+attributes[i] + " " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
+            #try:
+            for i in range(0,len(attributes)):
+                try:
                     if platform.system() == 'Darwin':
-                        displayList.append((preTag+attributes[i]+": ").decode('utf-8') + self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
+                        #displayList.append((preTag+attributes[i]+": ").decode('utf-8') + self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
+                        index = self.TagsList.InsertItem(i, (preTag+attributes[i]).decode('utf-8'))
+                        self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
                     else:
-                        displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
-            except:
-                for i in range(0,len(attributes)):
-                    displayList.append(preTag+attributes[i]+ ": ")
+                        #logging.debug("Iterating on " + str(i) + " "+ preTag+attributes[i] + " " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
+                        #displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
+                        index = self.TagsList.InsertItem(i, preTag+attributes[i])
+                        self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[preTag+attributes[i]])
+                except:
+                    #for i in range(0,len(attributes)):
+                    #displayList.append(preTag+attributes[i]+ ": ")
+                    if platform.system() == 'Darwin':
+                        index = self.TagsList.InsertItem(i, (preTag+attributes[i]).decode('utf-8'))
+                        self.TagsList.SetItem(index, 1, str(' '))
+                    else:
+                        index = self.TagsList.InsertItem(i, preTag+attributes[i])
+                        self.TagsList.SetItem(index, 1, str(' '))
 
-        self.TagsList.Set(displayList)
+
+        #self.TagsList.Set(displayList)

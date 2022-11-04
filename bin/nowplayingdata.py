@@ -24,15 +24,13 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-import logging
-import platform, os
 import time
+from copy import deepcopy
 
 from bin.beamsettings import *
 from bin.beamutils import getBeamHomePath
 from bin.mutagenutils import readCoverArtImage
 from bin.songclass import SongObject
-from copy import deepcopy
 
 ###############################################################
 #
@@ -54,15 +52,10 @@ from bin.modules import icecastmodule
 #
 ###############################################################
 
-if platform.system() == 'Linux':
-#    if beamSettings.getSelectedDMXdeviceName() != 'None':
-    from bin.DMX import olamodule, adj_ub_6h
+if platform.system() == 'Linux' or platform.system() == 'Darwin':
+    from bin.DMX import olamodule, dmxmodule
 # if platform.system() == 'Windows':
-#     if beamSettings.getSelectedDMXdeviceName() != 'None':
 
-if platform.system() == 'Darwin':
-#    if beamSettings.getSelectedDMXdeviceName() != 'None':
-    from bin.DMX import olamodule, adj_ub_6h
 
 
 ###############################################################
@@ -216,6 +209,7 @@ class NowPlayingData:
             self.playlistchangetime = time.time()
 
         logging.debug("Data extracted from " + currentSettings.getSelectedModuleName() + ": " + self.StatusMessage)
+
         if self.PreviousPlaybackStatus == "":
             self.PreviousPlaybackStatus = self.PlaybackStatus
 
@@ -320,7 +314,8 @@ class NowPlayingData:
         self.BackgroundPath = os.path.join(appPath, self.currentMood['Background'])
         self.RotateBackground = self.currentMood['RotateBackground']
         self.rotatebackgroundseconds = self.currentMood['RotateTimer']
-        self.currentDMXcolour = self.currentMood['DMXcolour']
+        self.currentU1DMXcolour = self.currentMood['U1DMXcolour']
+        self.currentU2DMXcolour = self.currentMood['U2DMXcolour']
 
         ###############################################################
         #
@@ -376,33 +371,26 @@ class NowPlayingData:
         #######################################
         # Run DMX command
         #######################################
-        colourpattern = []
-        DMXuniverse = 1
-        currentDMXcolour = self.currentDMXcolour
-        if platform.system() == 'Linux':
-            if beamSettings.getSelectedDMXdeviceName() != 'None':
-                if currentSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
-                    from bin.DMX import adj_ub_6h
-                    device = adj_ub_6h.DMXdevice()
-                    palette = device.GetPalette()
-                    colourpattern = palette[currentDMXcolour]
+        device = None
+        currentU1DMXcolour = self.currentU1DMXcolour
+        currentU2DMXcolour = self.currentU2DMXcolour
+        if platform.system() == 'Linux' or platform.system() == 'Darwin':
+            if beamSettings.getSelectedU1DMXdeviceName() != 'None':
+                device = dmxmodule.DMXdevice(currentSettings.getSelectedU1DMXdeviceName())
+                if device is not None:
+                    colourpattern = device.GetPattern(currentU1DMXcolour)
+                    olamodule.sendDMXrequest(1, colourpattern)
+                    logging.debug("... U1 DMX colour: " + currentU1DMXcolour)
 
-                    DMXuniverse = device.GetUniverse()
-                olamodule.sendDMXrequest(DMXuniverse, colourpattern)
-                logging.debug("... DMX colour: " + currentDMXcolour)
+            if beamSettings.getSelectedU2DMXdeviceName() != 'None':
+                device = dmxmodule.DMXdevice(currentSettings.getSelectedU2DMXdeviceName())
+                if device is not None:
+                    colourpattern = device.GetPattern(currentU2DMXcolour)
+                    olamodule.sendDMXrequest(2, colourpattern)
+                    logging.debug("... U2 DMX colour: " + currentU2DMXcolour)
 
         if platform.system() == 'Windows':
             pass
-        if platform.system() == 'Darwin':
-            if beamSettings.getSelectedDMXdeviceName() != 'None':
-                if currentSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
-                    from bin.DMX import adj_ub_6h
-                    device = adj_ub_6h.DMXdevice()
-                    palette = device.GetPalette()
-                    colourpattern = palette[currentDMXcolour]
-                    DMXuniverse = device.GetUniverse()
-                olamodule.sendDMXrequest(DMXuniverse, colourpattern)
-                logging.debug("... DMX colour: " + currentDMXcolour)
 
 
 ########################################################
