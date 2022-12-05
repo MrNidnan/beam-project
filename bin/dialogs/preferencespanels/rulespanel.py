@@ -46,7 +46,7 @@ class RulesPanel(wx.Panel):
         ###############
         # Description #
         ###############
-        description = wx.StaticText(self, -1, "Rules are used to:\n - Copy information from one tag to another.\n - Define Cortinas.\n - Split tags, such tags with both artist and title.\n - Ignore songs completely, such as silent tracks.\n\nRules can be activated and deactivated with the check box.")
+        description = wx.StaticText(self, -1, "Rules are used to:\n - Copy information from one tag to another.\n - Define Cortinas.\n - Split tags, such tags with both artist and title.\n - Ignore songs completely, such as silent tracks.\n - Replace tag value with static content when a criterion is met\n\nRules can be activated and deactivated with the check box.")
         description.Wrap(380)
 
         #############
@@ -145,7 +145,12 @@ class RulesPanel(wx.Panel):
         
             if rule['Type'] == "Parse":
                 self.RuleRows.append(str('Parse/split '+rule['Field1']+' containing '+rule['Field2']+' into '+rule['Field3']+' and '+rule['Field4']))
-    
+
+            if rule['Type'] == "Replace":
+                self.RuleRows.append(
+                    str('Replace ' + rule['Field1'] + ' containing ' + rule['Field3'] + ' with ' + rule[
+                        'Field2']))
+
             if rule['Type'] == "Ignore":
                 if rule['Field2'] =="is":
                     self.RuleRows.append(str("Ignore song if "+rule['Field1']+' is '+rule['Field3']))

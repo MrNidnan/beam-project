@@ -82,7 +82,7 @@ def DmxSent(status):
     if wrapper:
         wrapper.Stop()
 
-def sendDMXrequest (universe, datalist):
+def sendDMXrequest (universe: object, datalist: object) -> object:
     global wrapper
 
     logging.debug("... universe: %s", universe)

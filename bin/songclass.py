@@ -173,6 +173,15 @@ class SongObject(object):
                     # Example:
                     # Singer(j) = Comment(j)
                     setattr(self, currentRule['Field2'].replace("%",""), getattr(self, currentRule['Field1'].replace("%","")) )
+                #
+                # Replace
+                #
+                if currentRule['Type'] == 'Replace' and currentRule['Active'] == 'yes':
+                    # Rule[u'Field1'] shall be Rule[u'Field2']
+                    # Example:
+                    # Artist(j) = 'Desired string'
+                    if str(currentRule['Field3']).lower() in getattr(self, currentRule['Field1'].replace("%","")).lower():
+                        setattr(self, currentRule['Field1'].replace("%",""), str(currentRule['Field2']))
             except:
                 logging.error("Error at Rule: " + str(i) + " Type: " + currentRule['Type'] + "  First Field " + currentRule['Field1'])
                 break

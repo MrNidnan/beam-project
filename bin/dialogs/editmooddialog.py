@@ -28,9 +28,9 @@
 import wx
 import os
 
+from bin.DMX import adj_ub_6h
 from bin.beamsettings import *
 from bin.dialogs.editlayoutitemdialog import EditLayoutItemDialog
-
 from copy import deepcopy
 
 
@@ -40,9 +40,10 @@ from copy import deepcopy
 
 class EditMoodDialog(wx.Dialog):
     def __init__(self, moodsPanel, RowSelected, mode):
-        xpos,ypos = moodsPanel.GetScreenPosition()
+        xpos, ypos = moodsPanel.GetScreenPosition()
 #        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), style=wx.RESIZE_BORDER)
-        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), size=moodsPanel.BeamSettings._moodSize, style=wx.RESIZE_BORDER)
+        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
+                           size=moodsPanel.BeamSettings._moodSize, style=wx.RESIZE_BORDER)
         # #        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
 #                          size=self.moodsPanel.BeamSettings._moodSize,
 #                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
@@ -153,12 +154,14 @@ class EditMoodDialog(wx.Dialog):
         self.vbox.Add(descriptionSizer, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
 
         # DMX
-        #self.DMXSettings()
+        dmxDevice = adj_ub_6h.DMXdevice()
         dmxText = wx.StaticText(self.panel, -1, 'DMX colour')
         dmxText.SetFont(font)
         self.vbox.Add(dmxText, flag=wx.LEFT | wx.BOTTOM, border=10)
-        self.DMXcolourDropdown = wx.ComboBox(self.panel, value=self.EditMood['DMXcolour'], choices=['None', 'Red', 'Green', 'Blue', 'Amber', 'Black', 'White'], style=wx.CB_READONLY)
-        self.vbox.Add(self.DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM , border=10)
+        self.DMXcolourDropdown = wx.ComboBox(self.panel, value=self.EditMood['DMXcolour'],
+                                             choices=dmxDevice.GetPaletteList(),
+                                             style=wx.CB_READONLY)
+        self.vbox.Add(self.DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM, border=10)
 
         # Layout
         self.LayoutSettings()
@@ -185,7 +188,8 @@ class EditMoodDialog(wx.Dialog):
         # Create the fields
 
         self.MoodNameField = wx.TextCtrl(self.panel, value=self.EditMood['Name'], size=(120, -1))
-        self.MoodStateField = wx.ComboBox(self.panel, value=self.EditMood['PlayState'], choices=["Playing", "Not Playing"],
+        self.MoodStateField = wx.ComboBox(self.panel, value=self.EditMood['PlayState'],
+                                          choices=["Playing", "Not Playing"],
                                           size=(120, -1), style=wx.CB_READONLY)
         # min > 0 not to push away the default mood
         self.MoodOrderField = wx.SpinCtrl(self.panel, value=str(self.RowSelected), min=1, max=99)
@@ -372,6 +376,7 @@ class EditMoodDialog(wx.Dialog):
         self.EditMood['Field3'] = self.OutputField.GetValue()
         self.EditMood['DisplayTimer'] = self.DisplayTimerField.GetValue()
         self.EditMood['DMXcolour'] = self.DMXcolourDropdown.GetValue()
+        self.EditMood['Type'] = 'Default' if self.EditMood['Name'] == 'Default' else 'Mood'
 
         moodorder = int(self.MoodOrderField.GetValue())
         if self.EditMood['Name'] == 'Default':

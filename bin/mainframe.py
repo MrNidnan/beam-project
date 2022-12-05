@@ -35,6 +35,7 @@ from bin.dialogs.preferencespanels.basicsettingspanel import BasicSettingsPanel
 from bin.dialogs.preferencespanels.moodspanel import MoodsPanel
 from bin.dialogs.preferencespanels.rulespanel import RulesPanel
 from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel
+from bin.dialogs.preferencespanels.dmxcontrolspanel import DMXcontrolsPanel
 
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
@@ -120,6 +121,7 @@ class MainFrame(wx.Frame):
         # LISTBOOK MENU #
         #################
         listBookMenu = ListBookMenu(panel, self, beamSettings)
+        #listBookMenu.SetBackgroundColour(wx.Colour(136,136,136))
         self.previewPanel = listBookMenu.pages[0][0]
 
         
@@ -291,9 +293,11 @@ class ListBookMenu(wx.Listbook):
         # IMAGES #
         ##########
         imagelist = wx.ImageList(32,32)
+
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         urllist = ["2-DefaultDisplay32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        if beamSettings.getSelectedDMXdeviceName() != 'None': urllist.append("6-DMXcontrols32.png")
         for urls in urllist:
             appPath = getBeamHomePath()
             # /resources/icons/preferences
@@ -314,6 +318,7 @@ class ListBookMenu(wx.Listbook):
                     (RulesPanel(self, mainFrame, beamSettings), "Rules"),
                     (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")
                  ]
+        if beamSettings.getSelectedDMXdeviceName() != 'None': self.pages.append((DMXcontrolsPanel(self, beamSettings), "DMX"))
         ImId=0
         for page, label in self.pages:
             self.AddPage(page,label,imageId=ImId)

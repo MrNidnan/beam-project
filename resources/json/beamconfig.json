@@ -49,7 +49,8 @@
         "Spotify",
         "Embrace",
         "Mixxx",
-        "Icecast"
+        "Icecast",
+        "JRiver"
       ],
       "System": "Mac"
     }
@@ -104,8 +105,15 @@
       "Field1": "%Title",
       "Type": "Ignore",
       "Field3": "silent"
+    },
+    {
+      "Type": "Replace",
+      "Field1": "%Artist",
+      "Active": "yes",
+      "Field2": "Se\u00f1or del Tango",
+      "Field3": "Sarli"
     }
-  ],
+ ],
   "Moods": [
     {
       "PlayState": "-",
@@ -606,7 +614,7 @@
     {
       "Devices": [
         "None",
-       "ADJ: UB 6H"
+        "ADJ: UB 6H"
       ],
       "System": "Linux"
     },

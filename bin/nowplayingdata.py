@@ -25,9 +25,10 @@
 #
 # This Python file uses the following encoding: utf-8
 import logging
-import platform, os, sys
+import platform, os
 import time
 
+from bin.beamsettings import *
 from bin.beamutils import getBeamHomePath
 from bin.mutagenutils import readCoverArtImage
 from bin.songclass import SongObject
@@ -44,10 +45,24 @@ if platform.system() == 'Linux':
 if platform.system() == 'Windows':
     from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule, jrivermodule
 if platform.system() == 'Darwin':
-    from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule
+    from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule, jrivermodule
 from bin.modules import icecastmodule
 
+###############################################################
+#
+# LOAD DMX MODULES
+#
+###############################################################
 
+if platform.system() == 'Linux':
+#    if beamSettings.getSelectedDMXdeviceName() != 'None':
+    from bin.DMX import olamodule, adj_ub_6h
+# if platform.system() == 'Windows':
+#     if beamSettings.getSelectedDMXdeviceName() != 'None':
+
+if platform.system() == 'Darwin':
+#    if beamSettings.getSelectedDMXdeviceName() != 'None':
+    from bin.DMX import olamodule, adj_ub_6h
 
 
 ###############################################################
@@ -173,6 +188,8 @@ class NowPlayingData:
                     self.currentPlaylist, self.PlaybackStatus  = embracemodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
             if currentSettings.getSelectedModuleName() == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
+            if currentSettings.getSelectedModuleName() == 'JRiver':
+                self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings.getMaxTandaLength())
 
         # for all platforms
         if currentSettings.getSelectedModuleName() == 'Icecast':
@@ -254,6 +271,7 @@ class NowPlayingData:
             # Check if song is cortina
             if self.currentPlaylist[i].IsCortina == "yes" and not self.currentPlaylist[i+1].IsCortina == "yes":
                 self.nextTandaSong = deepcopy(self.currentPlaylist[i+1])
+                self.nextTandaSong.applySongRules(currentSettings.getRules())
                 break
             else:
                 self.TillNextCortinaCount = self.TillNextCortinaCount + 1
@@ -360,19 +378,34 @@ class NowPlayingData:
         #######################################
         # Run DMX command
         #######################################
+        colourpattern = []
+        DMXuniverse = 1
         currentDMXcolour = self.currentDMXcolour
         if platform.system() == 'Linux':
-            from bin.DMX.lin import adj_ub_6h
-            if currentSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+            if beamSettings.getSelectedDMXdeviceName() != 'None':
+                if currentSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+                    from bin.DMX import adj_ub_6h
+                    device = adj_ub_6h.DMXdevice()
+                    palette = device.GetPalette()
+                    colourpattern = palette[currentDMXcolour]
+
+                    DMXuniverse = device.GetUniverse()
+                olamodule.sendDMXrequest(DMXuniverse, colourpattern)
                 logging.debug("... DMX colour: " + currentDMXcolour)
-                adj_ub_6h.setColour(currentDMXcolour)
 
         if platform.system() == 'Windows':
-            from bin.DMX.win import placebo
+            pass
         if platform.system() == 'Darwin':
-            from bin.DMX.mac import adj_ub_6h
-            if currentSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
-                adj_ub_6h.setColour(currentDMXcolour)
+            if beamSettings.getSelectedDMXdeviceName() != 'None':
+                if currentSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+                    from bin.DMX import adj_ub_6h
+                    device = adj_ub_6h.DMXdevice()
+                    palette = device.GetPalette()
+                    colourpattern = palette[currentDMXcolour]
+                    DMXuniverse = device.GetUniverse()
+                olamodule.sendDMXrequest(DMXuniverse, colourpattern)
+                logging.debug("... DMX colour: " + currentDMXcolour)
+
 
 ########################################################
 # Conversion dictionary

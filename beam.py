@@ -25,8 +25,6 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import platform, os, sys
-
 # initializes public variables of beamsettings.beamSettings
 # from stringResuorces by BeamSettings() __init__
 from bin.beamsettings import *
@@ -84,15 +82,16 @@ try:
     # Run DMX server if warranted
     #############################
     if platform.system() == 'Linux':
-        from bin.DMX.lin import adj_ub_6h
-        if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
-            adj_ub_6h.startDMXserver()
-    if platform.system() == 'Windows':
-        from bin.DMX.win import placebo
+        from bin.DMX import olamodule, adj_ub_6h
+
+        if beamSettings.getSelectedDMXdeviceName() != 'None':
+            olamodule.startOlad()
+    # if platform.system() == 'Windows':
+    #     from bin.DMX.win import placebo
     if platform.system() == 'Darwin':
-        from bin.DMX.mac import adj_ub_6h
-        if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
-            adj_ub_6h.startDMXserver()
+        from bin.DMX import olamodule, adj_ub_6h
+        if beamSettings.getSelectedDMXdeviceName() != 'None':
+            olamodule.startOlad()
 
     ########################################################
     # Start the main window
@@ -113,18 +112,28 @@ try:
    #############################
     # Stop DMX server if warranted
     #############################
+    colourpattern = []
+    DMXuniverse = beamSettings.getDMXuniverse()
     if platform.system() == 'Linux':
-        from bin.DMX.lin import adj_ub_6h
-        if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
-            adj_ub_6h.setColour('None')
-            adj_ub_6h.stopDMXserver()
+        if beamSettings.getSelectedDMXdeviceName() != 'None':
+            if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+                from bin.DMX import adj_ub_6h
+                device = adj_ub_6h.DMXdevice()
+                palette = device.GetPalette()
+                colourpattern = palette['None']
+            olamodule.sendDMXrequest(DMXuniverse, colourpattern)
+            olamodule.stopOlad()
     if platform.system() == 'Windows':
         from bin.DMX.win import placebo
     if platform.system() == 'Darwin':
-        from bin.DMX.mac import adj_ub_6h
-        if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
-            adj_ub_6h.setColour('None')
-            adj_ub_6h.stopDMXserver()
+        if beamSettings.getSelectedDMXdeviceName() != 'None':
+            if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+                from bin.DMX import adj_ub_6h
+                device = adj_ub_6h.DMXdevice()
+                palette = device.GetPalette()
+                colourpattern = palette['None']
+            olamodule.sendDMXrequest(DMXuniverse, colourpattern)
+            olamodule.stopOlad()
 
     logging.info("Beam closed")
 
