@@ -41,7 +41,7 @@ from copy import deepcopy
 class EditMoodDialog(wx.Dialog):
     def __init__(self, moodsPanel, RowSelected, mode):
         xpos,ypos = moodsPanel.GetScreenPosition()
-        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), size=moodsPanel.BeamSettings._moodSize)
+        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), size=moodsPanel.BeamSettings._moodSize, style=wx.RESIZE_BORDER)
 #        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
 #                          size=self.moodsPanel.BeamSettings._moodSize,
 #                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
@@ -234,7 +234,7 @@ class EditMoodDialog(wx.Dialog):
         self.DisplayTimerField = wx.SpinCtrl(self.panel, value=str(displaytimer), min=0)
 
         self.LayoutList = wx.CheckListBox(self.panel, -1, size=wx.DefaultSize, choices=[], style=wx.LB_NEEDED_SB)
-        self.LayoutList.SetBackgroundColour(wx.Colour(255, 255, 255))
+        self.LayoutList.SetBackgroundColour(wx.Colour(128, 128, 128))
         self.LayoutList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditLayoutItem)
         self.LayoutList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckLayout)
 

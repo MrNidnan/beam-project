@@ -76,7 +76,7 @@ class MoodsPanel(wx.Panel):
         moodstitle = wx.StaticText(self, -1, "Moods")
         moodstitle.SetFont(font)
         self.MoodList = wx.CheckListBox(self,-1, size=wx.DefaultSize, choices=self.MoodRows, style= wx.LB_NEEDED_SB)
-        self.MoodList.SetBackgroundColour(wx.Colour(255, 255, 255))
+        self.MoodList.SetBackgroundColour(wx.Colour(128, 128, 128))
         self.MoodList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditMood)
         self.MoodList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckMood)
         # List all configured moods

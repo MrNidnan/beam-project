@@ -48,7 +48,7 @@ class BasicSettingsPanel(wx.Panel):
         #########################
         # MEDIA PLAYER SELECTOR #
         #########################
-        mediaplayer = wx.StaticText(self, wx.ID_ANY, "Mediaplayer")
+        mediaplayer = wx.StaticText(self, wx.ID_ANY, "Mediaplayer       ")
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         mediaplayer.SetFont(font)
         
@@ -66,7 +66,7 @@ class BasicSettingsPanel(wx.Panel):
         ############
         # Settings #
         ############
-        settingslabel = wx.StaticText(self, -1, "Settings")
+        settingslabel = wx.StaticText(self, -1, "Settings          ")
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         settingslabel.SetFont(font)
         vbox.Add(settingslabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
@@ -118,7 +118,7 @@ class BasicSettingsPanel(wx.Panel):
         vbox.Add(hboxLog, flag=wx.LEFT, border=20)
         '''
 
-        loglevel = wx.StaticText(self, wx.ID_ANY, "Logging Level")
+        loglevel = wx.StaticText(self, wx.ID_ANY, "Logging Level            ")
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         loglevel.SetFont(font)
 

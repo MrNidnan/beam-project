@@ -107,7 +107,7 @@ class DefaultLayoutPanel(wx.Panel):
         LayoutText = wx.StaticText(self, -1, "Layout")
         LayoutText.SetFont(font)
         self.LayoutList = wx.CheckListBox(self,-1, choices=[], style= wx.LB_NEEDED_SB)
-        self.LayoutList.SetBackgroundColour(wx.Colour(255, 255, 255))
+        self.LayoutList.SetBackgroundColour(wx.Colour(128, 128, 128))
         self.LayoutList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditLayout)
         self.LayoutList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckLayout)
         self.BuildLayoutList()
