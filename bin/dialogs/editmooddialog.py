@@ -41,8 +41,9 @@ from copy import deepcopy
 class EditMoodDialog(wx.Dialog):
     def __init__(self, moodsPanel, RowSelected, mode):
         xpos,ypos = moodsPanel.GetScreenPosition()
+#        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), style=wx.RESIZE_BORDER)
         wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), size=moodsPanel.BeamSettings._moodSize, style=wx.RESIZE_BORDER)
-#        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
+        # #        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
 #                          size=self.moodsPanel.BeamSettings._moodSize,
 #                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
 
@@ -150,6 +151,14 @@ class EditMoodDialog(wx.Dialog):
         descriptionSizer.Add(RandomSizer, flag=wx.LEFT | wx.TOP, border=10)
         descriptionSizer.Add(self.RandomBackgroundBox, flag=wx.LEFT, border=10)
         self.vbox.Add(descriptionSizer, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
+
+        # DMX
+        #self.DMXSettings()
+        dmxText = wx.StaticText(self.panel, -1, 'DMX colour')
+        dmxText.SetFont(font)
+        self.vbox.Add(dmxText, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.DMXcolourDropdown = wx.ComboBox(self.panel, value=self.EditMood['DMXcolour'], choices=['None', 'Red', 'Green', 'Blue', 'Amber', 'Black', 'White'], style=wx.CB_READONLY)
+        self.vbox.Add(self.DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM , border=10)
 
         # Layout
         self.LayoutSettings()
@@ -362,6 +371,7 @@ class EditMoodDialog(wx.Dialog):
         self.EditMood['Field2'] = self.IsIsNotField.GetValue()
         self.EditMood['Field3'] = self.OutputField.GetValue()
         self.EditMood['DisplayTimer'] = self.DisplayTimerField.GetValue()
+        self.EditMood['DMXcolour'] = self.DMXcolourDropdown.GetValue()
 
         moodorder = int(self.MoodOrderField.GetValue())
         if self.EditMood['Name'] == 'Default':

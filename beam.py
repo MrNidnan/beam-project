@@ -25,6 +25,8 @@
 #
 # This Python file uses the following encoding: utf-8
 
+import platform, os, sys
+
 # initializes public variables of beamsettings.beamSettings
 # from stringResuorces by BeamSettings() __init__
 from bin.beamsettings import *
@@ -78,6 +80,20 @@ try:
     logging.info("Config dir: '" + getBeamConfigPath() + "'")
     logging.info("Logfile: '" + logpath + "'")
 
+    #############################
+    # Run DMX server if warranted
+    #############################
+    if platform.system() == 'Linux':
+        from bin.DMX.lin import adj_ub_6h
+        if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+            adj_ub_6h.startDMXserver()
+    if platform.system() == 'Windows':
+        from bin.DMX.win import placebo
+    if platform.system() == 'Darwin':
+        from bin.DMX.mac import adj_ub_6h
+        if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+            adj_ub_6h.startDMXserver()
+
     ########################################################
     # Start the main window
     ########################################################
@@ -93,6 +109,22 @@ try:
     ########################################################
 
     app.MainLoop()              # Start the main loop which handles events
+
+   #############################
+    # Stop DMX server if warranted
+    #############################
+    if platform.system() == 'Linux':
+        from bin.DMX.lin import adj_ub_6h
+        if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+            adj_ub_6h.setColour('None')
+            adj_ub_6h.stopDMXserver()
+    if platform.system() == 'Windows':
+        from bin.DMX.win import placebo
+    if platform.system() == 'Darwin':
+        from bin.DMX.mac import adj_ub_6h
+        if beamSettings.getSelectedDMXdeviceName() == 'ADJ: UB 6H':
+            adj_ub_6h.setColour('None')
+            adj_ub_6h.stopDMXserver()
 
     logging.info("Beam closed")
 

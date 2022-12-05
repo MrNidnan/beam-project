@@ -137,6 +137,17 @@ class BeamSettings:
     def getShowStatusbar(self):
         return self._beamConfigData['ShowStatusbar']
 
+    def getSelectedDMXdeviceName(self):
+        return self._beamConfigData['DMXdevice']
+
+    def setSelectedDMXdeviceName(self, deviceName):
+        self._beamConfigData['DMXdevice'] = deviceName
+    def getDMXuniverse(self):
+        return self._beamConfigData['DMXuniverse']
+
+    def setdDMXuniverse(self, universe):
+        self._beamConfigData['DMXuniverse'] = universe
+
     def getBeamConfigFilePath(self):
         configfilepath = os.path.join(getBeamConfigPath(), self.getString("configfilename"))
 
@@ -221,6 +232,7 @@ class BeamSettings:
 
         # take module names always from default config
         self._beamConfigData['AllModules'] = deepcopy(defaultConfigData['AllModules'])
+        self._beamConfigData['DMX'] = deepcopy(defaultConfigData['DMX'])
 
         # self._allModulesNames    = self._beamConfigData['AllModules']
         # self._rules                 = self.__extractSetting(beamConfigData, defaultConfigData, 'Rules')
@@ -239,20 +251,24 @@ class BeamSettings:
         # Set OS-specific variables
         if platform.system() == 'Linux':
             osModuleNames = self._beamConfigData['AllModules'][0]['Modules']
+            osDMXdeviceNames = self._beamConfigData['DMX'][0]['Devices']
             self._preferencesSize = (500, 500)
-            self._moodSize = (480,600)
+            self._moodSize = (480,800)
         if platform.system() == 'Windows':
             osModuleNames = self._beamConfigData['AllModules'][1]['Modules']
+            osDMXdeviceNames = self._beamConfigData['DMX'][1]['Devices']
             self._preferencesSize = (500, 500)
-            self._moodSize = (420,600)
+            self._moodSize = (420,800)
         if platform.system() == 'Darwin':
             osModuleNames = self._beamConfigData['AllModules'][2]['Modules']
+            osDMXdeviceNames = self._beamConfigData['DMX'][2]['Devices']
             self._preferencesSize = (400, 600)
-            self._moodSize = (400,550)
+            self._moodSize = (400,750)
 
         # module names available for this OS
         # self._moduleNames = [s for s in osModuleNames['Modules']]
         self._moduleNames = osModuleNames
+        self._DMXdeviceNames = osDMXdeviceNames
 
         # set "internal" variables
 # !!! replace by access functions
@@ -260,6 +276,11 @@ class BeamSettings:
         if self.getSelectedModuleName() not in self._moduleNames:
             logging.warning("BeamSettings.__setConfigData(): selected module '" + self.getSelectedModuleName() + "' does not exist")
             self.setSelectedModuleName(self._moduleNames[0])
+
+        if self.getSelectedDMXdeviceName() not in self._DMXdeviceNames:
+            logging.warning(
+                "BeamSettings.__setConfigData(): selected DMX device '" + self.getSelectedDMXdeviceName() + "' does not exist")
+            self.setSelectedDMXdeviceName(self._DMXdeviceNames[0])
 
         # self._maxTandaLength        = self._beamConfigData['MaxTandaLength'] # Longest tandas, optimize for performance
         # self._updtime               = self._beamConfigData['Updtime']        # mSec between reading
