@@ -96,7 +96,7 @@ def run(MaxTandaLength):
                     elif name == 'Genre':
                         retSong.Genre = tag.text
                     elif name == 'Comment':
-                        retSong.Album = tag.text
+                        retSong.Comment = tag.text
                     elif name == 'Date (year)':
                         retSong.Year = tag.text
                     elif name == 'Album Artist':
