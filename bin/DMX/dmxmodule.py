@@ -72,3 +72,6 @@ class DMXdevice:
 
     def GetPattern (self, patternkey):
         return list(self.palette[patternkey])
+
+    def GetFixtureAddressOffset (self):
+        return len(list(self.palette['None']))

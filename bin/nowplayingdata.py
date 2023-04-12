@@ -519,7 +519,8 @@ class NowPlayingData:
         self.convDict['%DateMonth']     = time.strftime("%m")
         self.convDict['%DateYear']      = time.strftime("%Y")
         self.convDict['%LongDate']  = time.strftime("%d %B %Y")
-        
+        self.convDict['%ShortDate'] = time.strftime("%Y.%m.%d")
+
         #Track number in a tanda
         self.convDict['%SongsSinceLastCortina'] = self.SinceLastCortinaCount
         self.convDict['%CurrentTandaSongsRemaining'] = self.TillNextCortinaCount - 1

@@ -86,7 +86,7 @@ class TagsPreviewPanel(wx.Panel):
         self.TagsList.DeleteAllItems()
         attributes = ['Artist', 'Album', 'AlbumArtist','Title','Genre','Comment','Composer','Year', 'Singer'
                       ,'Performer','IsCortina']
-        additionalTags = ['%Hour','%Min','%DateDay','%DateMonth','%DateYear','%LongDate','%SongsSinceLastCortina'
+        additionalTags = ['%Hour','%Min','%DateDay','%DateMonth','%DateYear','%LongDate','%ShortDate','%SongsSinceLastCortina'
                         ,'%CurrentTandaSongsRemaining','%CurrentTandaLength']
         displayList = []
 
