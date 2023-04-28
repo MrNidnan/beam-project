@@ -154,23 +154,42 @@ class EditMoodDialog(wx.Dialog):
         self.vbox.Add(descriptionSizer, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
 
         # DMX
+        u1c = self.getU1DMXColourList()
+        u2c = self.getU2DMXColourList()
+        self.vboxU1 = wx.BoxSizer(wx.VERTICAL)
+        self.vboxU2 = wx.BoxSizer(wx.VERTICAL)
+        self.hboxU1 = wx.BoxSizer(wx.HORIZONTAL)
+        self.hboxU2 = wx.BoxSizer(wx.HORIZONTAL)
+        self.hboxDMX = wx.BoxSizer(wx.HORIZONTAL)
+
         dmxU1Device = dmxmodule.DMXdevice(beamSettings.getSelectedU1DMXdeviceName())
-        dmxU1Text = wx.StaticText(self.panel, -1, 'U1 DMX colour')
+        dmxU1Text = wx.StaticText(self.panel, -1, 'U1 DMX colours')
         dmxU1Text.SetFont(font)
-        self.vbox.Add(dmxU1Text, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.vboxU1.Add(dmxU1Text, flag=wx.LEFT | wx.BOTTOM, border=10)
         self.U1DMXcolourDropdown = wx.ComboBox(self.panel, value=self.EditMood['U1DMXcolour'],
                                              choices=dmxU1Device.GetPaletteList(),
                                              style=wx.CB_READONLY)
-        self.vbox.Add(self.U1DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.U1DMXcolourDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectU1DMXcolour)
+        self.U1DMXfixtureColourList = wx.ListBox(self.panel, wx.ID_ANY, choices=u1c, style=wx.LB_MULTIPLE)
+        self.hboxU1.Add(self.U1DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.hboxU1.Add(self.U1DMXfixtureColourList, border=10)
+        self.vboxU1.Add(self.hboxU1, flag=wx.LEFT | wx.BOTTOM, border=10)
         dmxU2Device = dmxmodule.DMXdevice(beamSettings.getSelectedU2DMXdeviceName())
-        dmxU2Text = wx.StaticText(self.panel, -1, 'U2 DMX colour')
+        dmxU2Text = wx.StaticText(self.panel, -1, 'U2 DMX colours')
         dmxU2Text.SetFont(font)
-        self.vbox.Add(dmxU2Text, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.vboxU2.Add(dmxU2Text, flag=wx.LEFT | wx.BOTTOM, border=10)
         self.U2DMXcolourDropdown = wx.ComboBox(self.panel, value=self.EditMood['U2DMXcolour'],
                                              choices=dmxU2Device.GetPaletteList(),
                                              style=wx.CB_READONLY)
-        self.vbox.Add(self.U2DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.U2DMXcolourDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectU2DMXcolour)
+        self.U2DMXfixtureColourList = wx.ListBox(self.panel, wx.ID_ANY, choices=u2c, style=wx.LB_MULTIPLE)
+        self.hboxU2.Add(self.U2DMXcolourDropdown, flag=wx.LEFT | wx.BOTTOM, border=10)
+        self.hboxU2.Add(self.U2DMXfixtureColourList, border=10)
+        self.vboxU2.Add(self.hboxU2, flag=wx.LEFT | wx.BOTTOM, border=10)
 
+        self.hboxDMX.Add(self.vboxU1)
+        self.hboxDMX.Add(self.vboxU2)
+        self.vbox.Add(self.hboxDMX)
         # Layout
         self.LayoutSettings()
         layoutText = wx.StaticText(self.panel, -1, "Layout")
@@ -384,7 +403,9 @@ class EditMoodDialog(wx.Dialog):
         self.EditMood['Field3'] = self.OutputField.GetValue()
         self.EditMood['DisplayTimer'] = self.DisplayTimerField.GetValue()
         self.EditMood['U1DMXcolour'] = self.U1DMXcolourDropdown.GetValue()
+        self.EditMood['U1DMXcolours'] = self.U1DMXColourList()
         self.EditMood['U2DMXcolour'] = self.U2DMXcolourDropdown.GetValue()
+        self.EditMood['U2DMXcolours'] = self.U2DMXColourList()
         self.EditMood['Type'] = 'Default' if self.EditMood['Name'] == 'Default' else 'Mood'
 
         moodorder = int(self.MoodOrderField.GetValue())
@@ -434,3 +455,62 @@ class EditMoodDialog(wx.Dialog):
             (path, backgroundfile) = os.path.split(self.EditMood['Background'])
             self.rotateBackgroundFunction()
             openFileDialog.Destroy()
+
+    def OnSelectU1DMXcolour(self, event):
+        fixtureindices = self.U1DMXfixtureColourList.GetSelections()
+        self.U1CurrentColour = self.U1DMXcolourDropdown.GetValue()
+        u1c = self.U1DMXColourList()
+        for i in fixtureindices:
+            u1c[i] = self.U1CurrentColour
+        u1 = beamSettings._Universe1
+        self.U1DMXfixtureColourList.Clear()
+        u1n = u1.FixtureNames()
+        for index, value in enumerate(u1n):
+            self.U1DMXfixtureColourList.Append(u1c[index])
+
+    def OnSelectU2DMXcolour(self, event):
+        fixtureindices = self.U2DMXfixtureColourList.GetSelections()
+        self.U2CurrentColour = self.U2DMXcolourDropdown.GetValue()
+        u2c = self.U2DMXColourList()
+        for i in fixtureindices:
+            u2c[i] = self.U2CurrentColour
+        u = beamSettings._Universe2
+        self.U2DMXfixtureColourList.Clear()
+        u2n = u.FixtureNames()
+        for index, value in enumerate(u2n):
+            self.U2DMXfixtureColourList.Append(u2c[index])
+
+    def U1DMXColourList (self):
+        list = []
+        count = self.U1DMXfixtureColourList.GetCount()
+        for i in range(count):
+            list.append(self.U1DMXfixtureColourList.GetString(i))
+        return list
+    def U2DMXColourList (self):
+        list = []
+        count = self.U2DMXfixtureColourList.GetCount()
+        for i in range(count):
+            list.append(self.U2DMXfixtureColourList.GetString(i))
+        return list
+    def getU1DMXColourList (self):
+        list = []
+        colour = self.EditMood['U1DMXcolour']
+        try:
+            list = self.EditMood['U1DMXcolours']
+        finally:
+            listlength = len(list)
+            u = beamSettings._Universe1
+            u1n = u.FixtureNames()
+            fixtureCnt = len(u1n)
+        return list[:fixtureCnt] + [colour]*(fixtureCnt-listlength)
+    def getU2DMXColourList (self):
+        list = []
+        colour = self.EditMood['U2DMXcolour']
+        try :
+            list = self.EditMood['U2DMXcolours']
+        finally:
+            listlength = len(list)
+            u = beamSettings._Universe2
+            u2n = u.FixtureNames()
+            fixtureCnt = len(u2n)
+        return list[:fixtureCnt] + [colour]*(fixtureCnt-listlength)

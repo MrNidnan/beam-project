@@ -316,6 +316,25 @@ class NowPlayingData:
         self.rotatebackgroundseconds = self.currentMood['RotateTimer']
         self.currentU1DMXcolour = self.currentMood['U1DMXcolour']
         self.currentU2DMXcolour = self.currentMood['U2DMXcolour']
+        u1 = beamSettings._Universe1
+        colourlist = []
+        try:
+            colourlist = self.currentMood['U1DMXcolours']
+        except:
+            colourlist.append(self.currentMood['U1DMXcolour'])
+        finally:
+            u1.setAllFixtureColours(colourlist)
+
+        u2 = beamSettings._Universe2
+        colourlist = []
+        try:
+            colourlist = self.currentMood['U2DMXcolours']
+        except:
+            colourlist.append(self.currentMood['U2DMXcolour'])
+        finally:
+            u2.setAllFixtureColours(colourlist)
+
+
 
         ###############################################################
         #
@@ -375,19 +394,12 @@ class NowPlayingData:
         currentU1DMXcolour = self.currentU1DMXcolour
         currentU2DMXcolour = self.currentU2DMXcolour
         if platform.system() == 'Linux' or platform.system() == 'Darwin':
-            if beamSettings.getSelectedU1DMXdeviceName() != 'None':
-                device = dmxmodule.DMXdevice(currentSettings.getSelectedU1DMXdeviceName())
-                if device is not None:
-                    colourpattern = device.GetPattern(currentU1DMXcolour)
-                    olamodule.sendDMXrequest(1, colourpattern)
-                    logging.debug("... U1 DMX colour: " + currentU1DMXcolour)
-
-            if beamSettings.getSelectedU2DMXdeviceName() != 'None':
-                device = dmxmodule.DMXdevice(currentSettings.getSelectedU2DMXdeviceName())
-                if device is not None:
-                    colourpattern = device.GetPattern(currentU2DMXcolour)
-                    olamodule.sendDMXrequest(2, colourpattern)
-                    logging.debug("... U2 DMX colour: " + currentU2DMXcolour)
+            colourpattern = u1.FixturePatterns()
+            if (0 < len(colourpattern)): olamodule.sendDMXrequest(1, colourpattern)
+            logging.debug("... U1 DMX colour: " + str(colourpattern))
+            colourpattern =  u2.FixturePatterns()
+            if (0 < len(colourpattern)): olamodule.sendDMXrequest(2, colourpattern)
+            logging.debug("... U2 DMX colour: " + str(colourpattern))
 
         if platform.system() == 'Windows':
             pass

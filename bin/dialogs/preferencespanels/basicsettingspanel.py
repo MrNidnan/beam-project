@@ -133,30 +133,6 @@ class BasicSettingsPanel(wx.Panel):
         vbox.Add(logleveldescription, flag=wx.LEFT, border=20)
         vbox.Add(self.LogLevelSelectorDropdown, flag=wx.LEFT, border=20)
 
-        #########################
-        # DMX Device SELECTOR #
-        #########################
-        dmxdevice = wx.StaticText(self, wx.ID_ANY, "DMX        ")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        dmxdevice.SetFont(font)
-
-        dmxU1description = wx.StaticText(self, wx.ID_ANY, "Select the DMX enabled device for Universe 1")
-        self.U1DMXdeviceSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
-                                                   value=self.BeamSettings.getSelectedU1DMXdeviceName(),
-                                                   choices=self.BeamSettings._U1DMXdeviceName,
-                                                   style=wx.CB_READONLY)
-        self.U1DMXdeviceSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectU1DMXdevice)
-        dmxU2description = wx.StaticText(self, wx.ID_ANY, "Select the DMX enabled device for Universe 2")
-        self.U2DMXdeviceSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
-                                                   value=self.BeamSettings.getSelectedU2DMXdeviceName(),
-                                                   choices=self.BeamSettings._U2DMXdeviceName,
-                                                   style=wx.CB_READONLY)
-        self.U2DMXdeviceSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectU2DMXdevice)
-        vbox.Add(dmxdevice, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
-        vbox.Add(dmxU1description, flag=wx.LEFT, border=20)
-        vbox.Add(self.U1DMXdeviceSelectorDropdown, flag=wx.LEFT, border=20)
-        vbox.Add(dmxU2description, flag=wx.LEFT, border=20)
-        vbox.Add(self.U2DMXdeviceSelectorDropdown, flag=wx.LEFT, border=20)
 
         ##############
         # SET SIZERS #

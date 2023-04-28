@@ -70,6 +70,15 @@ def stopOlad ():
 
     return []
 
+def isRunningOlad ():
+    status = 0
+    try:
+        result = subprocess.run (["ps", "-C", "olad", "-o", "pid="], capture_output=True, text=True)
+        pid = result.stdout
+        if "" != pid.strip() : status = 1
+    except Exception as e:
+        logging.error(e, exc_info=True)
+    return status
 
 def DmxSent(status):
     if status.Succeeded():

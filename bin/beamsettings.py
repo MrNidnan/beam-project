@@ -32,7 +32,7 @@ import logging
 import os
 from bin.beamutils import *
 from bin.beamstrings import BeamStrings
-from bin.DMX.dmxmodule import DMXlibrary
+from bin.DMX.dmxmodule import DMXlibrary, Universe
 from copy import deepcopy
 
 #
@@ -146,7 +146,7 @@ class BeamSettings:
     def getShowStatusbar(self):
         return self._beamConfigData['ShowStatusbar']
 
-    # def getDMXdeviceName(self):
+    #def getDMXdeviceName(self):
     #     return self._dmxDefinitions.
     #
     # def setSelectedDMXdeviceName(self, deviceName):
@@ -164,11 +164,46 @@ class BeamSettings:
     def setSelectedU2DMXdeviceName(self, deviceName):
         self._beamConfigData['U2_DMXdevice'] = deviceName
 
-    # def getDMXuniverse(self):
-    #     return self._beamConfigData['DMXuniverse']
-    #
-    # def setdDMXuniverse(self, universe):
-    #     self._beamConfigData['DMXuniverse'] = universe
+    def getDMXuniverse1(self):
+        uv1 = Universe()
+        try:
+            flist = self._beamConfigData['DMXuniverse1']
+            logging.debug("... DMXuniverse1: " + str(flist))
+            for f in flist:
+                uv1.AddFixture(f)
+        except:
+            f = self._beamConfigData['U1_DMXdevice']
+            logging.debug("... U1_DMXdevice: " + str(f))
+            uv1.AddFixture(f)
+            self.setDMXuniverse1(uv1)
+        return uv1
+
+    def setDMXuniverse1(self, u1):
+        self._beamConfigData['DMXuniverse1'] = u1.FixtureNames()
+        if len(u1.FixtureNames()) == 0 :
+            self.setSelectedU1DMXdeviceName('NONE')
+        else:
+            self.setSelectedU1DMXdeviceName(u1.FixtureNames()[0])
+    def getDMXuniverse2(self):
+        uv2 = Universe()
+        try:
+            flist = self._beamConfigData['DMXuniverse2']
+            logging.debug("... DMXuniverse2: " + str(flist))
+            for f in flist:
+                uv2.AddFixture(f)
+        except:
+            f = self._beamConfigData['U2_DMXdevice']
+            logging.debug("... U2_DMXdevice: " + str(f))
+            uv2.AddFixture(f)
+            self.setDMXuniverse2(uv2)
+        return uv2
+
+    def setDMXuniverse2(self, u2):
+        self._beamConfigData['DMXuniverse2'] = u2.FixtureNames()
+        if len(u2.FixtureNames()) == 0:
+            self.setSelectedU2DMXdeviceName('NONE')
+        else:
+            self.setSelectedU2DMXdeviceName(u2.FixtureNames()[0])
 
     def getBeamConfigFilePath(self):
         configfilepath = os.path.join(getBeamConfigPath(), self.getString("configfilename"))
@@ -290,6 +325,8 @@ class BeamSettings:
         self._moduleNames = osModuleNames
         self._U1DMXdeviceName = osU1DMXdeviceName
         self._U2DMXdeviceName = osU2DMXdeviceName
+        self._Universe1 = self.getDMXuniverse1()
+        self._Universe2 = self.getDMXuniverse2()
 
         # set "internal" variables
 # !!! replace by access functions

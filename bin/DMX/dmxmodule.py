@@ -60,7 +60,8 @@ class DMXdevice:
         dmxdevdefsfilename = os.path.join(getBeamResourcesPath(), 'json', 'dmxdevicedefs.json')
         self._dmxDefinitions = DMXlibrary(dmxdevdefsfilename)
         self.palette = deepcopy(self._dmxDefinitions.getDMXdeviceDict(dmxfixture)['Palette'])
-
+        self.name = dmxfixture
+        self.colour = 'None'
         logging.debug("... Palette: " + str(self.palette))
 
     def GetPalette (self):
@@ -69,9 +70,75 @@ class DMXdevice:
     def GetPaletteList (self):
         return list(self.palette.keys())
 
+    def SetColour (self, patternkey):
+        self.colour = patternkey
+    def GetCurrentColour (self):
+        return self.colour
+    def GetCurrentPattern (self):
+        return list(self.palette[self.colour])
 
     def GetPattern (self, patternkey):
         return list(self.palette[patternkey])
 
     def GetFixtureAddressOffset (self):
         return len(list(self.palette['None']))
+
+class Universe:
+    def __init__(self):
+        self.fixturelist = [] # names of devices
+
+    def AddFixture (self, dmxfixture):
+        self.fixturelist.append(DMXdevice(dmxfixture))
+
+    def DelFixture (self, fixtureidx):
+        if 0 < self.FixtureCount():
+            self.fixturelist.pop(fixtureidx)
+
+    def FixtureCount (self):
+        return len(self.fixturelist)
+
+    def FixtureAddresses (self):
+        addrlist = []
+        currentaddr = 1
+        for fixture in self.fixturelist:
+            addrlist.append(str(currentaddr))
+            currentaddr += fixture.GetFixtureAddressOffset()
+            #currentaddr += 1
+            logging.debug("... currentaddr: " + str(currentaddr))
+        return addrlist
+
+    def FixtureNames (self):
+        list = []
+        for fixture in self.fixturelist:
+            list.append(fixture.name)
+        return list
+
+    def FixtureColours (self):
+        list = []
+        for fixture in self.fixturelist:
+            list.append(fixture.colour)
+        return list
+    def setFixtureColours (self, colour, indices):
+        logging.debug("... desired indices: " + str(indices))
+        logging.debug("... desired colour: " + str(colour))
+        for idx, fixture in enumerate(self.fixturelist):
+            if (idx in indices): fixture.SetColour(colour)
+            logging.debug("... new colour: " + str(fixture.colour))
+
+    def setAllFixtureColours (self, colourlist):
+        logging.debug("... desired colour list: " + str(colourlist))
+        clrlstlength = len(colourlist)
+        logging.debug("... desired colour list length: " + str(clrlstlength))
+        lastcolour = 'None'
+        for idx, fixture in enumerate(self.fixturelist):
+            if idx < clrlstlength :
+                lastcolour = colourlist[idx]
+            fixture.SetColour(lastcolour)
+            logging.debug("... new colour: ("+str(idx)+") " + str(fixture.colour))
+
+
+    def FixturePatterns (self):
+        pattern = []
+        for fixture in self.fixturelist:
+            pattern += fixture.GetPattern(fixture.colour)
+        return pattern

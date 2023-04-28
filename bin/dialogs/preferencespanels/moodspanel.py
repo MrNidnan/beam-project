@@ -26,6 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 import wx, os
+import logging
 from bin.dialogs.editmooddialog import EditMoodDialog
 
 #
@@ -180,7 +181,7 @@ class MoodsPanel(wx.Panel):
             # List all configured moods
             self.BuildMoodList()
     
-        #####################
+      #####################
         # LAYOUT CHECKBOXES #
         #####################
     def OnCheckMood(self, event):

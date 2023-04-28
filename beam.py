@@ -84,7 +84,7 @@ try:
     if platform.system() == 'Linux' or platform.system() == 'Darwin':
         from bin.DMX import olamodule
         from bin.DMX import *
-        if beamSettings.getSelectedU1DMXdeviceName() != 'None' or beamSettings.getSelectedU2DMXdeviceName() != 'None':
+        if 0 < beamSettings._Universe1.FixtureCount() or 0 < beamSettings._Universe2.FixtureCount():
             olamodule.startOlad()
     # if platform.system() == 'Windows':
     #     from bin.DMX.win import placebo
@@ -112,16 +112,17 @@ try:
     deviceU1 = None
     deviceU2 = None
     if platform.system() == 'Linux' or platform.system() == 'Darwin':
-        if beamSettings.getSelectedU1DMXdeviceName() != 'None':
-            deviceU1 = dmxmodule.DMXdevice(beamSettings.getSelectedU1DMXdeviceName())
-            colourpattern = deviceU1.GetPattern('None')
-            olamodule.sendDMXrequest(1, colourpattern)
-        if beamSettings.getSelectedU2DMXdeviceName() != 'None':
-            deviceU2 = dmxmodule.DMXdevice(beamSettings.getSelectedU2DMXdeviceName())
-            colourpattern = deviceU2.GetPattern('None')
-            olamodule.sendDMXrequest(2, colourpattern)
+        if 0 < beamSettings._Universe1.FixtureCount() or 0 < beamSettings._Universe2.FixtureCount():
+            beamSettings._Universe1.setAllFixtureColours(['None'])
+            beamSettings._Universe2.setAllFixtureColours(['None'])
+            colourpattern = beamSettings._Universe1.FixturePatterns()
+            if (0 < len(colourpattern)): olamodule.sendDMXrequest(1, colourpattern)
+            logging.debug("... U1 DMX colour: " + str(colourpattern))
+            colourpattern =  beamSettings._Universe2.FixturePatterns()
+            if (0 < len(colourpattern)): olamodule.sendDMXrequest(2, colourpattern)
+            logging.debug("... U2 DMX colour: " + str(colourpattern))
+        if olamodule.isRunningOlad(): olamodule.stopOlad()
 
-            olamodule.stopOlad()
     if platform.system() == 'Windows':
         from bin.DMX.win import placebo
 
