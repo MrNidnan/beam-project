@@ -276,10 +276,10 @@ class EditRuleDialog(wx.Dialog):
             self.sizer3.Remove(self.OutputField3)
             self.OutputField3.Hide()
         except: pass
-        try:
-            self.sizer3.Remove(self.PlayingState)
-            self.PlayingState.Hide()
-        except: pass
+        # try:
+        #     self.sizer3.Remove(self.PlayingState)
+        #     self.PlayingState.Hide()
+        # except: pass
 
 #
 # SAVE

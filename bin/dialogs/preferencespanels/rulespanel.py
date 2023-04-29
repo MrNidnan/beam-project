@@ -25,7 +25,7 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import wx, os
+import wx, os, numpy
 from bin.dialogs.editruledialog import EditRuleDialog
 
 ########################################################
@@ -53,7 +53,9 @@ class RulesPanel(wx.Panel):
         # RULE LIST #
         #############
         self.RuleList = wx.CheckListBox(self,-1, size=wx.DefaultSize, choices=self.RuleRows, style= wx.LB_NEEDED_SB)
-        self.RuleList.SetBackgroundColour(wx.Colour(128, 128, 128))
+        bgcolour = self.RuleList.GetBackgroundColour()
+        fgcolour = tuple(numpy.subtract((255,255,255,510),bgcolour))
+        self.RuleList.SetForegroundColour(fgcolour)
         self.RuleList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditRule)
         self.RuleList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckRule)
         self.BuildRuleList()

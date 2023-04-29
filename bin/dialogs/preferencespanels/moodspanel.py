@@ -27,6 +27,7 @@
 
 import wx, os
 import logging
+import numpy
 from bin.dialogs.editmooddialog import EditMoodDialog
 
 #
@@ -77,7 +78,11 @@ class MoodsPanel(wx.Panel):
         moodstitle = wx.StaticText(self, -1, "Moods")
         moodstitle.SetFont(font)
         self.MoodList = wx.CheckListBox(self,-1, size=wx.DefaultSize, choices=self.MoodRows, style= wx.LB_NEEDED_SB)
-        self.MoodList.SetBackgroundColour(wx.Colour(128, 128, 128))
+        bgcolour = self.MoodList.GetBackgroundColour()
+        logging.debug("... bgcolour: " + str(bgcolour))
+        fgcolour = tuple(numpy.subtract((255,255,255,510),bgcolour))
+        logging.debug("... fgcolour: " + str(fgcolour))
+        self.MoodList.SetForegroundColour(fgcolour)
         self.MoodList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnEditMood)
         self.MoodList.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckMood)
         # List all configured moods

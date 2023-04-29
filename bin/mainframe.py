@@ -318,7 +318,7 @@ class ListBookMenu(wx.Listbook):
                     (RulesPanel(self, mainFrame, beamSettings), "Rules"),
                     (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")
                  ]
-        if beamSettings.getSelectedU1DMXdeviceName() != 'None' or beamSettings.getSelectedU2DMXdeviceName() != 'None' : self.pages.append((DMXcontrolsPanel(self, beamSettings), "DMX"))
+        if platform.system() == 'Linux' or platform.system() == 'Darwin': self.pages.append((DMXcontrolsPanel(self, beamSettings), "DMX"))
         ImId=0
         for page, label in self.pages:
             self.AddPage(page,label,imageId=ImId)
