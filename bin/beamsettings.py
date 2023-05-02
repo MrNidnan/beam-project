@@ -153,13 +153,23 @@ class BeamSettings:
     #     self._beamConfigData['DMXdevice'] = deviceName
 
     def getSelectedU1DMXdeviceName(self):
-        return self._beamConfigData['U1_DMXdevice']
+        dn = 'None'
+        try:
+            dn = self._beamConfigData['U1_DMXdevice']
+        except: pass
+        finally:
+            return dn
 
     def setSelectedU1DMXdeviceName(self, deviceName):
         self._beamConfigData['U1_DMXdevice'] = deviceName
 
     def getSelectedU2DMXdeviceName(self):
-        return self._beamConfigData['U2_DMXdevice']
+        dn = 'None'
+        try:
+            dn = self._beamConfigData['U2_DMXdevice']
+        except: pass
+        finally:
+            return dn
 
     def setSelectedU2DMXdeviceName(self, deviceName):
         self._beamConfigData['U2_DMXdevice'] = deviceName

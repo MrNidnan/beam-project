@@ -42,7 +42,9 @@ class DMXlibrary:
         return list(self._dmxdevDict.keys())
 
     def getDMXdeviceDict(self, dmxfixture):
-         return self._dmxdevDict[dmxfixture]
+        if '' == dmxfixture: dmxfixture = 'None'
+        return self._dmxdevDict[dmxfixture]
+
     def loadDMXdevDefinitions(self, dmxdevdefsfilename):
         dmxdevdefsFile = open(dmxdevdefsfilename, 'r')
         try:
@@ -59,6 +61,7 @@ class DMXdevice:
 
         dmxdevdefsfilename = os.path.join(getBeamResourcesPath(), 'json', 'dmxdevicedefs.json')
         self._dmxDefinitions = DMXlibrary(dmxdevdefsfilename)
+        if '' == dmxfixture: dmxfixture = 'None'
         self.palette = deepcopy(self._dmxDefinitions.getDMXdeviceDict(dmxfixture)['Palette'])
         self.name = dmxfixture
         self.colour = 'None'
@@ -88,6 +91,7 @@ class Universe:
         self.fixturelist = [] # names of devices
 
     def AddFixture (self, dmxfixture):
+        if '' == dmxfixture: dmxfixture = 'None'
         self.fixturelist.append(DMXdevice(dmxfixture))
 
     def DelFixture (self, fixtureidx):
