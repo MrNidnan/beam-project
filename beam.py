@@ -24,6 +24,7 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import logging
 
 # initializes public variables of beamsettings.beamSettings
 # from stringResuorces by BeamSettings() __init__
@@ -85,7 +86,9 @@ try:
         from bin.DMX import olamodule
         from bin.DMX import *
         if 0 < beamSettings._Universe1.FixtureCount() or 0 < beamSettings._Universe2.FixtureCount():
-            olamodule.startOlad()
+            beamSettings._oladIsRunning = olamodule.startOlad()
+
+    logging.debug("OLAD is running:  " + str(beamSettings._oladIsRunning))
     # if platform.system() == 'Windows':
     #     from bin.DMX.win import placebo
 
@@ -121,7 +124,7 @@ try:
             colourpattern =  beamSettings._Universe2.FixturePatterns()
             if (0 < len(colourpattern)): olamodule.sendDMXrequest(2, colourpattern)
             logging.debug("... U2 DMX colour: " + str(colourpattern))
-        if olamodule.isRunningOlad(): olamodule.stopOlad()
+        if beamSettings._oladIsRunning: olamodule.stopOlad()
 
     if platform.system() == 'Windows':
         from bin.DMX.win import placebo

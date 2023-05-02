@@ -394,12 +394,13 @@ class NowPlayingData:
         currentU1DMXcolour = self.currentU1DMXcolour
         currentU2DMXcolour = self.currentU2DMXcolour
         if platform.system() == 'Linux' or platform.system() == 'Darwin':
-            colourpattern = u1.FixturePatterns()
-            if (0 < len(colourpattern)): olamodule.sendDMXrequest(1, colourpattern)
-            logging.debug("... U1 DMX colour: " + str(colourpattern))
-            colourpattern =  u2.FixturePatterns()
-            if (0 < len(colourpattern)): olamodule.sendDMXrequest(2, colourpattern)
-            logging.debug("... U2 DMX colour: " + str(colourpattern))
+            if beamSettings._oladIsRunning :
+                colourpattern = u1.FixturePatterns()
+                if (0 < len(colourpattern)): olamodule.sendDMXrequest(1, colourpattern)
+                logging.debug("... U1 DMX colour: " + str(colourpattern))
+                colourpattern =  u2.FixturePatterns()
+                if (0 < len(colourpattern)): olamodule.sendDMXrequest(2, colourpattern)
+                logging.debug("... U2 DMX colour: " + str(colourpattern))
 
         if platform.system() == 'Windows':
             pass

@@ -42,6 +42,7 @@ import sys
 wrapper = None
 
 def startOlad ():
+    status = 0
 
     try:
         result = subprocess.run (["olad", "-f"], capture_output=True, text=True)
@@ -50,9 +51,12 @@ def startOlad ():
         logging.info(result.stderr, exc_info=True)
         logging.info("Olad started", exc_info=True)
         time.sleep(2)
+        status = 1
     except Exception as e:
-        logging.error(e, exc_info=True)
-    return []
+        pass
+        #logging.debug(e, exc_info=True)
+
+    return status
 
 def stopOlad ():
 
@@ -66,7 +70,7 @@ def stopOlad ():
             logging.info("Olad stopped", exc_info=True)
 
     except Exception as e:
-        logging.error(e, exc_info=True)
+        logging.debug(e, exc_info=True)
 
     return []
 
@@ -77,7 +81,7 @@ def isRunningOlad ():
         pid = result.stdout
         if "" != pid.strip() : status = 1
     except Exception as e:
-        logging.error(e, exc_info=True)
+        logging.debug(e, exc_info=True)
     return status
 
 def DmxSent(status):

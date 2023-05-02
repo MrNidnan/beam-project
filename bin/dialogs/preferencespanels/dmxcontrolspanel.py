@@ -303,13 +303,15 @@ class DMXcontrolsPanel(wx.Panel):
         u = self.beamSettings._Universe1
         colourpattern = u.FixturePatterns()
         logging.debug("... U1 colourpattern: " + str(colourpattern))
-        if (0 < len(colourpattern)): olamodule.sendDMXrequest(1, colourpattern)
+        if self.beamSettings._oladIsRunning :
+            if (0 < len(colourpattern)): olamodule.sendDMXrequest(1, colourpattern)
 
     def onU2Run(self, event):
         u = self.beamSettings._Universe2
         colourpattern = u.FixturePatterns()
         logging.debug("... U2 colourpattern: " + str(colourpattern))
-        if (0 < len(colourpattern)): olamodule.sendDMXrequest(2, colourpattern)
+        if self.beamSettings._oladIsRunning :
+            if (0 < len(colourpattern)): olamodule.sendDMXrequest(2, colourpattern)
 
 ###################################################################
 #                             EOF                                 #

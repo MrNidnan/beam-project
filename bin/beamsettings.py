@@ -317,7 +317,9 @@ class BeamSettings:
 
         # Set OS-specific variables
         if platform.system() == 'Linux' or platform.system() == 'Darwin' :
-            osModuleNames = self._beamConfigData['AllModules'][0]['Modules']
+            osIdx = 2
+            if platform.system() == 'Linux': osIdx = 0
+            osModuleNames = self._beamConfigData['AllModules'][osIdx]['Modules']
             osU1DMXdeviceName = self.getDMXdeviceList()
             osU2DMXdeviceName = self.getDMXdeviceList()
             self._preferencesSize = (500, 500)
@@ -364,6 +366,7 @@ class BeamSettings:
         if self.getLogPath() == '':
             self.setLogPath(getBeamConfigPath())
         # self._loglevel           = self._beamConfigData['LogLevel']
+        self._oladIsRunning = 0
 
 
         return
