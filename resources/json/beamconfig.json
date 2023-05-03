@@ -128,7 +128,9 @@
       "RotateBackground": "no",
       "RotateTimer": 1200,
       "DisplayTimer": 0,
-      "DMXcolour": "red",
+      "DMXcolour": "None",
+      "U1DMXcolour": "None",
+      "U2DMXcolour": "None",
       "Display": [
         {
           "Field": "\u266a Previous song: %PreviousTitle",
