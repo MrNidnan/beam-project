@@ -27,6 +27,7 @@
 
 import wx, os, platform
 import logging
+import numpy
 
 ########################################################
 #                   TagsPreview                        #
@@ -107,18 +108,9 @@ class TagsPreviewPanel(wx.Panel):
         else:
             for i in range(0, len(additionalTags)):
                 try:
-                    #displayList.append(additionalTags[i]+ ":  " + str(self.nowPlayingDataModel.convDict[additionalTags[i]]))
-                    #if platform.system() == 'Darwin':
-                    #    index = self.TagsList.InsertItem(i, (additionalTags[i]).decode('utf-8'))
-                    #    self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[additionalTags[i]].decode('utf-8'))
-                    #else:
                     index = self.TagsList.InsertItem(i, additionalTags[i])
                     self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[additionalTags[i]])
                 except:
-                    #if platform.system() == 'Darwin':
-                    #    index = self.TagsList.InsertItem(i, additionalTags[i])
-                    #    self.TagsList.SetItem(index, 1, str(' '))
-                    #else:
                     index = self.TagsList.InsertItem(i, additionalTags[i])
                     self.TagsList.SetItem(index, 1, str(' '))
 
@@ -127,22 +119,9 @@ class TagsPreviewPanel(wx.Panel):
             #try:
             for i in range(0,len(attributes)):
                 try:
-                    #if platform.system() == 'Darwin':
-                    #    #displayList.append((preTag+attributes[i]+": ").decode('utf-8') + self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
-                    #    index = self.TagsList.InsertItem(i, (preTag+attributes[i]).decode('utf-8'))
-                    #    self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[preTag+attributes[i]].decode('utf-8'))
-                    #else:
-                    #logging.debug("Iterating on " + str(i) + " "+ preTag+attributes[i] + " " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
-                    #displayList.append(preTag+attributes[i]+ ": " + str(self.nowPlayingDataModel.convDict[preTag+attributes[i]]))
                     index = self.TagsList.InsertItem(i, preTag+attributes[i])
                     self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[preTag+attributes[i]])
                 except:
-                    #for i in range(0,len(attributes)):
-                    #displayList.append(preTag+attributes[i]+ ": ")
-                    #if platform.system() == 'Darwin':
-                    #    index = self.TagsList.InsertItem(i, (preTag+attributes[i]).decode('utf-8'))
-                    #    self.TagsList.SetItem(index, 1, str(' '))
-                    #else:
                     index = self.TagsList.InsertItem(i, preTag+attributes[i])
                     self.TagsList.SetItem(index, 1, str(' '))
 
