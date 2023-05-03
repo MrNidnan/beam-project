@@ -43,7 +43,7 @@ if platform.system() == 'Linux':
 if platform.system() == 'Windows':
     from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule, jrivermodule
 if platform.system() == 'Darwin':
-    from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule
+    from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule, jrivermodule
 from bin.modules import icecastmodule
 
 ###############################################################
@@ -181,6 +181,8 @@ class NowPlayingData:
                     self.currentPlaylist, self.PlaybackStatus  = embracemodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
             if currentSettings.getSelectedModuleName() == 'Mixxx':
                 self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
+            if currentSettings.getSelectedModuleName() == 'JRiver':
+                self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings.getMaxTandaLength())
 
         # for all platforms
         if currentSettings.getSelectedModuleName() == 'Icecast':

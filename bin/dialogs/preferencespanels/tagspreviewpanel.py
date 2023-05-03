@@ -26,7 +26,6 @@
 # This Python file uses the following encoding: utf-8
 
 import wx, os, platform
-import numpy
 import logging
 
 ########################################################
@@ -66,6 +65,7 @@ class TagsPreviewPanel(wx.Panel):
         self.TagsList.InsertColumn(0, 'Tag', width=240)
         self.TagsList.InsertColumn(1, 'Value', width=500)
         self.DoRefresh(None)
+
         # Sizers
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
