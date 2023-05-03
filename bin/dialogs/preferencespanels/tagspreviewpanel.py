@@ -26,6 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 import wx, os, platform
+import numpy
 import logging
 
 ########################################################
@@ -57,6 +58,11 @@ class TagsPreviewPanel(wx.Panel):
         # List of tags
         #self.TagsList = wx.ListBox(self, -1, size=wx.DefaultSize, choices=Tags, style= wx.LB_NEEDED_SB)
         self.TagsList = wx.ListCtrl(self, -1, size=wx.DefaultSize, style= wx.LC_REPORT)
+        bgcolour = self.TagsList.GetBackgroundColour()
+        logging.debug("... bgcolour: " + str(bgcolour))
+        fgcolour = tuple(numpy.subtract((255,255,255,510),bgcolour))
+        logging.debug("... fgcolour: " + str(fgcolour))
+        self.TagsList.SetForegroundColour(fgcolour)
         self.TagsList.InsertColumn(0, 'Tag', width=240)
         self.TagsList.InsertColumn(1, 'Value', width=500)
         self.DoRefresh(None)
