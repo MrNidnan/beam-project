@@ -25,20 +25,22 @@
 #
 # This Python file uses the following encoding: utf-8
 
-import wx, os, platform
+import wx
 import logging
 import numpy
 
 ########################################################
 #                   TagsPreview                        #
 ########################################################
+
+
 class TagsPreviewPanel(wx.Panel):
-    def __init__(self, parent, BeamSettings, nowPlayingDataModel):
+    def __init__(self, parent, nowPlayingDataModel):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        Tags = []
+        font = wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_SLANT, wx.FONTWEIGHT_BOLD)
+
         self.nowPlayingDataModel = nowPlayingDataModel
 
         # Caption
@@ -52,20 +54,23 @@ class TagsPreviewPanel(wx.Panel):
         self.refreshButton.Bind(wx.EVT_BUTTON, self.DoRefresh)
 
         # Tag type selector
-        self.TagDropdown = wx.ComboBox(self,value="Current Song", choices=["Current Song","Previous Song","Next Song","Next Tanda", "Misc"], style=wx.CB_READONLY)
+        self.TagDropdown = wx.ComboBox(self,
+                                       value="Current Song",
+                                       choices=["Current Song", "Previous Song", "Next Song", "Next Tanda", "Misc"],
+                                       style=wx.CB_READONLY)
         self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.DoRefresh)
 
         # List of tags
-        #self.TagsList = wx.ListBox(self, -1, size=wx.DefaultSize, choices=Tags, style= wx.LB_NEEDED_SB)
-        self.TagsList = wx.ListCtrl(self, -1, size=wx.DefaultSize, style= wx.LC_REPORT)
+        # self.TagsList = wx.ListBox(self, -1, size=wx.DefaultSize, choices=Tags, style= wx.LB_NEEDED_SB)
+        self.TagsList = wx.ListCtrl(self, -1, size=wx.DefaultSize, style=wx.LC_REPORT)
         bgcolour = self.TagsList.GetBackgroundColour()
         logging.debug("... bgcolour: " + str(bgcolour))
-        fgcolour = tuple(numpy.subtract((255,255,255,510),bgcolour))
+        fgcolour = tuple(numpy.subtract((255, 255, 255, 510), bgcolour))
         logging.debug("... fgcolour: " + str(fgcolour))
         self.TagsList.SetForegroundColour(fgcolour)
         self.TagsList.InsertColumn(0, 'Tag', width=240)
         self.TagsList.InsertColumn(1, 'Value', width=500)
-        self.DoRefresh(None)
+        self.DoRefresh()
 
         # Sizers
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -83,19 +88,18 @@ class TagsPreviewPanel(wx.Panel):
         TagsSelected = self.TagDropdown.GetValue()
         self.BuildTagsList(TagsSelected)
 
-
-    def DoRefresh(self, event):
+    def DoRefresh(self):
         TagsSelected = self.TagDropdown.GetValue()
         self.BuildTagsList(TagsSelected)
 
-
     def BuildTagsList(self, TagsSelected):
         self.TagsList.DeleteAllItems()
-        attributes = ['Artist', 'Album', 'AlbumArtist','Title','Genre','Comment','Composer','Year', 'Singer'
-                      ,'Performer','IsCortina']
-        additionalTags = ['%Hour','%Min','%DateDay','%DateMonth','%DateYear','%LongDate','%ShortDate','%SongsSinceLastCortina'
-                        ,'%CurrentTandaSongsRemaining','%CurrentTandaLength']
-        displayList = []
+        attributes = ['Artist', 'Album', 'AlbumArtist', 'Title', 'Genre', 'Comment', 'Composer',
+                      'Year', 'Singer', 'Performer', 'IsCortina']
+        additionalTags = ['%Hour', '%Min', '%DateDay', '%DateMonth', '%DateYear',
+                          '%LongDate', '%ShortDate', '%SongsSinceLastCortina',
+                          '%CurrentTandaSongsRemaining', '%CurrentTandaLength']
+        preTag = ''
 
         if TagsSelected == "Current Song":
             preTag = '%'
@@ -114,10 +118,9 @@ class TagsPreviewPanel(wx.Panel):
                     index = self.TagsList.InsertItem(i, additionalTags[i])
                     self.TagsList.SetItem(index, 1, str(' '))
 
-
         if not TagsSelected == 'Misc':
-            #try:
-            for i in range(0,len(attributes)):
+            # try:
+            for i in range(0, len(attributes)):
                 try:
                     index = self.TagsList.InsertItem(i, preTag+attributes[i])
                     self.TagsList.SetItem(index, 1, self.nowPlayingDataModel.convDict[preTag+attributes[i]])
@@ -126,4 +129,3 @@ class TagsPreviewPanel(wx.Panel):
                     self.TagsList.SetItem(index, 1, str(' '))
 
 
-        #self.TagsList.Set(displayList)

@@ -316,7 +316,7 @@ class ListBookMenu(wx.Listbook):
                     # (DefaultLayoutPanel(self, beamSettings), "Layout"),
                     (MoodsPanel(self, mainFrame, beamSettings), "Layout"),
                     (RulesPanel(self, mainFrame, beamSettings), "Rules"),
-                    (TagsPreviewPanel(self, beamSettings, displayData.nowPlayingData), "Tags")
+                    (TagsPreviewPanel(self, displayData.nowPlayingData), "Tags")
                  ]
         if platform.system() == 'Linux' or platform.system() == 'Darwin': self.pages.append((DMXcontrolsPanel(self, beamSettings), "DMX"))
         ImId=0
