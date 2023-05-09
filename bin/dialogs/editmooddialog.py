@@ -497,6 +497,7 @@ class EditMoodDialog(wx.Dialog):
         colour = self.EditMood['U1DMXcolour']
         try:
             list = self.EditMood['U1DMXcolours']
+        except: pass
         finally:
             listlength = len(list)
             u = beamSettings._Universe1
@@ -508,6 +509,7 @@ class EditMoodDialog(wx.Dialog):
         colour = self.EditMood['U2DMXcolour']
         try :
             list = self.EditMood['U2DMXcolours']
+        except: pass
         finally:
             listlength = len(list)
             u = beamSettings._Universe2
