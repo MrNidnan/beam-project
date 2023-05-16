@@ -35,7 +35,9 @@ from bin.dialogs.preferencespanels.basicsettingspanel import BasicSettingsPanel
 from bin.dialogs.preferencespanels.moodspanel import MoodsPanel
 from bin.dialogs.preferencespanels.rulespanel import RulesPanel
 from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel
-from bin.dialogs.preferencespanels.dmxcontrolspanel import DMXcontrolsPanel
+
+if platform.system() == 'Linux' or platform.system() == 'Darwin':
+    from bin.dialogs.preferencespanels.dmxcontrolspanel import DMXcontrolsPanel
 
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
