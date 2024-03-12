@@ -84,8 +84,11 @@ class TagsPreviewPanel(wx.Panel):
         self.SetSizer(vbox)
 
     def OnPaint(self, event):
+        logging.debug(str(event))
         TagsSelected = self.TagDropdown.GetValue()
         self.BuildTagsList(TagsSelected)
+        self.Layout()
+        self.Update()
 
     def DoRefresh(self):
         TagsSelected = self.TagDropdown.GetValue()

@@ -45,7 +45,8 @@ class DMXcontrolsPanel(wx.Panel):
         self.beamSettings = beamSettings
         self.U1CurrentColour = 'None'
         self.U2CurrentColour = 'None'
-
+        self.U1SelectedDevices = []
+        self.U2SelectedDevices = []
         ##########
         # SIZERS #
         ##########
@@ -171,11 +172,12 @@ class DMXcontrolsPanel(wx.Panel):
         vbox.Add(self.dmxcontrols, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         vbox.Add(self.dmxdescription, flag=wx.LEFT, border=10)
         hbox1.Add(self.U1description, flag=wx.LEFT | wx.TOP, border=10)
-        hbox1.Add(self.U1DMXpatternSelectorDropdown, flag=wx.LEFT | wx.TOP, border=10)
         hbox1.Add(self.U1DMXfixtureColourList, flag=wx.LEFT | wx.TOP, border=10)
+        hbox1.Add(self.U1DMXpatternSelectorDropdown, flag=wx.LEFT | wx.TOP, border=10)
+
         hbox2.Add(self.U2description, flag=wx.LEFT | wx.TOP, border=10)
-        hbox2.Add(self.U2DMXpatternSelectorDropdown, flag=wx.LEFT | wx.TOP, border=10)
         hbox2.Add(self.U2DMXfixtureColourList, flag=wx.LEFT | wx.TOP, border=10)
+        hbox2.Add(self.U2DMXpatternSelectorDropdown, flag=wx.LEFT | wx.TOP, border=10)
 
         ###########
         # BUTTONS #
@@ -287,7 +289,6 @@ class DMXcontrolsPanel(wx.Panel):
         u1c = u1.FixtureColours()
         for index, value in enumerate(u1n):
             self.U1DMXfixtureColourList.Append(u1c[index])
-
     def OnSelectU2DMXpattern(self, event):
         fixtureindices = self.U2DMXfixtureColourList.GetSelections()
         self.U2CurrentColour = self.U2DMXpatternSelectorDropdown.GetValue()
