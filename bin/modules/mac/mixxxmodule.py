@@ -31,7 +31,8 @@ from bin.modules import mixxxutils
 
 
 def run(MaxTandaLength, LastPlaylist):
-    sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
+    # sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
+    sqlitePath = os.path.expandvars(r'$HOME/Library/Containers/org.mixxx.mixxx/Data/Library/Application Support/Mixxx/mixxxdb.sqlite')
 
     playlist, playback_status = mixxxutils.run(MaxTandaLength, LastPlaylist, sqlitePath)
 
