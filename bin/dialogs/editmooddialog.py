@@ -43,7 +43,8 @@ class EditMoodDialog(wx.Dialog):
         xpos, ypos = moodsPanel.GetScreenPosition()
 #        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), style=wx.RESIZE_BORDER)
         wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
-                           size=moodsPanel.BeamSettings._moodSize, style=wx.RESIZE_BORDER)
+#                           size=moodsPanel.BeamSettings._moodSize, style=wx.RESIZE_BORDER)
+                            size = moodsPanel.BeamSettings._moodSize)
         # #        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
 #                          size=self.moodsPanel.BeamSettings._moodSize,
 #                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
