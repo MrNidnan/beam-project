@@ -2,6 +2,10 @@
 
 Check the local [wiki/Home.md](wiki/Home.md) for project information.
 
+This fork is licensed under the GNU General Public License, version 2 or, at your option, any later version (`GPL-2.0-or-later`). See [LICENSE.md](LICENSE.md).
+
+Fork-specific changes and fixes are tracked in [CHANGELOG.md](CHANGELOG.md).
+
 To run the project locally make sure you have Python 3 installed and run:
 
 ```powershell
