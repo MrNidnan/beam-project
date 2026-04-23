@@ -1,4 +1,4 @@
-name: Build
+name: Validate
 
 on:
   workflow_dispatch:
@@ -10,33 +10,7 @@ on:
   pull_request:
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      artifact_tag: ${{ steps.version.outputs.artifact_tag }}
-      windows_artifact_name: ${{ steps.version.outputs.windows_artifact_name }}
-      windows_artifact_path: ${{ steps.version.outputs.windows_artifact_path }}
-      linux_artifact_name: ${{ steps.version.outputs.linux_artifact_name }}
-      linux_artifact_path: ${{ steps.version.outputs.linux_artifact_path }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Resolve artifact names
-        id: version
-        shell: bash
-        run: |
-          ARTIFACT_TAG=$(python3 -c "import json; from pathlib import Path; version = json.loads(Path('resources/json/strings.json').read_text(encoding='utf-8'))['version']; print('v' + version.removesuffix('.0'))")
-
-          echo "artifact_tag=$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
-          echo "windows_artifact_name=beam-win-$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
-          echo "windows_artifact_path=dist/beam-win-$ARTIFACT_TAG.exe" >> "$GITHUB_OUTPUT"
-          echo "linux_artifact_name=beam-lin-$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
-          echo "linux_artifact_path=dist/beam-lin-$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
-
-  build-windows:
-    needs: prepare
+  validate-windows:
     runs-on: windows-latest
 
     steps:
@@ -57,26 +31,13 @@ jobs:
         run: |
           .\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
           .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-          .\.venv\Scripts\python.exe -m pip install pyinstaller
 
-      - name: Build Windows executable
+      - name: Validate Windows entrypoint
         shell: pwsh
         run: |
-          .\.venv\Scripts\python.exe -m PyInstaller --noconfirm --noconsole --clean --onefile `
-            --add-data "resources;resources" `
-            --add-data "docs;docs" `
-            --name "${{ needs.prepare.outputs.windows_artifact_name }}" `
-            beam.py
+          .\.venv\Scripts\python.exe -m py_compile beam.py
 
-      - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.prepare.outputs.windows_artifact_name }}
-          path: ${{ needs.prepare.outputs.windows_artifact_path }}
-          if-no-files-found: error
-
-  build-linux:
-    needs: prepare
+  validate-linux:
     runs-on: ubuntu-22.04
 
     steps:
@@ -95,20 +56,6 @@ jobs:
             python3-numpy \
             python3-dbus
 
-      - name: Install PyInstaller
-        run: python3 -m pip install pyinstaller
-
-      - name: Build Linux executable
+      - name: Validate Linux entrypoint
         run: |
-          python3 -m PyInstaller --noconfirm --noconsole --clean --onefile \
-            --add-data "resources:resources" \
-            --add-data "docs:docs" \
-            --name "${{ needs.prepare.outputs.linux_artifact_name }}" \
-            beam.py
-
-      - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.prepare.outputs.linux_artifact_name }}
-          path: ${{ needs.prepare.outputs.linux_artifact_path }}
-          if-no-files-found: error
+          python3 -m py_compile beam.py

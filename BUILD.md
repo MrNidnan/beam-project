@@ -22,6 +22,14 @@ Release artifact names below use `v0.7.0`.
   - Windows: `%USERPROFILE%\\.beam\\beamconfig.json`
   - Linux: `~/.beam/beamconfig.json`
 
+## CI Policy
+
+- Branch pushes and pull requests run the GitHub Actions validation workflow only.
+- The validation workflow checks the Python entrypoint on Windows and Linux, but it does not package Beam and it does not upload artifacts.
+- Release artifacts are built only by the GitHub Actions release workflow.
+- The release workflow runs when you push a `v*` tag, or when you start it manually with `workflow_dispatch` and provide a release tag.
+- The release workflow builds the Windows and Linux executables, uploads those workflow artifacts, pauses at the `release-smoke-test` environment gate, and then creates a draft GitHub release.
+
 ## Windows
 
 ### Prerequisites
@@ -122,9 +130,14 @@ git tag v0.7.0
 git push origin v0.7.0
 ```
 
-7. Create the GitHub release and upload:
-   - `beam-win-v0.7.0.exe`
-   - `beam-lin-v0.7.0`
+7. Wait for the GitHub Actions `Release` workflow to build:
+
+- `beam-win-v0.7.0.exe`
+- `beam-lin-v0.7.0`
+
+8. Approve the `release-smoke-test` environment if your repository requires manual approval.
+
+9. Review the draft GitHub release created by the workflow and publish it.
 
 ## Packaging Notes
 
