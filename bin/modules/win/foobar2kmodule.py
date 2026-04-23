@@ -24,16 +24,32 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
-import urllib
+import json
+import logging
+import os
+import urllib.error
+import urllib.parse
+import urllib.request
 
 from bin.songclass import SongObject
-
-try:
-    import pythoncom
-    import win32com.client
-except ImportError:
-    pass
 from bin.modules.win.winutils import applicationrunning
+
+
+DEFAULT_BEEFWEB_URL = "http://localhost:8888/"
+DEFAULT_TIMEOUT_SECONDS = 2.0
+_beefweb_warning_logged = False
+BEAM_BEEFWEB_COLUMNS = [
+    "[%artist%]",
+    "[%album%]",
+    "[%title%]",
+    "[%genre%]",
+    "[%comment%]",
+    "[%composer%]",
+    "[%date%]",
+    "[%album artist%]",
+    "[%performer%]",
+    "[%path%]",
+]
 
 ###############################################################
 #
@@ -41,61 +57,177 @@ from bin.modules.win.winutils import applicationrunning
 #
 ###############################################################
 
-def run(MaxTandaLength):
+def run(max_tanda_length):
+    global _beefweb_warning_logged
 
     playlist = []
-    playbackStatus = ''
+    playback_status = ''
     
     #
     # Player Status
     #
     if not applicationrunning("foobar2000.exe"):
-        playbackStatus = 'PlayerNotRunning'
-        return playlist, playbackStatus
+        playback_status = 'PlayerNotRunning'
+        return playlist, playback_status
 
-    pythoncom.CoInitialize()
     try:
-        progID = "Foobar2000.Application.0.7"
-        foobarComObj = win32com.client.Dispatch(progID)
+        player_state = get_player_state()
+        playback_status = map_playback_status(player_state.get('playbackState'))
 
-        # Playback Status
-        if not foobarComObj.Playback.IsPlaying:
-            playbackStatus = 'Stopped'
+        active_item = player_state.get('activeItem') or {}
+        current_song = get_song_from_columns(active_item.get('columns') or [])
+
+        if song_has_metadata(current_song):
+            playlist.append(current_song)
+
+        playlist_id = active_item.get('playlistId')
+        active_index = active_item.get('index')
+        item_count = max(int(max_tanda_length or 1), 1)
+
+        if playlist_id is not None and active_index is not None:
+            playlist_items = get_playlist_items(playlist_id, active_index, item_count)
+            if playlist_items:
+                playlist = playlist_items
+
+        _beefweb_warning_logged = False
+
+    except urllib.error.URLError as error:
+        if not _beefweb_warning_logged:
+            logging.warning(
+                "Foobar2000 is running but Beefweb is unavailable at '%s': %s",
+                get_beefweb_base_url(),
+                error,
+            )
+            _beefweb_warning_logged = True
+        if playlist:
+            playback_status = 'Playing'
         else:
-            if foobarComObj.Playback.IsPaused:
-                playbackStatus = 'Paused'
-            else:
-                playbackStatus = 'Playing'
-                playlist.append(getSongAt(foobarComObj, 1))
+            playback_status = 'BeefwebUnavailable'
+    except Exception as error:
+        logging.error(error, exc_info=True)
+        if playlist:
+            playback_status = 'Playing'
+        else:
+            playback_status = 'BeefwebUnavailable'
 
-        # ??? foobarComObj..Quit()
-    finally:
-        pythoncom.CoUninitialize()
+    return playlist, playback_status
 
-    return playlist, playbackStatus
+def get_player_state():
+    response = open_json('/player', {'columns': BEAM_BEEFWEB_COLUMNS})
+    return response.get('player') or {}
 
-###############################################################
-#
-# Full read - Player specific
-#
-###############################################################
 
-def getSongAt(Foobar, songPosition):
-    retSong = SongObject()
+def get_playlist_items(playlist_id, active_index, item_count):
+    playlist_path = '/playlists/{0}/items/{1}:{2}'.format(
+        urllib.parse.quote(str(playlist_id), safe=''),
+        int(active_index),
+        int(item_count),
+    )
+    response = open_json(playlist_path, {'columns': BEAM_BEEFWEB_COLUMNS})
+    items = (((response.get('playlistItems') or {}).get('items')) or [])
+    return [get_song_from_columns(item.get('columns') or []) for item in items]
 
-    retSong.Artist      = Foobar.Playback.FormatTitle("[%artist%]")
-    retSong.Album       = Foobar.Playback.FormatTitle("[%album%]")
-    retSong.Title       = Foobar.Playback.FormatTitle("[%title%]")
-    retSong.Genre       = Foobar.Playback.FormatTitle("[%genre%]")
-    retSong.Comment     = Foobar.Playback.FormatTitle("[%comment%]")
-    retSong.Composer    = Foobar.Playback.FormatTitle("[%composer%]")
-    retSong.Year        = Foobar.Playback.FormatTitle("[%date%]")
-    #retSong._Singer     Defined by beam
-    retSong.AlbumArtist = Foobar.Playback.FormatTitle("[%album artist%]")
-    retSong.Performer   = Foobar.Playback.FormatTitle("[%performer%]")
-    #retSong.IsCortina   Defined by beam
 
-    retSong.FilePath     = Foobar.Playback.FormatTitle("[%path%]")
-    # 'C:\\Users\\DJ\\Tango\\Todays Tango\\Cola \'e Paja - Orquesta Típica Porteña - 1928-04-28.mp3'
-    
-    return retSong
+def get_song_from_columns(columns):
+    ret_song = SongObject()
+    normalized_columns = list(columns) + [''] * (len(BEAM_BEEFWEB_COLUMNS) - len(columns))
+
+    ret_song.Artist = normalized_columns[0]
+    ret_song.Album = normalized_columns[1]
+    ret_song.Title = normalized_columns[2]
+    ret_song.Genre = normalized_columns[3]
+    ret_song.Comment = normalized_columns[4]
+    ret_song.Composer = normalized_columns[5]
+    ret_song.Year = normalized_columns[6]
+    ret_song.AlbumArtist = normalized_columns[7]
+    ret_song.Performer = normalized_columns[8]
+    ret_song.FilePath = normalized_columns[9]
+
+    return ret_song
+
+
+def song_has_metadata(song):
+    return any([
+        song.Artist,
+        song.Album,
+        song.Title,
+        song.Genre,
+        song.Comment,
+        song.Composer,
+        song.Year,
+        song.AlbumArtist,
+        song.Performer,
+        song.FilePath,
+    ])
+
+
+def map_playback_status(beefweb_status):
+    if beefweb_status == 'playing':
+        return 'Playing'
+    if beefweb_status == 'paused':
+        return 'Paused'
+    return 'Stopped'
+
+
+def open_json(path, query_params=None):
+    opener = build_url_opener()
+    url = build_api_url(path, query_params)
+    request = urllib.request.Request(url, headers={'Accept': 'application/json'})
+
+    with opener.open(request, timeout=get_beefweb_timeout()) as response:
+        payload = response.read().decode('utf-8')
+
+    return json.loads(payload)
+
+
+def build_url_opener():
+    user = os.environ.get('BEAM_BEEFWEB_USER', '')
+    password = os.environ.get('BEAM_BEEFWEB_PASSWORD', '')
+
+    if not user and not password:
+        return urllib.request.build_opener()
+
+    password_manager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+    password_manager.add_password(None, get_beefweb_base_url(), user, password)
+    auth_handler = urllib.request.HTTPBasicAuthHandler(password_manager)
+    return urllib.request.build_opener(auth_handler)
+
+
+def build_api_url(path, query_params=None):
+    query_string = ''
+    if query_params:
+        encoded_params = []
+        for key, value in query_params.items():
+            if isinstance(value, (list, tuple)):
+                value = ','.join([str(item) for item in value])
+            encoded_params.append((key, value))
+        query_string = urllib.parse.urlencode(encoded_params)
+
+    url = get_beefweb_base_url().rstrip('/') + path
+    if query_string:
+        url = url + '?' + query_string
+    return url
+
+
+def get_beefweb_base_url():
+    configured_url = os.environ.get('BEAM_BEEFWEB_URL', DEFAULT_BEEFWEB_URL)
+    parsed_url = urllib.parse.urlsplit(configured_url)
+    normalized_path = parsed_url.path.rstrip('/')
+
+    if normalized_path in ('', '/api'):
+        normalized_path = '/api'
+
+    return urllib.parse.urlunsplit((
+        parsed_url.scheme,
+        parsed_url.netloc,
+        normalized_path,
+        parsed_url.query,
+        parsed_url.fragment,
+    ))
+
+
+def get_beefweb_timeout():
+    try:
+        return float(os.environ.get('BEAM_BEEFWEB_TIMEOUT', DEFAULT_TIMEOUT_SECONDS))
+    except ValueError:
+        return DEFAULT_TIMEOUT_SECONDS

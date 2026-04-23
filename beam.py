@@ -126,9 +126,6 @@ try:
             logging.debug("... U2 DMX colour: " + str(colourpattern))
         if beamSettings._oladIsRunning: olamodule.stopOlad()
 
-    if platform.system() == 'Windows':
-        from bin.DMX.win import placebo
-
     logging.info("Beam closed")
 
 except Exception as e:
