@@ -1,0 +1,13 @@
+Beam is an advanced live media extractor for Unix, Windows and Mac operating system. Features include a scalable display for TV or projector, customisable backgrounds and text, possibility to detect cortinas and display the next tanda.
+
+**Copyright:** (C) 2014 - 2016 Mikael Holber
+
+**Website:** http://www.beam-project.com
+
+**Developer:** Mikael Holber, Horia Uifăleanu, Martin Ziemer
+
+**Artwork:** by Andreea Vlad - www.andreeavlad.com
+
+# License #
+
+Beam is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. Beam is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with Beam; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA

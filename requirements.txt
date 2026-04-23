@@ -1,0 +1,5 @@
+wxPython
+mutagen
+numpy
+pywin32; platform_system == "Windows"
+dbus-python; platform_system == "Linux"
