@@ -82,7 +82,9 @@ def run(MaxTandaLength, LastPlaylist):
         searchsong = currentsong
         playlistlength = searchsong + MaxTandaLength+2
 
-        if MediaMonkey.VersionHi == 4:
+        version_hi = getattr(MediaMonkey, 'VersionHi', None)
+
+        if version_hi == 4:
             #
             # Quick-read
             #
@@ -102,12 +104,13 @@ def run(MaxTandaLength, LastPlaylist):
                         break
                     searchsong = searchsong+1
         else:
-            if MediaMonkey.VersionHi == 5:
-                # MM5 works only current song
+            if version_hi is not None and version_hi >= 5:
+                # MM5 and later only expose a reliable current-song path here.
                 playlist.append(getSongAt(MediaMonkey, searchsong))
             else:
-                # Unknown version
-                raise
+                logging.warning("Unsupported MediaMonkey version detected: %s", version_hi)
+                playbackStatus = 'Stopped'
+                return playlist, playbackStatus
     finally:
         pythoncom.CoUninitialize()
 

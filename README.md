@@ -6,6 +6,12 @@ This fork is licensed under the GNU General Public License, version 2 or, at you
 
 Fork-specific changes and fixes are tracked in [CHANGELOG.md](CHANGELOG.md).
 
+Build and release commands for this fork are documented in [BUILD.md](BUILD.md).
+
+Foobar2000 support in this fork now uses the Beefweb HTTP API and is no longer compatible with the older deprecated plugin path. See [FOOBAR_MODULE.md](FOOBAR_MODULE.md) for setup and migration details.
+
+Beam now keeps the last song and active mood visible while playback is paused. When playback stops, Beam clears the current song and falls back to the default or not-playing mood.
+
 To run the project locally make sure you have Python 3 installed and run:
 
 ```powershell

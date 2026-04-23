@@ -35,6 +35,7 @@ from mutagen import File
 from mutagen.apev2 import APEv2
 from mutagen.flac import FLAC
 from mutagen.id3 import ID3
+from mutagen.id3 import PictureType
 from mutagen.mp4 import MP4
 from mutagen.mp4 import MP4Cover
 
@@ -148,6 +149,44 @@ def readSongObject(filePath):
 ########################################################
 # DRAW TEXT & CoverArt
 ########################################################
+def getBitmapTypeFromMime(mimeType):
+    bitmapType = None
+    mimeType = mimeType.lower()
+
+    if (mimeType == 'image/jpeg') or (mimeType == 'image/jpg'):
+        bitmapType = wx.BITMAP_TYPE_JPEG
+    if mimeType == 'image/png':
+        bitmapType = wx.BITMAP_TYPE_PNG
+    if mimeType == 'image/gif':
+        bitmapType = wx.BITMAP_TYPE_GIF
+    if mimeType == 'image/bmp':
+        bitmapType = wx.BITMAP_TYPE_BMP
+    if not bitmapType:
+        logging.warning("Unkown mime type: " + mimeType)
+        bitmapType = wx.BITMAP_TYPE_ANY
+
+    return bitmapType
+
+
+def getPreferredId3ApicTag(id3Frame):
+    apicTags = id3Frame.getall("APIC")
+    if not apicTags:
+        apicTag = id3Frame.get("APIC:")
+        if apicTag:
+            return apicTag
+        return None
+
+    for apicTag in apicTags:
+        if apicTag.type == PictureType.COVER_FRONT and apicTag.data:
+            return apicTag
+
+    for apicTag in apicTags:
+        if apicTag.data:
+            return apicTag
+
+    return None
+
+
 def readCoverArtImage(filePath):
     logging.debug("readCoverArtImage(" + filePath + ")")
     coverArtImage = None
@@ -160,20 +199,10 @@ def readCoverArtImage(filePath):
     if not coverArtImage:
         try:
             id3Frame = ID3(filePath)
-            apicTag = id3Frame.get("APIC:")
-            data = apicTag.data
+            apicTag = getPreferredId3ApicTag(id3Frame)
+            data = apicTag.data if apicTag else None
             if data:
-                if (apicTag.mime.lower() == 'image/jpeg') or (apicTag.mime.lower() == 'image/jpg'):
-                    bitmapType = wx.BITMAP_TYPE_JPEG
-                if apicTag.mime.lower() == 'image/png':
-                    bitmapType = wx.BITMAP_TYPE_PNG
-                if apicTag.mime.lower() == 'image/gif':
-                    bitmapType = wx.BITMAP_TYPE_GIF
-                if apicTag.mime.lower() == 'image/bmp':
-                    bitmapType = wx.BITMAP_TYPE_BMP
-                if not bitmapType:
-                    logging.warning("Unkown mime type: " + apicTag.mime.lower())
-                    bitmapType = wx.BITMAP_TYPE_ANY
+                bitmapType = getBitmapTypeFromMime(apicTag.mime)
                 coverArtImage = wx.Image(BytesIO(data), bitmapType)
         except Exception as e:
             pass
@@ -201,17 +230,7 @@ def readCoverArtImage(filePath):
             flac = FLAC(filePath)
             pict = flac.pictures[0]
             if pict is not None:
-                if (pict.mime.lower() == 'image/jpeg') or (pict.mime.lower() == 'image/jpg'):
-                    bitmapType = wx.BITMAP_TYPE_JPEG
-                if pict.mime.lower() == 'image/png':
-                    bitmapType = wx.BITMAP_TYPE_PNG
-                if pict.mime.lower() == 'image/gif':
-                    bitmapType = wx.BITMAP_TYPE_GIF
-                if pict.mime.lower() == 'image/bmp':
-                    bitmapType = wx.BITMAP_TYPE_BMP
-                if not bitmapType:
-                    logging.warning("Unkown mime type: " + pict.mime.lower())
-                    bitmapType = wx.BITMAP_TYPE_ANY
+                bitmapType = getBitmapTypeFromMime(pict.mime)
                 # Suppress warning diaglog(!) "iCCP: known incorrect sRGB profile"
                 # from libpng on Tango Tunes cover art in debugger
                 coverArtImage = wx.Image(BytesIO(pict.data), bitmapType)
