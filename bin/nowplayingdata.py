@@ -105,9 +105,11 @@ class NowPlayingData:
         logging.debug("Start updating data... " + time.strftime("%H:%M:%S"))
         # Save previous state
         self.PreviousPlaybackStatus = self.PlaybackStatus
+        previous_playlist = []
 
         # try:
         if self.currentPlaylist:
+            previous_playlist = deepcopy(self.currentPlaylist)
             self.LastRead = deepcopy(self.currentPlaylist)
         else:
             self.currentPlaylist = []
@@ -187,6 +189,9 @@ class NowPlayingData:
         if currentSettings.getSelectedModuleName() == 'Icecast':
             from bin.modules import icecastmodule
             self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
+
+        if (not self.currentPlaylist) and self.PlaybackStatus == 'Paused' and previous_playlist:
+            self.currentPlaylist = deepcopy(previous_playlist)
 
         # sanitizeFields()
         for song in self.currentPlaylist[:]:
@@ -281,8 +286,14 @@ class NowPlayingData:
         else:
             currentSong = SongObject()
         
-        #Mood settings play status (Playing, Not Playing)
-        if self.PlaybackStatus == 'Playing':
+        preserved_song_context = (
+            self.PlaybackStatus == 'Paused'
+            and self.currentPlaylist and isinstance(self.LastRead, list) and self.LastRead
+            and self.currentPlaylist[0] == self.LastRead[0]
+        )
+
+        # Keep the active song mood until a new song replaces it.
+        if self.PlaybackStatus == 'Playing' or preserved_song_context:
             MoodStatus = "Playing"
         else:
             MoodStatus = "Not Playing"

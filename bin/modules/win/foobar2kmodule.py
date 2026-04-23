@@ -74,6 +74,10 @@ def run(max_tanda_length):
         player_state = get_player_state()
         playback_status = map_playback_status(player_state.get('playbackState'))
 
+        if playback_status == 'Stopped':
+            _beefweb_warning_logged = False
+            return playlist, playback_status
+
         active_item = player_state.get('activeItem') or {}
         current_song = get_song_from_columns(active_item.get('columns') or [])
 
@@ -113,7 +117,12 @@ def run(max_tanda_length):
     return playlist, playback_status
 
 def get_player_state():
-    response = open_json('/player', {'columns': BEAM_BEEFWEB_COLUMNS})
+    try:
+        response = open_json('/player', {'columns': BEAM_BEEFWEB_COLUMNS})
+    except urllib.error.HTTPError as error:
+        if error.code != 400:
+            raise
+        response = open_json('/player')
     return response.get('player') or {}
 
 

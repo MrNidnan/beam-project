@@ -1,5 +1,7 @@
 Beam now reads foobar2000 through the Beefweb HTTP API instead of the legacy COM automation path.
 
+If you are upgrading from an older Beam setup, note that this fork no longer supports the previous deprecated foobar2000 plugin path. Existing users should install Beefweb and update their local Beam environment variables before moving to `v0.7.0`.
+
 Check officiaal documentation and foobar componet at:
 https://www.foobar2000.org/components/view/foo_beefweb
 
@@ -87,6 +89,8 @@ No changes are required in the display pipeline for that part.
 Failure Behavior
 
 - If foobar2000 is not running, Beam returns `PlayerNotRunning`.
+- If playback is paused, Beam keeps the last song and active mood on screen.
+- If playback is stopped, Beam clears the current song display and falls back to the default or not-playing mood.
 - If Beefweb is unreachable or misconfigured, Beam returns `BeefwebUnavailable` unless it already managed to recover current-song data.
 - If playlist slicing fails but the player response contains current track columns, Beam can still project the current song.
 

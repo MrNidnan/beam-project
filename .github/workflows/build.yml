@@ -1,0 +1,124 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - feat/**
+  pull_request:
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_tag: ${{ steps.version.outputs.artifact_tag }}
+      windows_artifact_name: ${{ steps.version.outputs.windows_artifact_name }}
+      windows_artifact_path: ${{ steps.version.outputs.windows_artifact_path }}
+      linux_artifact_name: ${{ steps.version.outputs.linux_artifact_name }}
+      linux_artifact_path: ${{ steps.version.outputs.linux_artifact_path }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve artifact names
+        id: version
+        shell: bash
+        run: |
+          ARTIFACT_TAG=$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          version = json.loads(Path('resources/json/strings.json').read_text(encoding='utf-8'))['version']
+          parts = version.split('.')
+          while len(parts) > 3 and parts[-1] == '0':
+              parts.pop()
+          print(f"v{'.'.join(parts)}")
+          PY
+          )
+
+          echo "artifact_tag=$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
+          echo "windows_artifact_name=beam-win-$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
+          echo "windows_artifact_path=dist/beam-win-$ARTIFACT_TAG.exe" >> "$GITHUB_OUTPUT"
+          echo "linux_artifact_name=beam-lin-$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
+          echo "linux_artifact_path=dist/beam-lin-$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
+
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create virtual environment
+        shell: pwsh
+        run: py -3.12 -m venv .venv
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+          .\.venv\Scripts\python.exe -m pip install pyinstaller
+
+      - name: Build Windows executable
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -m PyInstaller --noconfirm --noconsole --clean --onefile `
+            --add-data "resources;resources" `
+            --add-data "docs;docs" `
+            --name "${{ needs.prepare.outputs.windows_artifact_name }}" `
+            beam.py
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.windows_artifact_name }}
+          path: ${{ needs.prepare.outputs.windows_artifact_path }}
+          if-no-files-found: error
+
+  build-linux:
+    needs: prepare
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3 \
+            python3-pip \
+            python3-venv \
+            python3-wxgtk4.0 \
+            python3-mutagen \
+            python3-numpy \
+            python3-dbus
+
+      - name: Install PyInstaller
+        run: python3 -m pip install pyinstaller
+
+      - name: Build Linux executable
+        run: |
+          python3 -m PyInstaller --noconfirm --noconsole --clean --onefile \
+            --add-data "resources:resources" \
+            --add-data "docs:docs" \
+            --name "${{ needs.prepare.outputs.linux_artifact_name }}" \
+            beam.py
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.linux_artifact_name }}
+          path: ${{ needs.prepare.outputs.linux_artifact_path }}
+          if-no-files-found: error

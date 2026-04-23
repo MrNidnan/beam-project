@@ -43,6 +43,35 @@ def alwaysStr(curr_str):
     return ret_str
 
 
+def normalized_rule_value(curr_value):
+    return alwaysStr(curr_value).strip().lower()
+
+
+def normalized_rule_options(rule_value):
+    return [part.strip().lower() for part in alwaysStr(rule_value).split(",") if part.strip()]
+
+
+def rule_matches(field_value, operator, rule_value):
+    normalized_field = normalized_rule_value(field_value)
+    normalized_target = normalized_rule_value(rule_value)
+    normalized_options = normalized_rule_options(rule_value)
+
+    if operator == 'is':
+        if normalized_options:
+            return normalized_field in normalized_options
+        return normalized_field == normalized_target
+
+    if operator == 'is not':
+        if normalized_options:
+            return normalized_field not in normalized_options
+        return normalized_field != normalized_target
+
+    if operator == 'contains':
+        return normalized_target in normalized_field
+
+    return False
+
+
 class SongObject(object):
 
     def __init__(self, p_artist="", p_album="", p_title="", p_genre="",
@@ -129,15 +158,15 @@ class SongObject(object):
                 if currentRule['Type'] == 'Ignore' and currentRule['Active'] == 'yes':
                     # Rule[u'Field2'] == is: IgnoreSong[j] shall be 'yes' if Rule[u'Field1'] is Rule[u'Field3']
                     if currentRule['Field2'] == 'is':
-                        if getattr(self, currentRule['Field1'].replace("%","")).lower() == str(currentRule['Field3']).lower():
+                        if rule_matches(getattr(self, currentRule['Field1'].replace("%","")), currentRule['Field2'], currentRule['Field3']):
                             self.IgnoreSong = "yes"
                     # Rule[u'Field2'] == is not: IgnoreSong[j] shall be 1 if Rule[u'Field1'] not in Rule[u'Field3']
                     if currentRule['Field2'] == 'is not':
-                        if getattr(self, currentRule['Field1'].replace("%","")).lower() not in str("["+currentRule['Field3'].lower()+"]"):
+                        if rule_matches(getattr(self, currentRule['Field1'].replace("%","")), currentRule['Field2'], currentRule['Field3']):
                             self.IgnoreSong = "yes"
                     # Rule[u'Field2'] == contains: IgnoreSong[j] shall be 1 if Rule[u'Field1'] contains any of Rule[u'Field3']
                     if currentRule['Field2'] == 'contains':
-                        if str(currentRule['Field3']).lower() in getattr(self, currentRule['Field1'].replace("%","")).lower():
+                        if rule_matches(getattr(self, currentRule['Field1'].replace("%","")), currentRule['Field2'], currentRule['Field3']):
                             self.IgnoreSong = "yes"
                 #
                 # PARSE
@@ -155,15 +184,15 @@ class SongObject(object):
                 if currentRule['Type'] == 'Cortina' and currentRule['Active'] == 'yes':
                     # Rule[u'Field2'] == is: IsCortina[j] shall be 1 if Rule[u'Field1'] is Rule[u'Field3']
                     if currentRule['Field2'] == 'is':
-                        if getattr(self, currentRule['Field1'].replace("%","")).lower() == str(currentRule['Field3']).lower():
+                        if rule_matches(getattr(self, currentRule['Field1'].replace("%","")), currentRule['Field2'], currentRule['Field3']):
                             self.IsCortina = "yes"
                     # Rule[u'Field2'] == is not: IsCortina[j] shall be 1 if Rule[u'Field1'] not in Rule[u'Field3']
                     if currentRule['Field2'] == 'is not':
-                        if getattr(self, currentRule['Field1'].replace("%","")).lower() not in str("["+currentRule['Field3'].lower()+"]"):
+                        if rule_matches(getattr(self, currentRule['Field1'].replace("%","")), currentRule['Field2'], currentRule['Field3']):
                             self.IsCortina = "yes"
                     # Rule[u'Field2'] == contains: IsCortina[j] shall be 1 if Rule[u'Field1'] contains any of Rule[u'Field3']
                     if currentRule['Field2'] == 'contains':
-                        if str(currentRule['Field3']).lower() in getattr(self, currentRule['Field1'].replace("%","")).lower():
+                        if rule_matches(getattr(self, currentRule['Field1'].replace("%","")), currentRule['Field2'], currentRule['Field3']):
                             self.IsCortina = "yes"
                 #
                 # COPY

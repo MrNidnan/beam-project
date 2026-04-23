@@ -1,0 +1,240 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to publish, for example v0.7.1
+        required: false
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.version.outputs.release_tag }}
+      windows_artifact_name: ${{ steps.version.outputs.windows_artifact_name }}
+      windows_artifact_path: ${{ steps.version.outputs.windows_artifact_path }}
+      windows_release_file: ${{ steps.version.outputs.windows_release_file }}
+      linux_artifact_name: ${{ steps.version.outputs.linux_artifact_name }}
+      linux_artifact_path: ${{ steps.version.outputs.linux_artifact_path }}
+      linux_release_file: ${{ steps.version.outputs.linux_release_file }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release metadata
+        id: version
+        shell: bash
+        env:
+          INPUT_RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_REF_TYPE: ${{ github.ref_type }}
+        run: |
+          if [ -n "$INPUT_RELEASE_TAG" ]; then
+            RELEASE_TAG="$INPUT_RELEASE_TAG"
+          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            RELEASE_TAG="$GITHUB_REF_NAME"
+          else
+            RELEASE_TAG=$(python3 - <<'PY'
+            import json
+            from pathlib import Path
+
+            version = json.loads(Path('resources/json/strings.json').read_text(encoding='utf-8'))['version']
+            parts = version.split('.')
+            while len(parts) > 3 and parts[-1] == '0':
+                parts.pop()
+            print(f"v{'.'.join(parts)}")
+            PY
+            )
+          fi
+
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "windows_artifact_name=beam-win-$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "windows_artifact_path=dist/beam-win-$RELEASE_TAG.exe" >> "$GITHUB_OUTPUT"
+          echo "windows_release_file=release-artifacts/beam-win-$RELEASE_TAG.exe" >> "$GITHUB_OUTPUT"
+          echo "linux_artifact_name=beam-lin-$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "linux_artifact_path=dist/beam-lin-$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "linux_release_file=release-artifacts/beam-lin-$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create virtual environment
+        shell: pwsh
+        run: py -3.12 -m venv .venv
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+          .\.venv\Scripts\python.exe -m pip install pyinstaller
+
+      - name: Build Windows executable
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -m PyInstaller --noconfirm --noconsole --clean --onefile `
+            --add-data "resources;resources" `
+            --add-data "docs;docs" `
+            --name "${{ needs.prepare.outputs.windows_artifact_name }}" `
+            beam.py
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.windows_artifact_name }}
+          path: ${{ needs.prepare.outputs.windows_artifact_path }}
+          if-no-files-found: error
+
+  build-linux:
+    needs: prepare
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3 \
+            python3-pip \
+            python3-venv \
+            python3-wxgtk4.0 \
+            python3-mutagen \
+            python3-numpy \
+            python3-dbus
+
+      - name: Install PyInstaller
+        run: python3 -m pip install pyinstaller
+
+      - name: Build Linux executable
+        run: |
+          python3 -m PyInstaller --noconfirm --noconsole --clean --onefile \
+            --add-data "resources:resources" \
+            --add-data "docs:docs" \
+            --name "${{ needs.prepare.outputs.linux_artifact_name }}" \
+            beam.py
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.linux_artifact_name }}
+          path: ${{ needs.prepare.outputs.linux_artifact_path }}
+          if-no-files-found: error
+
+  smoke-test:
+    needs:
+      - prepare
+      - build-windows
+      - build-linux
+    runs-on: ubuntu-latest
+    environment:
+      name: release-smoke-test
+
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.windows_artifact_name }}
+          path: release-artifacts
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.linux_artifact_name }}
+          path: release-artifacts
+
+      - name: Summarize manual smoke test
+        shell: bash
+        run: |
+          ls -lah release-artifacts
+          {
+            echo "## Manual smoke-test gate"
+            echo
+            echo "Approve this environment after you have smoke-tested the packaged artifacts."
+            echo
+            echo "- Release tag: ${{ needs.prepare.outputs.release_tag }}"
+            echo "- Windows artifact: ${{ needs.prepare.outputs.windows_release_file }}"
+            echo "- Linux artifact: ${{ needs.prepare.outputs.linux_release_file }}"
+            echo
+            echo "Suggested checks:"
+            echo "- Download each artifact from this workflow run."
+            echo "- Launch Beam and confirm the main window opens without an immediate crash."
+            echo "- Verify the expected player module still loads with your release config."
+            echo "- Close Beam cleanly and confirm a log file is written."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish-release:
+    needs:
+      - prepare
+      - build-windows
+      - build-linux
+      - smoke-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.windows_artifact_name }}
+          path: release-artifacts
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.prepare.outputs.linux_artifact_name }}
+          path: release-artifacts
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.release_tag }}
+          files: |
+            ${{ needs.prepare.outputs.windows_release_file }}
+            ${{ needs.prepare.outputs.linux_release_file }}
+          draft: true
+          generate_release_notes: false
+          body: |
+            ## Beam ${{ needs.prepare.outputs.release_tag }}
+
+            ### Breaking Changes
+
+            - Replaced the legacy foobar2000 integration path with the Beefweb HTTP API integration.
+            - Dropped compatibility with the older deprecated foobar2000 plugin path used by previous Beam setups.
+
+            ### Migration
+
+            - Install and enable the foobar2000 Beefweb component.
+            - Configure Beam to reach Beefweb through `BEAM_BEEFWEB_URL` and optional authentication environment variables.
+            - Review `FOOBAR_MODULE.md` before upgrading an existing foobar2000 setup.
+
+            ### Highlights
+
+            - Added updated foobar2000 support and repository documentation for the foobar module.
+            - MediaMonkey now works with newer 2024 releases.
+            - Empty or null `%Genre` values now work correctly with cortina rules.
+            - `%CoverArt` now supports front-cover APIC frames with non-empty descriptions.
+            - Beam keeps the last song and active mood while paused, and returns to the default or not-playing mood when stopped.
+
+            ### Artifacts
+
+            - `${{ needs.prepare.outputs.windows_artifact_name }}.exe`
+            - `${{ needs.prepare.outputs.linux_artifact_name }}`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
