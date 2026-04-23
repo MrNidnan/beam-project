@@ -27,17 +27,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          ARTIFACT_TAG=$(python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          version = json.loads(Path('resources/json/strings.json').read_text(encoding='utf-8'))['version']
-          parts = version.split('.')
-          while len(parts) > 3 and parts[-1] == '0':
-              parts.pop()
-          print(f"v{'.'.join(parts)}")
-          PY
-          )
+          ARTIFACT_TAG=$(python3 -c "import json; from pathlib import Path; version = json.loads(Path('resources/json/strings.json').read_text(encoding='utf-8'))['version']; print('v' + version.removesuffix('.0'))")
 
           echo "artifact_tag=$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"
           echo "windows_artifact_name=beam-win-$ARTIFACT_TAG" >> "$GITHUB_OUTPUT"

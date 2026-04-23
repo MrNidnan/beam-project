@@ -39,17 +39,7 @@ jobs:
           elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
             RELEASE_TAG="$GITHUB_REF_NAME"
           else
-            RELEASE_TAG=$(python3 - <<'PY'
-            import json
-            from pathlib import Path
-
-            version = json.loads(Path('resources/json/strings.json').read_text(encoding='utf-8'))['version']
-            parts = version.split('.')
-            while len(parts) > 3 and parts[-1] == '0':
-                parts.pop()
-            print(f"v{'.'.join(parts)}")
-            PY
-            )
+            RELEASE_TAG=$(python3 -c "import json; from pathlib import Path; version = json.loads(Path('resources/json/strings.json').read_text(encoding='utf-8'))['version']; print('v' + version.removesuffix('.0'))")
           fi
 
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
