@@ -21,6 +21,11 @@
     "Port": 8765,
     "WebRoot": "resources/web/tablet"
   },
+  "Foobar2000": {
+    "BeefwebUrl": "http://localhost:8880/",
+    "BeefwebUser": "",
+    "BeefwebPassword": ""
+  },
   "AllModules": [
     {
       "Modules": [
@@ -120,6 +125,11 @@
       "Active": "yes",
       "Field2": "Se\u00f1or del Tango",
       "Field3": "Sarli"
+    },
+    {
+      "Active": "no",
+      "Field1": "%Title",
+      "Type": "Trim () in Title"
     }
   ],
   "Moods": [

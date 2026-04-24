@@ -4,6 +4,33 @@ All notable changes in this fork are documented in this file.
 
 The format is based on Keep a Changelog, adapted for this repository's existing release history.
 
+## v0.7.1.1 - 2026-04-24
+
+### Added
+
+- Added saved Foobar2000 Beefweb settings in Beam Preferences for URL, username, and password.
+- Added a default disabled rule named `Trim () in the Title` to remove trailing parenthetical suffixes from song titles when enabled.
+- Added a local network address hint in Network Display settings so users can see the reachable browser URL without using external OS commands.
+
+### Changed
+
+- Updated the Foobar2000 integration to read saved Beefweb settings from Beam configuration before falling back to environment variables.
+- Updated the Rules UI to expose the new optional title-trimming rule.
+- Updated the Network Display settings UI to show a detected local IP address while preserving wildcard bind behavior for `0.0.0.0`.
+- Updated the README, Foobar2000 documentation, and user wiki to reflect the saved Foobar settings and the new default rule.
+
+### Fixed
+
+- Improved Foobar2000 Beefweb error logging to include the failing request URL and response body when available.
+- Avoided invalid Beefweb playlist slice requests when foobar2000 does not report a valid active playlist reference.
+
+## v0.7.1 - 2026-04-24
+
+### Added
+
+- Added Preferences controls for the Network Display service, including enable/disable, bind host, and configurable port settings.
+- Added browser projection refinements for distance reading, including automatic title scaling for long song names.
+
 ## v0.7.0 - 2026-04-23
 
 ### Breaking Changes
@@ -23,7 +50,6 @@ The format is based on Keep a Changelog, adapted for this repository's existing 
 - Added project-level dependency tracking via `requirements.txt`.
 - Added a local wiki snapshot covering user guidance, developer notes, releases, FAQ, known bugs, display tags, DMX notes, contact information, and project background.
 - Added `.gitignore` for local development artifacts.
-- Added an optional network display service with HTTP and WebSocket endpoints plus a browser-based tablet projection view.
 
 ### Changed
 

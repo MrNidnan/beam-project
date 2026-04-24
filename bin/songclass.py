@@ -25,8 +25,8 @@
 #
 # This Python file uses the following encoding: utf-8
 
-#import platform, os, sys
 import logging
+import re
 
 ###############################################################
 #
@@ -70,6 +70,14 @@ def rule_matches(field_value, operator, rule_value):
         return normalized_target in normalized_field
 
     return False
+
+
+def trim_trailing_parentheses(curr_value):
+    normalized_value = alwaysStr(curr_value).strip()
+    if normalized_value == "":
+        return ""
+
+    return re.sub(r'\s*(?:\([^()]*\)\s*)+$', '', normalized_value).strip()
 
 
 class SongObject(object):
@@ -211,6 +219,13 @@ class SongObject(object):
                     # Artist(j) = 'Desired string'
                     if str(currentRule['Field3']).lower() in getattr(self, currentRule['Field1'].replace("%","")).lower():
                         setattr(self, currentRule['Field1'].replace("%",""), str(currentRule['Field2']))
+                #
+                # Trim trailing parentheses in title
+                #
+                if currentRule['Type'] == 'Trim () in Title' and currentRule['Active'] == 'yes':
+                    title_field_name = currentRule.get('Field1', '%Title').replace('%', '')
+                    trimmed_title = trim_trailing_parentheses(getattr(self, title_field_name))
+                    setattr(self, title_field_name, trimmed_title)
             except:
                 logging.error("Error at Rule: " + str(i) + " Type: " + currentRule['Type'] + "  First Field " + currentRule['Field1'])
                 break

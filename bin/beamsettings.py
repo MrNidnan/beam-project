@@ -173,6 +173,30 @@ class BeamSettings:
     def getNetworkServiceWebRoot(self):
         return self.getNetworkService().get('WebRoot', os.path.join('resources', 'web', 'tablet'))
 
+    def getFoobar2000(self):
+        return self._beamConfigData['Foobar2000']
+
+    def getFoobarBeefwebUrl(self):
+        return str(self.getFoobar2000().get('BeefwebUrl', 'http://localhost:8880/')).strip()
+
+    def setFoobarBeefwebUrl(self, url):
+        normalized_url = str(url).strip()
+        if normalized_url == '':
+            normalized_url = 'http://localhost:8880/'
+        self.getFoobar2000()['BeefwebUrl'] = normalized_url
+
+    def getFoobarBeefwebUser(self):
+        return str(self.getFoobar2000().get('BeefwebUser', ''))
+
+    def setFoobarBeefwebUser(self, user):
+        self.getFoobar2000()['BeefwebUser'] = str(user)
+
+    def getFoobarBeefwebPassword(self):
+        return str(self.getFoobar2000().get('BeefwebPassword', ''))
+
+    def setFoobarBeefwebPassword(self, password):
+        self.getFoobar2000()['BeefwebPassword'] = str(password)
+
     #def getDMXdeviceName(self):
     #     return self._dmxDefinitions.
     #
@@ -340,7 +364,19 @@ class BeamSettings:
             complementDict(defMood, idxMood)
         # self._moods = self._beamConfigData['Moods']
 
-# ??? complement rules?
+        has_trim_title_rule = False
+        for rule in self._beamConfigData['Rules']:
+            if rule.get('Type') == 'Trim () in Title':
+                has_trim_title_rule = True
+                if 'Field1' not in rule:
+                    rule['Field1'] = '%Title'
+
+        if not has_trim_title_rule:
+            self._beamConfigData['Rules'].append({
+                'Active': 'no',
+                'Field1': '%Title',
+                'Type': 'Trim () in Title',
+            })
 
         # Set OS-specific variables
         if platform.system() == 'Linux' or platform.system() == 'Darwin' :
