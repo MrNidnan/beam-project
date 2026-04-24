@@ -23,6 +23,7 @@ The format is based on Keep a Changelog, adapted for this repository's existing 
 - Added project-level dependency tracking via `requirements.txt`.
 - Added a local wiki snapshot covering user guidance, developer notes, releases, FAQ, known bugs, display tags, DMX notes, contact information, and project background.
 - Added `.gitignore` for local development artifacts.
+- Added an optional network display service with HTTP and WebSocket endpoints plus a browser-based tablet projection view.
 
 ### Changed
 
