@@ -52,6 +52,7 @@ class EditRuleDialog(wx.Dialog):
         # self.ButtonCancelRule.Bind(wx.EVT_BUTTON, self.OnCancelRuleItem)
         self.InputFields    = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer"]
         self.OutputFields   = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer", "%Singer"]
+        self.RuleTypes      = ['Copy','Cortina','Parse', 'Ignore','Replace', 'Trim () in Title']
 
 
     # Check if it is a new line
@@ -64,7 +65,7 @@ class EditRuleDialog(wx.Dialog):
 
         # Build the static elements
         self.InputID3Field      = wx.ComboBox(self.EditRulePanel, size=(150,-1), value=self.Settings['Field1'], choices=self.InputFields, style=wx.CB_READONLY)
-        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(100,-1), value=self.Settings['Type'], choices=['Copy','Cortina','Parse', 'Ignore','Replace'], style=wx.CB_READONLY)
+        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(150,-1), value=self.Settings['Type'], choices=self.RuleTypes, style=wx.CB_READONLY)
         self.RuleSelectDropdown.Bind(wx.EVT_COMBOBOX, self.ChangeRuleType)
         self.RuleOrder          = wx.SpinCtrl(self.EditRulePanel, value=str(self.RowSelected+1), min=1, max=99)
 
@@ -119,6 +120,7 @@ class EditRuleDialog(wx.Dialog):
 
     def ChangeRuleType(self, event):
         RuleSelected = self.RuleSelectDropdown.GetValue()
+        self.InputID3Field.Enable()
 ###########################################
         if RuleSelected == 'Copy':
             self.DynamicFieldLabel1.SetLabel('Output field')
@@ -247,6 +249,21 @@ class EditRuleDialog(wx.Dialog):
             else:
                 self.IsIsNot.SetStringSelection("is")
                 self.OutputField2.SetValue("")
+
+        ##############################################
+        if RuleSelected == 'Trim () in Title':
+            self.DynamicFieldLabel1.SetLabel('')
+            self.DynamicFieldLabel2.SetLabel('')
+            self.DynamicFieldLabel3.SetLabel('')
+            self.DynamicFieldLabel4.SetLabel('')
+
+            self.RemoveDynamicElements()
+
+            self.InputID3Field.SetStringSelection('%Title')
+            self.InputID3Field.Disable()
+
+            self.DynamicFieldLabel3.Hide()
+            self.OutputField3.Hide()
 
         self.vbox.SetSizeHints(self)  
         self.EditRulePanel.SetSizer(self.vbox)

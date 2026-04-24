@@ -31,13 +31,15 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from bin.beamsettings import beamSettings
 from bin.songclass import SongObject
 from bin.modules.win.winutils import applicationrunning
 
 
-DEFAULT_BEEFWEB_URL = "http://localhost:8888/"
+DEFAULT_BEEFWEB_URL = "http://localhost:8880/"
 DEFAULT_TIMEOUT_SECONDS = 2.0
 _beefweb_warning_logged = False
+_beefweb_error_context = {}
 BEAM_BEEFWEB_COLUMNS = [
     "[%artist%]",
     "[%album%]",
@@ -88,7 +90,7 @@ def run(max_tanda_length):
         active_index = active_item.get('index')
         item_count = max(int(max_tanda_length or 1), 1)
 
-        if playlist_id is not None and active_index is not None:
+        if has_valid_playlist_reference(playlist_id, active_index):
             playlist_items = get_playlist_items(playlist_id, active_index, item_count)
             if playlist_items:
                 playlist = playlist_items
@@ -97,11 +99,7 @@ def run(max_tanda_length):
 
     except urllib.error.URLError as error:
         if not _beefweb_warning_logged:
-            logging.warning(
-                "Foobar2000 is running but Beefweb is unavailable at '%s': %s",
-                get_beefweb_base_url(),
-                error,
-            )
+            logging.warning("Foobar2000 is running but %s", describe_beefweb_error(error))
             _beefweb_warning_logged = True
         if playlist:
             playback_status = 'Playing'
@@ -135,6 +133,16 @@ def get_playlist_items(playlist_id, active_index, item_count):
     response = open_json(playlist_path, {'columns': BEAM_BEEFWEB_COLUMNS})
     items = (((response.get('playlistItems') or {}).get('items')) or [])
     return [get_song_from_columns(item.get('columns') or []) for item in items]
+
+
+def has_valid_playlist_reference(playlist_id, active_index):
+    if playlist_id in (None, ''):
+        return False
+
+    try:
+        return int(active_index) >= 0
+    except (TypeError, ValueError):
+        return False
 
 
 def get_song_from_columns(columns):
@@ -183,15 +191,56 @@ def open_json(path, query_params=None):
     url = build_api_url(path, query_params)
     request = urllib.request.Request(url, headers={'Accept': 'application/json'})
 
-    with opener.open(request, timeout=get_beefweb_timeout()) as response:
-        payload = response.read().decode('utf-8')
+    try:
+        with opener.open(request, timeout=get_beefweb_timeout()) as response:
+            payload = response.read().decode('utf-8')
+    except urllib.error.HTTPError as error:
+        error_context = {'request_url': url, 'response_body': ''}
+        try:
+            error_context['response_body'] = error.read().decode('utf-8', 'replace')
+        except Exception:
+            pass
+        _beefweb_error_context[id(error)] = error_context
+        raise
+    except urllib.error.URLError as error:
+        _beefweb_error_context[id(error)] = {'request_url': url, 'response_body': ''}
+        raise
 
     return json.loads(payload)
 
 
+def describe_beefweb_error(error):
+    error_context = _beefweb_error_context.pop(id(error), {})
+    request_url = error_context.get('request_url')
+    if request_url is None:
+        request_url = get_beefweb_base_url()
+
+    if isinstance(error, urllib.error.HTTPError):
+        reason = getattr(error, 'reason', '')
+        summary = 'HTTP {0}'.format(error.code)
+        if reason:
+            summary = '{0} {1}'.format(summary, reason)
+
+        response_body = error_context.get('response_body', '').strip()
+        if response_body:
+            return "Beefweb request failed at '{0}': {1}. Response body: {2}".format(
+                request_url,
+                summary,
+                response_body,
+            )
+
+        return "Beefweb request failed at '{0}': {1}".format(request_url, summary)
+
+    return "Beefweb request failed at '{0}': {1}".format(request_url, error)
+
+
 def build_url_opener():
-    user = os.environ.get('BEAM_BEEFWEB_USER', '')
-    password = os.environ.get('BEAM_BEEFWEB_PASSWORD', '')
+    user = beamSettings.getFoobarBeefwebUser()
+    password = beamSettings.getFoobarBeefwebPassword()
+
+    if not user and not password:
+        user = os.environ.get('BEAM_BEEFWEB_USER', '')
+        password = os.environ.get('BEAM_BEEFWEB_PASSWORD', '')
 
     if not user and not password:
         return urllib.request.build_opener()
@@ -219,7 +268,9 @@ def build_api_url(path, query_params=None):
 
 
 def get_beefweb_base_url():
-    configured_url = os.environ.get('BEAM_BEEFWEB_URL', DEFAULT_BEEFWEB_URL)
+    configured_url = beamSettings.getFoobarBeefwebUrl()
+    if not configured_url:
+        configured_url = os.environ.get('BEAM_BEEFWEB_URL', DEFAULT_BEEFWEB_URL)
     parsed_url = urllib.parse.urlsplit(configured_url)
     normalized_path = parsed_url.path.rstrip('/')
 

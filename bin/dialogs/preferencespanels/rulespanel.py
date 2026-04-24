@@ -46,7 +46,7 @@ class RulesPanel(wx.Panel):
         ###############
         # Description #
         ###############
-        description = wx.StaticText(self, -1, "Rules are used to:\n - Copy information from one tag to another.\n - Define Cortinas.\n - Split tags, such tags with both artist and title.\n - Ignore songs completely, such as silent tracks.\n - Replace tag value with static content when a criterion is met\n\nRules can be activated and deactivated with the check box.")
+        description = wx.StaticText(self, -1, "Rules are used to:\n - Copy information from one tag to another.\n - Define Cortinas.\n - Split tags, such tags with both artist and title.\n - Ignore songs completely, such as silent tracks.\n - Replace tag value with static content when a criterion is met.\n - Trim trailing (...) from song titles.\n\nRules can be activated and deactivated with the check box.")
         description.Wrap(380)
 
         #############
@@ -160,6 +160,9 @@ class RulesPanel(wx.Panel):
                     self.RuleRows.append(str("Ignore song if "+rule['Field1']+' is not '+rule['Field3']))
                 if rule['Field2'] =="contains":
                     self.RuleRows.append(str("Ignore song if "+rule['Field1']+' contains '+rule['Field3']))
+
+            if rule['Type'] == "Trim () in Title":
+                self.RuleRows.append("Trim () in the Title")
         self.RuleList.Set(self.RuleRows)
         # Check the rules
         for i in range(0, len(self.BeamSettings.getRules())):

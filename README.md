@@ -10,6 +10,10 @@ Build and release commands for this fork are documented in [BUILD.md](BUILD.md).
 
 Foobar2000 support in this fork now uses the Beefweb HTTP API and is no longer compatible with the older deprecated plugin path. See [FOOBAR_MODULE.md](FOOBAR_MODULE.md) for setup and migration details.
 
+Beam now stores Foobar2000 Beefweb connection settings in Preferences when `Foobar2000` is selected, instead of requiring environment variables for normal use.
+
+Beam also ships with a default disabled rule named `Trim () in the Title` that can be enabled from the Rules panel to remove trailing parenthetical suffixes from displayed song titles.
+
 Beam now keeps the last song and active mood visible while playback is paused. When playback stops, Beam clears the current song and falls back to the default or not-playing mood.
 
 To run the project locally make sure you have Python 3 installed and run:

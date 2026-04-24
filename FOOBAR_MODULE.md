@@ -1,6 +1,6 @@
 Beam now reads foobar2000 through the Beefweb HTTP API instead of the legacy COM automation path.
 
-If you are upgrading from an older Beam setup, note that this fork no longer supports the previous deprecated foobar2000 plugin path. Existing users should install Beefweb and update their local Beam environment variables before moving to `v0.7.0`.
+If you are upgrading from an older Beam setup, note that this fork no longer supports the previous deprecated foobar2000 plugin path. Existing users should install Beefweb before moving to `v0.7.0`.
 
 Check officiaal documentation and foobar componet at:
 https://www.foobar2000.org/components/view/foo_beefweb
@@ -49,10 +49,35 @@ That list maps directly onto Beam's `SongObject` fields.
 
 Configuration
 
-The current implementation is intentionally self-contained and uses environment variables because Beam does not yet have per-module UI settings for Foobar2000.
+Beam now supports saved Foobar2000 Beefweb settings in the main Preferences UI when `Foobar2000` is the selected media player.
+
+Open `Settings`, choose `Foobar2000` as the media player, and Beam will show the `Foobar2000 Beefweb` section directly below the media-player selector.
+
+- `Beefweb URL`
+  Default: `http://localhost:8880/`
+- `Beefweb Username`
+  Optional username if Beefweb authentication is enabled.
+- `Beefweb Password`
+  Optional password if Beefweb authentication is enabled.
+
+These settings are stored in Beam configuration as:
+
+```json
+"Foobar2000": {
+  "BeefwebUrl": "http://localhost:8880/",
+  "BeefwebUser": "",
+  "BeefwebPassword": ""
+}
+```
+
+These values are stored in Beam configuration and used by the foobar module at runtime.
+
+Beam first reads the saved Preferences values. Environment variables are only used as a fallback for older setups that have not moved to the saved settings yet.
+
+Environment variables are still accepted as a fallback for older setups:
 
 - `BEAM_BEEFWEB_URL`
-  Default: `http://localhost:8880/`
+  Default fallback: `http://localhost:8880/`
 - `BEAM_BEEFWEB_USER`
   Optional username if Beefweb authentication is enabled.
 - `BEAM_BEEFWEB_PASSWORD`
@@ -114,6 +139,13 @@ Support artwork:
 2. Convert the returned bytes into an image object Beam can render.
 3. Keep this logic in the foobar module or a small helper to avoid leaking Beefweb details into the UI layer.
 
-Recommended Next Step
+Rules and title cleanup
 
-If this integration is meant to be user-facing, the next engineering step should be moving the Beefweb connection settings out of environment variables and into Beam's saved configuration and preferences panels.
+Beam applies its normal rules after reading metadata from foobar2000. This includes the default disabled rule `Trim () in the Title`.
+
+When that rule is enabled in the Rules panel, Beam removes trailing parenthetical suffixes from song titles before display. Example:
+
+- `Malena (Take 1)` becomes `Malena`
+- `La Cumparsita (Alt. take) (test press)` becomes `La Cumparsita`
+
+The rule is optional and disabled by default, so Beam preserves the original title unless you enable it.
