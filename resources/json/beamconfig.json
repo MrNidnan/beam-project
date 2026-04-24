@@ -15,6 +15,12 @@
   "LogPath": "",
   "LogLevel": "Info",
   "ShowStatusbar": "True",
+  "NetworkService": {
+    "Enabled": "False",
+    "Host": "0.0.0.0",
+    "Port": 8765,
+    "WebRoot": "resources/web/tablet"
+  },
   "AllModules": [
     {
       "Modules": [

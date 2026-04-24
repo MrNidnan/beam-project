@@ -146,6 +146,33 @@ class BeamSettings:
     def getShowStatusbar(self):
         return self._beamConfigData['ShowStatusbar']
 
+    def getNetworkService(self):
+        return self._beamConfigData['NetworkService']
+
+    def getNetworkServiceEnabled(self):
+        return str(self.getNetworkService().get('Enabled', 'False')).lower() == 'true'
+
+    def setNetworkServiceEnabled(self, enabled):
+        self.getNetworkService()['Enabled'] = 'True' if enabled else 'False'
+
+    def getNetworkServiceHost(self):
+        return str(self.getNetworkService().get('Host', '0.0.0.0'))
+
+    def setNetworkServiceHost(self, host):
+        normalized_host = str(host).strip()
+        if normalized_host == '':
+            normalized_host = '0.0.0.0'
+        self.getNetworkService()['Host'] = normalized_host
+
+    def getNetworkServicePort(self):
+        return int(self.getNetworkService().get('Port', 8765))
+
+    def setNetworkServicePort(self, port):
+        self.getNetworkService()['Port'] = int(port)
+
+    def getNetworkServiceWebRoot(self):
+        return self.getNetworkService().get('WebRoot', os.path.join('resources', 'web', 'tablet'))
+
     #def getDMXdeviceName(self):
     #     return self._dmxDefinitions.
     #

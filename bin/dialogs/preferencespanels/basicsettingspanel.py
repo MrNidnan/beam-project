@@ -133,6 +133,33 @@ class BasicSettingsPanel(wx.Panel):
         vbox.Add(logleveldescription, flag=wx.LEFT, border=20)
         vbox.Add(self.LogLevelSelectorDropdown, flag=wx.LEFT, border=20)
 
+        networklabel = wx.StaticText(self, wx.ID_ANY, "Network Display        ")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        networklabel.SetFont(font)
+
+        networkdescription = wx.StaticText(self, wx.ID_ANY, "Expose the current Beam display to browsers on your network. Host and port are configurable; the default port is 8765.")
+        self.NetworkEnabledCheckBox = wx.CheckBox(self, label='Enable network display')
+        self.NetworkEnabledCheckBox.SetValue(self.BeamSettings.getNetworkServiceEnabled())
+        self.NetworkEnabledCheckBox.Bind(wx.EVT_CHECKBOX, self.OnNetworkEnabled)
+
+        hostlabel = wx.StaticText(self, wx.ID_ANY, "Host")
+        self.NetworkHostField = wx.TextCtrl(self, wx.ID_ANY, value=self.BeamSettings.getNetworkServiceHost(), size=(233, -1))
+        self.NetworkHostField.Bind(wx.EVT_TEXT, self.OnNetworkHostChanged)
+
+        portlabel = wx.StaticText(self, wx.ID_ANY, "Port (default 8765)")
+        self.NetworkPortField = wx.SpinCtrl(self, wx.ID_ANY, min=1, max=65535, initial=self.BeamSettings.getNetworkServicePort(), size=(100, -1))
+        self.NetworkPortField.Bind(wx.EVT_SPINCTRL, self.OnNetworkPortChanged)
+        self.NetworkPortField.Bind(wx.EVT_TEXT, self.OnNetworkPortChanged)
+        self.NetworkPortField.SetToolTip('Change the HTTP/WebSocket port for the network display service. Default: 8765.')
+
+        vbox.Add(networklabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        vbox.Add(networkdescription, flag=wx.LEFT, border=20)
+        vbox.Add(self.NetworkEnabledCheckBox, flag=wx.LEFT | wx.TOP, border=20)
+        vbox.Add(hostlabel, flag=wx.LEFT | wx.TOP, border=20)
+        vbox.Add(self.NetworkHostField, flag=wx.LEFT, border=20)
+        vbox.Add(portlabel, flag=wx.LEFT | wx.TOP, border=20)
+        vbox.Add(self.NetworkPortField, flag=wx.LEFT, border=20)
+
 
         ##############
         # SET SIZERS #
@@ -158,6 +185,15 @@ class BasicSettingsPanel(wx.Panel):
     def OnSelectLogLevel(self, event):
         self.BeamSettings.setLogLevel(self.LogLevelSelectorDropdown.GetValue())
         setLogLevel(self.BeamSettings.getLogLevel())
+
+    def OnNetworkEnabled(self, event):
+        self.BeamSettings.setNetworkServiceEnabled(self.NetworkEnabledCheckBox.GetValue())
+
+    def OnNetworkHostChanged(self, event):
+        self.BeamSettings.setNetworkServiceHost(self.NetworkHostField.GetValue())
+
+    def OnNetworkPortChanged(self, event):
+        self.BeamSettings.setNetworkServicePort(self.NetworkPortField.GetValue())
 
     ################
     # REFRESH TIME #
