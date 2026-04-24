@@ -1,5 +1,6 @@
 wxPython
 mutagen
 numpy
+aiohttp
 pywin32; platform_system == "Windows"
 dbus-python; platform_system == "Linux"

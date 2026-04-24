@@ -42,6 +42,7 @@ if platform.system() == 'Linux' or platform.system() == 'Darwin':
 from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs import aboutdialog
 from bin.dialogs.displayframe import DisplayFrame
+from bin.network import BeamNetworkService
 
 
 ###################################################################
@@ -60,6 +61,8 @@ class MainFrame(wx.Frame):
 
         self.displayData = DisplayData(self)
         self.displayFrame = DisplayFrame(self.displayData)
+        self.networkService = BeamNetworkService()
+        self.networkService.start()
 
         # Set Icon
         appPath = getBeamHomePath()
@@ -180,6 +183,10 @@ class MainFrame(wx.Frame):
 
 
     def destroyFrame(self):
+        try:
+            self.networkService.stop()
+        except Exception as e:
+            logging.error(e, exc_info=True)
         self.displayFrame.Hide()
         self.displayFrame.Destroy()
         self.Hide()
@@ -259,8 +266,11 @@ class MainFrame(wx.Frame):
     # UPDATE INFO FROM PREFERENCES WINDOW
     def updateSettings(self):
         try:
+            self.networkService.stop()
+            self.networkService.start()
             # self.showStatusBar()
             self.displayData.processData()
+            self.networkService.publish_display_state(self.displayData)
             # Starts and stops rotation if it has changed.
             # if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (
             #         not self.RotateBackgroundTimer.IsRunning() and not self.RotateBackground == 'no') or (
@@ -275,6 +285,7 @@ class MainFrame(wx.Frame):
         try:
             self.displayFrame.Refresh()
             self.previewPanel.Refresh()
+            self.networkService.publish_display_state(self.displayData)
         except Exception as e:
             logging.error(e, exc_info=True)
 

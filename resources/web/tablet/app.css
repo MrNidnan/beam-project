@@ -1,0 +1,202 @@
+:root {
+  color-scheme: dark;
+  --bg-1: #1f0b16;
+  --bg-2: #5a1f36;
+  --panel: rgba(22, 9, 16, 0.66);
+  --panel-border: rgba(255, 230, 236, 0.16);
+  --text: #fff7f8;
+  --muted: rgba(255, 240, 244, 0.78);
+  --accent: #f1c6d4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow: hidden;
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top, rgba(255, 242, 246, 0.12), transparent 34%),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2));
+  background-size: cover;
+  background-position: center;
+  touch-action: manipulation;
+  user-select: none;
+  transition: background 220ms ease, color 220ms ease;
+}
+
+body.genre-tango {
+  --bg-1: #240813;
+  --bg-2: #6f1837;
+  --panel: rgba(28, 9, 17, 0.68);
+  --panel-border: rgba(255, 221, 230, 0.18);
+  --accent: #f4c1d1;
+}
+
+body.genre-vals {
+  --bg-1: #0b1831;
+  --bg-2: #2d5f94;
+  --panel: rgba(9, 20, 41, 0.68);
+  --panel-border: rgba(220, 234, 255, 0.18);
+  --accent: #c6dcff;
+}
+
+body.genre-milonga {
+  --bg-1: #0d1b13;
+  --bg-2: #284f31;
+  --panel: rgba(11, 23, 15, 0.7);
+  --panel-border: rgba(222, 247, 228, 0.18);
+  --accent: #cfe8c7;
+}
+
+body.with-background::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: var(--beam-background);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.18;
+  filter: blur(2px);
+  z-index: -2;
+}
+
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.projection-window {
+  width: min(1100px, 100%);
+  min-height: min(640px, 100vh - 48px);
+  padding: 40px 40px 34px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 28px;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.28);
+}
+
+.hero-block {
+  width: min(100%, 940px);
+  min-height: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+  text-align: center;
+}
+
+.projection-window h1 {
+  margin: 0;
+  font-size: clamp(4.2rem, 10vw, 8rem);
+  line-height: 0.9;
+  text-wrap: balance;
+  max-width: 100%;
+}
+
+.projection-window h1[data-title-size="medium"] {
+  font-size: clamp(3.6rem, 8.5vw, 6.8rem);
+}
+
+.projection-window h1[data-title-size="long"] {
+  font-size: clamp(3rem, 7.2vw, 5.8rem);
+  line-height: 0.95;
+}
+
+.projection-window h1[data-title-size="xlong"] {
+  font-size: clamp(2.4rem, 6vw, 4.8rem);
+  line-height: 0.98;
+}
+
+.artist-name {
+  margin: 0;
+  font-size: clamp(2.7rem, 5.4vw, 4.1rem);
+  color: var(--accent);
+  text-align: center;
+  line-height: 1;
+  text-wrap: balance;
+  align-self: end;
+  padding-bottom: 100px;
+}
+
+.current-date {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: clamp(2rem, 4.2vw, 2.9rem);
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.05;
+  align-self: start;
+  padding-top: 26px;
+}
+
+.previous-song {
+  position: absolute;
+  left: 40px;
+  bottom: 34px;
+  margin: 0;
+  max-width: calc(100% - 80px);
+  font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+  color: var(--text);
+  text-align: left;
+  line-height: 1.15;
+}
+
+@media (max-width: 900px) {
+  .page-shell {
+    padding: 12px;
+  }
+
+  .projection-window {
+    min-height: min(520px, 100vh - 24px);
+    padding: 24px 20px 24px;
+  }
+
+  .hero-block {
+    min-height: 100%;
+  }
+
+  .projection-window h1 {
+    font-size: clamp(3rem, 11vw, 4.8rem);
+  }
+
+  .projection-window h1[data-title-size="medium"] {
+    font-size: clamp(2.6rem, 9.6vw, 4rem);
+  }
+
+  .projection-window h1[data-title-size="long"] {
+    font-size: clamp(2.2rem, 8vw, 3.4rem);
+  }
+
+  .projection-window h1[data-title-size="xlong"] {
+    font-size: clamp(1.9rem, 6.8vw, 2.8rem);
+  }
+
+  .artist-name {
+    font-size: clamp(2.1rem, 6.7vw, 2.9rem);
+    padding-bottom: 52px;
+  }
+
+  .current-date {
+    font-size: clamp(1.6rem, 5.2vw, 2.2rem);
+    padding-top: 18px;
+  }
+
+  .previous-song {
+    left: 20px;
+    bottom: 24px;
+    max-width: calc(100% - 40px);
+  }
+}
