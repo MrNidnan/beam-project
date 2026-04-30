@@ -55,7 +55,7 @@ jobs:
 
   build-windows:
     needs: prepare
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout
@@ -85,6 +85,48 @@ jobs:
             --add-data "docs;docs" `
             --name "${{ needs.prepare.outputs.windows_artifact_name }}" `
             beam.py
+
+      - name: Import signing certificate
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_PFX_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PFX_BASE64)) {
+            throw "WINDOWS_CERTIFICATE_PFX_BASE64 is missing"
+          }
+        
+          $certBytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_PFX_BASE64)
+          [IO.File]::WriteAllBytes("beam-signing-cert.pfx", $certBytes)
+
+      - name: Sign Windows executable
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PASSWORD)) {
+              throw "WINDOWS_CERTIFICATE_PASSWORD is missing"
+            }
+                        
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+            Where-Object { $_.FullName -match "\\x64\\signtool.exe$" } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+
+          if (-not $signtool) {
+            throw "signtool.exe not found on runner"
+          }
+
+          & $signtool sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com `
+            /f beam-signing-cert.pfx /p "$env:WINDOWS_CERTIFICATE_PASSWORD" `
+            "${{ needs.prepare.outputs.windows_artifact_path }}"
+
+      - name: Clean up signing certificate
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path "beam-signing-cert.pfx") {
+            Remove-Item "beam-signing-cert.pfx" -Force
+          }
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4

@@ -27,6 +27,7 @@ Release artifact names below use `v0.7.0`.
 - Branch pushes and pull requests run the GitHub Actions validation workflow only.
 - The validation workflow checks the Python entrypoint on Windows and Linux, but it does not package Beam and it does not upload artifacts.
 - Release artifacts are built only by the GitHub Actions release workflow.
+- The Windows release workflow can optionally Authenticode-sign the executable when `WINDOWS_CERTIFICATE_PFX_BASE64` and `WINDOWS_CERTIFICATE_PASSWORD` GitHub Actions secrets are configured.
 - The release workflow runs when you push a `v*` tag, or when you start it manually with `workflow_dispatch` and provide a release tag.
 - The release workflow builds the Windows and Linux executables, uploads those workflow artifacts, pauses at the `release-smoke-test` environment gate, and then creates a draft GitHub release.
 
@@ -66,6 +67,27 @@ pyinstaller --noconfirm --noconsole --clean --onefile `
 ```powershell
 .\dist\beam-win-v0.7.0.exe
 ```
+
+### Code Signing
+
+Unsigned Windows executables will show `Unknown publisher`, and SmartScreen may warn that the app is unrecognized. To improve this:
+
+- Export your code-signing certificate as a `.pfx` file.
+- Base64-encode that file and store it as the `WINDOWS_CERTIFICATE_PFX_BASE64` GitHub Actions secret.
+- Store the PFX password as the `WINDOWS_CERTIFICATE_PASSWORD` secret.
+- The release workflow will sign the executable automatically when both secrets are present.
+
+Example PowerShell command to prepare the Base64 value locally:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\beam-signing-cert.pfx"))
+```
+
+Notes:
+
+- Standard code signing removes the `Unknown publisher` label but does not guarantee SmartScreen will stop warning immediately.
+- SmartScreen reputation is built over time, and a newly issued certificate may still trigger warnings.
+- An EV code-signing certificate usually establishes SmartScreen reputation faster than a standard OV certificate.
 
 ## Linux
 
