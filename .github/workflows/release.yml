@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_tag: ${{ steps.version.outputs.release_tag }}
+      release_notes: ${{ steps.release_notes.outputs.release_notes }}
       windows_artifact_name: ${{ steps.version.outputs.windows_artifact_name }}
       windows_artifact_path: ${{ steps.version.outputs.windows_artifact_path }}
       windows_release_file: ${{ steps.version.outputs.windows_release_file }}
@@ -52,6 +53,46 @@ jobs:
           echo "linux_artifact_name=beam-lin-$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "linux_artifact_path=dist/beam-lin-$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "linux_release_file=release-artifacts/beam-lin-$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Extract release notes from changelog
+        id: release_notes
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          release_tag = os.environ['RELEASE_TAG']
+          changelog_lines = Path('CHANGELOG.md').read_text(encoding='utf-8').splitlines()
+          header = f'## {release_tag} - '
+
+          start = None
+          for index, line in enumerate(changelog_lines):
+              if line.startswith(header):
+                  start = index + 1
+                  break
+
+          if start is None:
+              raise SystemExit(f'Unable to find changelog section for {release_tag}')
+
+          end = len(changelog_lines)
+          for index in range(start, len(changelog_lines)):
+              if changelog_lines[index].startswith('## '):
+                  end = index
+                  break
+
+          notes = '\n'.join(changelog_lines[start:end]).strip()
+          if not notes:
+              raise SystemExit(f'Changelog section for {release_tag} is empty')
+
+          output_path = Path(os.environ['GITHUB_OUTPUT'])
+          with output_path.open('a', encoding='utf-8') as output_file:
+              output_file.write('release_notes<<EOF\n')
+              output_file.write(notes)
+              output_file.write('\nEOF\n')
+          PY
 
   build-windows:
     needs: prepare
@@ -248,24 +289,7 @@ jobs:
           body: |
             ## Beam ${{ needs.prepare.outputs.release_tag }}
 
-            ### Breaking Changes
-
-            - Replaced the legacy foobar2000 integration path with the Beefweb HTTP API integration.
-            - Dropped compatibility with the older deprecated foobar2000 plugin path used by previous Beam setups.
-
-            ### Migration
-
-            - Install and enable the foobar2000 Beefweb component.
-            - Configure Beam to reach Beefweb through `BEAM_BEEFWEB_URL` and optional authentication environment variables.
-            - Review `FOOBAR_MODULE.md` before upgrading an existing foobar2000 setup.
-
-            ### Highlights
-
-            - Added updated foobar2000 support and repository documentation for the foobar module.
-            - MediaMonkey now works with newer 2024 releases.
-            - Empty or null `%Genre` values now work correctly with cortina rules.
-            - `%CoverArt` now supports front-cover APIC frames with non-empty descriptions.
-            - Beam keeps the last song and active mood while paused, and returns to the default or not-playing mood when stopped.
+            ${{ needs.prepare.outputs.release_notes }}
 
             ### Artifacts
 
