@@ -46,7 +46,7 @@ class BeamStrings():
 
 
     def loadStrings(self, stringsfilename):
-        stringsFile = open(stringsfilename, 'r')
+        stringsFile = open(stringsfilename, 'r', encoding='utf-8')
         try:
             stringsDict = json.load(stringsFile)
         finally:

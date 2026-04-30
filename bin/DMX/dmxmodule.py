@@ -46,7 +46,7 @@ class DMXlibrary:
         return self._dmxdevDict[dmxfixture]
 
     def loadDMXdevDefinitions(self, dmxdevdefsfilename):
-        dmxdevdefsFile = open(dmxdevdefsfilename, 'r')
+        dmxdevdefsFile = open(dmxdevdefsfilename, 'r', encoding='utf-8')
         try:
             dmxdevDict = json.load(dmxdevdefsFile)
         finally:

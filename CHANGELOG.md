@@ -4,6 +4,12 @@ All notable changes in this fork are documented in this file.
 
 The format is based on Keep a Changelog, adapted for this repository's existing release history.
 
+## v0.7.1.2 - 2026-04-30
+
+### Fixed
+
+- Fixed Windows executable startup failures on non-UTF-8 system locales by loading bundled JSON resources and config files with explicit UTF-8 encoding.
+
 ## v0.7.1.1 - 2026-04-24
 
 ### Added
