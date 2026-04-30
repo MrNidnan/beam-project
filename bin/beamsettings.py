@@ -278,7 +278,7 @@ class BeamSettings:
 
 
     def loadConfigData(self, configFileName):
-        configFile = open(configFileName, 'r')
+        configFile = open(configFileName, 'r', encoding='utf-8')
         try:
             configData = json.load(configFile)
         finally:
@@ -298,9 +298,9 @@ class BeamSettings:
             # if the file does not exist use default from beam home
             logging.info("BeamSettings.dumpConfigData(): configfile does not exist '" + configFileName + "'")
 
-        configFile = open(configFileName, 'w')
+        configFile = open(configFileName, 'w', encoding='utf-8')
         try:
-            json.dump(configData, configFile, indent=2)
+            json.dump(configData, configFile, indent=2, ensure_ascii=False)
         finally:
             configFile.close()
 
