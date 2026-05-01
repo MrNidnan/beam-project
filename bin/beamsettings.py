@@ -193,6 +193,33 @@ class BeamSettings:
     def getVirtualDJ(self):
         return self._beamConfigData['VirtualDJ']
 
+    def getVirtualDJIntegrationMode(self):
+        integration_mode = str(self.getVirtualDJ().get('IntegrationMode', 'History File')).strip()
+        if integration_mode == '':
+            integration_mode = 'History File'
+        return integration_mode
+
+    def setVirtualDJIntegrationMode(self, integration_mode):
+        normalized_integration_mode = str(integration_mode).strip()
+        if normalized_integration_mode == '':
+            normalized_integration_mode = 'History File'
+        self.getVirtualDJ()['IntegrationMode'] = normalized_integration_mode
+        self._markDirty()
+
+    def getVirtualDJHistoryPath(self):
+        return str(self.getVirtualDJ().get('HistoryPath', '')).strip()
+
+    def setVirtualDJHistoryPath(self, history_path):
+        self.getVirtualDJ()['HistoryPath'] = str(history_path).strip()
+        self._markDirty()
+
+    def getVirtualDJRecentTrackWindowSec(self):
+        return int(self.getVirtualDJ().get('RecentTrackWindowSec', 300))
+
+    def setVirtualDJRecentTrackWindowSec(self, seconds):
+        self.getVirtualDJ()['RecentTrackWindowSec'] = int(seconds)
+        self._markDirty()
+
     def getVirtualDJHost(self):
         return str(self.getVirtualDJ().get('Host', '127.0.0.1')).strip()
 

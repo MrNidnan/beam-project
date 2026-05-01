@@ -1,0 +1,1 @@
+from bin.modules.virtualdjmodule import run

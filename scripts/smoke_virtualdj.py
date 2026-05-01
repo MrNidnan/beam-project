@@ -43,7 +43,7 @@ class VirtualDJHandler(http.server.BaseHTTPRequestHandler):
         auth_header = self.headers.get('Authorization', '')
         REQUEST_LOG.append((script, bearer, auth_header))
 
-        if bearer != 'secret-token' or auth_header != 'Bearer secret-token':
+        if bearer != '' or auth_header != 'Bearer secret-token':
             self.send_response(401)
             self.end_headers()
             return
@@ -64,17 +64,51 @@ def main():
     temp_home = tempfile.mkdtemp(prefix='beam-virtualdj-smoke-')
     os.environ['HOME'] = temp_home
     os.environ['USERPROFILE'] = temp_home
+    os.environ['LOCALAPPDATA'] = temp_home
 
     from bin.beamsettings import beamSettings
     from bin.modules import virtualdjmodule
+
+    history_dir = Path(temp_home) / 'VirtualDJ' / 'History'
+    history_dir.mkdir(parents=True, exist_ok=True)
+    (history_dir / 'tracklist.txt').write_text(
+        '22:44 : Juan D\'Arienzo - Paciencia\n'
+        '22:45 : deck=1 Oscar Larroca - Tango - Remolino\n'
+        '22:46 : deck=1 artist=Ricardo Tanturi genre=Tango title=Una Emocion year=1942\n'
+        '22:47 : deck=2 artist=Preview Artist genre=Preview title=Should Be Ignored year=1942\n',
+        encoding='utf-8',
+    )
+
+    beamSettings.loadConfig()
+    beamSettings.setSelectedModuleName('VirtualDJ')
+    beamSettings.setVirtualDJIntegrationMode('History File')
+    beamSettings.setVirtualDJHistoryPath('')
+    beamSettings.setVirtualDJRecentTrackWindowSec(300)
+
+    playlist, status = virtualdjmodule.run(beamSettings.getMaxTandaLength(), [])
+
+    assert status == 'Playing'
+    assert len(playlist) == 1
+    assert playlist[0].Artist == 'Ricardo Tanturi'
+    assert playlist[0].Genre == 'Tango'
+    assert playlist[0].Title == 'Una Emocion'
+    assert playlist[0].Year == '1942'
+
+    legacy_song = virtualdjmodule.get_song_from_text('22:45 : deck=1 Oscar Larroca - Tango - Remolino')
+    assert legacy_song.Artist == 'Oscar Larroca'
+    assert legacy_song.Genre == 'Tango'
+    assert legacy_song.Title == 'Remolino'
+
+    oldest_legacy_song = virtualdjmodule.get_song_from_text('22:44 : Juan D\'Arienzo - Paciencia')
+    assert oldest_legacy_song.Artist == 'Juan D\'Arienzo'
+    assert oldest_legacy_song.Title == 'Paciencia'
 
     server = socketserver.TCPServer(('127.0.0.1', 0), VirtualDJHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
     try:
-        beamSettings.loadConfig()
-        beamSettings.setSelectedModuleName('VirtualDJ')
+        beamSettings.setVirtualDJIntegrationMode('Network Control')
         beamSettings.setVirtualDJHost('127.0.0.1')
         beamSettings.setVirtualDJPort(server.server_address[1])
         beamSettings.setVirtualDJBearerToken('secret-token')
@@ -97,6 +131,8 @@ def main():
         assert "deck master is_audible ? deck master get_artist_title : get_text ''" in requested_scripts
         assert "deck master get_loaded_song 'artist'" in requested_scripts
         assert "deck master get_loaded_song 'filepath'" in requested_scripts
+        assert all(entry[1] == '' for entry in REQUEST_LOG)
+        assert all(entry[2] == 'Bearer secret-token' for entry in REQUEST_LOG)
 
         print('VirtualDJ smoke test passed')
     finally:

@@ -62,7 +62,7 @@ The format is based on Keep a Changelog, adapted for this repository's existing 
 
 - Install and enable the Beefweb foobar2000 component.
 - Configure Beam to reach Beefweb through `BEAM_BEEFWEB_URL` and optional authentication environment variables.
-- Review [FOOBAR_MODULE.md](FOOBAR_MODULE.md) before upgrading an existing foobar2000 setup.
+- Review [docs/FOOBAR_MODULE.md](docs/FOOBAR_MODULE.md) before upgrading an existing foobar2000 setup.
 
 ### Added
 

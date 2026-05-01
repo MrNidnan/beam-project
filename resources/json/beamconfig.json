@@ -27,6 +27,9 @@
     "BeefwebPassword": ""
   },
   "VirtualDJ": {
+    "IntegrationMode": "History File",
+    "HistoryPath": "",
+    "RecentTrackWindowSec": 300,
     "Host": "127.0.0.1",
     "Port": 80,
     "BearerToken": "",

@@ -90,7 +90,7 @@ class TagsPreviewPanel(wx.Panel):
         self.Layout()
         self.Update()
 
-    def DoRefresh(self):
+    def DoRefresh(self, event=None):
         TagsSelected = self.TagDropdown.GetValue()
         self.BuildTagsList(TagsSelected)
 

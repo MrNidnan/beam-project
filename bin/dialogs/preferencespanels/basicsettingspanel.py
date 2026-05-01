@@ -31,7 +31,8 @@ import wx
 from bin.beamutils import logLevelList, setLogLevel
 
 
-VIRTUALDJ_QUERY_MODES = ['Master', 'Deck 1', 'Deck 2']
+VIRTUALDJ_INTEGRATION_MODES = ['History File', 'Network Control']
+VIRTUALDJ_QUERY_MODES = ['Master', 'Deck 1', 'Deck 2', 'Left', 'Right']
 
 
 ###################################################################
@@ -76,7 +77,9 @@ class BasicSettingsPanel(wx.Panel):
         content_vbox.Add(self.ModuleSelectorDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
 
         self.foobarControls = []
-        self.virtualDjControls = []
+        self.virtualDjCommonControls = []
+        self.virtualDjHistoryControls = []
+        self.virtualDjNetworkControls = []
         
         
         ############
@@ -209,11 +212,30 @@ class BasicSettingsPanel(wx.Panel):
         content_vbox.Add(foobarpasswordlabel, flag=wx.LEFT | wx.TOP, border=20)
         content_vbox.Add(self.FoobarPasswordField, flag=wx.LEFT | wx.RIGHT, border=20)
 
-        virtualdjlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "VirtualDJ Network Control")
+        virtualdjlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "VirtualDJ")
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         virtualdjlabel.SetFont(font)
 
-        virtualdjdescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "These settings are used only when VirtualDJ is the selected media player.")
+        virtualdjdescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "History File works without VirtualDJ Pro. Network Control requires the optional Pro plugin.")
+
+        virtualdjintegrationlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Integration")
+        self.VirtualDJIntegrationDropdown = wx.ComboBox(self.scrolledWindow, wx.ID_ANY,
+                                value=self.BeamSettings.getVirtualDJIntegrationMode(),
+                                choices=VIRTUALDJ_INTEGRATION_MODES,
+                                size=(233, -1),
+                                style=wx.CB_READONLY)
+        self.VirtualDJIntegrationDropdown.Bind(wx.EVT_COMBOBOX, self.OnVirtualDJIntegrationModeChanged)
+
+        virtualdjhistorypathlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "History File Path")
+        self.VirtualDJHistoryPathField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJHistoryPath(), size=(233, -1))
+        self.VirtualDJHistoryPathField.Bind(wx.EVT_TEXT, self.OnVirtualDJHistoryPathChanged)
+        self.VirtualDJHistoryPathField.SetToolTip('Optional override for VirtualDJ tracklist.txt or a History folder. Leave blank for auto-detection.')
+
+        virtualdjrecentwindowlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Recent Track Window (sec)")
+        self.VirtualDJRecentWindowField = wx.SpinCtrl(self.scrolledWindow, wx.ID_ANY, min=0, max=86400, initial=self.BeamSettings.getVirtualDJRecentTrackWindowSec(), size=(100, -1))
+        self.VirtualDJRecentWindowField.Bind(wx.EVT_SPINCTRL, self.OnVirtualDJRecentTrackWindowChanged)
+        self.VirtualDJRecentWindowField.Bind(wx.EVT_TEXT, self.OnVirtualDJRecentTrackWindowChanged)
+        self.VirtualDJRecentWindowField.SetToolTip('How long a history file entry stays fresh before Beam treats VirtualDJ as stopped. Use 0 to disable staleness checks.')
 
         virtualdjhostlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Host")
         self.VirtualDJHostField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJHost(), size=(233, -1))
@@ -239,9 +261,21 @@ class BasicSettingsPanel(wx.Panel):
                                                       style=wx.CB_READONLY)
         self.VirtualDJQueryModeDropdown.Bind(wx.EVT_COMBOBOX, self.OnVirtualDJQueryModeChanged)
 
-        self.virtualDjControls = [
+        self.virtualDjCommonControls = [
             virtualdjlabel,
             virtualdjdescription,
+            virtualdjintegrationlabel,
+            self.VirtualDJIntegrationDropdown,
+        ]
+
+        self.virtualDjHistoryControls = [
+            virtualdjhistorypathlabel,
+            self.VirtualDJHistoryPathField,
+            virtualdjrecentwindowlabel,
+            self.VirtualDJRecentWindowField,
+        ]
+
+        self.virtualDjNetworkControls = [
             virtualdjhostlabel,
             self.VirtualDJHostField,
             virtualdjportlabel,
@@ -254,6 +288,12 @@ class BasicSettingsPanel(wx.Panel):
 
         content_vbox.Add(virtualdjlabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         content_vbox.Add(virtualdjdescription, flag=wx.LEFT, border=20)
+        content_vbox.Add(virtualdjintegrationlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJIntegrationDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_vbox.Add(virtualdjhistorypathlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJHistoryPathField, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_vbox.Add(virtualdjrecentwindowlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJRecentWindowField, flag=wx.LEFT, border=20)
         content_vbox.Add(virtualdjhostlabel, flag=wx.LEFT | wx.TOP, border=20)
         content_vbox.Add(self.VirtualDJHostField, flag=wx.LEFT | wx.RIGHT, border=20)
         content_vbox.Add(virtualdjportlabel, flag=wx.LEFT | wx.TOP, border=20)
@@ -296,6 +336,9 @@ class BasicSettingsPanel(wx.Panel):
         self.FoobarUrlField.ChangeValue(self.BeamSettings.getFoobarBeefwebUrl())
         self.FoobarUserField.ChangeValue(self.BeamSettings.getFoobarBeefwebUser())
         self.FoobarPasswordField.ChangeValue(self.BeamSettings.getFoobarBeefwebPassword())
+        self.VirtualDJIntegrationDropdown.SetValue(self.BeamSettings.getVirtualDJIntegrationMode())
+        self.VirtualDJHistoryPathField.ChangeValue(self.BeamSettings.getVirtualDJHistoryPath())
+        self.VirtualDJRecentWindowField.SetValue(self.BeamSettings.getVirtualDJRecentTrackWindowSec())
         self.VirtualDJHostField.ChangeValue(self.BeamSettings.getVirtualDJHost())
         self.VirtualDJPortField.SetValue(self.BeamSettings.getVirtualDJPort())
         self.VirtualDJTokenField.ChangeValue(self.BeamSettings.getVirtualDJBearerToken())
@@ -356,6 +399,16 @@ class BasicSettingsPanel(wx.Panel):
     def OnVirtualDJPortChanged(self, event):
         self.BeamSettings.setVirtualDJPort(self.VirtualDJPortField.GetValue())
 
+    def OnVirtualDJIntegrationModeChanged(self, event):
+        self.BeamSettings.setVirtualDJIntegrationMode(self.VirtualDJIntegrationDropdown.GetValue())
+        self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
+
+    def OnVirtualDJHistoryPathChanged(self, event):
+        self.BeamSettings.setVirtualDJHistoryPath(self.VirtualDJHistoryPathField.GetValue())
+
+    def OnVirtualDJRecentTrackWindowChanged(self, event):
+        self.BeamSettings.setVirtualDJRecentTrackWindowSec(self.VirtualDJRecentWindowField.GetValue())
+
     def OnVirtualDJBearerTokenChanged(self, event):
         self.BeamSettings.setVirtualDJBearerToken(self.VirtualDJTokenField.GetValue())
 
@@ -368,8 +421,16 @@ class BasicSettingsPanel(wx.Panel):
             control.Show(show_foobar_settings)
 
         show_virtualdj_settings = moduleName == 'VirtualDJ'
-        for control in self.virtualDjControls:
+        for control in self.virtualDjCommonControls:
             control.Show(show_virtualdj_settings)
+
+        show_virtualdj_history_controls = show_virtualdj_settings and self.BeamSettings.getVirtualDJIntegrationMode() == 'History File'
+        for control in self.virtualDjHistoryControls:
+            control.Show(show_virtualdj_history_controls)
+
+        show_virtualdj_network_controls = show_virtualdj_settings and self.BeamSettings.getVirtualDJIntegrationMode() == 'Network Control'
+        for control in self.virtualDjNetworkControls:
+            control.Show(show_virtualdj_network_controls)
 
         self.scrolledWindow.FitInside()
         self.Layout()
