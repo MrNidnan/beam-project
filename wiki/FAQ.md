@@ -16,6 +16,10 @@ A logfile 'beamlog.txt' will be written in the subdirectory '$USERHOME/.beam'.
 
 On Windows this might e.g. be 'C:\Users\<USERNAME>\\.beam\beamlog.txt' .
 
+For most users this means Beam logs are here:
+
+- `C:\Users\<USERNAME>\.beam\beamlog.txt`
+
 ## Why is there no config file '$USERHOME/.beam/beamconfig.json'
 
 If it's not there, then it gets created by the "Apply" button.
@@ -42,6 +46,11 @@ This can get changed to:
 - "Warning"
 - "Error"
 - "Critical"
+
+Recommended use:
+
+- use `Info` for normal everyday use
+- use `Debug` only when you are troubleshooting a problem and need more detail in `beamlog.txt`
 
 ## Beam: Directory <dirname> does not exist, logging to stdout only
 

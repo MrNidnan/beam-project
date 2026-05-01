@@ -9,14 +9,17 @@
 <body>
   <div class="page-shell">
     <main class="projection-window">
-      <div class="hero-block">
-        <p id="artist-name" class="artist-name">No track</p>
-        <h1 id="title">Waiting for Beam</h1>
-        <p id="current-date" class="current-date"></p>
-      </div>
-      <p id="previous-song" class="previous-song"></p>
+      <section id="layout-canvas" class="layout-canvas" aria-live="polite">
+        <div id="empty-state" class="empty-state">
+          <p class="empty-state-kicker">No active layout items</p>
+          <h1>Waiting for Beam</h1>
+          <p>Enable the network display and configure mood layout rows to project text and cover art here.</p>
+        </div>
+      </section>
     </main>
   </div>
+
+  <div id="text-measurer" class="text-measurer" aria-hidden="true"></div>
 
   <script type="module" src="/static/app.js"></script>
 </body>

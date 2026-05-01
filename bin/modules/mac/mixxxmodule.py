@@ -30,11 +30,21 @@ import logging
 from bin.modules import mixxxutils
 
 
-def run(MaxTandaLength, LastPlaylist):
-    # sqlitePath = os.path.expandvars(r'$HOME/Library/Application\ Support/Mixxx/mixxxdb.sqlite')
-    sqlitePath = os.path.expandvars(r'$HOME/Library/Containers/org.mixxx.mixxx/Data/Library/Application Support/Mixxx/mixxxdb.sqlite')
+DEFAULT_MIXXX_SQLITE_PATH = os.path.expandvars(r'$HOME/Library/Containers/org.mixxx.mixxx/Data/Library/Application Support/Mixxx/mixxxdb.sqlite')
+# $HOME/Library/Application Support/Mixxx/mixxxdb.sqlite
 
-    playlist, playback_status = mixxxutils.run(MaxTandaLength, LastPlaylist, sqlitePath)
+
+def run(max_tanda_length, last_playlist):
+    playlist, playback_status, _ = run_with_details(max_tanda_length, last_playlist)
 
     return playlist, playback_status
+
+
+def run_with_details(max_tanda_length, last_playlist):
+    return mixxxutils.run_with_details(
+        max_tanda_length,
+        last_playlist,
+        preferred_paths=[DEFAULT_MIXXX_SQLITE_PATH],
+        emit_debug_log=True,
+    )
 

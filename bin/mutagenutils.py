@@ -187,6 +187,71 @@ def getPreferredId3ApicTag(id3Frame):
     return None
 
 
+def readCoverArtData(filePath):
+    if not filePath:
+        return None, None
+
+    try:
+        id3Frame = ID3(filePath)
+        apicTag = getPreferredId3ApicTag(id3Frame)
+        data = apicTag.data if apicTag else None
+        if data:
+            return data, apicTag.mime
+    except Exception:
+        pass
+
+    try:
+        mp4Frame = MP4(filePath)
+        tags = mp4Frame.tags or {}
+        covr = tags.get('covr', [None])[0]
+        if covr:
+            if covr.imageformat == MP4Cover.FORMAT_JPEG:
+                return bytes(covr), 'image/jpeg'
+            if covr.imageformat == MP4Cover.FORMAT_PNG:
+                return bytes(covr), 'image/png'
+            logging.warning("Unkown MP4Cover.FORMAT: " + str(covr.imageformat))
+            return bytes(covr), 'application/octet-stream'
+    except Exception:
+        pass
+
+    try:
+        flac = FLAC(filePath)
+        pict = flac.pictures[0]
+        if pict is not None and pict.data:
+            return pict.data, pict.mime
+    except Exception:
+        pass
+
+    try:
+        apeFrame = APEv2(filePath)
+        logging.debug("APEv2 not implemented yet")
+        logging.debug(apeFrame.pprint())
+    except Exception:
+        pass
+
+    pathFileName, fileExt = os.path.splitext(filePath)
+    imagePath = pathFileName + ".jpg"
+    if os.path.isfile(imagePath):
+        try:
+            with open(imagePath, 'rb') as handle:
+                return handle.read(), 'image/jpeg'
+        except Exception:
+            pass
+
+    try:
+        fileDir, fileName = os.path.split(filePath)
+        for fileName in os.listdir(fileDir):
+            if fileName.endswith(".jpg"):
+                imagePath = os.path.join(fileDir, fileName)
+                if os.path.isfile(imagePath):
+                    with open(imagePath, 'rb') as handle:
+                        return handle.read(), 'image/jpeg'
+    except Exception:
+        pass
+
+    return None, None
+
+
 def readCoverArtImage(filePath):
     logging.debug("readCoverArtImage(" + filePath + ")")
     coverArtImage = None
@@ -198,63 +263,11 @@ def readCoverArtImage(filePath):
 
     if not coverArtImage:
         try:
-            id3Frame = ID3(filePath)
-            apicTag = getPreferredId3ApicTag(id3Frame)
-            data = apicTag.data if apicTag else None
+            data, mime_type = readCoverArtData(filePath)
             if data:
-                bitmapType = getBitmapTypeFromMime(apicTag.mime)
+                bitmapType = getBitmapTypeFromMime(mime_type or 'image/jpeg')
                 coverArtImage = wx.Image(BytesIO(data), bitmapType)
-        except Exception as e:
-            pass
-
-    if not coverArtImage:
-        try:
-            mp4Frame = MP4(filePath);
-            tags = mp4Frame.tags;
-            covr = tags['covr'][0];
-
-            if covr.imageformat == MP4Cover.FORMAT_JPEG:
-                bitmapType = wx.BITMAP_TYPE_JPEG
-            if covr.imageformat == MP4Cover.FORMAT_PNG:
-                bitmapType = wx.BITMAP_TYPE_PNG
-            if not bitmapType:
-                logging.warning("Unkown MP4Cover.FORMAT: " + covr.imageformat)
-                bitmapType = wx.BITMAP_TYPE_ANY
-
-            coverArtImage = wx.Image(BytesIO(covr), bitmapType);
-        except Exception as e:
-            pass
-
-    if not coverArtImage:
-        try:
-            flac = FLAC(filePath)
-            pict = flac.pictures[0]
-            if pict is not None:
-                bitmapType = getBitmapTypeFromMime(pict.mime)
-                # Suppress warning diaglog(!) "iCCP: known incorrect sRGB profile"
-                # from libpng on Tango Tunes cover art in debugger
-                coverArtImage = wx.Image(BytesIO(pict.data), bitmapType)
-        except Exception as e:
-            pass
-
-    if not coverArtImage:
-        try:
-            apeFrame = APEv2(filePath)
-            logging.debug("APEv2 not implemented yet")
-            logging.debug(apeFrame.pprint())
-            # keys = fileFrame.keys()
-            # logging.debug(keys)
-            # dict_keys = keys.dict_keys
-            # logging.debug(dict_keys)
-            # apicTag = id3Tags.get("APIC:")
-            # for apicTag in id3Tags.getall("APIC"):
-            #    print(apicTag.pprint())
-            # pictures = fileFrame.pictures
-            # apicTag = fileFrame.get("APIC:")
-            # if apicTag:
-            #    pict = apicTag.data
-            #    image = wx.Image(BytesIO(pict), wx.BITMAP_TYPE_JPEG)
-        except Exception as e:
+        except Exception:
             pass
 
         if not coverArtImage:

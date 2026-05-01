@@ -1,9 +1,10 @@
 # VirtualDJ Module
 
-This fork integrates VirtualDJ through two selectable modes:
+This fork integrates VirtualDJ through three selectable modes:
 
 - `History File`: default mode, based on `VirtualDJ/History/tracklist.txt`
 - `Network Control`: optional mode for users with the VirtualDJ Pro plugin available
+- `Auto (Network -> History)`: tries Network Control first, then falls back to history when the plugin is unavailable
 
 ## Why This Approach
 
@@ -44,7 +45,10 @@ Default history settings in Beam:
 
 - Integration mode: `History File`
 - History file path: blank, which means auto-detect
+- History deck: `Deck 1`
 - Recent track window: `300` seconds
+
+You can also set history deck to `-1` to accept entries from any deck.
 
 Current limitations of History File mode:
 
@@ -53,28 +57,32 @@ Current limitations of History File mode:
 - It depends on VirtualDJ writing history/tracklist output.
 - It may lag behind pause, stop, or deck changes.
 - Its format depends on the user's `tracklistFormat` setting.
-- Beam only reads deck `1` entries from history when deck markers are present, so deck `2` prelisten/history writes are ignored.
+- Beam follows the configured history deck when deck markers are present. The default is `Deck 1`. Set the value to `-1` if you want Beam to accept entries from any deck.
 
 Recommended VirtualDJ history settings:
 
 - Make sure `Record History` is enabled in VirtualDJ.
 - Reduce `HistoryDelay` from the default `45` seconds to a lower value such as `15` seconds if you want Beam to react sooner.
-- Set `tracklistFormat` to `deck=`get_deck` artist=%author genre=%genre title=%titleremix year=`get_year``so Beam can parse labeled fields directly, ignore deck`2`, and import year without guessing field order.
+- Set `tracklistFormat` to `deck=`get_deck` artist=%author genre=%genre title=%titleremix year=`get_year` filepath=`get_filepath`` so Beam can parse labeled fields directly, follow the configured history deck, import year, and keep the media file path for cover art recovery.
 
 Recommended `tracklistFormat` example:
 
 ```text
-deck=`get_deck` artist=%author genre=%genre title=%titleremix year=`get_year`
+deck=`get_deck` artist=%author genre=%genre title=%titleremix year=`get_year` filepath=`get_filepath`
 ```
 
 With that format, VirtualDJ writes lines such as:
 
 ```text
-22:45 : deck=1 artist=Oscar Larroca genre=Tango title=Remolino year=1941
+22:45 : deck=1 artist=Oscar Larroca genre=Tango title=Remolino year=1941 filepath=C:\Music\Oscar Larroca\Remolino.flac
 ```
 
-See other formats or text in virtualDj wiki:
-https://virtualdj.com/wiki/Skin%20SDK%20Textzone.html
+See other formats or text in VirtualDJ wiki:
+
+- https://virtualdj.com/wiki/Skin%20SDK%20Textzone.html
+- https://virtualdj.com/wiki/VDJScript.html
+
+Beam only cares that the history line contains a final labeled field such as `filepath=...`. If you prefer a different VDJScript expression that resolves to the loaded track path, Beam will read it the same way.
 
 Beam reads that as:
 
@@ -83,8 +91,9 @@ Beam reads that as:
 - Genre: `Tango`
 - Title: `Remolino`
 - Year: `1941`
+- File path: `C:\Music\Oscar Larroca\Remolino.flac`
 
-If a later history line is written for `deck=2`, Beam skips it instead of replacing the current Beam song with a prelisten deck entry.
+If a later history line is written for another deck, Beam skips it instead of replacing the current Beam song with a prelisten deck entry.
 
 Backward compatibility:
 
@@ -110,7 +119,7 @@ Current query modes:
 - `Left`: `deck left is_audible ? deck left get_artist_title : get_text ''`
 - `Right`: `deck right is_audible ? deck right get_artist_title : get_text ''`
 
-Beam first checks whether the selected deck is audible and then enriches the current `SongObject` with per-field metadata queries.
+Beam first checks whether the selected deck is audible and then enriches the current `SongObject` with one composite metadata query.
 
 Current metadata mapping:
 
@@ -125,7 +134,16 @@ Current limitations of Network Control mode:
 
 - A non-audible deck is treated as stopped.
 - Beam does not currently call `/execute`; it is read-only.
-- Metadata enrichment uses multiple `/query` calls after the audible check instead of one composite script.
+
+### Auto (Network -> History)
+
+When enabled, Beam tries the Network Control plugin first. If the plugin is unavailable or refuses the connection, Beam falls back to the configured history-file workflow.
+
+This mode is useful when:
+
+- you want live metadata when the plugin is running
+- you still want Beam to keep working if the plugin is disabled or fails to start
+- you want one configuration that covers both Pro and non-Pro environments
 
 ## User Setup
 
@@ -142,8 +160,9 @@ Beam setup:
 2. Select `VirtualDJ` as the media player.
 3. Choose `History File` as the integration.
 4. Leave `History File Path` blank for auto-detection, or enter a specific `tracklist.txt` path or `History` folder.
-5. In VirtualDJ, make sure history recording is enabled, set `tracklistFormat` to `deck=`get_deck` artist=%author genre=%genre title=%titleremix year=`get_year``, and lower `HistoryDelay` if you want Beam to react faster.
-6. Adjust `Recent Track Window (sec)` if you want Beam to forget stale entries faster or slower.
+5. Choose the history deck Beam should follow when VirtualDJ writes `deck=...` markers. Use `-1` if you want Beam to accept any deck.
+6. In VirtualDJ, make sure history recording is enabled, set `tracklistFormat` to `deck=`get_deck` artist=%author genre=%genre title=%titleremix year=`get_year` filepath=`get_filepath``, and lower `HistoryDelay` if you want Beam to react faster.
+7. Adjust `Recent Track Window (sec)` if you want Beam to forget stale entries faster or slower.
 
 ### Network Control
 
@@ -175,6 +194,33 @@ Default Network Control settings in Beam assume:
 - Port: `80`
 - Query mode: `Master`
 
+### Auto (Network -> History)
+
+Beam setup:
+
+1. Open `Preferences -> Basic Settings`.
+2. Select `VirtualDJ` as the media player.
+3. Choose `Auto (Network -> History)` as the integration.
+4. Configure the Network Control host, port, bearer token, and track source.
+5. Configure the history file path, history deck, and recent track window for fallback behavior.
+6. In VirtualDJ, keep history recording enabled even if you normally rely on the Network Control plugin.
+
+## Diagnostics
+
+Beam now writes a debug log line on each VirtualDJ poll showing the selected route:
+
+- `route=network` for Network Control polls
+- `route=fallback-history` when auto mode falls back from Network Control to history
+- `route=history` for direct history polling
+
+The VirtualDJ section in `Preferences -> Basic Settings` also includes a `Run test` button. It executes the current VirtualDJ integration immediately and shows:
+
+- the active integration mode
+- the route that was used
+- the current status
+- the history file or network target details
+- the metadata Beam detected for the current song
+
 ## Files Involved
 
 - `bin/modules/virtualdjmodule.py`: shared VirtualDJ backend with History File and Network Control modes
@@ -182,13 +228,13 @@ Default Network Control settings in Beam assume:
 - `bin/beamsettings.py`: VirtualDJ settings facade
 - `bin/dialogs/preferencespanels/basicsettingspanel.py`: user-facing VirtualDJ settings controls
 - `resources/json/beamconfig.json`: default config schema and module availability
-- `scripts/smoke_virtualdj.py`: smoke test covering both History File and Network Control modes in CI
+- `scripts/smoke_virtualdj.py`: smoke test covering History File, Network Control, hybrid fallback, and history deck selection in CI
 
 ## Future Extension Points
 
 If Beam needs better non-Pro fidelity later, the next likely step is to improve the history-file parser around timestamp handling, stale detection, and alternate `tracklistFormat` layouts.
 
-If Beam needs more metadata in Pro mode later, the safest next step is still to stay on `/query` rather than introducing a native plugin. If the request volume becomes a problem, the next optimization step is to replace the current per-field queries with a single composite `get_text` script.
+If Beam needs more metadata in Pro mode later, the safest next step is still to stay on `/query` rather than introducing a native plugin. The current implementation already uses a single composite `get_text` script for metadata.
 
 Potential follow-up work:
 

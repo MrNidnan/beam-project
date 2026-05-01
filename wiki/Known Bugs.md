@@ -1,39 +1,51 @@
-# Windows 11 Beam startup fails#
+# Known Bugs
 
-2022-12-10 20:43:22 : ERROR : C++ assertion "strcmp(setlocale(0, 0), "C") == 0" failed at ..\..\src\common\intl.cpp(1694) in wxLocale::GetInfo(): You probably called setlocale() directly instead of using wxLocale and now there is a mismatch between C/C++ and Windows locale.
-Things are going to break, please only change locale by creating wxLocale objects to avoid this!
-Traceback (most recent call last):
-  File "beam.py", line 86, in <module>
-  File "bin\mainframe.py", line 64, in __init__
-wx._core.wxAssertionError: C++ assertion "strcmp(setlocale(0, 0), "C") == 0" failed at ..\..\src\common\intl.cpp(1694) in wxLocale::GetInfo(): You probably called setlocale() directly instead of using wxLocale and now there is a mismatch between C/C++ and Windows locale.
-Things are going to break, please only change locale by creating wxLocale objects to avoid this!
+At the moment, this fork does not track any confirmed current known bugs on this page.
 
+The older entries that used to be listed here were already fixed in newer releases and are kept below only as historical notes.
 
-# Error dialog: Failed to load image from file ... #
+If you run into a problem, start here instead:
 
-It happens if you use an executable and select a new background image (and then apply).
-In that case we have something in the config "~.beam\beamconfig.json" like
+- [Quick Start Guide.md](Quick%20Start%20Guide.md)
+- [User Manual - Troubleshooting.md](User%20Manual%20-%20Troubleshooting.md)
+- [FAQ.md](FAQ.md)
+- [../CHANGELOG.md](../CHANGELOG.md)
 
-```
-"Background":  "C:\\Users\\Martin\\AppData\\Local\\Temp\\_MEI61802\\resources\\backgrounds
-\\bg1920x1080px_darkBlue.jpg",
-```
+## Historical Fixed Issues
 
-That temporary extraction folder ("_MEI61802") changes at the next start. 
-It should be a relative path then like:
+### Windows startup failure on some systems
 
-```
-"Background":  "resources\\backgrounds\\bg1920x1080px_darkBlue.jpg",
-```
+Older Beam versions could fail on Windows with locale or encoding-related startup errors.
 
-or so.
+Current status:
 
-## Workaround
+- fixed in this fork
+- Windows executable startup failures on non-UTF-8 system locales were fixed in `v0.7.1.2`
+- Windows startup reliability was improved again in later releases
 
-Do not change a background image file when using an executable version. 
+See [../CHANGELOG.md](../CHANGELOG.md) for the release history.
 
-a) Delete "~.beam\beamconfig.json" so that a new config file gets created.
+### Executable background paths pointing into temporary `_MEI...` folders
 
-b) To not lose the configuration, open the config file and correct it manually.
+Older Beam versions could save background paths that pointed into PyInstaller temporary extraction folders, which then broke after the next restart.
 
-## Fixed in V0.5.0.4
+Current status:
+
+- fixed in older Beam releases and superseded by the newer background asset handling in this fork
+- the current fork supports bundled backgrounds, managed imported backgrounds under the user's `.beam` folder, and compatibility with older saved paths
+
+See also:
+
+- [User Manual - Customize the Display.md](User%20Manual%20-%20Customize%20the%20Display.md)
+- [README.md](../README.md)
+- [../CHANGELOG.md](../CHANGELOG.md)
+
+## Reporting New Issues
+
+If you find a real current bug, it is more useful to record:
+
+- the Beam version
+- your operating system
+- the selected music player
+- the steps needed to reproduce the problem
+- the contents of `beamlog.txt` from your user `.beam` folder

@@ -26,9 +26,11 @@ Release artifact names below use `v0.7.0`.
 
 - Branch pushes and pull requests run the GitHub Actions validation workflow only.
 - The validation workflow checks the Python entrypoint on Windows and Linux, but it does not package Beam and it does not upload artifacts.
+- The validation workflow also exposes an optional manual `run_renderer_soak` input on `workflow_dispatch` to run the longer layered-renderer soak check without affecting the default validation path.
 - Release artifacts are built only by the GitHub Actions release workflow.
 - The Windows release workflow can optionally Authenticode-sign the executable when `WINDOWS_CERTIFICATE_PFX_BASE64` and `WINDOWS_CERTIFICATE_PASSWORD` GitHub Actions secrets are configured.
 - The release workflow runs when you push a `v*` tag, or when you start it manually with `workflow_dispatch` and provide a release tag.
+- The validation and release workflows both call the same shared GitHub composite action for their platform smoke suites before packaging or publishing, which keeps the smoke coverage aligned across pipelines.
 - The release workflow builds the Windows and Linux executables, uploads those workflow artifacts, pauses at the `release-smoke-test` environment gate, and then creates a draft GitHub release.
 
 ## Windows
@@ -67,6 +69,26 @@ pyinstaller --noconfirm --noconsole --clean --onefile `
 ```powershell
 .\dist\beam-win-v0.7.0.exe
 ```
+
+### Dev Smoke Scripts
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\smoke_imports.py
+.\.venv\Scripts\python.exe .\scripts\smoke_virtualdj.py
+.\.venv\Scripts\python.exe .\scripts\smoke_foobar.py
+.\.venv\Scripts\python.exe .\scripts\smoke_mixxx.py
+.\.venv\Scripts\python.exe .\scripts\smoke_background_pipeline.py
+```
+
+Optional long-run renderer soak check:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\soak_layered_repaints.py
+```
+
+Use the soak script when you want to watch layered bitmap cache behavior over repeated repaint-style loads. It is intentionally separate from the default smoke suite because it is slower and aimed at stability observation rather than quick gating.
+
+The runtime background memory and bitmap lifecycle logs in `beamlog.txt` are emitted only when Beam log level is set to `Debug`.
 
 ### Code Signing
 
@@ -137,6 +159,36 @@ pyinstaller --noconfirm --noconsole --clean --onefile \
 chmod u+x ./dist/beam-lin-v0.7.0
 ./dist/beam-lin-v0.7.0
 ```
+
+### Dev Smoke Scripts
+
+```bash
+python3 scripts/smoke_imports.py
+python3 scripts/smoke_mixxx.py
+python3 scripts/smoke_background_pipeline.py
+```
+
+Optional long-run renderer soak check:
+
+```bash
+python3 scripts/soak_layered_repaints.py
+```
+
+Use the soak script when you want to watch layered bitmap cache behavior over repeated repaint-style loads. It is intentionally separate from the default smoke suite because it is slower and aimed at stability observation rather than quick gating.
+
+The runtime background memory and bitmap lifecycle logs in `beamlog.txt` are emitted only when Beam log level is set to `Debug`.
+
+### Optional CI Soak Run
+
+The GitHub Actions `Validate` workflow can also run the layered renderer soak script as a manual, non-blocking job.
+
+How to use it:
+
+1. Open the `Validate` workflow in GitHub Actions.
+2. Start it with `Run workflow`.
+3. Enable the `run_renderer_soak` input.
+
+The soak job runs only for that manual dispatch path and is marked non-blocking so it does not fail the normal validation workflow.
 
 ## Release Checklist
 

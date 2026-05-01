@@ -31,6 +31,7 @@ import platform
 import logging
 import os
 from bin.beamutils import complementDict, getBeamConfigPath, getBeamHomePath, getBeamResourcesPath
+from bin.backgroundassets import normalize_background_reference
 from bin.beamstrings import BeamStrings
 from bin.profilesettings import ProfileSettingsStore
 from bin.DMX.dmxmodule import DMXlibrary, Universe
@@ -78,6 +79,7 @@ class BeamSettings:
         )
         self._isDirty = False
         self._suspendDirtyTracking = False
+        self._oladIsRunning = 0
 
     def _markDirty(self):
         if not self._suspendDirtyTracking:
@@ -108,6 +110,131 @@ class BeamSettings:
 
     def getMoods(self):
         return self._beamConfigData['Moods']
+
+    def getArtistBackgrounds(self):
+        return self._beamConfigData['ArtistBackgrounds']
+
+    def getArtistBackgroundMappings(self):
+        return self.getArtistBackgrounds().get('Mappings', [])
+
+    def getArtistBackgroundsEnabled(self):
+        return str(self.getArtistBackgrounds().get('Enabled', 'False')).lower() == 'true'
+
+    def getDisplayTweaks(self):
+        return getattr(self, '_beamConfigData', {}).get('DisplayTweaks', {})
+
+    def _get_display_tweaks_mutable(self):
+        if not hasattr(self, '_beamConfigData') or not isinstance(self._beamConfigData, dict):
+            self._beamConfigData = {}
+
+        display_tweaks = self._beamConfigData.get('DisplayTweaks')
+        if not isinstance(display_tweaks, dict):
+            display_tweaks = {}
+            self._beamConfigData['DisplayTweaks'] = display_tweaks
+
+        return display_tweaks
+
+    def _normalize_auto_or_int(self, value, minimum=0):
+        normalized_value = str(value).strip()
+        if normalized_value == '' or normalized_value.lower() == 'auto':
+            return 'auto'
+
+        try:
+            return max(minimum, int(normalized_value))
+        except (TypeError, ValueError):
+            return None
+
+    def getBackgroundBitmapCacheLimit(self):
+        try:
+            return max(1, int(self.getDisplayTweaks().get('BackgroundBitmapCacheLimit', 8)))
+        except (TypeError, ValueError):
+            return 8
+
+    def setBackgroundBitmapCacheLimit(self, value):
+        try:
+            normalized_value = max(1, int(value))
+        except (TypeError, ValueError):
+            return False
+
+        self._get_display_tweaks_mutable()['BackgroundBitmapCacheLimit'] = normalized_value
+        self._markDirty()
+        return True
+
+    def getCoverArtCornerRadius(self):
+        value = self.getDisplayTweaks().get('CoverArtCornerRadius', 'auto')
+        if str(value).strip().lower() == 'auto':
+            return 'auto'
+        try:
+            return max(0, int(value))
+        except (TypeError, ValueError):
+            return 'auto'
+
+    def setCoverArtCornerRadius(self, value):
+        normalized_value = self._normalize_auto_or_int(value, 0)
+        if normalized_value is None:
+            return False
+
+        self._get_display_tweaks_mutable()['CoverArtCornerRadius'] = normalized_value
+        self._markDirty()
+        return True
+
+    def getCoverArtFeatherAmount(self):
+        value = self.getDisplayTweaks().get('CoverArtFeatherAmount', 'auto')
+        if str(value).strip().lower() == 'auto':
+            return 'auto'
+        try:
+            return max(0, int(value))
+        except (TypeError, ValueError):
+            return 'auto'
+
+    def setCoverArtFeatherAmount(self, value):
+        normalized_value = self._normalize_auto_or_int(value, 0)
+        if normalized_value is None:
+            return False
+
+        self._get_display_tweaks_mutable()['CoverArtFeatherAmount'] = normalized_value
+        self._markDirty()
+        return True
+
+    def getCoverArtOutlineEnabled(self):
+        return str(self.getDisplayTweaks().get('CoverArtOutlineEnabled', 'True')).lower() == 'true'
+
+    def setCoverArtOutlineEnabled(self, enabled):
+        self._get_display_tweaks_mutable()['CoverArtOutlineEnabled'] = 'True' if enabled else 'False'
+        self._markDirty()
+
+    def getCoverArtOutlineAlpha(self):
+        try:
+            alpha = int(self.getDisplayTweaks().get('CoverArtOutlineAlpha', 56))
+        except (TypeError, ValueError):
+            alpha = 56
+        return max(0, min(255, alpha))
+
+    def setCoverArtOutlineAlpha(self, value):
+        try:
+            normalized_value = max(0, min(255, int(value)))
+        except (TypeError, ValueError):
+            return False
+
+        self._get_display_tweaks_mutable()['CoverArtOutlineAlpha'] = normalized_value
+        self._markDirty()
+        return True
+
+    def getCoverArtOutlineWidth(self):
+        try:
+            return max(1, int(self.getDisplayTweaks().get('CoverArtOutlineWidth', 1)))
+        except (TypeError, ValueError):
+            return 1
+
+    def setCoverArtOutlineWidth(self, value):
+        try:
+            normalized_value = max(1, int(value))
+        except (TypeError, ValueError):
+            return False
+
+        self._get_display_tweaks_mutable()['CoverArtOutlineWidth'] = normalized_value
+        self._markDirty()
+        return True
 
     def getRules(self):
         return self._beamConfigData['Rules']
@@ -190,8 +317,34 @@ class BeamSettings:
     def getFoobar2000(self):
         return self._beamConfigData['Foobar2000']
 
+    def getMixxx(self):
+        return self._beamConfigData['Mixxx']
+
     def getVirtualDJ(self):
         return self._beamConfigData['VirtualDJ']
+
+    def getJRiver(self):
+        return self._beamConfigData['JRiver']
+
+    def getJRiverTargetZone(self):
+        target_zone = str(self.getJRiver().get('TargetZone', '-1')).strip()
+        if target_zone == '':
+            target_zone = '-1'
+        return target_zone
+
+    def getMixxxDatabasePath(self):
+        return str(self.getMixxx().get('DatabasePath', '')).strip()
+
+    def setMixxxDatabasePath(self, database_path):
+        self.getMixxx()['DatabasePath'] = str(database_path).strip()
+        self._markDirty()
+
+    def setJRiverTargetZone(self, target_zone):
+        normalized_target_zone = str(target_zone).strip()
+        if normalized_target_zone == '':
+            normalized_target_zone = '-1'
+        self.getJRiver()['TargetZone'] = normalized_target_zone
+        self._markDirty()
 
     def getVirtualDJIntegrationMode(self):
         integration_mode = str(self.getVirtualDJ().get('IntegrationMode', 'History File')).strip()
@@ -218,6 +371,19 @@ class BeamSettings:
 
     def setVirtualDJRecentTrackWindowSec(self, seconds):
         self.getVirtualDJ()['RecentTrackWindowSec'] = int(seconds)
+        self._markDirty()
+
+    def getVirtualDJHistoryDeck(self):
+        history_deck = str(self.getVirtualDJ().get('HistoryDeck', 'Deck 1')).strip()
+        if history_deck == '':
+            history_deck = 'Deck 1'
+        return history_deck
+
+    def setVirtualDJHistoryDeck(self, history_deck):
+        normalized_history_deck = str(history_deck).strip()
+        if normalized_history_deck == '':
+            normalized_history_deck = 'Deck 1'
+        self.getVirtualDJ()['HistoryDeck'] = normalized_history_deck
         self._markDirty()
 
     def getVirtualDJHost(self):
@@ -258,12 +424,12 @@ class BeamSettings:
         self._markDirty()
 
     def getFoobarBeefwebUrl(self):
-        return str(self.getFoobar2000().get('BeefwebUrl', 'http://localhost:8880/')).strip()
+        return str(self.getFoobar2000().get('BeefwebUrl', 'http://localhost:8880/api/')).strip()
 
     def setFoobarBeefwebUrl(self, url):
         normalized_url = str(url).strip()
         if normalized_url == '':
-            normalized_url = 'http://localhost:8880/'
+            normalized_url = 'http://localhost:8880/api/'
         self.getFoobar2000()['BeefwebUrl'] = normalized_url
         self._markDirty()
 
@@ -424,6 +590,87 @@ class BeamSettings:
         if beamConfigData is not None:
             self.__setConfigData(beamConfigData, defaultConfigData)
 
+    def _migrate_background_reference_value(self, background_value, context):
+        normalized_value = '' if background_value is None else str(background_value).strip()
+        if normalized_value == '':
+            return normalized_value
+
+        try:
+            migrated_value = normalize_background_reference(normalized_value)
+        except ValueError:
+            logging.warning(
+                "BeamSettings: could not normalize %s background reference '%s'",
+                context,
+                background_value,
+            )
+            return background_value
+
+        if migrated_value != background_value:
+            logging.info(
+                "BeamSettings: normalized %s background reference '%s' -> '%s'",
+                context,
+                background_value,
+                migrated_value,
+            )
+            return migrated_value
+
+        if (
+            not normalized_value.startswith('asset:')
+            and not normalized_value.lower().startswith('resources/')
+            and not os.path.isabs(normalized_value)
+        ):
+            logging.warning(
+                "BeamSettings: keeping legacy relative %s background reference '%s' unchanged",
+                context,
+                background_value,
+            )
+
+        return background_value
+
+    def _ensure_artist_background_defaults(self, defaultConfigData):
+        default_artist_backgrounds = defaultConfigData.get('ArtistBackgrounds')
+        if default_artist_backgrounds is None:
+            return
+
+        artist_backgrounds = self._beamConfigData.get('ArtistBackgrounds')
+        if artist_backgrounds is None:
+            self._beamConfigData['ArtistBackgrounds'] = deepcopy(default_artist_backgrounds)
+            return
+
+        complementDict(default_artist_backgrounds, artist_backgrounds)
+
+    def _migrate_title_text_flow_in_memory(self):
+        for mood_index, mood in enumerate(self._beamConfigData.get('Moods', [])):
+            for display_index, display_item in enumerate(mood.get('Display', [])):
+                field_name = str(display_item.get('Field', '')).strip()
+                text_flow = str(display_item.get('TextFlow', 'Cut')).strip()
+                if field_name != '%Title' or text_flow != 'Cut':
+                    continue
+
+                display_item['TextFlow'] = 'Wrap'
+                logging.info(
+                    "BeamSettings: migrated mood[%s] display[%s] title TextFlow from Cut to Wrap",
+                    mood_index,
+                    display_index,
+                )
+
+    def _migrate_background_config_in_memory(self, defaultConfigData):
+        for mood_index, mood in enumerate(self._beamConfigData.get('Moods', [])):
+            mood['Background'] = self._migrate_background_reference_value(
+                mood.get('Background', ''),
+                'mood[%s]' % mood_index,
+            )
+
+        self._ensure_artist_background_defaults(defaultConfigData)
+
+        for mapping_index, mapping in enumerate(self.getArtistBackgroundMappings()):
+            mapping['Background'] = self._migrate_background_reference_value(
+                mapping.get('Background', ''),
+                'artist mapping[%s]' % mapping_index,
+            )
+
+        self._migrate_title_text_flow_in_memory()
+
 
     #
     # Initializes protected variables by copying from ConfigData or DefaultConfigData
@@ -444,6 +691,8 @@ class BeamSettings:
             for idx in range(0, len(beamConfigData['Moods'])):
                 idxMood = self._beamConfigData['Moods'][idx]
                 complementDict(defMood, idxMood)
+
+            self._migrate_background_config_in_memory(defaultConfigData)
 
             has_trim_title_rule = False
             for rule in self._beamConfigData['Rules']:

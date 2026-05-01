@@ -26,14 +26,26 @@
 # This Python file uses the following encoding: utf-8
 
 import wx, os
+from bin.backgroundassets import import_background_asset, resolve_background_reference, to_persisted_background_reference
 from bin.dialogs.editlayoutitemdialog import EditLayoutItemDialog
 from bin.dialogs.preferencespanels.timercombobox import TimerComboBox
-from bin.beamutils import getRelativePath
+
+BACKGROUND_FILE_WILDCARD = "Image files(*.png,*.jpg)|*.png;*.jpg"
+BACKGROUND_EXTENSIONS = ('.jpg', '.jpeg', '.png')
 
 ###################################################################
 #                      DefaultLayout                              #
 ###################################################################
-from bin.beamutils import getBeamHomePath
+
+
+def _get_background_picker_path(background_reference):
+    resolved_background = resolve_background_reference(background_reference)
+    return resolved_background['absolutePath'] or str(background_reference or '')
+
+
+def _get_background_label_path(background_reference):
+    resolved_background = resolve_background_reference(background_reference)
+    return resolved_background['absolutePath'] or resolved_background['relativePath'] or str(background_reference or '')
 
 
 class DefaultLayoutPanel(wx.Panel):
@@ -152,21 +164,76 @@ class DefaultLayoutPanel(wx.Panel):
     def BrowseBackgroundImage(self, event):
         # appPath = getBeamHomePath()
 # !!! current path as default?
-        backgroundPath = self.BeamSettings.getMoods()[0]['Background']
-        openFileDialog = wx.FileDialog(self, "Set new background image",
-                                       # os.path.join(appPath, 'resources', 'backgrounds'),
-                                       backgroundPath,
-                                       "",
-                                       "Image files(*.png,*.jpg)|*.png;*.jpg",
-                                       wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-        if openFileDialog.ShowModal() == wx.ID_OK:
-            backgroundPath = openFileDialog.GetPath()
-            # !!! Sanitize for temporary home of execcutable
-            relativePath = getRelativePath(backgroundPath)
-            self.BeamSettings.getMoods()[0]['Background'] = relativePath
-            # change current background
-            self.OnRotateBackground()
-            openFileDialog.Destroy()
+        background_path = _get_background_picker_path(self.BeamSettings.getMoods()[0]['Background'])
+        if self.BeamSettings.getMoods()[0]['RotateBackground'] == 'no':
+            dialog_directory, dialog_file = os.path.split(background_path)
+            open_dialog = wx.FileDialog(
+                self,
+                "Set new background image",
+                dialog_directory,
+                dialog_file,
+                BACKGROUND_FILE_WILDCARD,
+                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+            )
+        else:
+            dialog_directory = background_path
+            if os.path.splitext(os.path.basename(background_path))[1].lower() in BACKGROUND_EXTENSIONS:
+                dialog_directory = os.path.dirname(background_path)
+            open_dialog = wx.DirDialog(
+                self,
+                "Select background folder",
+                dialog_directory,
+                wx.DD_DIR_MUST_EXIST
+            )
+
+        try:
+            if open_dialog.ShowModal() == wx.ID_OK:
+                selected_path = open_dialog.GetPath()
+                persisted_reference = to_persisted_background_reference(selected_path, 'moods')
+                if persisted_reference is None:
+                    message = (
+                        "Copy the selected background into Beam's managed background library?\n\n"
+                        "Yes: import into ~/.beam/backgrounds/moods\n"
+                        "No: keep an unmanaged external path\n"
+                        "Cancel: keep the current background"
+                    )
+                    decision_dialog = wx.MessageDialog(
+                        self,
+                        message,
+                        "Import background",
+                        wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION,
+                    )
+                    try:
+                        decision = decision_dialog.ShowModal()
+                    finally:
+                        decision_dialog.Destroy()
+
+                    if decision == wx.ID_CANCEL:
+                        return
+                    if decision == wx.ID_YES:
+                        import_result = import_background_asset(selected_path, 'moods')
+                        if import_result['status'] == 'failed':
+                            error_dialog = wx.MessageDialog(
+                                self,
+                                import_result['message'],
+                                "Background import failed",
+                                wx.OK | wx.ICON_ERROR,
+                            )
+                            try:
+                                error_dialog.ShowModal()
+                            finally:
+                                error_dialog.Destroy()
+                            return
+                        persisted_reference = import_result['reference']
+                    else:
+                        persisted_reference = os.path.normpath(selected_path)
+
+                self.BeamSettings.getMoods()[0]['Background'] = persisted_reference
+                self.BeamSettings.markDirty()
+                # change current background
+                self.OnRotateBackground()
+        finally:
+            open_dialog.Destroy()
 
         #####################
         # ROTATE BACKGROUND #
@@ -193,11 +260,16 @@ class DefaultLayoutPanel(wx.Panel):
         timevalue = int(self.BeamSettings.getMoods()[0]['RotateTimer'])
         self.BackgroundTimerBox.setTimeSelection(timevalue)
 
-        (path,backgroundfile) = os.path.split(self.BeamSettings.getMoods()[0]['Background'])
+        label_path = _get_background_label_path(self.BeamSettings.getMoods()[0]['Background'])
+        path, backgroundfile = os.path.split(os.path.normpath(label_path))
         if self.BeamSettings.getMoods()[0]['RotateBackground'] == "no":
             self.currentBackground.SetLabel("Image: " + backgroundfile)
         else:
-            self.currentBackground.SetLabel("Images from folder: " + os.path.split(path)[1])
+            if os.path.splitext(backgroundfile)[1].lower() in BACKGROUND_EXTENSIONS:
+                folder_name = os.path.split(path)[1]
+            else:
+                folder_name = backgroundfile
+            self.currentBackground.SetLabel("Images from folder: " + folder_name)
 
         ##################
         # LAYOUT BUTTONS #

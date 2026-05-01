@@ -22,18 +22,42 @@
     "WebRoot": "resources/web/tablet"
   },
   "Foobar2000": {
-    "BeefwebUrl": "http://localhost:8880/",
+    "BeefwebUrl": "http://localhost:8880/api/",
     "BeefwebUser": "",
     "BeefwebPassword": ""
+  },
+  "Mixxx": {
+    "DatabasePath": ""
   },
   "VirtualDJ": {
     "IntegrationMode": "History File",
     "HistoryPath": "",
     "RecentTrackWindowSec": 300,
+    "HistoryDeck": "Deck 1",
     "Host": "127.0.0.1",
     "Port": 80,
     "BearerToken": "",
     "QueryMode": "Master"
+  },
+  "JRiver": {
+    "TargetZone": "-1"
+  },
+  "ArtistBackgrounds": {
+    "Enabled": "False",
+    "StorageRoot": "backgrounds/orchestras",
+    "MatchField": "%AlbumArtist",
+    "FallbackField": "%Artist",
+    "DefaultMode": "blend",
+    "DefaultOpacity": 35,
+    "Mappings": []
+  },
+  "DisplayTweaks": {
+    "BackgroundBitmapCacheLimit": 8,
+    "CoverArtCornerRadius": "auto",
+    "CoverArtFeatherAmount": "auto",
+    "CoverArtOutlineEnabled": "True",
+    "CoverArtOutlineAlpha": 56,
+    "CoverArtOutlineWidth": 1
   },
   "AllModules": [
     {
@@ -56,7 +80,7 @@
         "VirtualDJ",
         "MediaMonkey",
         "Spotify",
-        "Winamp",
+        "Winamp/AIMP",
         "Mixxx",
         "Icecast",
         "JRiver"
@@ -210,7 +234,7 @@
           "Position": [48, 50],
           "Alignment": "Center",
           "Active": "yes",
-          "TextFlow": "Cut"
+          "TextFlow": "Wrap"
         },
         {
           "Field": "%Genre %Year",
@@ -357,7 +381,7 @@
           "Font": "Georgia",
           "Alignment": "Center",
           "Size": 10,
-          "TextFlow": "Cut"
+          "TextFlow": "Wrap"
         },
         {
           "Style": "Italic",
@@ -463,7 +487,7 @@
           "Font": "Georgia",
           "Alignment": "Center",
           "Size": 10,
-          "TextFlow": "Cut"
+          "TextFlow": "Wrap"
         },
         {
           "Style": "Italic",

@@ -30,7 +30,10 @@ import sys
 import logging
 
 import array
-from ola.ClientWrapper import ClientWrapper
+try:
+    from ola.ClientWrapper import ClientWrapper
+except ImportError:
+    ClientWrapper = None
 import sys
 
 ###############################################################
@@ -40,6 +43,10 @@ import sys
 ###############################################################
 
 wrapper = None
+
+
+def isOlaAvailable():
+    return ClientWrapper is not None
 
 def startOlad ():
     status = 0
@@ -97,6 +104,10 @@ def DmxSent(status):
 
 def sendDMXrequest (universe: object, datalist: object) -> object:
     global wrapper
+
+    if not isOlaAvailable():
+        logging.info("OLA Python bindings are not installed; skipping DMX request")
+        return None
 
     logging.debug("... universe: %s", universe)
     # logging.debug("... Datalist: " + datalist)

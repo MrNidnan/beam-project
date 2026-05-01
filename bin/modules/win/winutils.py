@@ -38,21 +38,59 @@ except ImportError:
 ###############################################################
 
 def applicationrunning(appname):
+    normalized_app_name = str(appname).strip().lower()
+    if normalized_app_name == '':
+        logging.debug("winutils.applicationrunning(): empty app name")
+        return False
 
-    cmd = 'WMIC PROCESS get Caption'
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
-    for line in proc.stdout:
-        # logging.debug("Line: '" + line + "'")
-        if appname.lower() in line.lower():
-            proc.kill()
-            return True
-    proc.kill()
+    for method_name, command in (
+        ('wmic', ['wmic', 'process', 'get', 'Caption']),
+        ('tasklist', ['tasklist', '/FO', 'CSV', '/NH']),
+    ):
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=False,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0),
+            )
+        except Exception as error:
+            logging.debug(
+                "winutils.applicationrunning(%s): %s invocation failed: %s",
+                appname,
+                method_name,
+                error,
+                exc_info=True,
+            )
+            continue
 
-        # for i in range(len(string_list)):
-        # string_list[i] = string_list[i].lower()
+        stdout = result.stdout or ''
+        stderr = (result.stderr or '').strip()
+        if result.returncode not in (0,):
+            logging.debug(
+                "winutils.applicationrunning(%s): %s returned code %s stderr=%s",
+                appname,
+                method_name,
+                result.returncode,
+                stderr,
+            )
+            continue
 
+        for line in stdout.splitlines():
+            if normalized_app_name in line.lower():
+                logging.debug(
+                    "winutils.applicationrunning(%s): found process via %s",
+                    appname,
+                    method_name,
+                )
+                return True
 
-    # if not returned successfully above
-    logging.debug("winutils.appplicationRunning(" + appname + ") = False")
+        logging.debug(
+            "winutils.applicationrunning(%s): %s completed but process not found",
+            appname,
+            method_name,
+        )
 
+    logging.debug("winutils.applicationrunning(%s) = False", appname)
     return False

@@ -54,17 +54,19 @@ Beam now supports saved Foobar2000 Beefweb settings in the main Preferences UI w
 Open `Settings`, choose `Foobar2000` as the media player, and Beam will show the `Foobar2000 Beefweb` section directly below the media-player selector.
 
 - `Beefweb URL`
-  Default: `http://localhost:8880/`
+  Default: `http://localhost:8880/api/`
 - `Beefweb Username`
   Optional username if Beefweb authentication is enabled.
 - `Beefweb Password`
   Optional password if Beefweb authentication is enabled.
+- `Run test`
+  Runs the current Foobar2000 integration immediately and shows the detected status, Beefweb target, and current metadata.
 
 These settings are stored in Beam configuration as:
 
 ```json
 "Foobar2000": {
-  "BeefwebUrl": "http://localhost:8880/",
+  "BeefwebUrl": "http://localhost:8880/api/",
   "BeefwebUser": "",
   "BeefwebPassword": ""
 }
@@ -72,12 +74,20 @@ These settings are stored in Beam configuration as:
 
 These values are stored in Beam configuration and used by the foobar module at runtime.
 
+Multiple foobar2000 instances
+
+Beam connects to one Beefweb server URL. It does not detect or manage multiple foobar2000 instances separately.
+
+If you run a second foobar2000 instance for preview or prelisten, Beam can only follow the instance exposed through the configured `Beefweb URL`.
+
+For a reliable setup, expose Beefweb only on the foobar2000 instance you want Beam to follow. If your preview instance also has Beefweb enabled, disable it there or move it to a different port that Beam is not using.
+
 Beam first reads the saved Preferences values. Environment variables are only used as a fallback for older setups that have not moved to the saved settings yet.
 
 Environment variables are still accepted as a fallback for older setups:
 
 - `BEAM_BEEFWEB_URL`
-  Default fallback: `http://localhost:8880/`
+  Default fallback: `http://localhost:8880/api/`
 - `BEAM_BEEFWEB_USER`
   Optional username if Beefweb authentication is enabled.
 - `BEAM_BEEFWEB_PASSWORD`
@@ -88,11 +98,17 @@ Environment variables are still accepted as a fallback for older setups:
 Example PowerShell session:
 
 ```powershell
-$env:BEAM_BEEFWEB_URL = "http://localhost:8880/"
+$env:BEAM_BEEFWEB_URL = "http://localhost:8880/api/"
 $env:BEAM_BEEFWEB_USER = ""
 $env:BEAM_BEEFWEB_PASSWORD = ""
 python .\beam.py
 ```
+
+Important note:
+
+- Beam expects the Beefweb API base URL, not just the web UI root.
+- For a default local install, use `http://localhost:8880/api/`.
+- Beam then calls endpoints such as `GET /player` and `GET /playlists/...` relative to that API base.
 
 How The Playlist Logic Works
 
@@ -118,6 +134,11 @@ Failure Behavior
 - If playback is stopped, Beam clears the current song display and falls back to the default or not-playing mood.
 - If Beefweb is unreachable or misconfigured, Beam returns `BeefwebUnavailable` unless it already managed to recover current-song data.
 - If playlist slicing fails but the player response contains current track columns, Beam can still project the current song.
+
+Diagnostics
+
+- Beam writes a debug log line for each Foobar2000 poll showing the route, status, Beefweb base URL, authentication mode, and active playlist position when available.
+- The `Run test` button in the `Foobar2000 Beefweb` preferences section executes the current integration without waiting for the next poll and shows the detected status and song metadata.
 
 How To Extend It
 
