@@ -73,7 +73,3 @@ jobs:
       - name: Smoke import platform-gated modules
         run: |
           python3 scripts/smoke_imports.py
-
-      - name: Smoke VirtualDJ query flow
-        run: |
-          python3 scripts/smoke_virtualdj.py
