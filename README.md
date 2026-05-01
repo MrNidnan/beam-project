@@ -13,8 +13,32 @@ Foobar2000 support in this fork now uses the Beefweb HTTP API and is no longer c
 Beam now stores Foobar2000 Beefweb connection settings in Preferences when `Foobar2000` is selected, instead of requiring environment variables for normal use.
 
 Beam also ships with a default disabled rule named `Trim () in the Title` that can be enabled from the Rules panel to remove trailing parenthetical suffixes from displayed song titles.
+Example:
+
+- `Malena (Take 1)` becomes `Malena`
+- `La Cumparsita (Alt. take) (test press)` becomes `La Cumparsita`
+
+The rule is optional and disabled by default, so Beam preserves the original title unless you enable it.
 
 Beam now keeps the last song and active mood visible while playback is paused. When playback stops, Beam clears the current song and falls back to the default or not-playing mood.
+
+Beam now supports named configuration profiles. The active profile is selected in Preferences and Beam stores the profile manifest plus one full configuration snapshot per profile under `~/.beam`.
+
+Profile storage layout:
+
+```text
+~/.beam/
+	beamconfig.json
+	beamprofiles.json
+	profiles/
+		default.json
+		<profile-id>.json
+```
+
+- `beamprofiles.json` stores the active profile ID and profile metadata.
+- `profiles/default.json` is the non-deletable built-in `Default` profile.
+- each `profiles/<profile-id>.json` file stores the full Beam configuration tree for that profile.
+- `beamconfig.json` is still mirrored from the active profile for backward compatibility and manual troubleshooting.
 
 To run the project locally make sure you have Python 3 installed and run:
 

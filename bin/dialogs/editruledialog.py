@@ -29,7 +29,7 @@
 
 import wx.html
 
-from bin.beamsettings import *
+from bin.beamsettings import beamSettings
 
 #
 # Edit Rule class
@@ -342,6 +342,7 @@ class EditRuleDialog(wx.Dialog):
                 beamSettings.getRules().pop(self.RowSelected) #Move up and down in list
                 beamSettings.getRules().insert(RuleOrderBox, NewRule)
 
+        beamSettings.markDirty()
         self.rulesPanel.BuildRuleList()
         self.rulesPanel.updateSettings()
         self.Destroy()

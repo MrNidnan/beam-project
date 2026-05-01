@@ -28,7 +28,7 @@
 import socket
 
 import wx
-from bin.beamutils import *
+from bin.beamutils import logLevelList, setLogLevel
 
 
 ###################################################################
@@ -96,7 +96,7 @@ class BasicSettingsPanel(wx.Panel):
         hboxRefresh.Add(self.RefreshTime, flag= wx.LEFT | wx.RIGHT | wx.TOP, border=7)
         hboxRefresh.Add(self.RefreshTimeLabel, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
         content_vbox.Add(hboxRefresh, flag=wx.LEFT, border=20)
-        self.OnRefreshTimerScroll()
+        self.updateRefreshTimeLabel()
         
         ################
         # TANDA LENGTH #
@@ -105,7 +105,7 @@ class BasicSettingsPanel(wx.Panel):
         self.TandaLength = wx.Slider(self.scrolledWindow, -1, self.BeamSettings.getMaxTandaLength(), 0, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
         self.TandaLengthLabel = wx.StaticText(self.scrolledWindow, -1, "")
         self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
-        self.OnTandaLengthScroll()
+        self.updateTandaLengthLabel()
         content_vbox.Add(tandalength, flag=wx.LEFT, border=20)
         hboxTanda = wx.BoxSizer(wx.HORIZONTAL)
         hboxTanda.Add(self.TandaLength, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
@@ -226,6 +226,23 @@ class BasicSettingsPanel(wx.Panel):
         self.updateFoobarSettingsVisibility(self.BeamSettings.getSelectedModuleName())
         self.updateNetworkAddressHint()
 
+    def reloadFromSettings(self):
+        self.ModuleSelectorDropdown.SetValue(self.BeamSettings.getSelectedModuleName())
+        self.RefreshTime.SetValue(int(self.BeamSettings.getUpdtime()))
+        self.TandaLength.SetValue(int(self.BeamSettings.getMaxTandaLength()))
+        self.LogLevelSelectorDropdown.SetValue(self.BeamSettings.getLogLevel())
+        self.NetworkEnabledCheckBox.SetValue(self.BeamSettings.getNetworkServiceEnabled())
+        self.networkBindDisplayHost = self.getNetworkHostDisplayValue()
+        self.NetworkHostField.ChangeValue(self.networkBindDisplayHost)
+        self.NetworkPortField.SetValue(self.BeamSettings.getNetworkServicePort())
+        self.FoobarUrlField.ChangeValue(self.BeamSettings.getFoobarBeefwebUrl())
+        self.FoobarUserField.ChangeValue(self.BeamSettings.getFoobarBeefwebUser())
+        self.FoobarPasswordField.ChangeValue(self.BeamSettings.getFoobarBeefwebPassword())
+        self.updateRefreshTimeLabel()
+        self.updateTandaLengthLabel()
+        self.updateFoobarSettingsVisibility(self.BeamSettings.getSelectedModuleName())
+        self.updateNetworkAddressHint()
+
 
 
 
@@ -325,29 +342,32 @@ class BasicSettingsPanel(wx.Panel):
     ################
     # REFRESH TIME #
     ################
+    def updateRefreshTimeLabel(self):
+        timer_value = round(float(self.RefreshTime.GetValue()) / 1000, 1)
+        if timer_value < float(2.0):
+            self.RefreshTimeLabel.SetLabel(str(timer_value) + " sec (Fast)")
+        elif timer_value < float(5.0):
+            self.RefreshTimeLabel.SetLabel(str(timer_value) + " sec (Medium)")
+        else:
+            self.RefreshTimeLabel.SetLabel(str(timer_value) + " sec (Slow)")
+
     def OnRefreshTimerScroll(self, event = wx.EVT_SCROLL):
         self.BeamSettings.setUpdtime(self.RefreshTime.GetValue())
-        
-        Timervalue = round(float(self.BeamSettings.getUpdtime()) / 1000, 1)
-        if Timervalue < float(2.0):
-            # Fast
-            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Fast)")
-        elif Timervalue < float(5.0):
-            # Medium
-            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Medium)")
-        else:
-            # Slow
-            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Slow)")
+        self.updateRefreshTimeLabel()
 
     ################
     # TANDA LENGTH #
     ################
-    def OnTandaLengthScroll(self, event = wx.EVT_SCROLL):
-        self.BeamSettings.setMaxTandaLength( self.TandaLength.GetValue())
-        if self.BeamSettings.getMaxTandaLength() > 0:
-            self.TandaLengthLabel.SetLabel(str(self.BeamSettings.getMaxTandaLength()) + " songs")
+    def updateTandaLengthLabel(self):
+        tanda_length = int(self.TandaLength.GetValue())
+        if tanda_length > 0:
+            self.TandaLengthLabel.SetLabel(str(tanda_length) + " songs")
         else:
             self.TandaLengthLabel.SetLabel("No preview")
+
+    def OnTandaLengthScroll(self, event = wx.EVT_SCROLL):
+        self.BeamSettings.setMaxTandaLength( self.TandaLength.GetValue())
+        self.updateTandaLengthLabel()
 
     ################
     #   LOGGING    #

@@ -29,7 +29,7 @@
 import os
 import json
 import logging
-from bin.beamutils import *
+from bin.beamutils import getBeamResourcesPath
 from copy import deepcopy
 
 class DMXlibrary:

@@ -28,6 +28,7 @@
 
 
 import wx, wx.html
+from bin.beamsettings import beamSettings
 
 
 
@@ -183,6 +184,13 @@ class EditLayoutItemDialog(wx.Dialog):
                 self.LayoutList.append(self.Settings) # Append in the end
         else: #Edit layout
                 self.LayoutList.insert(newposition, self.Settings)
+
+        if hasattr(self.parent, 'BeamSettings'):
+            self.parent.BeamSettings.markDirty()
+        elif hasattr(self.parent, 'beamSettings'):
+            self.parent.beamSettings.markDirty()
+        elif getattr(self.parent, 'mode', None) == "Edit mood":
+            beamSettings.markDirty()
 
         self.parent.BuildLayoutList()
         self.Destroy()

@@ -23,7 +23,7 @@
 #    31/12/2009 Version 0.2
 #    	- Added support for keyword queries (queryAsKeyword)
 import logging
-from ctypes import *
+from ctypes import POINTER, Structure, addressof, byref, c_char_p, c_int, c_ulong, c_void_p, cast, create_string_buffer, sizeof, windll
 import win32api, win32con, win32gui, win32process, pywintypes
 
 # test

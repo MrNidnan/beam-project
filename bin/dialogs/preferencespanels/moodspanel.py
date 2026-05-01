@@ -120,6 +120,12 @@ class MoodsPanel(wx.Panel):
     def updateSettings(self):
         self.mainFrame.updateSettings();
 
+    def reloadFromSettings(self):
+        self.TransitionDropdown.SetValue(self.BeamSettings.getMoodTransition())
+        self.TransitionSpeed.SetValue(int(self.BeamSettings.getMoodTransitionSpeed()))
+        self.updateMoodTransition()
+        self.BuildMoodList()
+
 ###################################################################
 #                           EVENTS                                #
 ###################################################################
@@ -182,6 +188,7 @@ class MoodsPanel(wx.Panel):
             deleteDialog.Destroy()
             if result == wx.ID_OK:
                 self.BeamSettings.getMoods().pop(selrow)
+                self.BeamSettings.markDirty()
                 # points to self.BeamSettings.getMoods()[x]
             # List all configured moods
             self.BuildMoodList()
@@ -201,6 +208,7 @@ class MoodsPanel(wx.Panel):
                 mood['Active'] = "yes"
             else:
                 mood['Active'] = "no"
+        self.BeamSettings.markDirty()
         # List all configured moods
         self.BuildMoodList()
 

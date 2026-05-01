@@ -84,6 +84,9 @@ class RulesPanel(wx.Panel):
     def updateSettings(self):
         self.mainFrame.updateSettings();
 
+    def reloadFromSettings(self):
+        self.BuildRuleList()
+
 ###################################################################
 #                           EVENTS                                #
 ###################################################################
@@ -112,6 +115,7 @@ class RulesPanel(wx.Panel):
             dlg.Destroy()
             if result == wx.ID_OK:
                 self.BeamSettings.getRules().pop(RowSelected)
+                self.BeamSettings.markDirty()
                 self.BuildRuleList()
 
 
@@ -125,6 +129,7 @@ class RulesPanel(wx.Panel):
                 rule['Active'] = "yes"
             else:
                 rule['Active'] = "no"
+        self.BeamSettings.markDirty()
         self.BuildRuleList()
 
     #####################

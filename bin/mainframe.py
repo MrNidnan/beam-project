@@ -25,14 +25,21 @@
 #
 # This Python file uses the following encoding: utf-8
 
+import logging
+import os
+import platform
+
+import wx
 import wx.lib.delayedresult
 
-from bin.beamsettings import *
+from bin.beamsettings import beamSettings
+from bin.beamutils import getBeamHomePath
 from bin.displaydata import DisplayData
 from bin.dialogs.preferencespanels.displaypanel import DisplayPanel
 
 from bin.dialogs.preferencespanels.basicsettingspanel import BasicSettingsPanel
 from bin.dialogs.preferencespanels.moodspanel import MoodsPanel
+from bin.dialogs.preferencespanels.profilespanel import ProfilesPanel
 from bin.dialogs.preferencespanels.rulespanel import RulesPanel
 from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel
 
@@ -54,7 +61,7 @@ class MainFrame(wx.Frame):
     def __init__(self):
         # Size and position of this main window
         # beamsettings loaded in beam.py
-        wx.Frame.__init__(self, None, title=beamSettings.getString("mainframetitle") + " V" + beamSettings.getString("version"), pos=(150, 150), size=(800, 600))
+        wx.Frame.__init__(self, None, title=beamSettings.getString("mainframetitle") + " V" + beamSettings.getString("version"), pos=(150, 150), size=(960, 720))
 
         # only required for display
         # self.SetDoubleBuffered(True)
@@ -125,9 +132,9 @@ class MainFrame(wx.Frame):
         #################
         # LISTBOOK MENU #
         #################
-        listBookMenu = ListBookMenu(panel, self, beamSettings)
+        self.listBookMenu = ListBookMenu(panel, self, beamSettings)
         #listBookMenu.SetBackgroundColour(wx.Colour(136,136,136))
-        self.previewPanel = listBookMenu.pages[0][0]
+        self.previewPanel = self.listBookMenu.pages[0][0]
 
         
         ###########
@@ -144,7 +151,7 @@ class MainFrame(wx.Frame):
         ###########
         # ARRANGE #
         ###########
-        vbox.Add(listBookMenu, 1, wx.ALL | wx.EXPAND, 5)
+        vbox.Add(self.listBookMenu, 1, wx.ALL | wx.EXPAND, 5)
         vbox.Add(hbox, flag=wx.ALIGN_RIGHT)
 
         ###########
@@ -216,6 +223,7 @@ class MainFrame(wx.Frame):
         try:
             # Save settings
             beamSettings.dumpConfig()
+            self.reloadPreferencesPanels()
             # Reload settings in main-window
             self.updateSettings()
         except Exception as e:
@@ -278,7 +286,8 @@ class MainFrame(wx.Frame):
             #     self.rotateBackground()
         except Exception as e:
             logging.error(e, exc_info=True)
-            pass
+        finally:
+            self.reloadPreferencesPanels()
 
 
     def refreshDisplay(self):
@@ -286,6 +295,12 @@ class MainFrame(wx.Frame):
             self.displayFrame.Refresh()
             self.previewPanel.Refresh()
             self.networkService.publish_display_state(self.displayData)
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    def reloadPreferencesPanels(self):
+        try:
+            self.listBookMenu.reloadFromSettings()
         except Exception as e:
             logging.error(e, exc_info=True)
 
@@ -300,6 +315,7 @@ class ListBookMenu(wx.Listbook):
 
     def __init__(self, parent, mainFrame, beamSettings):
         wx.Listbook.__init__(self, parent, wx.ID_ANY, style = wx.BK_DEFAULT)
+        self.Bind(wx.EVT_LISTBOOK_PAGE_CHANGED, self.onPageChanged)
 
         displayData = mainFrame.displayData
         ##########
@@ -309,7 +325,7 @@ class ListBookMenu(wx.Listbook):
 
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "2-DefaultDisplay32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
         # urllist = ["0-DisplayFrame32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
-        urllist = ["2-DefaultDisplay32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png"]
+        urllist = ["2-DefaultDisplay32.png", "1-BasicSettings32.png", "3-Moods32.png", "4-Rules32.png", "5-Tags32.png", "7-Profiles32.png"]
         if platform.system() == 'Linux' or platform.system() == 'Darwin': urllist.append("6-DMXcontrols32.png")
         for urls in urllist:
             appPath = getBeamHomePath()
@@ -329,10 +345,26 @@ class ListBookMenu(wx.Listbook):
                     # (DefaultLayoutPanel(self, beamSettings), "Layout"),
                     (MoodsPanel(self, mainFrame, beamSettings), "Layout"),
                     (RulesPanel(self, mainFrame, beamSettings), "Rules"),
-                    (TagsPreviewPanel(self, displayData.nowPlayingData), "Tags")
+                    (TagsPreviewPanel(self, displayData.nowPlayingData), "Tags"),
+                    (ProfilesPanel(self, mainFrame, beamSettings), "Profiles")
                  ]
         if platform.system() == 'Linux' or platform.system() == 'Darwin': self.pages.append((DMXcontrolsPanel(self, beamSettings), "DMX"))
         ImId=0
         for page, label in self.pages:
             self.AddPage(page,label,imageId=ImId)
             ImId +=1
+
+    def onPageChanged(self, event):
+        try:
+            selection = event.GetSelection()
+            if selection != wx.NOT_FOUND:
+                page = self.GetPage(selection)
+                if hasattr(page, 'reloadFromSettings'):
+                    page.reloadFromSettings()
+        finally:
+            event.Skip()
+
+    def reloadFromSettings(self):
+        for page, label in self.pages:
+            if hasattr(page, 'reloadFromSettings'):
+                page.reloadFromSettings()

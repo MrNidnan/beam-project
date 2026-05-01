@@ -4,6 +4,20 @@ All notable changes in this fork are documented in this file.
 
 The format is based on Keep a Changelog, adapted for this repository's existing release history.
 
+## v0.8.0 - 2026-05-01
+
+### Added
+
+- Updated Beam so your current configuration can be organized into reusable named profiles instead of a single setup.
+- Added profile management in Preferences so you can create, save, switch, rename, and delete named Beam setups.
+- Added clearer feedback for the active profile, including an unsaved-changes indicator.
+- Updated the Preferences window with a dedicated Profiles page.
+- Older Beam configurations and existing users should be able to move to profiles without losing their current setup and transparently
+
+### Fixed
+
+- Fixed several startup and refresh issues around settings and the new profile workflow.
+
 ## v0.7.1.2 - 2026-04-30
 
 ### Fixed

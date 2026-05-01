@@ -24,10 +24,13 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import logging
+import os
+import platform
 import time
 from copy import deepcopy
 
-from bin.beamsettings import *
+from bin.beamsettings import beamSettings
 from bin.beamutils import getBeamHomePath
 from bin.mutagenutils import readCoverArtImage
 from bin.songclass import SongObject

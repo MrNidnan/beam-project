@@ -94,6 +94,9 @@ class TagsPreviewPanel(wx.Panel):
         TagsSelected = self.TagDropdown.GetValue()
         self.BuildTagsList(TagsSelected)
 
+    def reloadFromSettings(self):
+        self.DoRefresh()
+
     def BuildTagsList(self, TagsSelected):
         self.TagsList.DeleteAllItems()
         attributes = ['Artist', 'Album', 'AlbumArtist', 'Title', 'Genre', 'Comment', 'Composer',

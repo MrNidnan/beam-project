@@ -30,8 +30,9 @@ import wx
 import platform
 import logging
 import os
-from bin.beamutils import *
+from bin.beamutils import complementDict, getBeamConfigPath, getBeamHomePath, getBeamResourcesPath
 from bin.beamstrings import BeamStrings
+from bin.profilesettings import ProfileSettingsStore
 from bin.DMX.dmxmodule import DMXlibrary, Universe
 from copy import deepcopy
 
@@ -61,26 +62,6 @@ class BeamSettings:
 
 
     def __init__(self):
-        # protected variables
-        # get initialized empty
-        # later on set from config file
-        # self._selectedModuleName    = None
-        # self._allModulesNames    = None
-        # self._rules                 = None
-        # self._moods                 = None
-
-        # self._maxTandaLength    = None
-        # module run() interval in milliseconds
-        # self._updtime       = None
-        # self._moodTransition       = None
-        # self._moodTransitionSpeed  = None
-        # self._logging              = True
-        # self._logPath              = None
-        # self._loglevel              = None
-        # not in use, kept for configfile
-        # self.__showStatusbar        = None
-        # self.applicationpath = getBeamHomePath()
-
         # load strings from strings.json
         stringsfilename = os.path.join(getBeamResourcesPath(), 'json', 'strings.json')
         self._beamStrings = BeamStrings(stringsfilename)
@@ -88,6 +69,28 @@ class BeamSettings:
         # load dmx device definitions from dmxdevicedefs.json
         dmxdevdefsfilename = os.path.join(getBeamResourcesPath(), 'json', 'dmxdevicedefs.json')
         self._dmxDefinitions = DMXlibrary(dmxdevdefsfilename)
+        self._profileSettings = ProfileSettingsStore(
+            self.getString("configfilename"),
+            self.getDefaultConfigFilePath,
+            self.getBeamConfigFilePath,
+            self.loadConfigData,
+            self.dumpConfigData,
+        )
+        self._isDirty = False
+        self._suspendDirtyTracking = False
+
+    def _markDirty(self):
+        if not self._suspendDirtyTracking:
+            self._isDirty = True
+
+    def markDirty(self):
+        self._markDirty()
+
+    def clearDirty(self):
+        self._isDirty = False
+
+    def isDirty(self):
+        return self._isDirty
 
     def getString(self, key):
         return self._beamStrings.getString(key)
@@ -101,6 +104,7 @@ class BeamSettings:
 
     def setSelectedModuleName(self, moduleName):
         self._beamConfigData['Module'] = moduleName
+        self._markDirty()
 
     def getMoods(self):
         return self._beamConfigData['Moods']
@@ -112,36 +116,43 @@ class BeamSettings:
         return self._beamConfigData['MaxTandaLength']
     def setMaxTandaLength(self, maxtandalength):
         self._beamConfigData['MaxTandaLength'] = maxtandalength
+        self._markDirty()
 
     def getUpdtime(self):
         return self._beamConfigData['Updtime']
     def setUpdtime(self, updtime):
         self._beamConfigData['Updtime'] = updtime
+        self._markDirty()
 
     def getMoodTransition(self):
         return self._beamConfigData['MoodTransition']
     def setMoodTransition(self, moodTransition):
         self._beamConfigData['MoodTransition'] = moodTransition
+        self._markDirty()
 
     def getMoodTransitionSpeed(self):
         return self._beamConfigData['MoodTransitionSpeed']
     def setMoodTransitionSpeed(self, moodTransition):
         self._beamConfigData['MoodTransitionSpeed'] = moodTransition
+        self._markDirty()
 
     def getLogging(self):
         return self._beamConfigData['Logging']
     def setLogging(self, logging):
         self._beamConfigData['Logging'] = logging
+        self._markDirty()
 
     def getLogPath(self):
         return self._beamConfigData['LogPath']
     def setLogPath(self, logPath):
         self._beamConfigData['LogPath'] = logPath
+        self._markDirty()
 
     def getLogLevel(self):
         return self._beamConfigData['LogLevel']
     def setLogLevel(self, loglevel):
         self._beamConfigData['LogLevel'] = loglevel
+        self._markDirty()
 
     def getShowStatusbar(self):
         return self._beamConfigData['ShowStatusbar']
@@ -154,6 +165,7 @@ class BeamSettings:
 
     def setNetworkServiceEnabled(self, enabled):
         self.getNetworkService()['Enabled'] = 'True' if enabled else 'False'
+        self._markDirty()
 
     def getNetworkServiceHost(self):
         return str(self.getNetworkService().get('Host', '0.0.0.0'))
@@ -163,12 +175,14 @@ class BeamSettings:
         if normalized_host == '':
             normalized_host = '0.0.0.0'
         self.getNetworkService()['Host'] = normalized_host
+        self._markDirty()
 
     def getNetworkServicePort(self):
         return int(self.getNetworkService().get('Port', 8765))
 
     def setNetworkServicePort(self, port):
         self.getNetworkService()['Port'] = int(port)
+        self._markDirty()
 
     def getNetworkServiceWebRoot(self):
         return self.getNetworkService().get('WebRoot', os.path.join('resources', 'web', 'tablet'))
@@ -184,46 +198,35 @@ class BeamSettings:
         if normalized_url == '':
             normalized_url = 'http://localhost:8880/'
         self.getFoobar2000()['BeefwebUrl'] = normalized_url
+        self._markDirty()
 
     def getFoobarBeefwebUser(self):
         return str(self.getFoobar2000().get('BeefwebUser', ''))
 
     def setFoobarBeefwebUser(self, user):
         self.getFoobar2000()['BeefwebUser'] = str(user)
+        self._markDirty()
 
     def getFoobarBeefwebPassword(self):
         return str(self.getFoobar2000().get('BeefwebPassword', ''))
 
     def setFoobarBeefwebPassword(self, password):
         self.getFoobar2000()['BeefwebPassword'] = str(password)
-
-    #def getDMXdeviceName(self):
-    #     return self._dmxDefinitions.
-    #
-    # def setSelectedDMXdeviceName(self, deviceName):
-    #     self._beamConfigData['DMXdevice'] = deviceName
+        self._markDirty()
 
     def getSelectedU1DMXdeviceName(self):
-        dn = 'None'
-        try:
-            dn = self._beamConfigData['U1_DMXdevice']
-        except: pass
-        finally:
-            return dn
+        return self._beamConfigData.get('U1_DMXdevice', 'None')
 
     def setSelectedU1DMXdeviceName(self, deviceName):
         self._beamConfigData['U1_DMXdevice'] = deviceName
+        self._markDirty()
 
     def getSelectedU2DMXdeviceName(self):
-        dn = 'None'
-        try:
-            dn = self._beamConfigData['U2_DMXdevice']
-        except: pass
-        finally:
-            return dn
+        return self._beamConfigData.get('U2_DMXdevice', 'None')
 
     def setSelectedU2DMXdeviceName(self, deviceName):
         self._beamConfigData['U2_DMXdevice'] = deviceName
+        self._markDirty()
 
     def getDMXuniverse1(self):
         uv1 = Universe()
@@ -245,6 +248,7 @@ class BeamSettings:
             self.setSelectedU1DMXdeviceName('NONE')
         else:
             self.setSelectedU1DMXdeviceName(u1.FixtureNames()[0])
+        self._markDirty()
     def getDMXuniverse2(self):
         uv2 = Universe()
         try:
@@ -265,11 +269,24 @@ class BeamSettings:
             self.setSelectedU2DMXdeviceName('NONE')
         else:
             self.setSelectedU2DMXdeviceName(u2.FixtureNames()[0])
+        self._markDirty()
 
     def getBeamConfigFilePath(self):
         configfilepath = os.path.join(getBeamConfigPath(), self.getString("configfilename"))
 
         return configfilepath
+
+    def getProfiles(self):
+        return self._profileSettings.getProfiles()
+
+    def getActiveProfileId(self):
+        return self._profileSettings.getActiveProfileId()
+
+    def getActiveProfileName(self):
+        return self._profileSettings.getActiveProfileName()
+
+    def hasActiveProfileBeenPersisted(self):
+        return self._profileSettings.hasActiveProfileBeenPersisted()
 
     def getDefaultConfigFilePath(self):
         defaultfilepath = os.path.join(getBeamHomePath(), 'resources', 'json', self.getString("configfilename"))
@@ -278,13 +295,8 @@ class BeamSettings:
 
 
     def loadConfigData(self, configFileName):
-        configFile = open(configFileName, 'r', encoding='utf-8')
-        try:
-            configData = json.load(configFile)
-        finally:
-            configFile.close()
-
-        return configData
+        with open(configFileName, 'r', encoding='utf-8') as configFile:
+            return json.load(configFile)
 
 
     def dumpConfigData(self, configFileName, configData):
@@ -298,168 +310,136 @@ class BeamSettings:
             # if the file does not exist use default from beam home
             logging.info("BeamSettings.dumpConfigData(): configfile does not exist '" + configFileName + "'")
 
-        configFile = open(configFileName, 'w', encoding='utf-8')
-        try:
+        with open(configFileName, 'w', encoding='utf-8') as configFile:
             json.dump(configData, configFile, indent=2, ensure_ascii=False)
-        finally:
-            configFile.close()
 
         return
 
     def dumpConfig(self):
-
-        '''
-# replace by dump of _beamConfigData
-# when access functions are implemented
-        output = {}
-
-        output['Configname']       = "Default Configuration"
-        output['Comment']          = "This is a configuration file for Beam"
-        output['Author']           = "Mikael Holber & Horia Uifaleanu - 2015"
-        output['Module']           = self._selectedModuleName
-        output['MaxTandaLength']   = self._maxTandaLength
-        output['Updtime']          = self._updtime
-        output['MoodTransition']           = self._moodTransition
-        output['MoodTransitionSpeed']      = self._moodTransitionSpeed
-        output['Logging']              = self._logging
-        output['LogPath']              = self._logPath
-        output['LogLevel']              = self._loglevel
-        output['ShowStatusbar']        = self.__showStatusbar
-
-        # Dictionaries
-        output['AllModules']           = self._allModulesNames
-        output['Rules']                = self._rules
-        output['Moods']                = self._moods
-                '''
-
-        beamconfigfile = self.getBeamConfigFilePath()
-        self.dumpConfigData(beamconfigfile, self._beamConfigData)
-        logging.info("BeamSettings.dumpConfig(): configfile '" + beamconfigfile + "'")
+        self.saveActiveProfile()
+        logging.info("BeamSettings.dumpConfig(): saved active profile '%s'", self.getActiveProfileId())
 
         return
+
+    def loadProfiles(self):
+        beamConfigData, defaultConfigData = self._profileSettings.loadProfiles()
+        self.__setConfigData(beamConfigData, defaultConfigData)
+
+        return
+
+    def saveProfiles(self):
+        self._profileSettings.saveProfiles()
+
+    def saveActiveProfile(self):
+        self._profileSettings.saveActiveProfile(self._beamConfigData)
+        self.clearDirty()
+
+    def saveActiveProfileAs(self, profileId):
+        self._profileSettings.saveActiveProfileAs(profileId, self._beamConfigData)
+        self.clearDirty()
+
+    def switchProfile(self, profileId):
+        beamConfigData, defaultConfigData = self._profileSettings.switchProfile(profileId)
+        if beamConfigData is None:
+            return
+        self.__setConfigData(beamConfigData, defaultConfigData)
+
+    def createProfile(self, name, source='current'):
+        profile, configData, defaultConfigData = self._profileSettings.createProfile(name, self._beamConfigData, source)
+        self.__setConfigData(configData, defaultConfigData)
+        return deepcopy(profile)
+
+    def renameProfile(self, profileId, newName):
+        self._profileSettings.renameProfile(profileId, newName)
+
+    def deleteProfile(self, profileId):
+        beamConfigData, defaultConfigData = self._profileSettings.deleteProfile(profileId)
+        if beamConfigData is not None:
+            self.__setConfigData(beamConfigData, defaultConfigData)
 
 
     #
     # Initializes protected variables by copying from ConfigData or DefaultConfigData
     #
     def __setConfigData(self, beamConfigData, defaultConfigData):
+        self._suspendDirtyTracking = True
+        try:
+            self._beamConfigData = deepcopy(beamConfigData)
+            # Copy new properties and dicts from defaults without overwriting user lists.
+            complementDict(defaultConfigData, self._beamConfigData)
 
-        self._beamConfigData = deepcopy(beamConfigData)
-        # copies new properties and dicts from default config to beam config, but but not lists
-        complementDict(defaultConfigData, self._beamConfigData)
+            # take module names always from default config
+            self._beamConfigData['AllModules'] = deepcopy(defaultConfigData['AllModules'])
+            self._beamConfigData['DMX'] = deepcopy(defaultConfigData['DMX'])
 
-        # take module names always from default config
-        self._beamConfigData['AllModules'] = deepcopy(defaultConfigData['AllModules'])
-        self._beamConfigData['DMX'] = deepcopy(defaultConfigData['DMX'])
+            # add new properties from default mood to all moods
+            defMood = defaultConfigData['Moods'][0]
+            for idx in range(0, len(beamConfigData['Moods'])):
+                idxMood = self._beamConfigData['Moods'][idx]
+                complementDict(defMood, idxMood)
 
-        # self._allModulesNames    = self._beamConfigData['AllModules']
-        # self._rules                 = self.__extractSetting(beamConfigData, defaultConfigData, 'Rules')
-        # self._rules                 = self._beamConfigData['Rules']
-        # self._moods                 = self.__extractSetting(beamConfigData, defaultConfigData, 'Moods')
+            has_trim_title_rule = False
+            for rule in self._beamConfigData['Rules']:
+                if rule.get('Type') == 'Trim () in Title':
+                    has_trim_title_rule = True
+                    if 'Field1' not in rule:
+                        rule['Field1'] = '%Title'
 
-        # add new properties from default mood to all moods
-        defMood = defaultConfigData['Moods'][0]
-        for idx in range(0, len(beamConfigData['Moods'])):
-            idxMood = self._beamConfigData['Moods'][idx]
-            complementDict(defMood, idxMood)
-        # self._moods = self._beamConfigData['Moods']
+            if not has_trim_title_rule:
+                self._beamConfigData['Rules'].append({
+                    'Active': 'no',
+                    'Field1': '%Title',
+                    'Type': 'Trim () in Title',
+                })
 
-        has_trim_title_rule = False
-        for rule in self._beamConfigData['Rules']:
-            if rule.get('Type') == 'Trim () in Title':
-                has_trim_title_rule = True
-                if 'Field1' not in rule:
-                    rule['Field1'] = '%Title'
+            # Set OS-specific variables
+            if platform.system() == 'Linux' or platform.system() == 'Darwin' :
+                osIdx = 2
+                if platform.system() == 'Linux': osIdx = 0
+                osModuleNames = self._beamConfigData['AllModules'][osIdx]['Modules']
+                osU1DMXdeviceName = self.getDMXdeviceList()
+                osU2DMXdeviceName = self.getDMXdeviceList()
+                self._preferencesSize = (500, 500)
+                self._moodSize = (480,800)
+            if platform.system() == 'Windows':
+                osModuleNames = self._beamConfigData['AllModules'][1]['Modules']
+                osU1DMXdeviceName = self._beamConfigData['DMX'][1]['U1_Device']
+                osU2DMXdeviceName = self._beamConfigData['DMX'][1]['U2_Device']
+                self._preferencesSize = (500, 500)
+                self._moodSize = (420,800)
 
-        if not has_trim_title_rule:
-            self._beamConfigData['Rules'].append({
-                'Active': 'no',
-                'Field1': '%Title',
-                'Type': 'Trim () in Title',
-            })
+            self._moduleNames = osModuleNames
+            self._U1DMXdeviceName = osU1DMXdeviceName
+            self._U2DMXdeviceName = osU2DMXdeviceName
+            self._Universe1 = self.getDMXuniverse1()
+            self._Universe2 = self.getDMXuniverse2()
 
-        # Set OS-specific variables
-        if platform.system() == 'Linux' or platform.system() == 'Darwin' :
-            osIdx = 2
-            if platform.system() == 'Linux': osIdx = 0
-            osModuleNames = self._beamConfigData['AllModules'][osIdx]['Modules']
-            osU1DMXdeviceName = self.getDMXdeviceList()
-            osU2DMXdeviceName = self.getDMXdeviceList()
-            self._preferencesSize = (500, 500)
-            self._moodSize = (480,800)
-        if platform.system() == 'Windows':
-            osModuleNames = self._beamConfigData['AllModules'][1]['Modules']
-            # osDMXdeviceNames = self._beamConfigData['DMX'][1]['Devices']
-            osU1DMXdeviceName = self._beamConfigData['DMX'][1]['U1_Device']
-            osU2DMXdeviceName = self._beamConfigData['DMX'][1]['U2_Device']
-            self._preferencesSize = (500, 500)
-            self._moodSize = (420,800)
+            if self.getSelectedModuleName() not in self._moduleNames:
+                logging.warning("BeamSettings.__setConfigData(): selected module '" + self.getSelectedModuleName() + "' does not exist")
+                self.setSelectedModuleName(self._moduleNames[0])
 
-        # module names available for this OS
-        # self._moduleNames = [s for s in osModuleNames['Modules']]
-        self._moduleNames = osModuleNames
-        self._U1DMXdeviceName = osU1DMXdeviceName
-        self._U2DMXdeviceName = osU2DMXdeviceName
-        self._Universe1 = self.getDMXuniverse1()
-        self._Universe2 = self.getDMXuniverse2()
+            if self.getSelectedU1DMXdeviceName() not in self._U1DMXdeviceName:
+                logging.warning(
+                    "BeamSettings.__setConfigData(): selected DMX device '" + self.getSelectedU1DMXdeviceName() + "' does not exist")
+                self.setSelectedU1DMXdeviceName(self._U1DMXdeviceName[0])
 
-        # set "internal" variables
-# !!! replace by access functions
-        # self._selectedModuleName = self._beamConfigData['Module']         # Player to read from
-        if self.getSelectedModuleName() not in self._moduleNames:
-            logging.warning("BeamSettings.__setConfigData(): selected module '" + self.getSelectedModuleName() + "' does not exist")
-            self.setSelectedModuleName(self._moduleNames[0])
+            if self.getSelectedU2DMXdeviceName() not in self._U2DMXdeviceName:
+                logging.warning(
+                    "BeamSettings.__setConfigData(): selected DMX device '" + self.getSelectedU2DMXdeviceName() + "' does not exist")
+                self.setSelectedU2DMXdeviceName(self._U2DMXdeviceName[0])
 
-        if self.getSelectedU1DMXdeviceName() not in self._U1DMXdeviceName:
-            logging.warning(
-                "BeamSettings.__setConfigData(): selected DMX device '" + self.getSelectedU1DMXdeviceName() + "' does not exist")
-            self.setSelectedU1DMXdeviceName(self._U1DMXdeviceName[0])
+            if self.getLogPath() == '':
+                self.setLogPath(getBeamConfigPath())
+            self._oladIsRunning = 0
+        finally:
+            self._suspendDirtyTracking = False
 
-        if self.getSelectedU2DMXdeviceName() not in self._U2DMXdeviceName:
-            logging.warning(
-                "BeamSettings.__setConfigData(): selected DMX device '" + self.getSelectedU2DMXdeviceName() + "' does not exist")
-            self.setSelectedU2DMXdeviceName(self._U2DMXdeviceName[0])
-
-        # self._updtime               = self._beamConfigData['Updtime']        # mSec between reading
-        # self._moodTransition        = self._beamConfigData['MoodTransition']
-        # self._moodTransitionSpeed   = self._beamConfigData['MoodTransitionSpeed']
-        # self.__showStatusbar         = self._beamConfigData['ShowStatusbar']
-        # self._logging               = self._beamConfigData['Logging']
-        # self._logPath               = self._beamConfigData['LogPath']
-        if self.getLogPath() == '':
-            self.setLogPath(getBeamConfigPath())
-        # self._loglevel           = self._beamConfigData['LogLevel']
-        self._oladIsRunning = 0
-
-
+        self.clearDirty()
         return
 
 
     def loadConfig(self):
-        # configfilename="beamconfig.json"
-
-        beamconfigfilepath = self.getBeamConfigFilePath()
-        if not os.path.isfile(beamconfigfilepath):
-            # if there is no configfile yet
-            logging.warning("BeamSettings.loadConfig(): configfile does not exist '" + beamconfigfilepath + "'")
-            oldconfigfile = os.path.join(getUserHomePath(), "BeamConfig.json")
-            if os.path.isfile(oldconfigfile):
-                logging.warning("BeamSettings.loadConfig(): using configfile in old directory: '" + oldconfigfile + "'")
-                beamconfigfilepath = oldconfigfile
-            else:
-                # beamconfigpath = getBeamHomePath()
-                beamconfigfilepath = self.getDefaultConfigFilePath()
-                logging.warning("BeamSettings.loadConfig(): loading default configfile '" + beamconfigfilepath + "'")
-                # Use original configfile which is the settingsfile below
-        beamConfigData = self.loadConfigData(beamconfigfilepath)
-
-        # Also load the default configfile
-        defaultconfigfile = os.path.join(getBeamResourcesPath(), "json", self.getString("configfilename"))
-        defaultConfigData = self.loadConfigData(defaultconfigfile)
-
-        # merges new properties from defaultConfigData into beamConfigData
-        # and sets the instance properties
-        self.__setConfigData(beamConfigData, defaultConfigData)
+        self.loadProfiles()
 
         return
 

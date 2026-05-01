@@ -138,14 +138,3 @@ Support artwork:
 1. Call `GET /artwork/current` or `GET /artwork/{playlistId}/{index}`.
 2. Convert the returned bytes into an image object Beam can render.
 3. Keep this logic in the foobar module or a small helper to avoid leaking Beefweb details into the UI layer.
-
-Rules and title cleanup
-
-Beam applies its normal rules after reading metadata from foobar2000. This includes the default disabled rule `Trim () in the Title`.
-
-When that rule is enabled in the Rules panel, Beam removes trailing parenthetical suffixes from song titles before display. Example:
-
-- `Malena (Take 1)` becomes `Malena`
-- `La Cumparsita (Alt. take) (test press)` becomes `La Cumparsita`
-
-The rule is optional and disabled by default, so Beam preserves the original title unless you enable it.
