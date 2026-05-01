@@ -29,7 +29,8 @@ import wx
 import os
 
 from bin.DMX import dmxmodule
-from bin.beamsettings import *
+from bin.beamsettings import beamSettings
+from bin.beamutils import getRelativePath
 from bin.dialogs.editlayoutitemdialog import EditLayoutItemDialog
 from copy import deepcopy
 
@@ -316,6 +317,8 @@ class EditMoodDialog(wx.Dialog):
                 layout['Active'] = "yes"
             else:
                 layout['Active'] = "no"
+        if self.mode == "Edit mood":
+            beamSettings.markDirty()
         self.BuildLayoutList()
 
     #
@@ -336,6 +339,8 @@ class EditMoodDialog(wx.Dialog):
             self.BackgroundTimerBox.Disable()
         timerVector = [15, 30, 60, 120, 180, 300, 600, 1200]
         self.EditMood['RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
+        if self.mode == "Edit mood":
+            beamSettings.markDirty()
         self.rotateBackgroundFunction()
 
     def rotateBackgroundFunction(self):
@@ -390,6 +395,8 @@ class EditMoodDialog(wx.Dialog):
             dlg.Destroy()
             if result == wx.ID_OK:
                 self.EditMood['Display'].pop(RowSelected)
+                if self.mode == "Edit mood":
+                    beamSettings.markDirty()
                 self.BuildLayoutList()
 
     #
@@ -427,6 +434,7 @@ class EditMoodDialog(wx.Dialog):
                 beamSettings.getMoods().pop(self.RowSelected)  # Move up and down in list
                 beamSettings.getMoods().insert(moodorder, self.EditMood)
 
+        beamSettings.markDirty()
         self.moodsPanel.BuildMoodList()
         self.moodsPanel.updateSettings()
         self.Destroy()
@@ -453,6 +461,8 @@ class EditMoodDialog(wx.Dialog):
             # Sanitize for temporary home of execcutable
             relativePath = getRelativePath(backgroundPath)
             self.EditMood['Background'] = relativePath
+            if self.mode == "Edit mood":
+                beamSettings.markDirty()
             (path, backgroundfile) = os.path.split(self.EditMood['Background'])
             self.rotateBackgroundFunction()
             openFileDialog.Destroy()

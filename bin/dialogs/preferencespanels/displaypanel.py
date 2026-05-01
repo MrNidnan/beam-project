@@ -24,10 +24,14 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import logging
+import time
+
+import wx
 import wx.html
 import wx.lib.delayedresult
-import time
-from bin.beamsettings import *
+
+from bin.beamsettings import beamSettings
 
 
 #
@@ -83,6 +87,11 @@ class DisplayPanel(wx.Panel):
         except:
             dc = pdc
         self.Draw(dc)
+
+    def reloadFromSettings(self):
+        self.displayData.triggerResizeBackground = True
+        self.Refresh()
+        self.Update()
 
 
 ########################################################

@@ -25,11 +25,16 @@
 #
 # This Python file uses the following encoding: utf-8
 
+import logging
+import os
+from copy import deepcopy
+
+import wx
 import wx.lib.delayedresult
 
-from bin.beamsettings import *
+from bin.beamsettings import beamSettings
 from bin.beamutils import getBeamHomePath
-from bin.nowplayingdata import *
+from bin.nowplayingdata import NowPlayingData
 from random import randint
 
 from bin.dialogs.preferencespanels.basicsettingspanel import BasicSettingsPanel

@@ -27,9 +27,9 @@
 
 import wx
 import wx.adv
+import logging
 
 from bin.DMX import olamodule, dmxmodule
-from bin.beamutils import *
 
 
 ###################################################################
@@ -197,6 +197,41 @@ class DMXcontrolsPanel(wx.Panel):
         # SET SIZERS #
         ##############
         self.SetSizer(vbox)
+
+    def reloadFromSettings(self):
+        u1 = self.beamSettings._Universe1
+        u2 = self.beamSettings._Universe2
+
+        self.DMXdeviceSelectorDropdown.SetItems(self.beamSettings._U1DMXdeviceName)
+        self.DMXdeviceSelectorDropdown.SetValue(self.beamSettings.getSelectedU1DMXdeviceName())
+
+        self.U1DMXfixtureList.Clear()
+        self.U1DMXfixtureColourList.Clear()
+        for index, value in enumerate(u1.FixtureNames()):
+            self.U1DMXfixtureList.Append('(' + u1.FixtureAddresses()[index] + ') ' + value)
+            self.U1DMXfixtureColourList.Append(u1.FixtureColours()[index])
+
+        self.U2DMXfixtureList.Clear()
+        self.U2DMXfixtureColourList.Clear()
+        for index, value in enumerate(u2.FixtureNames()):
+            self.U2DMXfixtureList.Append('(' + u2.FixtureAddresses()[index] + ') ' + value)
+            self.U2DMXfixtureColourList.Append(u2.FixtureColours()[index])
+
+        dmxU1Device = dmxmodule.DMXdevice(self.beamSettings.getSelectedU1DMXdeviceName())
+        self.U1CurrentColour = 'None'
+        self.U1DMXpatternSelectorDropdown.SetItems(dmxU1Device.GetPaletteList())
+        self.U1DMXpatternSelectorDropdown.SetValue(self.U1CurrentColour)
+        self.U1DMXpatternSelectorDropdown.Enable(self.beamSettings.getSelectedU1DMXdeviceName() != 'None')
+        self.runU1Btn.Enable(self.beamSettings.getSelectedU1DMXdeviceName() != 'None')
+        self.delU1Btn.Enable(self.U1DMXfixtureList.GetCount() > 0)
+
+        dmxU2Device = dmxmodule.DMXdevice(self.beamSettings.getSelectedU2DMXdeviceName())
+        self.U2CurrentColour = 'None'
+        self.U2DMXpatternSelectorDropdown.SetItems(dmxU2Device.GetPaletteList())
+        self.U2DMXpatternSelectorDropdown.SetValue(self.U2CurrentColour)
+        self.U2DMXpatternSelectorDropdown.Enable(self.beamSettings.getSelectedU2DMXdeviceName() != 'None')
+        self.runU2Btn.Enable(self.beamSettings.getSelectedU2DMXdeviceName() != 'None')
+        self.delU2Btn.Enable(self.U2DMXfixtureList.GetCount() > 0)
 
     #       self.SetSizer(hbox)
 

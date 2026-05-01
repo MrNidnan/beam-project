@@ -29,7 +29,7 @@
 import wx.html, wx.adv
 
 import textwrap
-from bin.beamsettings import *
+from bin.beamsettings import beamSettings
 
 ##################################################
 # About DIALOG

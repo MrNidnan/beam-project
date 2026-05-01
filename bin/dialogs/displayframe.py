@@ -24,9 +24,12 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import logging
+
+import wx
 import wx.html
 import wx.lib.delayedresult
-from bin.beamsettings import *
+
 from bin.dialogs.preferencespanels.displaypanel import DisplayPanel
 
 

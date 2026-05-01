@@ -25,10 +25,16 @@
 #
 # This Python file uses the following encoding: utf-8
 import logging
+import os
+import platform
+import sys
+
+import wx
 
 # initializes public variables of beamsettings.beamSettings
 # from stringResuorces by BeamSettings() __init__
-from bin.beamsettings import *
+from bin.beamsettings import beamSettings
+from bin.beamutils import getBeamConfigPath, getBeamHomePath, getUserHomePath, setLogLevel
 from bin.mainframe import MainFrame
 
 try:

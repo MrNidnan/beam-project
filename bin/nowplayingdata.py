@@ -24,10 +24,13 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import logging
+import os
+import platform
 import time
 from copy import deepcopy
 
-from bin.beamsettings import *
+from bin.beamsettings import beamSettings
 from bin.beamutils import getBeamHomePath
 from bin.mutagenutils import readCoverArtImage
 from bin.songclass import SongObject
@@ -43,7 +46,7 @@ if platform.system() == 'Linux':
 if platform.system() == 'Windows':
     from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule, jrivermodule
 if platform.system() == 'Darwin':
-    from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule, jrivermodule
+    from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule, jrivermodule, virtualdjmodule as macvirtualdjmodule
 
 ###############################################################
 #
@@ -184,8 +187,14 @@ class NowPlayingData:
                 self.currentPlaylist, self.PlaybackStatus = mixxxmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
             if currentSettings.getSelectedModuleName() == 'JRiver':
                 self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings.getMaxTandaLength())
+            if currentSettings.getSelectedModuleName() == 'VirtualDJ':
+                self.currentPlaylist, self.PlaybackStatus = macvirtualdjmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
 
         # for all platforms
+        if currentSettings.getSelectedModuleName() == 'VirtualDJ' and platform.system() == 'Windows':
+            from bin.modules import virtualdjmodule
+            self.currentPlaylist, self.PlaybackStatus = virtualdjmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
+
         if currentSettings.getSelectedModuleName() == 'Icecast':
             from bin.modules import icecastmodule
             self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)

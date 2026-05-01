@@ -28,7 +28,11 @@
 import socket
 
 import wx
-from bin.beamutils import *
+from bin.beamutils import logLevelList, setLogLevel
+
+
+VIRTUALDJ_INTEGRATION_MODES = ['History File', 'Network Control']
+VIRTUALDJ_QUERY_MODES = ['Master', 'Deck 1', 'Deck 2', 'Left', 'Right']
 
 
 ###################################################################
@@ -73,6 +77,9 @@ class BasicSettingsPanel(wx.Panel):
         content_vbox.Add(self.ModuleSelectorDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
 
         self.foobarControls = []
+        self.virtualDjCommonControls = []
+        self.virtualDjHistoryControls = []
+        self.virtualDjNetworkControls = []
         
         
         ############
@@ -96,7 +103,7 @@ class BasicSettingsPanel(wx.Panel):
         hboxRefresh.Add(self.RefreshTime, flag= wx.LEFT | wx.RIGHT | wx.TOP, border=7)
         hboxRefresh.Add(self.RefreshTimeLabel, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
         content_vbox.Add(hboxRefresh, flag=wx.LEFT, border=20)
-        self.OnRefreshTimerScroll()
+        self.updateRefreshTimeLabel()
         
         ################
         # TANDA LENGTH #
@@ -105,7 +112,7 @@ class BasicSettingsPanel(wx.Panel):
         self.TandaLength = wx.Slider(self.scrolledWindow, -1, self.BeamSettings.getMaxTandaLength(), 0, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
         self.TandaLengthLabel = wx.StaticText(self.scrolledWindow, -1, "")
         self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
-        self.OnTandaLengthScroll()
+        self.updateTandaLengthLabel()
         content_vbox.Add(tandalength, flag=wx.LEFT, border=20)
         hboxTanda = wx.BoxSizer(wx.HORIZONTAL)
         hboxTanda.Add(self.TandaLength, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
@@ -205,6 +212,97 @@ class BasicSettingsPanel(wx.Panel):
         content_vbox.Add(foobarpasswordlabel, flag=wx.LEFT | wx.TOP, border=20)
         content_vbox.Add(self.FoobarPasswordField, flag=wx.LEFT | wx.RIGHT, border=20)
 
+        virtualdjlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "VirtualDJ")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        virtualdjlabel.SetFont(font)
+
+        virtualdjdescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "History File works without VirtualDJ Pro. Network Control requires the optional Pro plugin.")
+
+        virtualdjintegrationlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Integration")
+        self.VirtualDJIntegrationDropdown = wx.ComboBox(self.scrolledWindow, wx.ID_ANY,
+                                value=self.BeamSettings.getVirtualDJIntegrationMode(),
+                                choices=VIRTUALDJ_INTEGRATION_MODES,
+                                size=(233, -1),
+                                style=wx.CB_READONLY)
+        self.VirtualDJIntegrationDropdown.Bind(wx.EVT_COMBOBOX, self.OnVirtualDJIntegrationModeChanged)
+
+        virtualdjhistorypathlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "History File Path")
+        self.VirtualDJHistoryPathField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJHistoryPath(), size=(233, -1))
+        self.VirtualDJHistoryPathField.Bind(wx.EVT_TEXT, self.OnVirtualDJHistoryPathChanged)
+        self.VirtualDJHistoryPathField.SetToolTip('Optional override for VirtualDJ tracklist.txt or a History folder. Leave blank for auto-detection.')
+
+        virtualdjrecentwindowlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Recent Track Window (sec)")
+        self.VirtualDJRecentWindowField = wx.SpinCtrl(self.scrolledWindow, wx.ID_ANY, min=0, max=86400, initial=self.BeamSettings.getVirtualDJRecentTrackWindowSec(), size=(100, -1))
+        self.VirtualDJRecentWindowField.Bind(wx.EVT_SPINCTRL, self.OnVirtualDJRecentTrackWindowChanged)
+        self.VirtualDJRecentWindowField.Bind(wx.EVT_TEXT, self.OnVirtualDJRecentTrackWindowChanged)
+        self.VirtualDJRecentWindowField.SetToolTip('How long a history file entry stays fresh before Beam treats VirtualDJ as stopped. Use 0 to disable staleness checks.')
+
+        virtualdjhostlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Host")
+        self.VirtualDJHostField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJHost(), size=(233, -1))
+        self.VirtualDJHostField.Bind(wx.EVT_TEXT, self.OnVirtualDJHostChanged)
+        self.VirtualDJHostField.SetToolTip('Host or IP address where the VirtualDJ Network Control plugin is listening.')
+
+        virtualdjportlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Port")
+        self.VirtualDJPortField = wx.SpinCtrl(self.scrolledWindow, wx.ID_ANY, min=1, max=65535, initial=self.BeamSettings.getVirtualDJPort(), size=(100, -1))
+        self.VirtualDJPortField.Bind(wx.EVT_SPINCTRL, self.OnVirtualDJPortChanged)
+        self.VirtualDJPortField.Bind(wx.EVT_TEXT, self.OnVirtualDJPortChanged)
+        self.VirtualDJPortField.SetToolTip('Port configured in the VirtualDJ Network Control plugin. Default: 80.')
+
+        virtualdjtokenlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Bearer Token")
+        self.VirtualDJTokenField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJBearerToken(), size=(233, -1), style=wx.TE_PASSWORD)
+        self.VirtualDJTokenField.Bind(wx.EVT_TEXT, self.OnVirtualDJBearerTokenChanged)
+        self.VirtualDJTokenField.SetToolTip('Optional authentication token configured in the VirtualDJ Network Control plugin.')
+
+        virtualdjquerymodelabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Track Source")
+        self.VirtualDJQueryModeDropdown = wx.ComboBox(self.scrolledWindow, wx.ID_ANY,
+                                                      value=self.BeamSettings.getVirtualDJQueryMode(),
+                                                      choices=VIRTUALDJ_QUERY_MODES,
+                                                      size=(233, -1),
+                                                      style=wx.CB_READONLY)
+        self.VirtualDJQueryModeDropdown.Bind(wx.EVT_COMBOBOX, self.OnVirtualDJQueryModeChanged)
+
+        self.virtualDjCommonControls = [
+            virtualdjlabel,
+            virtualdjdescription,
+            virtualdjintegrationlabel,
+            self.VirtualDJIntegrationDropdown,
+        ]
+
+        self.virtualDjHistoryControls = [
+            virtualdjhistorypathlabel,
+            self.VirtualDJHistoryPathField,
+            virtualdjrecentwindowlabel,
+            self.VirtualDJRecentWindowField,
+        ]
+
+        self.virtualDjNetworkControls = [
+            virtualdjhostlabel,
+            self.VirtualDJHostField,
+            virtualdjportlabel,
+            self.VirtualDJPortField,
+            virtualdjtokenlabel,
+            self.VirtualDJTokenField,
+            virtualdjquerymodelabel,
+            self.VirtualDJQueryModeDropdown,
+        ]
+
+        content_vbox.Add(virtualdjlabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        content_vbox.Add(virtualdjdescription, flag=wx.LEFT, border=20)
+        content_vbox.Add(virtualdjintegrationlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJIntegrationDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_vbox.Add(virtualdjhistorypathlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJHistoryPathField, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_vbox.Add(virtualdjrecentwindowlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJRecentWindowField, flag=wx.LEFT, border=20)
+        content_vbox.Add(virtualdjhostlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJHostField, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_vbox.Add(virtualdjportlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJPortField, flag=wx.LEFT, border=20)
+        content_vbox.Add(virtualdjtokenlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJTokenField, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_vbox.Add(virtualdjquerymodelabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJQueryModeDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
+
         content_vbox.Add(networklabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         content_vbox.Add(networkdescription, flag=wx.LEFT, border=20)
         content_vbox.Add(self.NetworkEnabledCheckBox, flag=wx.LEFT | wx.TOP, border=20)
@@ -223,7 +321,31 @@ class BasicSettingsPanel(wx.Panel):
         self.scrolledWindow.FitInside()
         outer_vbox.Add(self.scrolledWindow, 1, wx.EXPAND)
         self.SetSizer(outer_vbox)
-        self.updateFoobarSettingsVisibility(self.BeamSettings.getSelectedModuleName())
+        self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
+        self.updateNetworkAddressHint()
+
+    def reloadFromSettings(self):
+        self.ModuleSelectorDropdown.SetValue(self.BeamSettings.getSelectedModuleName())
+        self.RefreshTime.SetValue(int(self.BeamSettings.getUpdtime()))
+        self.TandaLength.SetValue(int(self.BeamSettings.getMaxTandaLength()))
+        self.LogLevelSelectorDropdown.SetValue(self.BeamSettings.getLogLevel())
+        self.NetworkEnabledCheckBox.SetValue(self.BeamSettings.getNetworkServiceEnabled())
+        self.networkBindDisplayHost = self.getNetworkHostDisplayValue()
+        self.NetworkHostField.ChangeValue(self.networkBindDisplayHost)
+        self.NetworkPortField.SetValue(self.BeamSettings.getNetworkServicePort())
+        self.FoobarUrlField.ChangeValue(self.BeamSettings.getFoobarBeefwebUrl())
+        self.FoobarUserField.ChangeValue(self.BeamSettings.getFoobarBeefwebUser())
+        self.FoobarPasswordField.ChangeValue(self.BeamSettings.getFoobarBeefwebPassword())
+        self.VirtualDJIntegrationDropdown.SetValue(self.BeamSettings.getVirtualDJIntegrationMode())
+        self.VirtualDJHistoryPathField.ChangeValue(self.BeamSettings.getVirtualDJHistoryPath())
+        self.VirtualDJRecentWindowField.SetValue(self.BeamSettings.getVirtualDJRecentTrackWindowSec())
+        self.VirtualDJHostField.ChangeValue(self.BeamSettings.getVirtualDJHost())
+        self.VirtualDJPortField.SetValue(self.BeamSettings.getVirtualDJPort())
+        self.VirtualDJTokenField.ChangeValue(self.BeamSettings.getVirtualDJBearerToken())
+        self.VirtualDJQueryModeDropdown.SetValue(self.BeamSettings.getVirtualDJQueryMode())
+        self.updateRefreshTimeLabel()
+        self.updateTandaLengthLabel()
+        self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
         self.updateNetworkAddressHint()
 
 
@@ -238,7 +360,7 @@ class BasicSettingsPanel(wx.Panel):
     def OnSelectMediaPlayer(self, event):
         module_name = self.ModuleSelectorDropdown.GetValue()
         self.BeamSettings.setSelectedModuleName(module_name)
-        self.updateFoobarSettingsVisibility(module_name)
+        self.updateModuleSpecificSettingsVisibility(module_name)
     def OnSelectU1DMXdevice(self, event):
         self.BeamSettings.setSelectedU1DMXdeviceName(self.U1DMXdeviceSelectorDropdown.GetValue())
     def OnSelectU2DMXdevice(self, event):
@@ -271,10 +393,45 @@ class BasicSettingsPanel(wx.Panel):
     def OnFoobarPasswordChanged(self, event):
         self.BeamSettings.setFoobarBeefwebPassword(self.FoobarPasswordField.GetValue())
 
-    def updateFoobarSettingsVisibility(self, moduleName):
+    def OnVirtualDJHostChanged(self, event):
+        self.BeamSettings.setVirtualDJHost(self.VirtualDJHostField.GetValue())
+
+    def OnVirtualDJPortChanged(self, event):
+        self.BeamSettings.setVirtualDJPort(self.VirtualDJPortField.GetValue())
+
+    def OnVirtualDJIntegrationModeChanged(self, event):
+        self.BeamSettings.setVirtualDJIntegrationMode(self.VirtualDJIntegrationDropdown.GetValue())
+        self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
+
+    def OnVirtualDJHistoryPathChanged(self, event):
+        self.BeamSettings.setVirtualDJHistoryPath(self.VirtualDJHistoryPathField.GetValue())
+
+    def OnVirtualDJRecentTrackWindowChanged(self, event):
+        self.BeamSettings.setVirtualDJRecentTrackWindowSec(self.VirtualDJRecentWindowField.GetValue())
+
+    def OnVirtualDJBearerTokenChanged(self, event):
+        self.BeamSettings.setVirtualDJBearerToken(self.VirtualDJTokenField.GetValue())
+
+    def OnVirtualDJQueryModeChanged(self, event):
+        self.BeamSettings.setVirtualDJQueryMode(self.VirtualDJQueryModeDropdown.GetValue())
+
+    def updateModuleSpecificSettingsVisibility(self, moduleName):
         show_foobar_settings = moduleName == 'Foobar2000'
         for control in self.foobarControls:
             control.Show(show_foobar_settings)
+
+        show_virtualdj_settings = moduleName == 'VirtualDJ'
+        for control in self.virtualDjCommonControls:
+            control.Show(show_virtualdj_settings)
+
+        show_virtualdj_history_controls = show_virtualdj_settings and self.BeamSettings.getVirtualDJIntegrationMode() == 'History File'
+        for control in self.virtualDjHistoryControls:
+            control.Show(show_virtualdj_history_controls)
+
+        show_virtualdj_network_controls = show_virtualdj_settings and self.BeamSettings.getVirtualDJIntegrationMode() == 'Network Control'
+        for control in self.virtualDjNetworkControls:
+            control.Show(show_virtualdj_network_controls)
+
         self.scrolledWindow.FitInside()
         self.Layout()
         if self.GetParent() is not None:
@@ -325,29 +482,32 @@ class BasicSettingsPanel(wx.Panel):
     ################
     # REFRESH TIME #
     ################
+    def updateRefreshTimeLabel(self):
+        timer_value = round(float(self.RefreshTime.GetValue()) / 1000, 1)
+        if timer_value < float(2.0):
+            self.RefreshTimeLabel.SetLabel(str(timer_value) + " sec (Fast)")
+        elif timer_value < float(5.0):
+            self.RefreshTimeLabel.SetLabel(str(timer_value) + " sec (Medium)")
+        else:
+            self.RefreshTimeLabel.SetLabel(str(timer_value) + " sec (Slow)")
+
     def OnRefreshTimerScroll(self, event = wx.EVT_SCROLL):
         self.BeamSettings.setUpdtime(self.RefreshTime.GetValue())
-        
-        Timervalue = round(float(self.BeamSettings.getUpdtime()) / 1000, 1)
-        if Timervalue < float(2.0):
-            # Fast
-            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Fast)")
-        elif Timervalue < float(5.0):
-            # Medium
-            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Medium)")
-        else:
-            # Slow
-            self.RefreshTimeLabel.SetLabel(str(Timervalue) + " sec (Slow)")
+        self.updateRefreshTimeLabel()
 
     ################
     # TANDA LENGTH #
     ################
-    def OnTandaLengthScroll(self, event = wx.EVT_SCROLL):
-        self.BeamSettings.setMaxTandaLength( self.TandaLength.GetValue())
-        if self.BeamSettings.getMaxTandaLength() > 0:
-            self.TandaLengthLabel.SetLabel(str(self.BeamSettings.getMaxTandaLength()) + " songs")
+    def updateTandaLengthLabel(self):
+        tanda_length = int(self.TandaLength.GetValue())
+        if tanda_length > 0:
+            self.TandaLengthLabel.SetLabel(str(tanda_length) + " songs")
         else:
             self.TandaLengthLabel.SetLabel("No preview")
+
+    def OnTandaLengthScroll(self, event = wx.EVT_SCROLL):
+        self.BeamSettings.setMaxTandaLength( self.TandaLength.GetValue())
+        self.updateTandaLengthLabel()
 
     ################
     #   LOGGING    #

@@ -26,6 +26,15 @@
     "BeefwebUser": "",
     "BeefwebPassword": ""
   },
+  "VirtualDJ": {
+    "IntegrationMode": "History File",
+    "HistoryPath": "",
+    "RecentTrackWindowSec": 300,
+    "Host": "127.0.0.1",
+    "Port": 80,
+    "BearerToken": "",
+    "QueryMode": "Master"
+  },
   "AllModules": [
     {
       "Modules": [
@@ -44,6 +53,7 @@
       "Modules": [
         "iTunes",
         "Foobar2000",
+        "VirtualDJ",
         "MediaMonkey",
         "Spotify",
         "Winamp",
@@ -59,6 +69,7 @@
         "Decibel",
         "Swinsian",
         "Vox",
+        "VirtualDJ",
         "Spotify",
         "Embrace",
         "Mixxx",
