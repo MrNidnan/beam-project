@@ -237,6 +237,7 @@ class MainFrame(wx.Frame):
                 # self.displayBtn.SetLabel("Display")
             else:
                 self.displayFrame.Show()
+                self.refreshDisplay()
                 # self.displayBtn.SetLabel("Hide")
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -292,8 +293,8 @@ class MainFrame(wx.Frame):
 
     def refreshDisplay(self):
         try:
-            self.displayFrame.Refresh()
-            self.previewPanel.Refresh()
+            self.displayFrame.displayPanel.reloadFromSettings()
+            self.previewPanel.reloadFromSettings()
             self.networkService.publish_display_state(self.displayData)
         except Exception as e:
             logging.error(e, exc_info=True)

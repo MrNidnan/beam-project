@@ -91,6 +91,7 @@ class DisplayPanel(wx.Panel):
     def reloadFromSettings(self):
         self.displayData.triggerResizeBackground = True
         self.Refresh()
+        self.Update()
 
 
 ########################################################
