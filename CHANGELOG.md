@@ -4,11 +4,12 @@ All notable changes in this fork are documented in this file.
 
 The format is based on Keep a Changelog, adapted for this repository's existing release history.
 
-## v0.8.0 - 2026-05-01
+## v0.8.0.0 - 2026-05-01
 
 ### Added
 
-- Updated Beam so your current configuration can be organized into reusable named profiles instead of a single setup.
+- **Support for VirtualDJ integration**, including history parsing and network control functionality.
+- **Profiles settings configutarion** configuration can be organized in named profiles instead of a single setup.
 - Added profile management in Preferences so you can create, save, switch, rename, and delete named Beam setups.
 - Added clearer feedback for the active profile, including an unsaved-changes indicator.
 - Updated the Preferences window with a dedicated Profiles page.
