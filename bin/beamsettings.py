@@ -190,6 +190,46 @@ class BeamSettings:
     def getFoobar2000(self):
         return self._beamConfigData['Foobar2000']
 
+    def getVirtualDJ(self):
+        return self._beamConfigData['VirtualDJ']
+
+    def getVirtualDJHost(self):
+        return str(self.getVirtualDJ().get('Host', '127.0.0.1')).strip()
+
+    def setVirtualDJHost(self, host):
+        normalized_host = str(host).strip()
+        if normalized_host == '':
+            normalized_host = '127.0.0.1'
+        self.getVirtualDJ()['Host'] = normalized_host
+        self._markDirty()
+
+    def getVirtualDJPort(self):
+        return int(self.getVirtualDJ().get('Port', 80))
+
+    def setVirtualDJPort(self, port):
+        self.getVirtualDJ()['Port'] = int(port)
+        self._markDirty()
+
+    def getVirtualDJBearerToken(self):
+        return str(self.getVirtualDJ().get('BearerToken', ''))
+
+    def setVirtualDJBearerToken(self, token):
+        self.getVirtualDJ()['BearerToken'] = str(token)
+        self._markDirty()
+
+    def getVirtualDJQueryMode(self):
+        query_mode = str(self.getVirtualDJ().get('QueryMode', 'Master')).strip()
+        if query_mode == '':
+            query_mode = 'Master'
+        return query_mode
+
+    def setVirtualDJQueryMode(self, query_mode):
+        normalized_query_mode = str(query_mode).strip()
+        if normalized_query_mode == '':
+            normalized_query_mode = 'Master'
+        self.getVirtualDJ()['QueryMode'] = normalized_query_mode
+        self._markDirty()
+
     def getFoobarBeefwebUrl(self):
         return str(self.getFoobar2000().get('BeefwebUrl', 'http://localhost:8880/')).strip()
 

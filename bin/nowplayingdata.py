@@ -189,6 +189,10 @@ class NowPlayingData:
                 self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings.getMaxTandaLength())
 
         # for all platforms
+        if currentSettings.getSelectedModuleName() == 'VirtualDJ':
+            from bin.modules import virtualdjmodule
+            self.currentPlaylist, self.PlaybackStatus = virtualdjmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
+
         if currentSettings.getSelectedModuleName() == 'Icecast':
             from bin.modules import icecastmodule
             self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)

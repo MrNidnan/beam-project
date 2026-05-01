@@ -31,6 +31,9 @@ import wx
 from bin.beamutils import logLevelList, setLogLevel
 
 
+VIRTUALDJ_QUERY_MODES = ['Master', 'Deck 1', 'Deck 2']
+
+
 ###################################################################
 #                      BasicSettingsTab                           #
 ###################################################################
@@ -73,6 +76,7 @@ class BasicSettingsPanel(wx.Panel):
         content_vbox.Add(self.ModuleSelectorDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
 
         self.foobarControls = []
+        self.virtualDjControls = []
         
         
         ############
@@ -205,6 +209,60 @@ class BasicSettingsPanel(wx.Panel):
         content_vbox.Add(foobarpasswordlabel, flag=wx.LEFT | wx.TOP, border=20)
         content_vbox.Add(self.FoobarPasswordField, flag=wx.LEFT | wx.RIGHT, border=20)
 
+        virtualdjlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "VirtualDJ Network Control")
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        virtualdjlabel.SetFont(font)
+
+        virtualdjdescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "These settings are used only when VirtualDJ is the selected media player.")
+
+        virtualdjhostlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Host")
+        self.VirtualDJHostField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJHost(), size=(233, -1))
+        self.VirtualDJHostField.Bind(wx.EVT_TEXT, self.OnVirtualDJHostChanged)
+        self.VirtualDJHostField.SetToolTip('Host or IP address where the VirtualDJ Network Control plugin is listening.')
+
+        virtualdjportlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Port")
+        self.VirtualDJPortField = wx.SpinCtrl(self.scrolledWindow, wx.ID_ANY, min=1, max=65535, initial=self.BeamSettings.getVirtualDJPort(), size=(100, -1))
+        self.VirtualDJPortField.Bind(wx.EVT_SPINCTRL, self.OnVirtualDJPortChanged)
+        self.VirtualDJPortField.Bind(wx.EVT_TEXT, self.OnVirtualDJPortChanged)
+        self.VirtualDJPortField.SetToolTip('Port configured in the VirtualDJ Network Control plugin. Default: 80.')
+
+        virtualdjtokenlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Bearer Token")
+        self.VirtualDJTokenField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJBearerToken(), size=(233, -1), style=wx.TE_PASSWORD)
+        self.VirtualDJTokenField.Bind(wx.EVT_TEXT, self.OnVirtualDJBearerTokenChanged)
+        self.VirtualDJTokenField.SetToolTip('Optional authentication token configured in the VirtualDJ Network Control plugin.')
+
+        virtualdjquerymodelabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Track Source")
+        self.VirtualDJQueryModeDropdown = wx.ComboBox(self.scrolledWindow, wx.ID_ANY,
+                                                      value=self.BeamSettings.getVirtualDJQueryMode(),
+                                                      choices=VIRTUALDJ_QUERY_MODES,
+                                                      size=(233, -1),
+                                                      style=wx.CB_READONLY)
+        self.VirtualDJQueryModeDropdown.Bind(wx.EVT_COMBOBOX, self.OnVirtualDJQueryModeChanged)
+
+        self.virtualDjControls = [
+            virtualdjlabel,
+            virtualdjdescription,
+            virtualdjhostlabel,
+            self.VirtualDJHostField,
+            virtualdjportlabel,
+            self.VirtualDJPortField,
+            virtualdjtokenlabel,
+            self.VirtualDJTokenField,
+            virtualdjquerymodelabel,
+            self.VirtualDJQueryModeDropdown,
+        ]
+
+        content_vbox.Add(virtualdjlabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
+        content_vbox.Add(virtualdjdescription, flag=wx.LEFT, border=20)
+        content_vbox.Add(virtualdjhostlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJHostField, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_vbox.Add(virtualdjportlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJPortField, flag=wx.LEFT, border=20)
+        content_vbox.Add(virtualdjtokenlabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJTokenField, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_vbox.Add(virtualdjquerymodelabel, flag=wx.LEFT | wx.TOP, border=20)
+        content_vbox.Add(self.VirtualDJQueryModeDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
+
         content_vbox.Add(networklabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
         content_vbox.Add(networkdescription, flag=wx.LEFT, border=20)
         content_vbox.Add(self.NetworkEnabledCheckBox, flag=wx.LEFT | wx.TOP, border=20)
@@ -223,7 +281,7 @@ class BasicSettingsPanel(wx.Panel):
         self.scrolledWindow.FitInside()
         outer_vbox.Add(self.scrolledWindow, 1, wx.EXPAND)
         self.SetSizer(outer_vbox)
-        self.updateFoobarSettingsVisibility(self.BeamSettings.getSelectedModuleName())
+        self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
         self.updateNetworkAddressHint()
 
     def reloadFromSettings(self):
@@ -238,9 +296,13 @@ class BasicSettingsPanel(wx.Panel):
         self.FoobarUrlField.ChangeValue(self.BeamSettings.getFoobarBeefwebUrl())
         self.FoobarUserField.ChangeValue(self.BeamSettings.getFoobarBeefwebUser())
         self.FoobarPasswordField.ChangeValue(self.BeamSettings.getFoobarBeefwebPassword())
+        self.VirtualDJHostField.ChangeValue(self.BeamSettings.getVirtualDJHost())
+        self.VirtualDJPortField.SetValue(self.BeamSettings.getVirtualDJPort())
+        self.VirtualDJTokenField.ChangeValue(self.BeamSettings.getVirtualDJBearerToken())
+        self.VirtualDJQueryModeDropdown.SetValue(self.BeamSettings.getVirtualDJQueryMode())
         self.updateRefreshTimeLabel()
         self.updateTandaLengthLabel()
-        self.updateFoobarSettingsVisibility(self.BeamSettings.getSelectedModuleName())
+        self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
         self.updateNetworkAddressHint()
 
 
@@ -255,7 +317,7 @@ class BasicSettingsPanel(wx.Panel):
     def OnSelectMediaPlayer(self, event):
         module_name = self.ModuleSelectorDropdown.GetValue()
         self.BeamSettings.setSelectedModuleName(module_name)
-        self.updateFoobarSettingsVisibility(module_name)
+        self.updateModuleSpecificSettingsVisibility(module_name)
     def OnSelectU1DMXdevice(self, event):
         self.BeamSettings.setSelectedU1DMXdeviceName(self.U1DMXdeviceSelectorDropdown.GetValue())
     def OnSelectU2DMXdevice(self, event):
@@ -288,10 +350,27 @@ class BasicSettingsPanel(wx.Panel):
     def OnFoobarPasswordChanged(self, event):
         self.BeamSettings.setFoobarBeefwebPassword(self.FoobarPasswordField.GetValue())
 
-    def updateFoobarSettingsVisibility(self, moduleName):
+    def OnVirtualDJHostChanged(self, event):
+        self.BeamSettings.setVirtualDJHost(self.VirtualDJHostField.GetValue())
+
+    def OnVirtualDJPortChanged(self, event):
+        self.BeamSettings.setVirtualDJPort(self.VirtualDJPortField.GetValue())
+
+    def OnVirtualDJBearerTokenChanged(self, event):
+        self.BeamSettings.setVirtualDJBearerToken(self.VirtualDJTokenField.GetValue())
+
+    def OnVirtualDJQueryModeChanged(self, event):
+        self.BeamSettings.setVirtualDJQueryMode(self.VirtualDJQueryModeDropdown.GetValue())
+
+    def updateModuleSpecificSettingsVisibility(self, moduleName):
         show_foobar_settings = moduleName == 'Foobar2000'
         for control in self.foobarControls:
             control.Show(show_foobar_settings)
+
+        show_virtualdj_settings = moduleName == 'VirtualDJ'
+        for control in self.virtualDjControls:
+            control.Show(show_virtualdj_settings)
+
         self.scrolledWindow.FitInside()
         self.Layout()
         if self.GetParent() is not None:

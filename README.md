@@ -12,6 +12,8 @@ Foobar2000 support in this fork now uses the Beefweb HTTP API and is no longer c
 
 Beam now stores Foobar2000 Beefweb connection settings in Preferences when `Foobar2000` is selected, instead of requiring environment variables for normal use.
 
+Beam now also supports VirtualDJ through the official Network Control plugin, including artist, title, album, genre, year, and file path metadata. Setup notes and the maintenance history for that integration are documented in [docs/VIRTUALDJ_MODULE.md](docs/VIRTUALDJ_MODULE.md).
+
 Beam also ships with a default disabled rule named `Trim () in the Title` that can be enabled from the Rules panel to remove trailing parenthetical suffixes from displayed song titles.
 Example:
 

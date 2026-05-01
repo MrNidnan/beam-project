@@ -42,6 +42,11 @@ jobs:
         run: |
           .\.venv\Scripts\python.exe .\scripts\smoke_imports.py
 
+      - name: Smoke VirtualDJ query flow
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe .\scripts\smoke_virtualdj.py
+
   validate-linux:
     runs-on: ubuntu-22.04
 
@@ -68,3 +73,7 @@ jobs:
       - name: Smoke import platform-gated modules
         run: |
           python3 scripts/smoke_imports.py
+
+      - name: Smoke VirtualDJ query flow
+        run: |
+          python3 scripts/smoke_virtualdj.py
