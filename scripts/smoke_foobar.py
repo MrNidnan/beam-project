@@ -19,6 +19,36 @@ REQUEST_LOG = []
 PRIMARY_ARTIST = 'Carlos Di Sarli'
 PRIMARY_TITLE = 'Bahia Blanca'
 PRIMARY_PATH = r'C:\Music\Carlos Di Sarli\Bahia Blanca.flac'
+PLAYLIST_ITEMS = [
+    {
+        'columns': [
+            PRIMARY_ARTIST,
+            'Instrumentales',
+            PRIMARY_TITLE,
+            'Tango',
+            '',
+            '',
+            '1957',
+            PRIMARY_ARTIST,
+            '',
+            PRIMARY_PATH,
+        ],
+    },
+    {
+        'columns': [
+            'Osvaldo Pugliese',
+            'En Vivo',
+            'La Yumba',
+            'Tango',
+            '',
+            '',
+            '1946',
+            'Osvaldo Pugliese',
+            '',
+            r'C:\Music\Osvaldo Pugliese\La Yumba.flac',
+        ],
+    },
+]
 
 
 class FoobarHandler(http.server.BaseHTTPRequestHandler):
@@ -56,39 +86,10 @@ class FoobarHandler(http.server.BaseHTTPRequestHandler):
                     },
                 },
             }
-        elif parsed.path == '/api/playlists/main/items/3:4':
+        elif parsed.path.startswith('/api/playlists/main/items/3:'):
             body = {
                 'playlistItems': {
-                    'items': [
-                        {
-                            'columns': [
-                                PRIMARY_ARTIST,
-                                'Instrumentales',
-                                PRIMARY_TITLE,
-                                'Tango',
-                                '',
-                                '',
-                                '1957',
-                                PRIMARY_ARTIST,
-                                '',
-                                PRIMARY_PATH,
-                            ],
-                        },
-                        {
-                            'columns': [
-                                'Osvaldo Pugliese',
-                                'En Vivo',
-                                'La Yumba',
-                                'Tango',
-                                '',
-                                '',
-                                '1946',
-                                'Osvaldo Pugliese',
-                                '',
-                                r'C:\Music\Osvaldo Pugliese\La Yumba.flac',
-                            ],
-                        },
-                    ],
+                    'items': PLAYLIST_ITEMS,
                 },
             }
         else:
@@ -111,6 +112,9 @@ class FoobarHandler(http.server.BaseHTTPRequestHandler):
 def main():
     from bin.beamsettings import beamSettings
     from bin.modules.win import foobar2kmodule
+
+    expected_playlist_count = foobar2kmodule.get_playlist_fetch_count(4)
+    expected_playlist_path = '/api/playlists/main/items/3:{0}'.format(expected_playlist_count)
 
     server = socketserver.TCPServer(('127.0.0.1', 0), FoobarHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -135,14 +139,14 @@ def main():
         assert details['authMode'] == 'basic-auth'
         assert details['activePlaylistId'] == 'main'
         assert details['activeIndex'] == '3'
-        assert len(playlist) == 2
+        assert len(playlist) == len(PLAYLIST_ITEMS)
         assert playlist[0].Artist == PRIMARY_ARTIST
         assert playlist[0].Title == PRIMARY_TITLE
         assert playlist[0].FilePath == PRIMARY_PATH
 
         request_paths = [entry[0] for entry in REQUEST_LOG]
         assert '/api/player' in request_paths
-        assert '/api/playlists/main/items/3:4' in request_paths
+        assert expected_playlist_path in request_paths
         assert any(entry[2].startswith('Basic ') for entry in REQUEST_LOG)
 
         print('Foobar2000 smoke test passed')
