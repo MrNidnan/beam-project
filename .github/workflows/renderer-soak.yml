@@ -1,0 +1,29 @@
+name: Renderer Soak
+
+on:
+  workflow_dispatch:
+
+jobs:
+  renderer-soak-linux:
+    continue-on-error: true
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3 \
+            python3-pip \
+            python3-venv \
+            python3-wxgtk4.0 \
+            python3-mutagen \
+            python3-numpy \
+            python3-dbus
+
+      - name: Run layered renderer soak check
+        run: |
+          python3 scripts/soak_layered_repaints.py
