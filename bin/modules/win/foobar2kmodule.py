@@ -31,15 +31,20 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from mutagen._file import File as mutagen_file
+
 from bin.beamsettings import beamSettings
 from bin.songclass import SongObject
 
 
 DEFAULT_BEEFWEB_URL = "http://localhost:8880/api/"
 DEFAULT_TIMEOUT_SECONDS = 2.0
+PLAYLIST_LOOKAHEAD_PADDING = 8
+PLAYLIST_LOOKAHEAD_LIMIT = 24
 _beefweb_warning_logged = False
 _beefweb_error_context = {}
 _player_state_warning_logged = False
+_metadata_fallback_cache = {}
 BEAM_BEEFWEB_COLUMNS = [
     "[%artist%]",
     "[%album%]",
@@ -86,7 +91,7 @@ def append_active_song(playlist, active_item, playback_status):
 def extend_playlist_from_active_item(playlist, active_item, max_tanda_length):
     playlist_id = active_item.get('playlistId')
     active_index = active_item.get('index')
-    item_count = max(int(max_tanda_length or 1), 1)
+    item_count = get_playlist_fetch_count(max_tanda_length)
 
     if not has_valid_playlist_reference(playlist_id, active_index):
         logging.debug(
@@ -106,6 +111,16 @@ def extend_playlist_from_active_item(playlist, active_item, max_tanda_length):
             item_count,
             len(playlist_items),
         )
+
+
+def get_playlist_fetch_count(max_tanda_length):
+    try:
+        base_count = int(max_tanda_length or 1)
+    except (TypeError, ValueError):
+        base_count = 1
+
+    base_count = max(base_count, 1)
+    return min(base_count + PLAYLIST_LOOKAHEAD_PADDING, PLAYLIST_LOOKAHEAD_LIMIT)
 
 
 def get_active_item(player_state):
@@ -255,7 +270,83 @@ def get_song_from_columns(columns):
     ret_song.Performer = normalized_columns[8]
     ret_song.FilePath = normalized_columns[9]
 
+    # In case the columns provided by Beefweb are missing metadata, attempt to enrich from file metadata if possible.
+    # This can help with certain playlist types that don't support custom columns, or if the user hasn't configured the columns correctly.
+    enrich_song_from_file_metadata(ret_song)
+
     return ret_song
+
+
+def enrich_song_from_file_metadata(song):
+    if not song.FilePath or not song_needs_metadata_fallback(song):
+        return song
+
+    metadata = get_file_metadata(song.FilePath)
+    if not metadata:
+        return song
+
+    apply_missing_song_metadata(song, metadata)
+    return song
+
+
+def song_needs_metadata_fallback(song):
+    return not song.Genre
+
+
+def get_file_metadata(file_path):
+    normalized_path = os.path.normcase(os.path.abspath(file_path))
+    if normalized_path in _metadata_fallback_cache:
+        return _metadata_fallback_cache[normalized_path]
+
+    metadata = {}
+
+    if not os.path.exists(file_path):
+        _metadata_fallback_cache[normalized_path] = metadata
+        return metadata
+
+    try:
+        audio = mutagen_file(file_path, easy=True)
+    except Exception as error:
+        logging.debug("Foobar2000 metadata fallback failed for '%s': %s", file_path, error, exc_info=True)
+        _metadata_fallback_cache[normalized_path] = metadata
+        return metadata
+
+    if not audio:
+        _metadata_fallback_cache[normalized_path] = metadata
+        return metadata
+
+    metadata = {
+        'Artist': get_first_metadata_value(audio, 'artist'),
+        'Album': get_first_metadata_value(audio, 'album'),
+        'Title': get_first_metadata_value(audio, 'title'),
+        'Genre': get_first_metadata_value(audio, 'genre'),
+        'Comment': get_first_metadata_value(audio, 'comment'),
+        'Composer': get_first_metadata_value(audio, 'composer'),
+        'Year': get_first_metadata_value(audio, 'date'),
+        'AlbumArtist': get_first_metadata_value(audio, 'albumartist'),
+        'Performer': get_first_metadata_value(audio, 'performer'),
+    }
+    _metadata_fallback_cache[normalized_path] = metadata
+    return metadata
+
+
+def get_first_metadata_value(audio, key):
+    value = audio.get(key)
+    if isinstance(value, list):
+        value = value[0] if value else ''
+
+    value = getattr(value, 'value', value)
+
+    if value is None:
+        return ''
+
+    return str(value)
+
+
+def apply_missing_song_metadata(song, metadata):
+    for field_name, value in metadata.items():
+        if value and not getattr(song, field_name):
+            setattr(song, field_name, value)
 
 
 def song_has_metadata(song):
