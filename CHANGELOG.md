@@ -2,7 +2,38 @@
 
 All notable changes in this fork are documented in this file.
 
-The format is based on Keep a Changelog, adapted for this repository's existing release history.
+## v0.9.0.0 - 2026-05-03
+
+### Added
+
+- **Custom backgrounds per album artist / artist**, including reworked background settings.
+  - Supports layered rendering with mood backgrounds and artist-specific overlays.
+  - Artist backgrounds can blend with mood backgrounds using configurable opacity/blend mode, or replace them entirely.
+- Browser and tablet projection support for layered backgrounds.
+- Imported mood and orchestra backgrounds are stored under `~/.beam/backgrounds/...` and referenced as `asset:user/...`.
+- **JRiver** support updated for macOS and Windows, with Zone support for preview listening without beaming.
+- **CoverArt** settings for optional outline, border radius, and feathering.
+- **VirtualDJ** deck selector and CoverArt support for history parsing.
+- **AIMP** windows support
+
+### Changed
+
+- Modernized **Mixxx** integration.
+- Reworked settings UI:
+  - Basic settings layout.
+  - Layout configuration screen.
+  - Edit Mood dialog.
+  - Edit Layout Item dialog.
+- Edit Layout Item changes are now shown automatically and immediately in the display.
+- Long titles now wrap instead of being truncated.
+
+### Fixed
+
+- Resolved overlapping issues caused by wrapped titles in desktop layouts.
+- Fixed `%CoverArt` rendering by using integer image scaling sizes for cross-platform compatibility.
+- Improved Foobar2000 startup reliability and diagnostics on Windows.
+- Fixed compatibility with older background configurations and rotating backgrounds.
+- Fixed Mood "Display Timer" behavior. (also renamed to Mood Timing)
 
 ## v0.8.0.0 - 2026-05-01
 
@@ -49,8 +80,7 @@ The format is based on Keep a Changelog, adapted for this repository's existing 
 
 ### Added
 
-- Added Preferences controls for the Network Display service, including enable/disable, bind host, and configurable port settings.
-- Added browser projection refinements for distance reading, including automatic title scaling for long song names.
+- Add http display service and a browser projection view
 
 ## v0.7.0 - 2026-04-23
 

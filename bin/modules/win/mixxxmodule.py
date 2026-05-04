@@ -37,18 +37,30 @@ from bin.modules import mixxxutils
 from bin.modules.win import winutils
 
 
-def run(maxtandalength, lastplaylist):
-    sqlitePath = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
-    # "C:\\Users\\<user>\\AppData\Local\\Mixxx\\mixxxdb.sqlite"
+DEFAULT_MIXXX_SQLITE_PATH = os.path.expandvars(r'%LOCALAPPDATA%\Mixxx\mixxxdb.sqlite')
+# "C:\\Users\\<user>\\AppData\\Local\\Mixxx\\mixxxdb.sqlite"
 
-    #
-    # Player Status
-    #
+
+def run(maxtandalength, lastplaylist):
+    playlist, playbackstatus, _ = run_with_details(maxtandalength, lastplaylist)
+
+    return playlist, playbackstatus
+
+
+def run_with_details(maxtandalength, lastplaylist):
     if winutils.applicationrunning("mixxx.exe"):
-        playlist, playbackstatus = mixxxutils.run(maxtandalength, lastplaylist, sqlitePath)
+        playlist, playbackstatus, details = mixxxutils.run_with_details(
+            maxtandalength,
+            lastplaylist,
+            process_running=True,
+            preferred_paths=[DEFAULT_MIXXX_SQLITE_PATH],
+            emit_debug_log=True,
+        )
     else:
         playbackstatus = 'PlayerNotRunning'
         emptyplaylist = []
-        return emptyplaylist, playbackstatus
+        details = mixxxutils.build_mixxx_details(preferred_paths=[DEFAULT_MIXXX_SQLITE_PATH])
+        details['status'] = playbackstatus
+        return emptyplaylist, playbackstatus, details
 
-    return playlist, playbackstatus
+    return playlist, playbackstatus, details

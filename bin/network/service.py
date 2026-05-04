@@ -7,6 +7,7 @@ from copy import deepcopy
 
 from bin.beamsettings import beamSettings
 from bin.beamutils import getBeamHomePath
+from bin.mutagenutils import readCoverArtData
 from bin.network.events import build_event
 from bin.network.schema import empty_snapshot, snapshot_from_display_data
 
@@ -116,6 +117,8 @@ class BeamNetworkService(object):
         app.router.add_get('/now-playing', self._handle_now_playing)
         app.router.add_get('/events', self._handle_events)
         app.router.add_get('/media/background/current', self._handle_background)
+        app.router.add_get('/media/background/{layer}', self._handle_background)
+        app.router.add_get('/media/cover-art/current', self._handle_cover_art)
         app.router.add_static('/static/', self._get_static_directory())
 
         self._runner = web.AppRunner(app)
@@ -197,14 +200,42 @@ class BeamNetworkService(object):
 
         return websocket
 
+    def _get_snapshot_background_path(self, layer_name):
+        background_data = self._latest_snapshot.get('background', {})
+        if layer_name == 'base':
+            layer_data = background_data.get('base', {})
+            return layer_data.get('currentPath', '') or layer_data.get('sourcePath', '')
+        if layer_name == 'overlay':
+            layer_data = background_data.get('overlay', {})
+            return layer_data.get('currentPath', '') or layer_data.get('sourcePath', '')
+        return background_data.get('sourcePath', '')
+
     async def _handle_background(self, request):
+        layer_name = request.match_info.get('layer', 'current')
         with self._lock:
-            background_path = self._latest_snapshot['background']['sourcePath']
+            background_path = self._get_snapshot_background_path(layer_name)
 
         if background_path and os.path.isfile(background_path):
             return web.FileResponse(background_path)
 
         raise web.HTTPNotFound()
+
+    async def _handle_cover_art(self, request):
+        with self._lock:
+            cover_art_path = self._latest_snapshot.get('coverArt', {}).get('sourcePath', '')
+
+        if not cover_art_path:
+            raise web.HTTPNotFound()
+
+        image_bytes, mime_type = readCoverArtData(cover_art_path)
+        if not image_bytes:
+            raise web.HTTPNotFound()
+
+        return web.Response(
+            body=image_bytes,
+            content_type=mime_type or 'application/octet-stream',
+            headers={'Cache-Control': 'no-store'},
+        )
 
     def _get_static_directory(self):
         return os.path.join(getBeamHomePath(), beamSettings.getNetworkServiceWebRoot())

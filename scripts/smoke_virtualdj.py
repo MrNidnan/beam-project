@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import http.server
+import logging
 import os
 import socketserver
 import sys
@@ -16,17 +17,21 @@ if str(ROOT) not in sys.path:
 
 
 REQUEST_LOG = []
+PRIMARY_HISTORY_PATH = 'music/Ricardo Tanturi/Una Emocion.flac'
+PRIMARY_NETWORK_PATH = 'music/Osvaldo Pugliese/La Yumba.flac'
 
 
 class VirtualDJHandler(http.server.BaseHTTPRequestHandler):
     RESPONSES = {
         "deck master is_audible ? deck master get_artist_title : get_text ''": 'Osvaldo Pugliese - La Yumba',
-        "deck master get_loaded_song 'artist'": 'Osvaldo Pugliese',
-        "deck master get_loaded_song 'title'": 'La Yumba',
-        "deck master get_loaded_song 'album'": '1944',
-        "deck master get_loaded_song 'genre'": 'Tango',
-        "deck master get_loaded_song 'year'": '1944',
-        "deck master get_loaded_song 'filepath'": r'C:\Music\Osvaldo Pugliese\La Yumba.flac',
+        "deck master get_text \"artist=`deck master get_loaded_song 'artist'`\\ntitle=`deck master get_loaded_song 'title'`\\nalbum=`deck master get_loaded_song 'album'`\\ngenre=`deck master get_loaded_song 'genre'`\\nyear=`deck master get_loaded_song 'year'`\\nfilepath=`deck master get_loaded_song 'filepath'`\"": (
+            'artist=Osvaldo Pugliese\n'
+            'title=La Yumba\n'
+            'album=1944\n'
+            'genre=Tango\n'
+            'year=1944\n'
+            'filepath=' + PRIMARY_NETWORK_PATH
+        ),
     }
 
     def do_GET(self):
@@ -74,25 +79,32 @@ def main():
     (history_dir / 'tracklist.txt').write_text(
         '22:44 : Juan D\'Arienzo - Paciencia\n'
         '22:45 : deck=1 Oscar Larroca - Tango - Remolino\n'
-        '22:46 : deck=1 artist=Ricardo Tanturi genre=Tango title=Una Emocion year=1942\n'
+        '22:46 : deck=1 artist=Ricardo Tanturi genre=Tango title=Una Emocion year=1942 filepath=' + PRIMARY_HISTORY_PATH + '\n'
         '22:47 : deck=2 artist=Preview Artist genre=Preview title=Should Be Ignored year=1942\n',
         encoding='utf-8',
     )
 
+    config_data = beamSettings.loadConfigData(beamSettings.getDefaultConfigFilePath())
+    config_data['Module'] = 'VirtualDJ'
+    Path(beamSettings.getBeamConfigFilePath()).parent.mkdir(parents=True, exist_ok=True)
+    beamSettings.dumpConfigData(beamSettings.getBeamConfigFilePath(), config_data)
     beamSettings.loadConfig()
     beamSettings.setSelectedModuleName('VirtualDJ')
     beamSettings.setVirtualDJIntegrationMode('History File')
     beamSettings.setVirtualDJHistoryPath('')
     beamSettings.setVirtualDJRecentTrackWindowSec(300)
+    beamSettings.setVirtualDJHistoryDeck('Deck 1')
 
-    playlist, status = virtualdjmodule.run(beamSettings.getMaxTandaLength(), [])
+    playlist, status, details = virtualdjmodule.run_with_details(beamSettings.getMaxTandaLength(), [], emit_debug_log=False)
 
     assert status == 'Playing'
     assert len(playlist) == 1
+    assert details['route'] == 'history'
     assert playlist[0].Artist == 'Ricardo Tanturi'
     assert playlist[0].Genre == 'Tango'
     assert playlist[0].Title == 'Una Emocion'
     assert playlist[0].Year == '1942'
+    assert playlist[0].FilePath == PRIMARY_HISTORY_PATH
 
     legacy_song = virtualdjmodule.get_song_from_text('22:45 : deck=1 Oscar Larroca - Tango - Remolino')
     assert legacy_song.Artist == 'Oscar Larroca'
@@ -102,6 +114,26 @@ def main():
     oldest_legacy_song = virtualdjmodule.get_song_from_text('22:44 : Juan D\'Arienzo - Paciencia')
     assert oldest_legacy_song.Artist == 'Juan D\'Arienzo'
     assert oldest_legacy_song.Title == 'Paciencia'
+
+    beamSettings.setVirtualDJHistoryDeck('Deck 2')
+    playlist, status, details = virtualdjmodule.run_with_details(beamSettings.getMaxTandaLength(), [], emit_debug_log=False)
+
+    assert status == 'Playing'
+    assert len(playlist) == 1
+    assert details['historyDeck'] == '2'
+    assert playlist[0].Artist == 'Preview Artist'
+    assert playlist[0].Genre == 'Preview'
+    assert playlist[0].Title == 'Should Be Ignored'
+
+    beamSettings.setVirtualDJHistoryDeck('-1')
+    playlist, status, details = virtualdjmodule.run_with_details(beamSettings.getMaxTandaLength(), [], emit_debug_log=False)
+
+    assert status == 'Playing'
+    assert len(playlist) == 1
+    assert details['historyDeck'] == '-1'
+    assert playlist[0].Artist == 'Preview Artist'
+
+    beamSettings.setVirtualDJHistoryDeck('Deck 1')
 
     server = socketserver.TCPServer(('127.0.0.1', 0), VirtualDJHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -114,10 +146,11 @@ def main():
         beamSettings.setVirtualDJBearerToken('secret-token')
         beamSettings.setVirtualDJQueryMode('Master')
 
-        playlist, status = virtualdjmodule.run(beamSettings.getMaxTandaLength(), [])
+        playlist, status, details = virtualdjmodule.run_with_details(beamSettings.getMaxTandaLength(), [], emit_debug_log=False)
 
         assert status == 'Playing'
         assert len(playlist) == 1
+        assert details['route'] == 'network'
 
         song = playlist[0]
         assert song.Artist == 'Osvaldo Pugliese'
@@ -125,14 +158,30 @@ def main():
         assert song.Album == '1944'
         assert song.Genre == 'Tango'
         assert song.Year == '1944'
-        assert song.FilePath == r'C:\Music\Osvaldo Pugliese\La Yumba.flac'
+        assert song.FilePath == PRIMARY_NETWORK_PATH
 
         requested_scripts = [entry[0] for entry in REQUEST_LOG]
         assert "deck master is_audible ? deck master get_artist_title : get_text ''" in requested_scripts
-        assert "deck master get_loaded_song 'artist'" in requested_scripts
-        assert "deck master get_loaded_song 'filepath'" in requested_scripts
+        assert "deck master get_text \"artist=`deck master get_loaded_song 'artist'`\\ntitle=`deck master get_loaded_song 'title'`\\nalbum=`deck master get_loaded_song 'album'`\\ngenre=`deck master get_loaded_song 'genre'`\\nyear=`deck master get_loaded_song 'year'`\\nfilepath=`deck master get_loaded_song 'filepath'`\"" in requested_scripts
         assert all(entry[1] == '' for entry in REQUEST_LOG)
         assert all(entry[2] == 'Bearer secret-token' for entry in REQUEST_LOG)
+
+        beamSettings.setVirtualDJIntegrationMode('Auto (Network -> History)')
+        beamSettings.setVirtualDJPort(server.server_address[1] + 1)
+
+        previous_disable = logging.root.manager.disable
+        logging.disable(logging.WARNING)
+        try:
+            playlist, status, details = virtualdjmodule.run_with_details(beamSettings.getMaxTandaLength(), [], emit_debug_log=False)
+        finally:
+            logging.disable(previous_disable)
+
+        assert status == 'Playing'
+        assert len(playlist) == 1
+        assert details['route'] == 'fallback-history'
+        assert playlist[0].Artist == 'Ricardo Tanturi'
+        assert playlist[0].Title == 'Una Emocion'
+        assert playlist[0].FilePath == PRIMARY_HISTORY_PATH
 
         print('VirtualDJ smoke test passed')
     finally:

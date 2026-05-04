@@ -13,7 +13,7 @@ Keep on beaming!
 
 ![beam-coverart-01.jpg](https://bitbucket.org/repo/RarB8L/images/3264372137-beam-coverart-01.jpg)
 
-# Content #
+# Content
 
 ## [For User](https://bitbucket.org/beam-project/main/wiki/For%20User)
 
@@ -23,24 +23,23 @@ Keep on beaming!
 
 ## [FAQ](https://bitbucket.org/beam-project/main/wiki/FAQ)
 
-## [Known Bugs](https://bitbucket.org/beam-project/main/wiki/Known%20Bugs) 
+## [Known Bugs](https://bitbucket.org/beam-project/main/wiki/Known%20Bugs)
 
 ## [Releases](https://bitbucket.org/beam-project/main/wiki/Releases)
 
-## [Contact](https://bitbucket.org/beam-project/main/wiki/Contact) 
-
+## [Contact](https://bitbucket.org/beam-project/main/wiki/Contact)
 
 # Downloading and starting executables
 
 Beam executables are provided on the Bitbucket repository [download page](https://bitbucket.org/beam-project/main/downloads) from the current release. Have a look onto the date column to get something recent - or maybe an older version if you need that.
 
-There are executables for Windows, currently developed on Windows 10, and for Linux, currently developed on XUbuntu 20.04 "Focal" and Mint 20 "Cinnamon". 
+There are executables for Windows, currently developed on Windows 10, and for Linux, currently developed on XUbuntu 20.04 "Focal" and Mint 20 "Cinnamon".
 
-***For Apple macOS there is no new executable and the sources are not tested, this has to be done. If you're able to install Python3.9 and download the Beam sources from the Bitbucket repository, please volunteer.*** 
+**_For Apple macOS there is no new executable and the sources are not tested, this has to be done. If you're able to install Python3.9 and download the Beam sources from the Bitbucket repository, please volunteer._**
 
 A configuration file BeamConfig.json in your home directory ("$USERHOME") from previous versions will get get read and converted. You'll find the new configuration in a subdirectory '$USERHOME/.beam'.
 
-If you experience issues, please take a look into the  [FAQ](https://bitbucket.org/beam-project/main/wiki/FAQ).
+If you experience issues, please take a look into the [FAQ](https://bitbucket.org/beam-project/main/wiki/FAQ).
 
 However, there may be reasons that you do not want a single file execute, but install Python3 and interpret the sources directly. How to do that is decribed in [For Developer](https://bitbucket.org/beam-project/main/wiki/For%20Developer).
 
@@ -60,38 +59,40 @@ There is currently no new executable for Apple macOS. But if you can install Pyt
 
 # Music player
 
-It's not that all listed player in all there versions get tested, it's just that there is a module you can test. 
+It's not that all listed player in all there versions get tested, it's just that there is a module you can test.
 
 ## Windows
 
-* Foobar2000 [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
-* Icecast [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
-* iTunes
-* JRiver (under development)
-* MediaMonkey [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
-* Mixxx [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
-* Spotify
-* WinAMP / AIMP [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- Foobar2000 [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- Icecast [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- iTunes
+- JRiver
+- MediaMonkey [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- Mixxx [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- Spotify
+- WinAMP / AIMP [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- VirtualDJ
 
 ## Apple macOS
 
-* Cog
-* Decibel
-* Embrace
-* Icecast [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
-* iTunes
-* Mixxx [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
-* Spotify
-* Swinsian
-* Vox
+- Cog
+- Decibel
+- Embrace
+- Icecast [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- iTunes
+- Mixxx [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- Spotify
+- Swinsian
+- Vox
+- VirtualDJ
 
 ## Linux
 
-* Audacious
-* Banshee
-* Clementine
-* Icecast [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
-* Mixxx [(*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
-* Rhythmbox
-* Spotify
-* Strawberry
+- Audacious
+- Banshee
+- Clementine
+- Icecast [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- Mixxx [(\*)](https://bitbucket.org/beam-project/main/wiki/For%20User)
+- Rhythmbox
+- Spotify
+- Strawberry

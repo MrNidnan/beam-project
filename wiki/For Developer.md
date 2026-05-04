@@ -1,29 +1,46 @@
-# Common #
+# Common
 
-## Using the Python source ##
+## Run Beam locally from source
 
-Running Beam from source requires the installation of Python3 plus some packages.
+The current fork is meant to be run from the repository root with Python 3 and the dependencies listed in `requirements.txt`.
 
-Download the beam sources :
+Clone or download the repository, then open a terminal in the project root and create a virtual environment.
 
+### Windows
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python .\beam.py
 ```
-https://bitbucket.org/beam-project/main/downloads/
-beam-src-v0.5.zip
-```
 
-and unzip the folder "beam" in it to somewhere.
-Move into that folder and start beam with a command like:
+### Linux
 
-```
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 python beam.py
 ```
 
-## Using the PyCharm IDE ##
+### Notes
+
+- Run all commands from the repository root.
+- If you update dependencies, reinstall them with `pip install -r requirements.txt`.
+- Build and packaging details for this fork are documented in `BUILD.md`.
+- The main local entry point is `beam.py`.
+
+## Using the PyCharm IDE
 
 File->New project->Create from existing sources
+
 ```
 ~\beam-project\beam
 ```
+
 VCS->Enable version control system->Git
 Pull
 
@@ -38,9 +55,9 @@ Step Over (F8)
 
 Step Into (F7)
 
+If you use PyCharm or another IDE, point it at the same virtual environment and install dependencies from `requirements.txt` before starting Beam.
 
-
-## Set a new Beam version number ##
+## Set a new Beam version number
 
 In the file
 
@@ -48,24 +65,21 @@ resources/json/strings.json
 
 there is a property like
 
-
 ```
   "version": "0.5.0.0",
 ```
-
 
 that has to get adjusted to get displayed in the main window title.
 
 PyCharm -> Git -> Commit -> Comment: "V0.5.0.0" -> Commit and Push
 
-## Merge a Branch ##
+## Merge a Branch
 
 Bitbucket -> Branches -> Merge
 
+## Add a new Media Player
 
-## Add a new Media Player ##
-
-1) Create module source file for the operatig system
+1. Create module source file for the operatig system
 
 bin/modules/lin/strawberrymodule.py
 
@@ -75,7 +89,7 @@ def run(MaxTandaLength):
     return playlist, playbackStatus
 ```
 
-2) Import the module in nowplayingdata.py
+2. Import the module in nowplayingdata.py
 
 ```python
 
@@ -92,8 +106,8 @@ if platform.system() == 'Linux':
             if currentSettings._moduleSelected == 'Strawberry':
                 self.currentPlaylist, self.PlaybackStatus = strawberrymodule.run(currentSettings._maxTandaLength)
 ```
-       
-4) Add new module to resources/json/beamsettings.json
+
+4. Add new module to resources/json/beamsettings.json
 
 ```python
 
@@ -110,60 +124,36 @@ if platform.system() == 'Linux':
       ],
       "System": "Linux"
     },
-	
-```
-
-
-
-# Windows #
-
-## Install Python3 ##
-
-Download & Install Python 3.9.9 from:
-
-https://www.python.org/downloads/
-
-Execute
 
 ```
-python-3.9.9-amd64.exe
+
+# Windows
+
+## Install Python3
+
+Install a current Python 3 release supported by this fork.
+
+The recommended local development flow is still the repository-root virtual environment shown above.
+
+If you need a plain command-line summary on Windows:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python .\beam.py
 ```
 
-Python path configuration:
+## Start Beam
 
-User Environment Path: +  C:\Users\<username>\AppData\Local\Programs\Python\Python39
-
-```
-python -m ensurepip
+```powershell
+python .\beam.py
 ```
 
-User Environment Path: + C:\Users\<username>\AppData\Local\Programs\Python\Python39\Scripts
+## Build an executable
 
 ```
-pip3 install wxpython
-pip3 install mutagen
-pip3 install pypiwin32
-pip3 install traktor_nowplaying
-pip3 install pyinstaller
-```
-
-## Start Beam ##
-
-
-```
-python beam.py
-```
-
-or maybe
-
-```
-python3 beam.py
-```
-
-## Build an executable ##
-
-```
-pyinstaller --noconfirm --noconsole --clean --onefile --add-data="resources;resources" --add-data="docs;docs" --name="beam-win.exe" beam.py 
+pyinstaller --noconfirm --noconsole --clean --onefile --add-data="resources;resources" --add-data="docs;docs" --name="beam-win.exe" beam.py
 ```
 
 Run it:
@@ -172,64 +162,65 @@ Run it:
 .\dist\beam-win.exe
 ```
 
-## Start Beam sources from the command line ##
+## Start Beam sources from the command line
 
+```powershell
+cd C:\path\to\beam-project
+python .\beam.py
 ```
-cd C:\Users\<username>\beam-projec\beam
-python beam.py
-```
 
-
-## Start Beam sources by a desktop shortcut ##
+## Start Beam sources by a desktop shortcut
 
 Desktop->New->Shortcut
 Location of the item:
+
 ```
 C:\Users\<username>\AppData\Local\Programs\Python\Python39\python.exe C:\Users\<username>\beam-projec\beam\beam.py
 ```
-Name: 
+
+Name:
+
 ```
 Beam
 ```
-Shortcut Context Menu->Properties->Start in: 
+
+Shortcut Context Menu->Properties->Start in:
+
 ```
 C:\Users\<username>\beam-project\beam
 ```
 
-
-# Apple macOS #
+# Apple macOS
 
 Announced Jan 2022: Apple will not be including Python2 with its macOS 12.3 "Monterey" So you will have to install Python3 separately, Python2 does not get supported since 2020.
 
-## Install Python3 ##
+## Install Python3
 
-If you have successfully done it and you would write it down, please let us know.
-Some possible hints:
+If you want to run Beam from source on macOS, use the same repository-root pattern and install dependencies from `requirements.txt` inside a virtual environment.
 
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python beam.py
+```
+
+Some extra possible hints:
 https://www.geeksforgeeks.org/how-to-install-wxpython-on-macos/
 
-```
-pip3 install wxpython
-pip3 install mutagen
-pip3 install pypiwin32
-pip3 install traktor_nowplaying
-pip3 install ola
-pip3 install pyinstaller
-```
-
-## Start Beam ##
+## Start Beam
 
 If you have successfully done it and you would write it down, please let us know.
 
-## Build an executable ##
-
+## Build an executable
 
 ```
 cd ~/beam-project/beam
 pyinstaller --noconfirm --clean --onefile --windowed --osx-bundle-identifier="com.beam-project.beam" --icon="resources/icons/icon_iOSapp/icon_iOSapp_512px.png" --add-data="resources:resources" --add-data="docs:docs" --name="beam-osx-v0.6.2.1" beam.py
 ```
 
-## Technical steps supplied by Klaus ##
+## Technical steps supplied by Klaus
 
 ```
 ### I didn't have Xcode on my system and installed it at some point via the AppStore.
@@ -307,13 +298,13 @@ $ python3 -m venv /Users/UserName/.local/pipx/venvs
 $ source /Users/UserName/.local/pipx/venvs/bin/activate
  
 ### Another problem: The icons do not have the correct format.
-'/Users/UserName/Beam/master/resources/icons/icon_iOSapp/icon_iOSapp_512px.png' which exists but is not in the correct format. 
-  On this platform, only ('icns',) images may be used as icons. 
+'/Users/UserName/Beam/master/resources/icons/icon_iOSapp/icon_iOSapp_512px.png' which exists but is not in the correct format.
+  On this platform, only ('icns',) images may be used as icons.
   Please install Pillow or convert your 'png' file to one of ('icns',) and try again.
 ### I did the conversion manually using Preview. That works too.
  
  
-pyinstaller --noconfirm --clean --onefile --windowed --osx-bundle-identifier="com.beam-project.beam" \ 
+pyinstaller --noconfirm --clean --onefile --windowed --osx-bundle-identifier="com.beam-project.beam" \
   --icon="resources/icons/icon_iOSapp/icon_iOSapp_512px.icns" --add-data="resources:resources" \
   --add-data="docs:docs" --name="beam-osx-v0.6.2.1" beam.py
  
@@ -329,15 +320,14 @@ pyinstaller --noconfirm --clean --onefile --windowed --osx-bundle-identifier="co
 
 ```
 
-
-# Linux #
+# Linux
 
 Distributions where the executable gets tested:
 
-* Ubuntu 20.04 LTS
-* Mint 20 Chinnamon
+- Ubuntu 20.04 LTS
+- Mint 20 Chinnamon
 
-## Install Python3 ##
+## Install Python3
 
 These are instructions for a global installation.
 
@@ -357,7 +347,6 @@ sudo pip3 install ola
 sudo pip3 install pyinstaller
 ```
 
-
 Now you can run Beam from your source directory:
 
 ```
@@ -370,7 +359,7 @@ or maybe
 python3 beam.py
 ```
 
-## Build an executable ##
+## Build an executable
 
 ```
 cd ~/beam-project/beam

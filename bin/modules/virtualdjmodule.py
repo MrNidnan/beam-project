@@ -12,9 +12,12 @@ from bin.songclass import SongObject
 
 
 DEFAULT_VIRTUALDJ_INTEGRATION_MODE = 'History File'
+HYBRID_VIRTUALDJ_INTEGRATION_MODE = 'Auto (Network -> History)'
 DEFAULT_VIRTUALDJ_HOST = '127.0.0.1'
 DEFAULT_VIRTUALDJ_PORT = 80
 DEFAULT_VIRTUALDJ_QUERY_MODE = 'Master'
+DEFAULT_VIRTUALDJ_HISTORY_DECK = 'Deck 1'
+ANY_VIRTUALDJ_HISTORY_DECK = '-1'
 DEFAULT_VIRTUALDJ_RECENT_TRACK_WINDOW = 300
 QUERY_ENDPOINT = '/query'
 TIMESTAMP_PREFIX_RE = re.compile(r'^\d{1,2}:\d{2}(?::\d{2})?\s*:\s*')
@@ -28,6 +31,11 @@ QUERY_MODE_TARGETS = {
     'Left': 'deck left',
     'Right': 'deck right',
 }
+HISTORY_DECK_TARGETS = {
+    ANY_VIRTUALDJ_HISTORY_DECK: ANY_VIRTUALDJ_HISTORY_DECK,
+    DEFAULT_VIRTUALDJ_HISTORY_DECK: '1',
+    'Deck 2': '2',
+}
 FIELD_SCRIPT_TEMPLATES = {
     'Artist': "{target} get_loaded_song 'artist'",
     'Title': "{target} get_loaded_song 'title'",
@@ -37,48 +45,89 @@ FIELD_SCRIPT_TEMPLATES = {
     'FilePath': "{target} get_loaded_song 'filepath'",
 }
 PLAYING_SCRIPT_TEMPLATE = "{target} is_audible ? {target} get_artist_title : get_text ''"
+METADATA_SCRIPT_TEMPLATE = (
+    '{target} get_text "artist=`{target} get_loaded_song \'artist\'`\\n'
+    'title=`{target} get_loaded_song \'title\'`\\n'
+    'album=`{target} get_loaded_song \'album\'`\\n'
+    'genre=`{target} get_loaded_song \'genre\'`\\n'
+    'year=`{target} get_loaded_song \'year\'`\\n'
+    'filepath=`{target} get_loaded_song \'filepath\'`"'
+)
 _virtualdj_network_warning_logged = False
 
 
 def run(max_tanda_length, raw_playlist=None):
-    if beamSettings.getVirtualDJIntegrationMode() == 'Network Control':
-        return run_network_control(max_tanda_length, raw_playlist)
-
-    return run_history_file(max_tanda_length, raw_playlist)
+    playlist, status, _ = run_with_details(max_tanda_length, raw_playlist)
+    return playlist, status
 
 
-def run_history_file(max_tanda_length, raw_playlist=None):
+def run_with_details(max_tanda_length, raw_playlist=None, emit_debug_log=True):
+    integration_mode = beamSettings.getVirtualDJIntegrationMode()
+
+    if integration_mode == 'Network Control':
+        playlist, status, details = run_network_control(max_tanda_length, raw_playlist, route='network')
+    elif integration_mode == HYBRID_VIRTUALDJ_INTEGRATION_MODE:
+        playlist, status, details = run_network_control(max_tanda_length, raw_playlist, route='network')
+        if status == 'PlayerNotRunning':
+            playlist, status, details = run_history_file(max_tanda_length, raw_playlist, route='fallback-history')
+    else:
+        playlist, status, details = run_history_file(max_tanda_length, raw_playlist, route='history')
+
+    details['integrationMode'] = integration_mode
+    if emit_debug_log:
+        log_virtualdj_poll_result(details)
+    return playlist, status, details
+
+
+def run_history_file(max_tanda_length, raw_playlist=None, route='history'):
     _ = max_tanda_length, raw_playlist
     playlist = []
+    history_target_deck = get_history_target_deck()
+    details = {
+        'route': route,
+        'status': 'Stopped',
+        'historyDeck': history_target_deck,
+        'historyFilePath': '',
+    }
 
     try:
         history_file_path = resolve_history_file_path()
     except Exception as error:
         logging.error(error, exc_info=True)
-        return playlist, 'Stopped'
+        return playlist, 'Stopped', details
+
+    details['historyFilePath'] = history_file_path
 
     if not history_file_path:
-        return playlist, 'Stopped'
+        return playlist, 'Stopped', details
 
     if not is_recent_history_file(history_file_path):
-        return playlist, 'Stopped'
+        return playlist, 'Stopped', details
 
     track_line = read_last_valid_track_line(history_file_path)
     if track_line == '':
-        return playlist, 'Stopped'
+        return playlist, 'Stopped', details
 
     song = get_song_from_text(track_line)
     if song_has_metadata(song):
         playlist.append(song)
 
-    return playlist, 'Playing'
+    details['status'] = 'Playing'
+    details['trackLine'] = track_line
+    return playlist, 'Playing', details
 
 
-def run_network_control(max_tanda_length, raw_playlist=None):
+def run_network_control(max_tanda_length, raw_playlist=None, route='network'):
     global _virtualdj_network_warning_logged
 
     _ = max_tanda_length, raw_playlist
     playlist = []
+    details = {
+        'route': route,
+        'status': 'PlayerNotRunning',
+        'queryMode': beamSettings.getVirtualDJQueryMode(),
+        'baseUrl': get_virtualdj_base_url(),
+    }
 
     try:
         now_playing = query_virtualdj(get_playing_script())
@@ -87,15 +136,19 @@ def run_network_control(max_tanda_length, raw_playlist=None):
         if not _virtualdj_network_warning_logged:
             logging.warning('VirtualDJ Network Control is unavailable: %s', describe_virtualdj_network_error(error))
             _virtualdj_network_warning_logged = True
-        return playlist, 'PlayerNotRunning'
+        details['error'] = describe_virtualdj_network_error(error)
+        return playlist, 'PlayerNotRunning', details
     except Exception as error:
         logging.error(error, exc_info=True)
-        return playlist, 'PlayerNotRunning'
+        details['error'] = str(error)
+        return playlist, 'PlayerNotRunning', details
 
     if now_playing == '':
-        return playlist, 'Stopped'
+        details['status'] = 'Stopped'
+        return playlist, 'Stopped', details
 
     song = get_song_from_text(now_playing)
+    details['nowPlaying'] = now_playing
 
     try:
         populate_song_metadata(song)
@@ -103,13 +156,16 @@ def run_network_control(max_tanda_length, raw_playlist=None):
         if not _virtualdj_network_warning_logged:
             logging.warning('VirtualDJ Network Control metadata lookup failed: %s', describe_virtualdj_network_error(error))
             _virtualdj_network_warning_logged = True
+        details['metadataError'] = describe_virtualdj_network_error(error)
     except Exception as error:
         logging.debug('VirtualDJ metadata enrichment failed: %s', error, exc_info=True)
+        details['metadataError'] = str(error)
 
     if song_has_metadata(song):
         playlist.append(song)
 
-    return playlist, 'Playing'
+    details['status'] = 'Playing'
+    return playlist, 'Playing', details
 
 
 def resolve_history_file_path():
@@ -243,12 +299,27 @@ def get_query_target():
     return QUERY_MODE_TARGETS.get(query_mode, QUERY_MODE_TARGETS[DEFAULT_VIRTUALDJ_QUERY_MODE])
 
 
+def get_history_target_deck():
+    history_deck = beamSettings.getVirtualDJHistoryDeck()
+    return HISTORY_DECK_TARGETS.get(history_deck, HISTORY_DECK_TARGETS[DEFAULT_VIRTUALDJ_HISTORY_DECK])
+
+
+def describe_history_target_deck(history_target_deck):
+    if history_target_deck == ANY_VIRTUALDJ_HISTORY_DECK:
+        return 'any'
+    return history_target_deck
+
+
 def get_playing_script():
     return PLAYING_SCRIPT_TEMPLATE.format(target=get_query_target())
 
 
 def get_field_script(field_name):
     return FIELD_SCRIPT_TEMPLATES[field_name].format(target=get_query_target())
+
+
+def get_metadata_script():
+    return METADATA_SCRIPT_TEMPLATE.format(target=get_query_target())
 
 
 def build_virtualdj_url(path, query_params=None):
@@ -297,6 +368,7 @@ def get_song_from_text(track_text):
     song.Title = parsed_track['Title']
     song.Genre = parsed_track['Genre']
     song.Year = parsed_track['Year']
+    song.FilePath = parsed_track['FilePath']
     return song
 
 
@@ -318,10 +390,39 @@ def populate_song_metadata(song):
 
 
 def get_virtualdj_metadata():
-    metadata = {}
+    metadata_text = query_virtualdj(get_metadata_script())
+    return parse_virtualdj_metadata_text(metadata_text)
 
-    for field_name in FIELD_SCRIPT_TEMPLATES:
-        metadata[field_name] = query_virtualdj(get_field_script(field_name))
+
+def parse_virtualdj_metadata_text(metadata_text):
+    metadata = {
+        'Artist': '',
+        'Title': '',
+        'Album': '',
+        'Genre': '',
+        'Year': '',
+        'FilePath': '',
+    }
+    field_matches = list(HISTORY_FIELD_RE.finditer(metadata_text))
+
+    for index, field_match in enumerate(field_matches):
+        field_name = field_match.group(1).strip().lower()
+        field_value_start = field_match.end()
+        field_value_end = field_matches[index + 1].start() if (index + 1) < len(field_matches) else len(metadata_text)
+        field_value = metadata_text[field_value_start:field_value_end].strip()
+
+        if field_name == 'artist':
+            metadata['Artist'] = field_value
+        elif field_name == 'title':
+            metadata['Title'] = field_value
+        elif field_name == 'album':
+            metadata['Album'] = field_value
+        elif field_name == 'genre':
+            metadata['Genre'] = field_value
+        elif field_name == 'year':
+            metadata['Year'] = field_value
+        elif field_name == 'filepath':
+            metadata['FilePath'] = field_value
 
     return metadata
 
@@ -339,6 +440,7 @@ def parse_track_text(track_text):
         'Title': '',
         'Genre': '',
         'Year': '',
+        'FilePath': '',
     }
 
     if normalized_text == '':
@@ -378,6 +480,7 @@ def parse_key_value_track_text(track_text):
         'Title': '',
         'Genre': '',
         'Year': '',
+        'FilePath': '',
     }
     field_matches = list(HISTORY_FIELD_RE.finditer(track_text))
 
@@ -400,6 +503,8 @@ def parse_key_value_track_text(track_text):
             parsed_track['Genre'] = field_value
         elif field_name == 'year':
             parsed_track['Year'] = field_value
+        elif field_name == 'filepath':
+            parsed_track['FilePath'] = field_value
 
     return parsed_track
 
@@ -411,6 +516,7 @@ def has_key_value_track_metadata(parsed_track):
         parsed_track['Title'],
         parsed_track['Genre'],
         parsed_track['Year'],
+        parsed_track['FilePath'],
     ])
 
 
@@ -428,7 +534,10 @@ def is_key_value_track_text(track_text, parsed_track):
 
 def should_ignore_history_line(track_text):
     parsed_track = parse_track_text(track_text)
-    return parsed_track['Deck'] not in ('', '1')
+    history_target_deck = get_history_target_deck()
+    if history_target_deck == ANY_VIRTUALDJ_HISTORY_DECK:
+        return False
+    return parsed_track['Deck'] not in ('', history_target_deck)
 
 
 def strip_timestamp_prefix(track_text):
@@ -444,3 +553,26 @@ def song_has_metadata(song):
         song.Year,
         song.FilePath,
     ])
+
+
+def log_virtualdj_poll_result(details):
+    route = details.get('route', 'unknown')
+    status = details.get('status', 'unknown')
+
+    if route in ('history', 'fallback-history'):
+        logging.debug(
+            'VirtualDJ poll route=%s status=%s history_deck=%s history_file=%s',
+            route,
+            status,
+            describe_history_target_deck(details.get('historyDeck', '')),
+            details.get('historyFilePath', ''),
+        )
+        return
+
+    logging.debug(
+        'VirtualDJ poll route=%s status=%s query_mode=%s base_url=%s',
+        route,
+        status,
+        details.get('queryMode', ''),
+        details.get('baseUrl', ''),
+    )

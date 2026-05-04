@@ -26,12 +26,16 @@
 # This Python file uses the following encoding: utf-8
 
 import socket
+import platform
 
 import wx
 from bin.beamutils import logLevelList, setLogLevel
+from bin.modules import mixxxutils
 
 
-VIRTUALDJ_INTEGRATION_MODES = ['History File', 'Network Control']
+VIRTUALDJ_AUTO_INTEGRATION_MODE = 'Auto (Network -> History)'
+VIRTUALDJ_INTEGRATION_MODES = ['History File', 'Network Control', VIRTUALDJ_AUTO_INTEGRATION_MODE]
+VIRTUALDJ_HISTORY_DECK_MODES = ['-1', 'Deck 1', 'Deck 2']
 VIRTUALDJ_QUERY_MODES = ['Master', 'Deck 1', 'Deck 2', 'Left', 'Right']
 
 
@@ -41,286 +45,330 @@ VIRTUALDJ_QUERY_MODES = ['Master', 'Deck 1', 'Deck 2', 'Left', 'Right']
 class BasicSettingsPanel(wx.Panel):
     def __init__(self, parent, BeamSettings):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
-        
+
         #############
         # VARIABLES #
         #############
         self.BeamSettings = BeamSettings
         self.networkBindDisplayHost = self.getNetworkHostDisplayValue()
-        
+
         ##########
         # SIZERS #
         ##########
         outer_vbox = wx.BoxSizer(wx.VERTICAL)
         self.scrolledWindow = wx.ScrolledWindow(self, wx.ID_ANY, style=wx.VSCROLL)
         self.scrolledWindow.SetScrollRate(0, 20)
-        self.scrolledWindow.SetMinSize((360, -1))
+        self.scrolledWindow.SetMinSize((760, -1))
+        self.scrolledWindow.Bind(wx.EVT_SIZE, self.OnScrolledWindowSize)
 
-        content_vbox = wx.BoxSizer(wx.VERTICAL)
-        
-        #########################
-        # MEDIA PLAYER SELECTOR #
-        #########################
-        mediaplayer = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Mediaplayer       ")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        mediaplayer.SetFont(font)
-        
-        mediadescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Select mediaplayer to display information from")
-        self.ModuleSelectorDropdown = wx.ComboBox(self.scrolledWindow, wx.ID_ANY,
-                                                  value = self.BeamSettings.getSelectedModuleName(),
-                                                  choices = self.BeamSettings._moduleNames,
-                                                  size=(233, -1),
-                                                  style=wx.CB_READONLY)
-        self.ModuleSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectMediaPlayer)
-        content_vbox.Add(mediaplayer, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
-        content_vbox.Add(mediadescription, flag=wx.LEFT, border=20)
-        content_vbox.Add(self.ModuleSelectorDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
+        content_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.leftColumnPanel = wx.Panel(self.scrolledWindow, wx.ID_ANY)
+        self.rightColumnPanel = wx.Panel(self.scrolledWindow, wx.ID_ANY)
+        left_column_vbox = wx.BoxSizer(wx.VERTICAL)
+        right_column_vbox = wx.BoxSizer(wx.VERTICAL)
+        self.leftColumnPanel.SetSizer(left_column_vbox)
+        self.rightColumnPanel.SetSizer(right_column_vbox)
 
-        self.foobarControls = []
-        self.virtualDjCommonControls = []
         self.virtualDjHistoryControls = []
         self.virtualDjNetworkControls = []
-        
-        
-        ############
-        # Settings #
-        ############
-        settingslabel = wx.StaticText(self.scrolledWindow, -1, "Settings          ")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        settingslabel.SetFont(font)
-        content_vbox.Add(settingslabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
-        
-        
-        ################
-        # REFRESH TIME #
-        ################
-        refreshtime = wx.StaticText(self.scrolledWindow, -1, "Mediaplayer Refresh Time")
-        self.RefreshTime = wx.Slider(self.scrolledWindow, -1, int(self.BeamSettings.getUpdtime()), 500, 10000, (0, 0), (233, -1), wx.SL_HORIZONTAL)
-        self.RefreshTimeLabel = wx.StaticText(self.scrolledWindow, -1, "")
-        self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
-        content_vbox.Add(refreshtime, flag=wx.LEFT, border=20)
-        hboxRefresh = wx.BoxSizer(wx.HORIZONTAL)
-        hboxRefresh.Add(self.RefreshTime, flag= wx.LEFT | wx.RIGHT | wx.TOP, border=7)
-        hboxRefresh.Add(self.RefreshTimeLabel, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
-        content_vbox.Add(hboxRefresh, flag=wx.LEFT, border=20)
+
+        self.mediaPlayerSection, media_player_grid = self._create_section(
+            self.leftColumnPanel,
+            "Mediaplayer",
+            "Choose the active media player and refresh behavior.",
+        )
+        _, _, self.ModuleSelectorDropdown = self._add_section_row(
+            self.mediaPlayerSection,
+            media_player_grid,
+            "Selected media player",
+            lambda parent: self._build_media_player_dropdown(parent),
+        )
+        _, _, refresh_field = self._add_section_row(
+            self.mediaPlayerSection,
+            media_player_grid,
+            "Refresh interval",
+            lambda parent: self._build_refresh_interval_field(parent),
+        )
+        _, _, tanda_field = self._add_section_row(
+            self.mediaPlayerSection,
+            media_player_grid,
+            "Maximum tanda length",
+            lambda parent: self._build_tanda_length_field(parent),
+        )
+        refresh_field.GetSizer().Layout()
+        tanda_field.GetSizer().Layout()
         self.updateRefreshTimeLabel()
-        
-        ################
-        # TANDA LENGTH #
-        ################
-        tandalength = wx.StaticText(self.scrolledWindow, -1, "Max. Tanda Length")
-        self.TandaLength = wx.Slider(self.scrolledWindow, -1, self.BeamSettings.getMaxTandaLength(), 0, 10,(0,0), (233,-1), wx.SL_HORIZONTAL)
-        self.TandaLengthLabel = wx.StaticText(self.scrolledWindow, -1, "")
-        self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
         self.updateTandaLengthLabel()
-        content_vbox.Add(tandalength, flag=wx.LEFT, border=20)
-        hboxTanda = wx.BoxSizer(wx.HORIZONTAL)
-        hboxTanda.Add(self.TandaLength, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=7)
-        hboxTanda.Add(self.TandaLengthLabel, flag=wx.LEFT | wx.TOP, border=7)
-        content_vbox.Add(hboxTanda, flag=wx.LEFT, border=20)
-        
+        left_column_vbox.Add(self.mediaPlayerSection, flag=wx.EXPAND | wx.ALL, border=10)
 
-        '''        
-        ################
-        #   LOGGING    #
-        ################
-        logging = wx.StaticText(self, -1, "Logging (require restart)")
-        self.LogCheckBox = wx.CheckBox(self, label='Log to '+self.BeamSettings._logPath)
-        if self.BeamSettings._logging == 'True':
-            self.LogCheckBox.SetValue(True)
-        else:
-            self.LogCheckBox.SetValue(False)
-        self.LogCheckBox.Bind(wx.EVT_CHECKBOX, self.OnLoggingBox)
-        vbox.Add(logging, flag=wx.LEFT, border=20)
-        hboxLog = wx.BoxSizer(wx.HORIZONTAL)
-        hboxLog.Add(self.LogCheckBox, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border=7)
-        vbox.Add(hboxLog, flag=wx.LEFT, border=20)
-        '''
+        self.foobarSection, foobar_grid = self._create_section(
+            self.rightColumnPanel,
+            "Foobar2000 Beefweb",
+            "Used only when Foobar2000 is the selected media player.",
+        )
+        _, _, self.FoobarUrlField = self._add_section_row(
+            self.foobarSection,
+            foobar_grid,
+            "Beefweb URL",
+            lambda parent: self._build_text_field(parent, self.BeamSettings.getFoobarBeefwebUrl(), self.OnFoobarUrlChanged),
+            helper_text="Example: http://localhost:8880/api/",
+        )
+        _, _, self.FoobarUserField = self._add_section_row(
+            self.foobarSection,
+            foobar_grid,
+            "Username",
+            lambda parent: self._build_text_field(parent, self.BeamSettings.getFoobarBeefwebUser(), self.OnFoobarUserChanged),
+        )
+        _, _, self.FoobarPasswordField = self._add_section_row(
+            self.foobarSection,
+            foobar_grid,
+            "Password",
+            lambda parent: self._build_text_field(parent, self.BeamSettings.getFoobarBeefwebPassword(), self.OnFoobarPasswordChanged, style=wx.TE_PASSWORD),
+            helper_text="Leave username and password blank unless Beefweb authentication is enabled.",
+        )
+        _, _, self.FoobarTestButton = self._add_section_row(
+            self.foobarSection,
+            foobar_grid,
+            "Test Foobar2000",
+            lambda parent: self._build_button_field(parent, 'Run test', self.OnFoobarTest),
+            helper_text="Runs the current Foobar2000 integration and shows the detected status and metadata.",
+        )
+        right_column_vbox.Add(self.foobarSection, flag=wx.EXPAND | wx.ALL, border=10)
 
-        loglevel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Logging Level            ")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        loglevel.SetFont(font)
+        self.jriverSection, jriver_grid = self._create_section(
+            self.rightColumnPanel,
+            "JRiver",
+            "Used only when JRiver is the selected media player.",
+        )
+        _, _, self.JRiverTargetZoneField = self._add_section_row(
+            self.jriverSection,
+            jriver_grid,
+            "Target zone",
+            lambda parent: self._build_text_field(parent, self.BeamSettings.getJRiverTargetZone(), self.OnJRiverTargetZoneChanged),
+            helper_text="Use -1 for the current/default playback zone, or enter a specific JRiver zone id.",
+        )
+        right_column_vbox.Add(self.jriverSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
-        logleveldescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Select Log Level")
-        self.LogLevelSelectorDropdown = wx.ComboBox(self.scrolledWindow, wx.ID_ANY,
-                                                    value=self.BeamSettings.getLogLevel(),
-                                                    choices=logLevelList,
-                                                    size=(233, -1),
-                                                    style=wx.CB_READONLY)
-        self.LogLevelSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectLogLevel)
-        content_vbox.Add(loglevel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
-        content_vbox.Add(logleveldescription, flag=wx.LEFT, border=20)
-        content_vbox.Add(self.LogLevelSelectorDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
+        self.mixxxSection, mixxx_grid = self._create_section(
+            self.rightColumnPanel,
+            "Mixxx",
+            "Used only when Mixxx is the selected media player.",
+        )
+        _, _, self.MixxxDatabasePathField = self._add_section_row(
+            self.mixxxSection,
+            mixxx_grid,
+            "Database path",
+            lambda parent: self._build_text_field(parent, self.getMixxxDatabasePathDisplayValue(), self.OnMixxxDatabasePathChanged),
+            helper_text="Prefilled with the platform default path. Change it if your Mixxx sqlite database lives somewhere else.",
+        )
+        _, _, self.MixxxTestButton = self._add_section_row(
+            self.mixxxSection,
+            mixxx_grid,
+            "Test Mixxx",
+            lambda parent: self._build_button_field(parent, 'Run test', self.OnMixxxTest),
+            helper_text="Shows the selected database path, playback status, and current metadata detected from Mixxx.",
+        )
+        right_column_vbox.Add(self.mixxxSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
-        networklabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Network Display        ")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        networklabel.SetFont(font)
+        self.virtualDjSection, virtualdj_grid = self._create_section(
+            self.rightColumnPanel,
+            "VirtualDJ",
+            "Used only when VirtualDJ is the selected media player.",
+        )
+        _, _, self.VirtualDJIntegrationDropdown = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "Integration",
+            lambda parent: self._build_combo_field(parent, self.BeamSettings.getVirtualDJIntegrationMode(), VIRTUALDJ_INTEGRATION_MODES, self.OnVirtualDJIntegrationModeChanged),
+        )
+        history_path_row = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "History file path",
+            lambda parent: self._build_text_field(parent, self.BeamSettings.getVirtualDJHistoryPath(), self.OnVirtualDJHistoryPathChanged),
+            helper_text="Leave blank for auto-detection.",
+        )
+        self.VirtualDJHistoryPathField = history_path_row[2]
+        self.virtualDjHistoryControls.extend(history_path_row[:2])
+        recent_window_row = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "Recent track window (sec)",
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getVirtualDJRecentTrackWindowSec(), self.OnVirtualDJRecentTrackWindowChanged, minimum=0, maximum=86400),
+            helper_text="Use 0 to disable staleness checks.",
+        )
+        self.VirtualDJRecentWindowField = recent_window_row[2]
+        self.virtualDjHistoryControls.extend(recent_window_row[:2])
+        history_deck_row = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "History deck",
+            lambda parent: self._build_combo_field(parent, self.BeamSettings.getVirtualDJHistoryDeck(), VIRTUALDJ_HISTORY_DECK_MODES, self.OnVirtualDJHistoryDeckChanged),
+            helper_text="Used when reading deck-marked VirtualDJ history lines. Use -1 to accept any deck.",
+        )
+        self.VirtualDJHistoryDeckDropdown = history_deck_row[2]
+        self.virtualDjHistoryControls.extend(history_deck_row[:2])
+        virtualdj_host_row = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "Host",
+            lambda parent: self._build_text_field(parent, self.BeamSettings.getVirtualDJHost(), self.OnVirtualDJHostChanged),
+        )
+        self.VirtualDJHostField = virtualdj_host_row[2]
+        self.virtualDjNetworkControls.extend(virtualdj_host_row[:2])
+        virtualdj_port_row = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "Port",
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getVirtualDJPort(), self.OnVirtualDJPortChanged, minimum=1, maximum=65535),
+        )
+        self.VirtualDJPortField = virtualdj_port_row[2]
+        self.virtualDjNetworkControls.extend(virtualdj_port_row[:2])
+        virtualdj_token_row = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "Bearer token",
+            lambda parent: self._build_text_field(parent, self.BeamSettings.getVirtualDJBearerToken(), self.OnVirtualDJBearerTokenChanged, style=wx.TE_PASSWORD),
+            helper_text="Optional authentication token configured in the VirtualDJ Network Control plugin.",
+        )
+        self.VirtualDJTokenField = virtualdj_token_row[2]
+        self.virtualDjNetworkControls.extend(virtualdj_token_row[:2])
+        virtualdj_query_row = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "Track source",
+            lambda parent: self._build_combo_field(parent, self.BeamSettings.getVirtualDJQueryMode(), VIRTUALDJ_QUERY_MODES, self.OnVirtualDJQueryModeChanged),
+        )
+        self.VirtualDJQueryModeDropdown = virtualdj_query_row[2]
+        self.virtualDjNetworkControls.extend(virtualdj_query_row[:2])
+        _, _, self.VirtualDJTestButton = self._add_section_row(
+            self.virtualDjSection,
+            virtualdj_grid,
+            "Test VirtualDJ",
+            lambda parent: self._build_button_field(parent, 'Run test', self.OnVirtualDJTest),
+            helper_text="Runs the current VirtualDJ integration and shows the detected route, status, and metadata.",
+        )
+        right_column_vbox.Add(self.virtualDjSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
-        networkdescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Expose the current Beam display to browsers on your network.")
-        self.NetworkEnabledCheckBox = wx.CheckBox(self.scrolledWindow, label='Enable network display')
-        self.NetworkEnabledCheckBox.SetValue(self.BeamSettings.getNetworkServiceEnabled())
-        self.NetworkEnabledCheckBox.Bind(wx.EVT_CHECKBOX, self.OnNetworkEnabled)
+        self.loggingSection, logging_grid = self._create_section(self.leftColumnPanel, "Logging")
+        _, _, self.LogLevelSelectorDropdown = self._add_section_row(
+            self.loggingSection,
+            logging_grid,
+            "Log level",
+            lambda parent: self._build_combo_field(parent, self.BeamSettings.getLogLevel(), logLevelList, self.OnSelectLogLevel),
+        )
+        left_column_vbox.Add(self.loggingSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
-        hostlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Host")
-        self.NetworkHostField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.networkBindDisplayHost, size=(233, -1))
-        self.NetworkHostField.Bind(wx.EVT_TEXT, self.OnNetworkHostChanged)
-        self.NetworkHostField.SetToolTip('Host or IP address to bind the network display service to. Use 0.0.0.0 to listen on all interfaces.')
+        self.NetworkDisplayPane = wx.CollapsiblePane(self.leftColumnPanel, wx.ID_ANY, "Network display")
+        self.NetworkDisplayPane.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnNetworkDisplayPaneChanged)
+        self.NetworkDisplayPane.Collapse(True)
+        self._style_collapsible_pane_header(self.NetworkDisplayPane)
+        network_pane = self.NetworkDisplayPane.GetPane()
+        network_pane_sizer = wx.BoxSizer(wx.VERTICAL)
+        network_pane.SetSizer(network_pane_sizer)
+        network_description = wx.StaticText(
+            network_pane,
+            wx.ID_ANY,
+            "Expose the current Beam display to browsers on your network.",
+        )
+        network_grid = self._create_form_grid()
+        network_pane_sizer.Add(network_description, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=8)
+        network_pane_sizer.Add(network_grid, flag=wx.EXPAND | wx.ALL, border=8)
+        _, _, self.NetworkEnabledCheckBox = self._add_section_row(
+            network_pane,
+            network_grid,
+            "Enable service",
+            lambda parent: self._build_checkbox_field(parent, 'Enable network display', self.BeamSettings.getNetworkServiceEnabled(), self.OnNetworkEnabled),
+        )
+        _, _, self.NetworkHostField = self._add_section_row(
+            network_pane,
+            network_grid,
+            "Host",
+            lambda parent: self._build_text_field(parent, self.networkBindDisplayHost, self.OnNetworkHostChanged),
+            helper_text='Use 0.0.0.0 to listen on all interfaces.',
+        )
+        _, _, self.NetworkPortField = self._add_section_row(
+            network_pane,
+            network_grid,
+            "Port",
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getNetworkServicePort(), self.OnNetworkPortChanged, minimum=1, maximum=65535),
+            helper_text='Default: 8765.',
+        )
+        _, _, self.NetworkAddressHint = self._add_section_row(
+            network_pane,
+            network_grid,
+            "Address",
+            lambda parent: wx.StaticText(parent, wx.ID_ANY, ""),
+        )
+        left_column_vbox.Add(self.NetworkDisplayPane, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
-        self.NetworkAddressHint = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "")
+        self.ExpertDisplayTweaksPane = wx.CollapsiblePane(self.leftColumnPanel, wx.ID_ANY, "Advanced display options")
+        self.ExpertDisplayTweaksPane.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnExpertDisplayTweaksPaneChanged)
+        self.ExpertDisplayTweaksPane.Collapse(True)
+        self._style_collapsible_pane_header(self.ExpertDisplayTweaksPane)
+        expert_pane = self.ExpertDisplayTweaksPane.GetPane()
+        expert_pane_sizer = wx.BoxSizer(wx.VERTICAL)
+        expert_pane.SetSizer(expert_pane_sizer)
+        expert_hint = wx.StaticText(
+            expert_pane,
+            wx.ID_ANY,
+            "Optional advanced rendering knobs for cover art and background bitmap caching. Use auto for proportional radius and feather.",
+        )
+        expert_grid = self._create_form_grid()
+        expert_pane_sizer.Add(expert_hint, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=8)
+        expert_pane_sizer.Add(expert_grid, flag=wx.EXPAND | wx.ALL, border=8)
+        _, _, self.BackgroundBitmapCacheLimitField = self._add_section_row(
+            expert_pane,
+            expert_grid,
+            "Background cache limit",
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getBackgroundBitmapCacheLimit(), self.OnBackgroundBitmapCacheLimitChanged, minimum=1, maximum=64),
+        )
+        _, _, self.CoverArtCornerRadiusField = self._add_section_row(
+            expert_pane,
+            expert_grid,
+            "Cover art corner radius",
+            lambda parent: self._build_auto_numeric_field(parent, self.BeamSettings.getCoverArtCornerRadius(), self.OnCoverArtCornerRadiusChanged),
+        )
+        _, _, self.CoverArtFeatherAmountField = self._add_section_row(
+            expert_pane,
+            expert_grid,
+            "Cover art feather amount",
+            lambda parent: self._build_auto_numeric_field(parent, self.BeamSettings.getCoverArtFeatherAmount(), self.OnCoverArtFeatherAmountChanged),
+        )
+        _, _, self.CoverArtOutlineEnabledField = self._add_section_row(
+            expert_pane,
+            expert_grid,
+            "Cover art outline",
+            lambda parent: self._build_checkbox_field(parent, 'Enable thin translucent outline', self.BeamSettings.getCoverArtOutlineEnabled(), self.OnCoverArtOutlineEnabledChanged),
+        )
+        _, _, self.CoverArtOutlineAlphaField = self._add_section_row(
+            expert_pane,
+            expert_grid,
+            "Cover art outline alpha",
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getCoverArtOutlineAlpha(), self.OnCoverArtOutlineAlphaChanged, minimum=0, maximum=255),
+        )
+        _, _, self.CoverArtOutlineWidthField = self._add_section_row(
+            expert_pane,
+            expert_grid,
+            "Cover art outline width",
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getCoverArtOutlineWidth(), self.OnCoverArtOutlineWidthChanged, minimum=1, maximum=12),
+        )
+        left_column_vbox.Add(self.ExpertDisplayTweaksPane, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
-        portlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Port (default 8765)")
-        self.NetworkPortField = wx.SpinCtrl(self.scrolledWindow, wx.ID_ANY, min=1, max=65535, initial=self.BeamSettings.getNetworkServicePort(), size=(100, -1))
-        self.NetworkPortField.Bind(wx.EVT_SPINCTRL, self.OnNetworkPortChanged)
-        self.NetworkPortField.Bind(wx.EVT_TEXT, self.OnNetworkPortChanged)
-        self.NetworkPortField.SetToolTip('Change the HTTP/WebSocket port for the network display service. Default: 8765.')
-
-        foobarlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Foobar2000 Beefweb")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        foobarlabel.SetFont(font)
-
-        foobardescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "These settings are used only when Foobar2000 is the selected media player.")
-
-        foobarurllabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Beefweb URL")
-        self.FoobarUrlField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getFoobarBeefwebUrl(), size=(233, -1))
-        self.FoobarUrlField.Bind(wx.EVT_TEXT, self.OnFoobarUrlChanged)
-
-        foobaruserlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Beefweb Username")
-        self.FoobarUserField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getFoobarBeefwebUser(), size=(233, -1))
-        self.FoobarUserField.Bind(wx.EVT_TEXT, self.OnFoobarUserChanged)
-
-        foobarpasswordlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Beefweb Password")
-        self.FoobarPasswordField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getFoobarBeefwebPassword(), size=(233, -1), style=wx.TE_PASSWORD)
-        self.FoobarPasswordField.Bind(wx.EVT_TEXT, self.OnFoobarPasswordChanged)
-
-        self.foobarControls = [
-            foobarlabel,
-            foobardescription,
-            foobarurllabel,
-            self.FoobarUrlField,
-            foobaruserlabel,
-            self.FoobarUserField,
-            foobarpasswordlabel,
-            self.FoobarPasswordField,
-        ]
-
-        content_vbox.Add(foobarlabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
-        content_vbox.Add(foobardescription, flag=wx.LEFT, border=20)
-        content_vbox.Add(foobarurllabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.FoobarUrlField, flag=wx.LEFT | wx.RIGHT, border=20)
-        content_vbox.Add(foobaruserlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.FoobarUserField, flag=wx.LEFT | wx.RIGHT, border=20)
-        content_vbox.Add(foobarpasswordlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.FoobarPasswordField, flag=wx.LEFT | wx.RIGHT, border=20)
-
-        virtualdjlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "VirtualDJ")
-        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
-        virtualdjlabel.SetFont(font)
-
-        virtualdjdescription = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "History File works without VirtualDJ Pro. Network Control requires the optional Pro plugin.")
-
-        virtualdjintegrationlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Integration")
-        self.VirtualDJIntegrationDropdown = wx.ComboBox(self.scrolledWindow, wx.ID_ANY,
-                                value=self.BeamSettings.getVirtualDJIntegrationMode(),
-                                choices=VIRTUALDJ_INTEGRATION_MODES,
-                                size=(233, -1),
-                                style=wx.CB_READONLY)
-        self.VirtualDJIntegrationDropdown.Bind(wx.EVT_COMBOBOX, self.OnVirtualDJIntegrationModeChanged)
-
-        virtualdjhistorypathlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "History File Path")
-        self.VirtualDJHistoryPathField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJHistoryPath(), size=(233, -1))
-        self.VirtualDJHistoryPathField.Bind(wx.EVT_TEXT, self.OnVirtualDJHistoryPathChanged)
-        self.VirtualDJHistoryPathField.SetToolTip('Optional override for VirtualDJ tracklist.txt or a History folder. Leave blank for auto-detection.')
-
-        virtualdjrecentwindowlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Recent Track Window (sec)")
-        self.VirtualDJRecentWindowField = wx.SpinCtrl(self.scrolledWindow, wx.ID_ANY, min=0, max=86400, initial=self.BeamSettings.getVirtualDJRecentTrackWindowSec(), size=(100, -1))
-        self.VirtualDJRecentWindowField.Bind(wx.EVT_SPINCTRL, self.OnVirtualDJRecentTrackWindowChanged)
-        self.VirtualDJRecentWindowField.Bind(wx.EVT_TEXT, self.OnVirtualDJRecentTrackWindowChanged)
-        self.VirtualDJRecentWindowField.SetToolTip('How long a history file entry stays fresh before Beam treats VirtualDJ as stopped. Use 0 to disable staleness checks.')
-
-        virtualdjhostlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Host")
-        self.VirtualDJHostField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJHost(), size=(233, -1))
-        self.VirtualDJHostField.Bind(wx.EVT_TEXT, self.OnVirtualDJHostChanged)
-        self.VirtualDJHostField.SetToolTip('Host or IP address where the VirtualDJ Network Control plugin is listening.')
-
-        virtualdjportlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Port")
-        self.VirtualDJPortField = wx.SpinCtrl(self.scrolledWindow, wx.ID_ANY, min=1, max=65535, initial=self.BeamSettings.getVirtualDJPort(), size=(100, -1))
-        self.VirtualDJPortField.Bind(wx.EVT_SPINCTRL, self.OnVirtualDJPortChanged)
-        self.VirtualDJPortField.Bind(wx.EVT_TEXT, self.OnVirtualDJPortChanged)
-        self.VirtualDJPortField.SetToolTip('Port configured in the VirtualDJ Network Control plugin. Default: 80.')
-
-        virtualdjtokenlabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Bearer Token")
-        self.VirtualDJTokenField = wx.TextCtrl(self.scrolledWindow, wx.ID_ANY, value=self.BeamSettings.getVirtualDJBearerToken(), size=(233, -1), style=wx.TE_PASSWORD)
-        self.VirtualDJTokenField.Bind(wx.EVT_TEXT, self.OnVirtualDJBearerTokenChanged)
-        self.VirtualDJTokenField.SetToolTip('Optional authentication token configured in the VirtualDJ Network Control plugin.')
-
-        virtualdjquerymodelabel = wx.StaticText(self.scrolledWindow, wx.ID_ANY, "Track Source")
-        self.VirtualDJQueryModeDropdown = wx.ComboBox(self.scrolledWindow, wx.ID_ANY,
-                                                      value=self.BeamSettings.getVirtualDJQueryMode(),
-                                                      choices=VIRTUALDJ_QUERY_MODES,
-                                                      size=(233, -1),
-                                                      style=wx.CB_READONLY)
-        self.VirtualDJQueryModeDropdown.Bind(wx.EVT_COMBOBOX, self.OnVirtualDJQueryModeChanged)
-
-        self.virtualDjCommonControls = [
-            virtualdjlabel,
-            virtualdjdescription,
-            virtualdjintegrationlabel,
-            self.VirtualDJIntegrationDropdown,
-        ]
-
-        self.virtualDjHistoryControls = [
-            virtualdjhistorypathlabel,
-            self.VirtualDJHistoryPathField,
-            virtualdjrecentwindowlabel,
-            self.VirtualDJRecentWindowField,
-        ]
-
-        self.virtualDjNetworkControls = [
-            virtualdjhostlabel,
-            self.VirtualDJHostField,
-            virtualdjportlabel,
-            self.VirtualDJPortField,
-            virtualdjtokenlabel,
-            self.VirtualDJTokenField,
-            virtualdjquerymodelabel,
-            self.VirtualDJQueryModeDropdown,
-        ]
-
-        content_vbox.Add(virtualdjlabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
-        content_vbox.Add(virtualdjdescription, flag=wx.LEFT, border=20)
-        content_vbox.Add(virtualdjintegrationlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.VirtualDJIntegrationDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
-        content_vbox.Add(virtualdjhistorypathlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.VirtualDJHistoryPathField, flag=wx.LEFT | wx.RIGHT, border=20)
-        content_vbox.Add(virtualdjrecentwindowlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.VirtualDJRecentWindowField, flag=wx.LEFT, border=20)
-        content_vbox.Add(virtualdjhostlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.VirtualDJHostField, flag=wx.LEFT | wx.RIGHT, border=20)
-        content_vbox.Add(virtualdjportlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.VirtualDJPortField, flag=wx.LEFT, border=20)
-        content_vbox.Add(virtualdjtokenlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.VirtualDJTokenField, flag=wx.LEFT | wx.RIGHT, border=20)
-        content_vbox.Add(virtualdjquerymodelabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.VirtualDJQueryModeDropdown, flag=wx.LEFT | wx.RIGHT, border=20)
-
-        content_vbox.Add(networklabel, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)
-        content_vbox.Add(networkdescription, flag=wx.LEFT, border=20)
-        content_vbox.Add(self.NetworkEnabledCheckBox, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(hostlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.NetworkHostField, flag=wx.LEFT | wx.RIGHT, border=20)
-        content_vbox.Add(self.NetworkAddressHint, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=20)
-        content_vbox.Add(portlabel, flag=wx.LEFT | wx.TOP, border=20)
-        content_vbox.Add(self.NetworkPortField, flag=wx.LEFT, border=20)
+        content_hbox.Add(self.leftColumnPanel, 0, wx.EXPAND | wx.RIGHT, 6)
+        content_hbox.Add(self.rightColumnPanel, 0, wx.EXPAND | wx.LEFT, 6)
 
 
         ##############
         # SET SIZERS #
         ##############
-        self.scrolledWindow.SetSizer(content_vbox)
-        content_vbox.SetMinSize((340, -1))
+        self.scrolledWindow.SetSizer(content_hbox)
+        left_column_vbox.SetMinSize((360, -1))
+        right_column_vbox.SetMinSize((360, -1))
         self.scrolledWindow.FitInside()
         outer_vbox.Add(self.scrolledWindow, 1, wx.EXPAND)
         self.SetSizer(outer_vbox)
+        self._sync_column_widths()
         self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
         self.updateNetworkAddressHint()
 
@@ -336,6 +384,8 @@ class BasicSettingsPanel(wx.Panel):
         self.FoobarUrlField.ChangeValue(self.BeamSettings.getFoobarBeefwebUrl())
         self.FoobarUserField.ChangeValue(self.BeamSettings.getFoobarBeefwebUser())
         self.FoobarPasswordField.ChangeValue(self.BeamSettings.getFoobarBeefwebPassword())
+        self.MixxxDatabasePathField.ChangeValue(self.getMixxxDatabasePathDisplayValue())
+        self.JRiverTargetZoneField.ChangeValue(self.BeamSettings.getJRiverTargetZone())
         self.VirtualDJIntegrationDropdown.SetValue(self.BeamSettings.getVirtualDJIntegrationMode())
         self.VirtualDJHistoryPathField.ChangeValue(self.BeamSettings.getVirtualDJHistoryPath())
         self.VirtualDJRecentWindowField.SetValue(self.BeamSettings.getVirtualDJRecentTrackWindowSec())
@@ -343,6 +393,12 @@ class BasicSettingsPanel(wx.Panel):
         self.VirtualDJPortField.SetValue(self.BeamSettings.getVirtualDJPort())
         self.VirtualDJTokenField.ChangeValue(self.BeamSettings.getVirtualDJBearerToken())
         self.VirtualDJQueryModeDropdown.SetValue(self.BeamSettings.getVirtualDJQueryMode())
+        self.BackgroundBitmapCacheLimitField.SetValue(self.BeamSettings.getBackgroundBitmapCacheLimit())
+        self.CoverArtCornerRadiusField.ChangeValue(self._get_auto_numeric_display_value(self.BeamSettings.getCoverArtCornerRadius()))
+        self.CoverArtFeatherAmountField.ChangeValue(self._get_auto_numeric_display_value(self.BeamSettings.getCoverArtFeatherAmount()))
+        self.CoverArtOutlineEnabledField.SetValue(self.BeamSettings.getCoverArtOutlineEnabled())
+        self.CoverArtOutlineAlphaField.SetValue(self.BeamSettings.getCoverArtOutlineAlpha())
+        self.CoverArtOutlineWidthField.SetValue(self.BeamSettings.getCoverArtOutlineWidth())
         self.updateRefreshTimeLabel()
         self.updateTandaLengthLabel()
         self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
@@ -356,6 +412,22 @@ class BasicSettingsPanel(wx.Panel):
 ###################################################################
 #                           EVENTS                                #
 ###################################################################
+
+    def OnExpertDisplayTweaksPaneChanged(self, event):
+        self.scrolledWindow.FitInside()
+        self.Layout()
+        if self.GetParent() is not None:
+            self.GetParent().Layout()
+
+    def OnNetworkDisplayPaneChanged(self, event):
+        self.scrolledWindow.FitInside()
+        self.Layout()
+        if self.GetParent() is not None:
+            self.GetParent().Layout()
+
+    def OnScrolledWindowSize(self, event):
+        self._sync_column_widths()
+        event.Skip()
 
     def OnSelectMediaPlayer(self, event):
         module_name = self.ModuleSelectorDropdown.GetValue()
@@ -393,6 +465,114 @@ class BasicSettingsPanel(wx.Panel):
     def OnFoobarPasswordChanged(self, event):
         self.BeamSettings.setFoobarBeefwebPassword(self.FoobarPasswordField.GetValue())
 
+    def getMixxxDatabasePathDisplayValue(self):
+        configured_path = self.BeamSettings.getMixxxDatabasePath()
+        if configured_path != '':
+            return configured_path
+
+        candidate_paths = mixxxutils.get_mixxx_database_candidates()
+        if candidate_paths:
+            return candidate_paths[0]
+
+        return ''
+
+    def OnMixxxDatabasePathChanged(self, event):
+        self.BeamSettings.setMixxxDatabasePath(self.MixxxDatabasePathField.GetValue())
+
+    def OnMixxxTest(self, event):
+        if platform.system() == 'Windows':
+            from bin.modules.win import mixxxmodule
+        elif platform.system() == 'Darwin':
+            from bin.modules.mac import mixxxmodule
+        else:
+            from bin.modules.lin import mixxxmodule
+
+        try:
+            playlist, status, details = mixxxmodule.run_with_details(self.BeamSettings.getMaxTandaLength(), [])
+        except Exception as error:
+            wx.MessageBox(str(error), 'Mixxx test failed', wx.OK | wx.ICON_ERROR)
+            return
+
+        message_lines = [
+            'Route: {0}'.format(details.get('route', 'unknown')),
+            'Status: {0}'.format(status),
+            'State model: {0}'.format(details.get('stateModel', '')),
+            'Path source: {0}'.format(details.get('pathSource', '')),
+            'Database path: {0}'.format(details.get('databasePath', '')),
+            'Metadata source: {0}'.format(details.get('metadataSource', '')),
+            'Schema: {0}'.format(details.get('schemaFlavor', '')),
+        ]
+
+        if details.get('playlistSource'):
+            message_lines.append('Playlist source: {0}'.format(details.get('playlistSource', '')))
+        if details.get('schemaMissingColumns'):
+            message_lines.append('Schema missing columns: {0}'.format(', '.join(details.get('schemaMissingColumns', []))))
+        if details.get('candidatePaths'):
+            message_lines.append('Candidate paths: {0}'.format('; '.join(details.get('candidatePaths', []))))
+
+        if playlist:
+            song = playlist[0]
+            message_lines.extend([
+                '',
+                'Artist: {0}'.format(song.Artist),
+                'Title: {0}'.format(song.Title),
+                'Album: {0}'.format(song.Album),
+                'Genre: {0}'.format(song.Genre),
+                'Year: {0}'.format(song.Year),
+                'File path: {0}'.format(song.FilePath),
+                'Diagnostics: {0}'.format(song.ModuleMessage),
+            ])
+        elif details.get('error'):
+            message_lines.extend(['', 'Error: {0}'.format(details['error'])])
+        else:
+            message_lines.extend(['', 'Diagnostics: {0}'.format(mixxxmodule.mixxxutils.describe_mixxx_status_message(details, include_database_path=True))])
+
+        wx.MessageBox('\n'.join(message_lines), 'Mixxx test', wx.OK | wx.ICON_INFORMATION)
+
+    def OnFoobarTest(self, event):
+        if platform.system() != 'Windows':
+            wx.MessageBox('Foobar2000 integration is only available on Windows.', 'Foobar2000 test', wx.OK | wx.ICON_INFORMATION)
+            return
+
+        from bin.modules.win import foobar2kmodule
+
+        try:
+            playlist, status, details = foobar2kmodule.run_with_details(self.BeamSettings.getMaxTandaLength(), emit_debug_log=False)
+        except Exception as error:
+            wx.MessageBox(str(error), 'Foobar2000 test failed', wx.OK | wx.ICON_ERROR)
+            return
+
+        message_lines = [
+            'Route: {0}'.format(details.get('route', 'unknown')),
+            'Status: {0}'.format(status),
+            'Base URL: {0}'.format(details.get('baseUrl', '')),
+            'Authentication: {0}'.format(details.get('authMode', '')),
+        ]
+
+        if details.get('activePlaylistId') not in (None, ''):
+            message_lines.append('Playlist id: {0}'.format(details.get('activePlaylistId', '')))
+        if details.get('activeIndex') not in (None, ''):
+            message_lines.append('Playlist index: {0}'.format(details.get('activeIndex', '')))
+
+        if playlist:
+            song = playlist[0]
+            message_lines.extend([
+                '',
+                'Artist: {0}'.format(song.Artist),
+                'Title: {0}'.format(song.Title),
+                'Album: {0}'.format(song.Album),
+                'Genre: {0}'.format(song.Genre),
+                'Year: {0}'.format(song.Year),
+                'File path: {0}'.format(song.FilePath),
+            ])
+        elif details.get('error'):
+            message_lines.extend(['', 'Error: {0}'.format(details['error'])])
+
+        wx.MessageBox('\n'.join(message_lines), 'Foobar2000 test', wx.OK | wx.ICON_INFORMATION)
+
+    def OnJRiverTargetZoneChanged(self, event):
+        self.BeamSettings.setJRiverTargetZone(self.JRiverTargetZoneField.GetValue())
+
     def OnVirtualDJHostChanged(self, event):
         self.BeamSettings.setVirtualDJHost(self.VirtualDJHostField.GetValue())
 
@@ -409,26 +589,90 @@ class BasicSettingsPanel(wx.Panel):
     def OnVirtualDJRecentTrackWindowChanged(self, event):
         self.BeamSettings.setVirtualDJRecentTrackWindowSec(self.VirtualDJRecentWindowField.GetValue())
 
+    def OnVirtualDJHistoryDeckChanged(self, event):
+        self.BeamSettings.setVirtualDJHistoryDeck(self.VirtualDJHistoryDeckDropdown.GetValue())
+
     def OnVirtualDJBearerTokenChanged(self, event):
         self.BeamSettings.setVirtualDJBearerToken(self.VirtualDJTokenField.GetValue())
 
     def OnVirtualDJQueryModeChanged(self, event):
         self.BeamSettings.setVirtualDJQueryMode(self.VirtualDJQueryModeDropdown.GetValue())
 
+    def OnVirtualDJTest(self, event):
+        from bin.modules import virtualdjmodule
+
+        try:
+            playlist, status, details = virtualdjmodule.run_with_details(self.BeamSettings.getMaxTandaLength(), [], emit_debug_log=False)
+        except Exception as error:
+            wx.MessageBox(str(error), 'VirtualDJ test failed', wx.OK | wx.ICON_ERROR)
+            return
+
+        message_lines = [
+            'Integration: {0}'.format(details.get('integrationMode', self.BeamSettings.getVirtualDJIntegrationMode())),
+            'Route: {0}'.format(details.get('route', 'unknown')),
+            'Status: {0}'.format(status),
+        ]
+
+        if details.get('route') in ('history', 'fallback-history'):
+            message_lines.append('History deck: {0}'.format(details.get('historyDeck', '')))
+            message_lines.append('History file: {0}'.format(details.get('historyFilePath', '')))
+        else:
+            message_lines.append('Track source: {0}'.format(details.get('queryMode', '')))
+            message_lines.append('Base URL: {0}'.format(details.get('baseUrl', '')))
+
+        if playlist:
+            song = playlist[0]
+            message_lines.extend([
+                '',
+                'Artist: {0}'.format(song.Artist),
+                'Title: {0}'.format(song.Title),
+                'Album: {0}'.format(song.Album),
+                'Genre: {0}'.format(song.Genre),
+                'Year: {0}'.format(song.Year),
+                'File path: {0}'.format(song.FilePath),
+            ])
+        elif details.get('error'):
+            message_lines.extend(['', 'Error: {0}'.format(details['error'])])
+
+        wx.MessageBox('\n'.join(message_lines), 'VirtualDJ test', wx.OK | wx.ICON_INFORMATION)
+
+    def OnBackgroundBitmapCacheLimitChanged(self, event):
+        self.BeamSettings.setBackgroundBitmapCacheLimit(self.BackgroundBitmapCacheLimitField.GetValue())
+
+    def OnCoverArtCornerRadiusChanged(self, event):
+        self.BeamSettings.setCoverArtCornerRadius(self.CoverArtCornerRadiusField.GetValue())
+
+    def OnCoverArtFeatherAmountChanged(self, event):
+        self.BeamSettings.setCoverArtFeatherAmount(self.CoverArtFeatherAmountField.GetValue())
+
+    def OnCoverArtOutlineEnabledChanged(self, event):
+        self.BeamSettings.setCoverArtOutlineEnabled(self.CoverArtOutlineEnabledField.GetValue())
+
+    def OnCoverArtOutlineAlphaChanged(self, event):
+        self.BeamSettings.setCoverArtOutlineAlpha(self.CoverArtOutlineAlphaField.GetValue())
+
+    def OnCoverArtOutlineWidthChanged(self, event):
+        self.BeamSettings.setCoverArtOutlineWidth(self.CoverArtOutlineWidthField.GetValue())
+
     def updateModuleSpecificSettingsVisibility(self, moduleName):
         show_foobar_settings = moduleName == 'Foobar2000'
-        for control in self.foobarControls:
-            control.Show(show_foobar_settings)
+        self.foobarSection.Show(show_foobar_settings)
+
+        show_mixxx_settings = moduleName == 'Mixxx'
+        self.mixxxSection.Show(show_mixxx_settings)
+
+        show_jriver_settings = moduleName == 'JRiver' and platform.system() in ('Darwin', 'Windows')
+        self.jriverSection.Show(show_jriver_settings)
 
         show_virtualdj_settings = moduleName == 'VirtualDJ'
-        for control in self.virtualDjCommonControls:
-            control.Show(show_virtualdj_settings)
+        self.virtualDjSection.Show(show_virtualdj_settings)
 
-        show_virtualdj_history_controls = show_virtualdj_settings and self.BeamSettings.getVirtualDJIntegrationMode() == 'History File'
+        integration_mode = self.BeamSettings.getVirtualDJIntegrationMode()
+        show_virtualdj_history_controls = show_virtualdj_settings and integration_mode in ('History File', VIRTUALDJ_AUTO_INTEGRATION_MODE)
         for control in self.virtualDjHistoryControls:
             control.Show(show_virtualdj_history_controls)
 
-        show_virtualdj_network_controls = show_virtualdj_settings and self.BeamSettings.getVirtualDJIntegrationMode() == 'Network Control'
+        show_virtualdj_network_controls = show_virtualdj_settings and integration_mode in ('Network Control', VIRTUALDJ_AUTO_INTEGRATION_MODE)
         for control in self.virtualDjNetworkControls:
             control.Show(show_virtualdj_network_controls)
 
@@ -436,6 +680,23 @@ class BasicSettingsPanel(wx.Panel):
         self.Layout()
         if self.GetParent() is not None:
             self.GetParent().Layout()
+
+    def _sync_column_widths(self):
+        available_width, _ = self.scrolledWindow.GetClientSize()
+        if available_width <= 0:
+            return
+
+        gap_width = 12
+        column_width = max(320, int((available_width - gap_width) / 2))
+        fixed_column_size = wx.Size(column_width, -1)
+        self.leftColumnPanel.SetMinSize(fixed_column_size)
+        self.leftColumnPanel.SetMaxSize(fixed_column_size)
+        self.rightColumnPanel.SetMinSize(fixed_column_size)
+        self.rightColumnPanel.SetMaxSize(fixed_column_size)
+        self.leftColumnPanel.GetSizer().Layout()
+        self.rightColumnPanel.GetSizer().Layout()
+        self.scrolledWindow.Layout()
+        self.scrolledWindow.FitInside()
 
     def getNetworkHostDisplayValue(self):
         configured_host = self.BeamSettings.getNetworkServiceHost().strip()
@@ -478,6 +739,134 @@ class BasicSettingsPanel(wx.Panel):
             return
 
         self.NetworkAddressHint.SetLabel('Address: http://{0}:{1}'.format(display_host, port))
+
+    def _create_section(self, parent, title, description=''):
+        section_panel = wx.Panel(parent, wx.ID_ANY)
+        section_sizer = wx.StaticBoxSizer(wx.VERTICAL, section_panel, "")
+        header_label = wx.StaticText(section_panel, wx.ID_ANY, title)
+        header_font = wx.Font(13, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        header_label.SetFont(header_font)
+        section_sizer.Add(header_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        if description:
+            description_label = wx.StaticText(section_panel, wx.ID_ANY, description)
+            section_sizer.Add(description_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=6)
+        form_grid = self._create_form_grid()
+        section_sizer.Add(form_grid, flag=wx.EXPAND | wx.ALL, border=10)
+        section_panel.SetSizer(section_sizer)
+        return section_panel, form_grid
+
+    def _create_form_grid(self):
+        form_grid = wx.FlexGridSizer(0, 2, 8, 12)
+        form_grid.AddGrowableCol(1, 1)
+        return form_grid
+
+    def _add_section_row(self, parent, form_grid, label_text, field_builder, helper_text=''):
+        label = wx.StaticText(parent, wx.ID_ANY, label_text)
+        field_container = wx.Panel(parent, wx.ID_ANY)
+        field_sizer = wx.BoxSizer(wx.VERTICAL)
+        field_container.SetSizer(field_sizer)
+        field_control = field_builder(field_container)
+        field_sizer.Add(field_control, flag=wx.EXPAND)
+        if helper_text:
+            helper_label = wx.StaticText(field_container, wx.ID_ANY, helper_text)
+            field_sizer.Add(helper_label, flag=wx.TOP, border=4)
+        form_grid.Add(label, flag=wx.ALIGN_CENTER_VERTICAL)
+        form_grid.Add(field_container, flag=wx.EXPAND)
+        return label, field_container, field_control
+
+    def _build_media_player_dropdown(self, parent):
+        control = wx.ComboBox(
+            parent,
+            wx.ID_ANY,
+            value=self.BeamSettings.getSelectedModuleName(),
+            choices=self.BeamSettings._moduleNames,
+            size=(233, -1),
+            style=wx.CB_READONLY,
+        )
+        control.Bind(wx.EVT_COMBOBOX, self.OnSelectMediaPlayer)
+        return control
+
+    def _build_refresh_interval_field(self, parent):
+        panel = wx.Panel(parent, wx.ID_ANY)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel.SetSizer(sizer)
+        self.RefreshTime = wx.Slider(panel, -1, int(self.BeamSettings.getUpdtime()), 500, 10000, (0, 0), (233, -1), wx.SL_HORIZONTAL)
+        self.RefreshTime.Bind(wx.EVT_SCROLL, self.OnRefreshTimerScroll)
+        self.RefreshTimeLabel = wx.StaticText(panel, -1, "")
+        sizer.Add(self.RefreshTime, 1, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 8)
+        sizer.Add(self.RefreshTimeLabel, 0, wx.ALIGN_CENTER_VERTICAL)
+        return panel
+
+    def _build_tanda_length_field(self, parent):
+        panel = wx.Panel(parent, wx.ID_ANY)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel.SetSizer(sizer)
+        self.TandaLength = wx.Slider(panel, -1, self.BeamSettings.getMaxTandaLength(), 0, 10, (0, 0), (233, -1), wx.SL_HORIZONTAL)
+        self.TandaLength.Bind(wx.EVT_SCROLL, self.OnTandaLengthScroll)
+        self.TandaLengthLabel = wx.StaticText(panel, -1, "")
+        sizer.Add(self.TandaLength, 1, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 8)
+        sizer.Add(self.TandaLengthLabel, 0, wx.ALIGN_CENTER_VERTICAL)
+        return panel
+
+    def _build_text_field(self, parent, value, handler, style=0):
+        control = wx.TextCtrl(parent, wx.ID_ANY, value=value, size=(233, -1), style=style)
+        control.Bind(wx.EVT_TEXT, handler)
+        return control
+
+    def _build_combo_field(self, parent, value, choices, handler):
+        control = wx.ComboBox(parent, wx.ID_ANY, value=value, choices=choices, size=(233, -1), style=wx.CB_READONLY)
+        control.Bind(wx.EVT_COMBOBOX, handler)
+        return control
+
+    def _build_spin_field(self, parent, value, handler, minimum, maximum):
+        control = wx.SpinCtrl(parent, wx.ID_ANY, min=minimum, max=maximum, initial=int(value), size=(100, -1))
+        control.Bind(wx.EVT_SPINCTRL, handler)
+        control.Bind(wx.EVT_TEXT, handler)
+        return control
+
+    def _build_checkbox_field(self, parent, label, value, handler):
+        control = wx.CheckBox(parent, wx.ID_ANY, label)
+        control.SetValue(value)
+        control.Bind(wx.EVT_CHECKBOX, handler)
+        return control
+
+    def _build_button_field(self, parent, label, handler):
+        control = wx.Button(parent, wx.ID_ANY, label=label)
+        control.Bind(wx.EVT_BUTTON, handler)
+        return control
+
+    def _build_auto_numeric_field(self, parent, value, handler):
+        control = wx.ComboBox(
+            parent,
+            wx.ID_ANY,
+            value=self._get_auto_numeric_display_value(value),
+            choices=['auto'],
+            size=(120, -1),
+        )
+        control.Bind(wx.EVT_TEXT, handler)
+        control.Bind(wx.EVT_COMBOBOX, handler)
+        return control
+
+    def _style_collapsible_pane_header(self, collapsible_pane):
+        toggle_button = collapsible_pane.GetChildren()[0] if collapsible_pane.GetChildren() else None
+        if toggle_button is None:
+            return
+
+        current_font = toggle_button.GetFont()
+        styled_font = wx.Font(
+            13,
+            current_font.GetFamily(),
+            current_font.GetStyle(),
+            wx.FONTWEIGHT_BOLD,
+            current_font.GetUnderlined(),
+            current_font.GetFaceName(),
+        )
+        toggle_button.SetFont(styled_font)
+
+    def _get_auto_numeric_display_value(self, value):
+        if str(value).strip().lower() == 'auto':
+            return 'auto'
+        return str(value)
 
     ################
     # REFRESH TIME #

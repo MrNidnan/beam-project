@@ -1,0 +1,38 @@
+name: Run Python smoke suite
+description: Run the Beam smoke-test scripts for a supported platform using the provided Python executable.
+
+inputs:
+  platform:
+    description: Supported platform identifier for the smoke suite.
+    required: true
+  python-command:
+    description: Python executable to use when running the smoke scripts.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Run Windows smoke suite
+      if: inputs.platform == 'windows'
+      shell: pwsh
+      run: |
+        & "${{ inputs.python-command }}" .\scripts\smoke_imports.py
+        & "${{ inputs.python-command }}" .\scripts\smoke_virtualdj.py
+        & "${{ inputs.python-command }}" .\scripts\smoke_foobar.py
+        & "${{ inputs.python-command }}" .\scripts\smoke_mixxx.py
+        & "${{ inputs.python-command }}" .\scripts\smoke_background_pipeline.py
+
+    - name: Run Linux smoke suite
+      if: inputs.platform == 'linux'
+      shell: bash
+      run: |
+        "${{ inputs.python-command }}" scripts/smoke_imports.py
+        "${{ inputs.python-command }}" scripts/smoke_mixxx.py
+        "${{ inputs.python-command }}" scripts/smoke_background_pipeline.py
+
+    - name: Reject unsupported smoke suite platform
+      if: inputs.platform != 'windows' && inputs.platform != 'linux'
+      shell: bash
+      run: |
+        echo "Unsupported smoke suite platform: ${{ inputs.platform }}" >&2
+        exit 1

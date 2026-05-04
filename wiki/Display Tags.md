@@ -13,6 +13,7 @@ CurrentSong   PreviousSong          NextSong         NextTanda
 %Performer    %PreviousPerformer    %NextPerformer   %NextTandaPerformer
 %Year         %PreviousYear         %NextYear        %NextTandaYear
 %Singer       %PreviousSinger       %NextSinger      %NextTandaSinger
+%FilePath
 %IsCortina    %PreviousIsCortina    %NextIsCortina
 
 
@@ -31,6 +32,9 @@ Song count
 ```
 
 Most media players can only provide a subset of the tags, e.g. Next\* is often not available.
+
+`%FilePath` shows the current track's resolved local file path.
+It is mainly useful for diagnostics when you want to verify what Beam is receiving from the active player module.
 
 ## Cover Art
 
