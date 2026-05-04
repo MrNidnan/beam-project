@@ -138,6 +138,10 @@ def assert_now_playing_status_flow(auto_db_path):
     from bin.beamsettings import beamSettings
     from bin.nowplayingdata import NowPlayingData
 
+    config_data = beamSettings.loadConfigData(beamSettings.getDefaultConfigFilePath())
+    config_data['Module'] = 'Mixxx'
+    Path(beamSettings.getBeamConfigFilePath()).parent.mkdir(parents=True, exist_ok=True)
+    beamSettings.dumpConfigData(beamSettings.getBeamConfigFilePath(), config_data)
     beamSettings.loadConfig()
     beamSettings.setSelectedModuleName('Mixxx')
     beamSettings.setMixxxDatabasePath(str(auto_db_path))

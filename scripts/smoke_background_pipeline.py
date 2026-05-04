@@ -2,6 +2,7 @@
 
 import json
 import os
+import platform
 import sys
 import tempfile
 from collections import OrderedDict
@@ -382,11 +383,17 @@ def test_beamsettings_background_migration():
 
     default_config = load_default_config()
     legacy_config = deepcopy(default_config)
+    module_index_by_platform = {
+        'Linux': 0,
+        'Windows': 1,
+        'Darwin': 2,
+    }
+    module_index = module_index_by_platform.get(platform.system(), 0)
     legacy_config.pop('ArtistBackgrounds', None)
     legacy_config['Moods'][0]['Background'] = 'resources\\backgrounds\\bg1920x1080px_darkGreen.jpg'
     legacy_config['Moods'][0]['RotateBackground'] = 'linear'
     legacy_config['Moods'][0]['RotateTimer'] = 30
-    legacy_config['Module'] = ''
+    legacy_config['Module'] = default_config['AllModules'][module_index]['Modules'][0]
     legacy_config['Moods'][0]['Display'][2]['Field'] = '%Title'
     legacy_config['Moods'][0]['Display'][2]['TextFlow'] = 'Cut'
     legacy_config['Moods'][0]['Display'][1]['Field'] = '%AlbumArtist'

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import http.server
+import logging
 import os
 import socketserver
 import sys
@@ -83,6 +84,10 @@ def main():
         encoding='utf-8',
     )
 
+    config_data = beamSettings.loadConfigData(beamSettings.getDefaultConfigFilePath())
+    config_data['Module'] = 'VirtualDJ'
+    Path(beamSettings.getBeamConfigFilePath()).parent.mkdir(parents=True, exist_ok=True)
+    beamSettings.dumpConfigData(beamSettings.getBeamConfigFilePath(), config_data)
     beamSettings.loadConfig()
     beamSettings.setSelectedModuleName('VirtualDJ')
     beamSettings.setVirtualDJIntegrationMode('History File')
@@ -164,7 +169,12 @@ def main():
         beamSettings.setVirtualDJIntegrationMode('Auto (Network -> History)')
         beamSettings.setVirtualDJPort(server.server_address[1] + 1)
 
-        playlist, status, details = virtualdjmodule.run_with_details(beamSettings.getMaxTandaLength(), [], emit_debug_log=False)
+        previous_disable = logging.root.manager.disable
+        logging.disable(logging.WARNING)
+        try:
+            playlist, status, details = virtualdjmodule.run_with_details(beamSettings.getMaxTandaLength(), [], emit_debug_log=False)
+        finally:
+            logging.disable(previous_disable)
 
         assert status == 'Playing'
         assert len(playlist) == 1

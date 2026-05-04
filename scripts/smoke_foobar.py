@@ -117,6 +117,10 @@ def main():
     thread.start()
 
     try:
+        config_data = beamSettings.loadConfigData(beamSettings.getDefaultConfigFilePath())
+        config_data['Module'] = 'Foobar2000'
+        Path(beamSettings.getBeamConfigFilePath()).parent.mkdir(parents=True, exist_ok=True)
+        beamSettings.dumpConfigData(beamSettings.getBeamConfigFilePath(), config_data)
         beamSettings.loadConfig()
         beamSettings.setSelectedModuleName('Foobar2000')
         beamSettings.setFoobarBeefwebUrl('http://127.0.0.1:{0}/api/'.format(server.server_address[1]))
