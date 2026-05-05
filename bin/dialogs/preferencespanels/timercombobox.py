@@ -27,12 +27,15 @@
 
 import wx
 
+from bin.beamutils import normalizeMacControlHeight
+
 class TimerComboBox(wx.ComboBox):
     def __init__(self, parent):
         wx.ComboBox.__init__(self, parent=parent,
                           choices=['Every 15 seconds','Every 30 seconds', 'Every 1 minute', 'Every 2 minutes',
                                    'Every 3 minutes', 'Every 5 minutes','Every 10 minutes','Every 20 minutes'],
                           style=wx.CB_READONLY)
+        normalizeMacControlHeight(self)
 
     def setTimeSelection(self, value):
         if value == 15:

@@ -28,6 +28,7 @@
 import wx
 import wx.adv
 import logging
+from bin.beamutils import normalizeMacControlHeight
 
 from bin.DMX import olamodule, dmxmodule
 
@@ -82,10 +83,10 @@ class DMXcontrolsPanel(wx.Panel):
         dmxU1description = wx.StaticText(self, wx.ID_ANY, "DMX devices in Universe 1")
         dmxU2description = wx.StaticText(self, wx.ID_ANY, "DMX devices in Universe 2")
         hboxU = wx.BoxSizer(wx.HORIZONTAL)
-        self.DMXdeviceSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
-                                                     value=self.beamSettings.getSelectedU1DMXdeviceName(),
-                                                     choices=self.beamSettings._U1DMXdeviceName,
-                                                     style=wx.CB_READONLY)
+        self.DMXdeviceSelectorDropdown = normalizeMacControlHeight(wx.ComboBox(self, wx.ID_ANY,
+                                 value=self.beamSettings.getSelectedU1DMXdeviceName(),
+                                 choices=self.beamSettings._U1DMXdeviceName,
+                                 style=wx.CB_READONLY))
         # self.DMXdeviceSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectDMXdevice)
 
         u1 = self.beamSettings._Universe1
@@ -152,10 +153,10 @@ class DMXcontrolsPanel(wx.Panel):
         self.U1description = wx.StaticText(self, wx.ID_ANY, "Universe 1")
         self.U2description = wx.StaticText(self, wx.ID_ANY, "Universe 2")
         dmxU1Device = dmxmodule.DMXdevice(self.beamSettings.getSelectedU1DMXdeviceName())
-        self.U1DMXpatternSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
-                                                        value=self.U1CurrentColour,
-                                                        choices=dmxU1Device.GetPaletteList(),
-                                                        style=wx.CB_READONLY)
+        self.U1DMXpatternSelectorDropdown = normalizeMacControlHeight(wx.ComboBox(self, wx.ID_ANY,
+                                value=self.U1CurrentColour,
+                                choices=dmxU1Device.GetPaletteList(),
+                                style=wx.CB_READONLY))
         if self.beamSettings.getSelectedU1DMXdeviceName() == 'None': device = self.U1DMXpatternSelectorDropdown.Disable()
         self.U1DMXpatternSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectU1DMXpattern)
 
@@ -163,10 +164,10 @@ class DMXcontrolsPanel(wx.Panel):
         self.U2DMXfixtureColourList = wx.ListBox(self, wx.ID_ANY, choices=u2c, style=wx.LB_MULTIPLE)
 
         dmxU2Device = dmxmodule.DMXdevice(self.beamSettings.getSelectedU2DMXdeviceName())
-        self.U2DMXpatternSelectorDropdown = wx.ComboBox(self, wx.ID_ANY,
-                                                        value=self.U2CurrentColour,
-                                                        choices=dmxU2Device.GetPaletteList(),
-                                                        style=wx.CB_READONLY)
+        self.U2DMXpatternSelectorDropdown = normalizeMacControlHeight(wx.ComboBox(self, wx.ID_ANY,
+                                value=self.U2CurrentColour,
+                                choices=dmxU2Device.GetPaletteList(),
+                                style=wx.CB_READONLY))
         if self.beamSettings.getSelectedU2DMXdeviceName() == 'None': device = self.U2DMXpatternSelectorDropdown.Disable()
         self.U2DMXpatternSelectorDropdown.Bind(wx.EVT_COMBOBOX, self.OnSelectU2DMXpattern)
         vbox.Add(self.dmxcontrols, flag=wx.LEFT | wx.TOP | wx.BOTTOM, border=10)

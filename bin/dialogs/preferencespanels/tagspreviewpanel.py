@@ -28,6 +28,7 @@
 import wx
 import logging
 import numpy
+from bin.beamutils import normalizeMacControlHeight
 
 ########################################################
 #                   TagsPreview                        #
@@ -54,10 +55,10 @@ class TagsPreviewPanel(wx.Panel):
         self.refreshButton.Bind(wx.EVT_BUTTON, self.DoRefresh)
 
         # Tag type selector
-        self.TagDropdown = wx.ComboBox(self,
-                                       value="Current Song",
-                                       choices=["Current Song", "Previous Song", "Next Song", "Next Tanda", "Misc"],
-                                       style=wx.CB_READONLY)
+        self.TagDropdown = normalizeMacControlHeight(wx.ComboBox(self,
+                           value="Current Song",
+                           choices=["Current Song", "Previous Song", "Next Song", "Next Tanda", "Misc"],
+                           style=wx.CB_READONLY))
         self.TagDropdown.Bind(wx.EVT_COMBOBOX, self.DoRefresh)
 
         # List of tags

@@ -30,7 +30,7 @@ import wx
 import platform
 import logging
 import os
-from bin.beamutils import complementDict, getBeamConfigPath, getBeamHomePath, getBeamResourcesPath
+from bin.beamutils import complementDict, getBeamConfigPath, getBeamResourcesPath
 from bin.backgroundassets import normalize_background_reference
 from bin.beamstrings import BeamStrings
 from bin.profilesettings import ProfileSettingsStore
@@ -730,8 +730,10 @@ class BeamSettings:
             self._Universe1 = self.getDMXuniverse1()
             self._Universe2 = self.getDMXuniverse2()
 
-            if self.getSelectedModuleName() not in self._moduleNames:
-                logging.warning("BeamSettings.__setConfigData(): selected module '" + self.getSelectedModuleName() + "' does not exist")
+            selected_module_name = self.getSelectedModuleName()
+            if selected_module_name not in self._moduleNames:
+                if str(selected_module_name).strip() != '':
+                    logging.warning("BeamSettings.__setConfigData(): selected module '" + selected_module_name + "' does not exist")
                 self.setSelectedModuleName(self._moduleNames[0])
 
             if self.getSelectedU1DMXdeviceName() not in self._U1DMXdeviceName:

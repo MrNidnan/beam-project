@@ -1,17 +1,17 @@
-# Common
+# For Developer
 
-## Run Beam locally from source
+Use this page if the packaged app does not work for you, or if you want to run Beam directly from the repository while developing.
 
-The current fork is meant to be run from the repository root with Python 3 and the dependencies listed in `requirements.txt`.
+## Run Beam From Source
 
-Clone or download the repository, then open a terminal in the project root and create a virtual environment.
+Run all commands from the repository root. The local entry point is `beam.py` and dependencies are listed in `requirements.txt`.
 
 ### Windows
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
+python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 python .\beam.py
 ```
@@ -21,302 +21,83 @@ python .\beam.py
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
+python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 python beam.py
 ```
 
-### Notes
+### macOS
 
-- Run all commands from the repository root.
-- If you update dependencies, reinstall them with `pip install -r requirements.txt`.
-- Build and packaging details for this fork are documented in `BUILD.md`.
-- The main local entry point is `beam.py`.
-
-## Using the PyCharm IDE
-
-File->New project->Create from existing sources
-
-```
-~\beam-project\beam
-```
-
-VCS->Enable version control system->Git
-Pull
-
-Using PyCharm has the advantage, that tracebacks can get doubleclicked to jump to the error position in the code.
-And version control support is included to push/pull the commits.
-
-Run beam (Shift-F10)
-
-Debug beam (Shift-F9)
-
-Step Over (F8)
-
-Step Into (F7)
-
-If you use PyCharm or another IDE, point it at the same virtual environment and install dependencies from `requirements.txt` before starting Beam.
-
-## Set a new Beam version number
-
-In the file
-
-resources/json/strings.json
-
-there is a property like
-
-```
-  "version": "0.5.0.0",
-```
-
-that has to get adjusted to get displayed in the main window title.
-
-PyCharm -> Git -> Commit -> Comment: "V0.5.0.0" -> Commit and Push
-
-## Merge a Branch
-
-Bitbucket -> Branches -> Merge
-
-## Add a new Media Player
-
-1. Create module source file for the operatig system
-
-bin/modules/lin/strawberrymodule.py
-
-```python
-def run(MaxTandaLength):
-[...]
-    return playlist, playbackStatus
-```
-
-2. Import the module in nowplayingdata.py
-
-```python
-
-if platform.system() == 'Linux':
-    from bin.modules.lin import audaciousmodule, rhythmboxmodule, clementinemodule, bansheemodule, spotifymodule, mixxxmodule, strawberrymodule
-
-```
-
-3)Include the function in NowPlayingData.readData(self, currentSettings):
-
-```python
-        if platform.system() == 'Linux':
-            [...]
-            if currentSettings._moduleSelected == 'Strawberry':
-                self.currentPlaylist, self.PlaybackStatus = strawberrymodule.run(currentSettings._maxTandaLength)
-```
-
-4. Add new module to resources/json/beamsettings.json
-
-```python
-
-   {
-      "Modules": [
-        "Audacious",
-        "Banshee",
-        "Clementine",
-        "Rhythmbox",
-        "Spotify",
-        "Mixxx",
-        "Icecast",
-        "Strawberry"
-      ],
-      "System": "Linux"
-    },
-
-```
-
-# Windows
-
-## Install Python3
-
-Install a current Python 3 release supported by this fork.
-
-The recommended local development flow is still the repository-root virtual environment shown above.
-
-If you need a plain command-line summary on Windows:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python .\beam.py
-```
-
-## Start Beam
-
-```powershell
-python .\beam.py
-```
-
-## Build an executable
-
-```
-pyinstaller --noconfirm --noconsole --clean --onefile --add-data="resources;resources" --add-data="docs;docs" --name="beam-win.exe" beam.py
-```
-
-Run it:
-
-```
-.\dist\beam-win.exe
-```
-
-## Start Beam sources from the command line
-
-```powershell
-cd C:\path\to\beam-project
-python .\beam.py
-```
-
-## Start Beam sources by a desktop shortcut
-
-Desktop->New->Shortcut
-Location of the item:
-
-```
-C:\Users\<username>\AppData\Local\Programs\Python\Python39\python.exe C:\Users\<username>\beam-projec\beam\beam.py
-```
-
-Name:
-
-```
-Beam
-```
-
-Shortcut Context Menu->Properties->Start in:
-
-```
-C:\Users\<username>\beam-project\beam
-```
-
-# Apple macOS
-
-Announced Jan 2022: Apple will not be including Python2 with its macOS 12.3 "Monterey" So you will have to install Python3 separately, Python2 does not get supported since 2020.
-
-## Install Python3
-
-If you want to run Beam from source on macOS, use the same repository-root pattern and install dependencies from `requirements.txt` inside a virtual environment.
+If Beam packaging is unavailable on macOS, use the same repository-root flow:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
+python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 python beam.py
 ```
 
-Some extra possible hints:
-https://www.geeksforgeeks.org/how-to-install-wxpython-on-macos/
+If `python3` is missing, install a current Python 3 release from https://www.python.org/downloads/macos/.
 
-## Start Beam
+## Build And Release
 
-If you have successfully done it and you would write it down, please let us know.
+Packaging, PyInstaller commands, smoke scripts, and release steps are documented in [../BUILD.md](../BUILD.md).
 
-## Build an executable
+## Repository Basics
 
-```
-cd ~/beam-project/beam
-pyinstaller --noconfirm --clean --onefile --windowed --osx-bundle-identifier="com.beam-project.beam" --icon="resources/icons/icon_iOSapp/icon_iOSapp_512px.png" --add-data="resources:resources" --add-data="docs:docs" --name="beam-osx-v0.6.2.1" beam.py
-```
+- main entry point: `beam.py`
+- player modules: `bin/modules/`
+- app strings and version: `resources/json/strings.json`
+- runtime settings template: `resources/json/beamconfig.json`
 
-## Technical steps supplied by Klaus
-
-```
-### I didn't have Xcode on my system and installed it at some point via the AppStore.
- 
-MacBookPro:DEV UserName$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  ==> This script will install:
-  /usr/local/bin/brew
-  /usr/local/share/doc/homebrew
-  /usr/local/share/man/man1/brew.1
-  /usr/local/share/zsh/site-functions/_brew
-  /usr/local/etc/bash_completion.d/brew
-  /usr/local/Homebrew
-  ...
-  ==> Updating Homebrew...
-  ==> Installation successful!
-  ==> Next steps:
-  - Run these commands in your terminal to add Homebrew to your PATH:
-    echo >> /Users/UserName/.bash_profile
-    echo 'eval "$(/usr/local/bin/brew shellenv)"' >> /Users/UserName/.bash_profile
-    eval "$(/usr/local/bin/brew shellenv)"
- 
-MacBookPro:DEV UserName$ echo >> /Users/UserName/.bash_profile
-MacBookPro:DEV UserName$ echo 'eval "$(/usr/local/bin/brew shellenv)"' >> /Users/UserName/.bash_profile
-MacBookPro:DEV UserName$ eval "$(/usr/local/bin/brew shellenv)"
- 
-MacBookPro:DEV UserName$ brew install python
-  ==> Downloading https://ghcr.io/v2/homebrew/core/python/3.13/manifests/3.13.1
-  ...
-  ==> Installing python@3.13
-  ...
-  Python is installed as
-    /usr/local/bin/python3
- 
- 
-MacBookPro:DEV UserName$ brew install pipx
- 
-MacBookPro:DEV UserName$ pipx install wxPython
-  installed package wxpython 4.2.2, installed using Python 3.13.1
- 
-MacBookPro:DEV UserName$ pipx ensurepath
-  Success! Added /Users/UserName/.local/bin to the PATH environment variable.
- 
-MacBookPro:DEV UserName$ python3 -m venv /Users/UserName/.local/pipx/venvs
-MacBookPro:DEV UserName$ source /Users/UserName/.local/pipx/venvs/bin/activate
- 
-(venvs) MacBookPro:master UserName$ python3 -m pip install setuptools
-(venvs) MacBookPro:master UserName$ pip install --upgrade pip
- 
-(venvs) MacBookPro:wxPython-4.1.1 UserName$ python3 -m pip install setuptools
-  Installing collected packages: setuptools
-  Successfully installed setuptools-75.8.0
- 
-(venvs) MacBookPro:bin UserName$ brew install wxmac
-  ==> Auto-updating Homebrew...
-  ==> Auto-updated Homebrew!
- 
-### THE PYTHON MODULES CAN NOW BE INSTALLED
- 
-(venvs) MacBookPro:wxPython-4.1.1 UserName$ python3 -m pip install setuptools
-(venvs) MacBookPro:wxPython-4.1.1 UserName$ python3 setup.py install
- 
-(venvs) MacBookPro:master UserName$ python3 -m pip install mutagen
-(venvs) MacBookPro:master UserName$ python3 -m pip install wxpython
+If you change dependencies, reinstall them with `pip install -r requirements.txt` inside the same virtual environment.
 (venvs) MacBookPro:master UserName$ python3 -m pip install pypiwin32
 (venvs) MacBookPro:master UserName$ python3 -m pip install traktor_nowplaying
 (venvs) MacBookPro:master UserName$ python3 -m pip install ola
 (venvs) MacBookPro:master UserName$ python3 -m pip install pyinstaller
+
  
+
 ### There are still other modules missing that are no longer part of the Python3 package and must be installed later:
+
 (venvs) MacBookPro:master UserName$ python3 -m pip install legacy-cgi
 (venvs) MacBookPro:master UserName$ python3 -m pip install numpy
+
  
+
 ### If you have logged out in the meantime or created a new terminal window, it must be sourced:
+
 $ python3 -m venv /Users/UserName/.local/pipx/venvs
 $ source /Users/UserName/.local/pipx/venvs/bin/activate
+
  
+
 ### Another problem: The icons do not have the correct format.
+
 '/Users/UserName/Beam/master/resources/icons/icon_iOSapp/icon_iOSapp_512px.png' which exists but is not in the correct format.
-  On this platform, only ('icns',) images may be used as icons.
-  Please install Pillow or convert your 'png' file to one of ('icns',) and try again.
+On this platform, only ('icns',) images may be used as icons.
+Please install Pillow or convert your 'png' file to one of ('icns',) and try again.
+
 ### I did the conversion manually using Preview. That works too.
+
  
+
  
 pyinstaller --noconfirm --clean --onefile --windowed --osx-bundle-identifier="com.beam-project.beam" \
-  --icon="resources/icons/icon_iOSapp/icon_iOSapp_512px.icns" --add-data="resources:resources" \
-  --add-data="docs:docs" --name="beam-osx-v0.6.2.1" beam.py
+ --icon="resources/icons/icon_iOSapp/icon_iOSapp_512px.icns" --add-data="resources:resources" \
+ --add-data="docs:docs" --name="beam-osx-v0.6.2.1" beam.py
+
  
-  198 INFO: PyInstaller: 6.11.1, contrib hooks: 2025.1
-  199 INFO: Python: 3.13.1
-  215 INFO: Platform: macOS-15.3-x86_64-i386-64bit-Mach-O
-  215 INFO: Python environment: /Users/UserName/.local/pipx/venvs/pyinstaller
-  216 INFO: wrote /Users/UserName/Beam/master/beam-osx-v0.6.2.1.spec
-  ...
-  13109 INFO: Building BUNDLE BUNDLE-00.toc
-  13116 INFO: Signing the BUNDLE...
-  13218 INFO: Building BUNDLE BUNDLE-00.toc completed successfully.
+198 INFO: PyInstaller: 6.11.1, contrib hooks: 2025.1
+199 INFO: Python: 3.13.1
+215 INFO: Platform: macOS-15.3-x86_64-i386-64bit-Mach-O
+215 INFO: Python environment: /Users/UserName/.local/pipx/venvs/pyinstaller
+216 INFO: wrote /Users/UserName/Beam/master/beam-osx-v0.6.2.1.spec
+...
+13109 INFO: Building BUNDLE BUNDLE-00.toc
+13116 INFO: Signing the BUNDLE...
+13218 INFO: Building BUNDLE BUNDLE-00.toc completed successfully.
 
 ```
 
@@ -334,6 +115,7 @@ These are instructions for a global installation.
 A virtual environment installation might have advantages if you use Python also for other applications.
 
 ```
+
 sudo apt-get -y install python3
 sudo apt-get -y install python3-pip
 sudo apt-get -y install python3-wxgtk4.0
@@ -345,30 +127,41 @@ sudo apt-get -y install python3-dbus
 sudo pip3 install traktor_nowplaying
 sudo pip3 install ola
 sudo pip3 install pyinstaller
+
 ```
 
 Now you can run Beam from your source directory:
 
 ```
+
 python beam.py
+
 ```
 
 or maybe
 
 ```
+
 python3 beam.py
+
 ```
 
 ## Build an executable
 
 ```
+
 cd ~/beam-project/beam
 pyinstaller --noconfirm --noconsole --clean --onefile --add-data="resources:resources" --add-data="docs:docs" --name="beam-lin" beam.py
+
 ```
 
 Run it:
 
 ```
+
 $ chmod u+x ./dist/beam-lin
 $ ./dist/beam-lin
+
+```
+
 ```

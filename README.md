@@ -35,16 +35,18 @@ If you can start your music player and use a settings window, you can use Beam.
 
 If Beam shows the current song in the preview, you are ready to use it live.
 
-## Setup Guides
+## Setup And Configuration
 
-Choose the guide that matches your player:
+Choose the shortest path that matches what you need:
 
+- First event setup: see [wiki/Quick Start Guide.md](wiki/Quick%20Start%20Guide.md)
+- Full user manual: see [wiki/User Manual - Start Here.md](wiki/User%20Manual%20-%20Start%20Here.md)
+- Player setup overview: see [wiki/User Manual - Player Setup.md](wiki/User%20Manual%20-%20Player%20Setup.md)
+- Display customization: see [wiki/User Manual - Customize the Display.md](wiki/User%20Manual%20-%20Customize%20the%20Display.md)
+- Browser or tablet display: see [docs/NETWORK_DISPLAY.md](docs/NETWORK_DISPLAY.md)
 - Foobar2000: see [docs/FOOBAR_MODULE.md](docs/FOOBAR_MODULE.md)
 - Mixxx: see [docs/MIXXX_MODULE.md](docs/MIXXX_MODULE.md)
 - VirtualDJ: see [docs/VIRTUALDJ_MODULE.md](docs/VIRTUALDJ_MODULE.md)
-- Browser or tablet display: see [docs/NETWORK_DISPLAY.md](docs/NETWORK_DISPLAY.md)
-- Quick start for DJs: see [wiki/Quick Start Guide.md](wiki/Quick%20Start%20Guide.md)
-- Full user manual: see [wiki/User Manual - Start Here.md](wiki/User%20Manual%20-%20Start%20Here.md)
 
 ## Supported Players
 
@@ -120,11 +122,19 @@ If something does not work, start here:
 - [wiki/User Manual - Troubleshooting.md](wiki/User%20Manual%20-%20Troubleshooting.md)
 - [wiki/FAQ.md](wiki/FAQ.md)
 
-## For Advanced Users
+## If Packaging Does Not Work
 
-If you want build instructions, release notes, or technical details:
+Run Beam directly from source instead of using the packaged app:
 
+- Source-run guide: [wiki/For Developer.md](wiki/For%20Developer.md)
 - Build and release notes: [BUILD.md](BUILD.md)
+
+This is the recommended fallback for developers and for users on platforms where packaging is incomplete.
+
+## Advanced Configuration
+
+If you want rendering controls or technical details:
+
 - Change history: [CHANGELOG.md](CHANGELOG.md)
 
 Beam also includes an expert-only `DisplayTweaks` section for rendering controls that are hidden behind `Settings > Display Expert Controls > Show expert display tweaks`.
@@ -139,16 +149,6 @@ These values are saved in the active profile JSON under `DisplayTweaks` and curr
 - `CoverArtOutlineWidth`
 
 `CoverArtCornerRadius` and `CoverArtFeatherAmount` accept either `auto` or a numeric pixel value.
-
-## Documentation Map
-
-- Start here: [wiki/User Manual - Start Here.md](wiki/User%20Manual%20-%20Start%20Here.md)
-- Short version: [wiki/Quick Start Guide.md](wiki/Quick%20Start%20Guide.md)
-- Daily use: [wiki/User Manual - Daily Use.md](wiki/User%20Manual%20-%20Daily%20Use.md)
-- Customizing the display: [wiki/User Manual - Customize the Display.md](wiki/User%20Manual%20-%20Customize%20the%20Display.md)
-- Browser and tablet display: [wiki/User Manual - Browser and Tablet Display.md](wiki/User%20Manual%20-%20Browser%20and%20Tablet%20Display.md)
-- Player setup overview: [wiki/User Manual - Player Setup.md](wiki/User%20Manual%20-%20Player%20Setup.md)
-- Troubleshooting: [wiki/User Manual - Troubleshooting.md](wiki/User%20Manual%20-%20Troubleshooting.md)
 
 ## License
 

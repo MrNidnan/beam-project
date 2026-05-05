@@ -30,6 +30,7 @@ import os
 import platform
 
 from bin.backgroundassets import import_background_asset, resolve_background_reference, to_persisted_background_reference
+from bin.beamutils import normalizeMacControlHeight
 from bin.DMX import dmxmodule
 from bin.beamsettings import beamSettings
 from bin.dialogs.editlayoutitemdialog import EditLayoutItemDialog
@@ -134,10 +135,10 @@ class EditMoodDialog(wx.Dialog):
         self.currentBackground = wx.StaticText(self.panel, -1, "")
 
         self.ChangeBackgroundBox = wx.CheckBox(self.panel, label='Rotate backgrounds')
-        self.BackgroundTimerBox = wx.ComboBox(self.panel,
-                                              choices=['Every 15 seconds', 'Every 30 seconds', 'Every 1 minute',
-                                                       'Every 2 minutes', 'Every 3 minutes', 'Every 5 minutes',
-                                                       'Every 10 minutes', 'Every 20 minutes'], style=wx.CB_READONLY)
+        self.BackgroundTimerBox = normalizeMacControlHeight(wx.ComboBox(self.panel,
+                              choices=['Every 15 seconds', 'Every 30 seconds', 'Every 1 minute',
+                                   'Every 2 minutes', 'Every 3 minutes', 'Every 5 minutes',
+                                   'Every 10 minutes', 'Every 20 minutes'], style=wx.CB_READONLY))
         self.RandomBackgroundBox = wx.CheckBox(self.panel, label='Random order')
         self.ChangeBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
         self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
@@ -256,17 +257,17 @@ class EditMoodDialog(wx.Dialog):
 
         # Create the fields
 
-        self.MoodNameField = wx.TextCtrl(self.panel, value=self.EditMood['Name'], size=(120, -1))
-        self.MoodStateField = wx.ComboBox(self.panel, value=self.EditMood['PlayState'],
+        self.MoodNameField = normalizeMacControlHeight(wx.TextCtrl(self.panel, value=self.EditMood['Name'], size=(120, -1)), default_width=120)
+        self.MoodStateField = normalizeMacControlHeight(wx.ComboBox(self.panel, value=self.EditMood['PlayState'],
                                           choices=["Playing", "Not Playing"],
-                                          size=(120, -1), style=wx.CB_READONLY)
+                          size=(120, -1), style=wx.CB_READONLY), default_width=120)
         # min > 0 not to push away the default mood
         self.MoodOrderField = wx.SpinCtrl(self.panel, value=str(self.RowSelected), min=1, max=99)
-        self.InputID3Field = wx.ComboBox(self.panel, size=(120, -1), value=self.EditMood['Field1'],
-                                         choices=self.Fields, style=wx.CB_READONLY)
-        self.IsIsNotField = wx.ComboBox(self.panel, value=self.EditMood['Field2'], choices=["is", "is not", "contains"],
-                                        style=wx.CB_READONLY)
-        self.OutputField = wx.TextCtrl(self.panel, value=self.EditMood['Field3'], size=(120, -1))
+        self.InputID3Field = normalizeMacControlHeight(wx.ComboBox(self.panel, size=(120, -1), value=self.EditMood['Field1'],
+                         choices=self.Fields, style=wx.CB_READONLY), default_width=120)
+        self.IsIsNotField = normalizeMacControlHeight(wx.ComboBox(self.panel, value=self.EditMood['Field2'], choices=["is", "is not", "contains"],
+                        style=wx.CB_READONLY), default_width=120)
+        self.OutputField = normalizeMacControlHeight(wx.TextCtrl(self.panel, value=self.EditMood['Field3'], size=(120, -1)), default_width=120)
 
         if self.isDefaultMood:
             # Default has to keep name 'Default'

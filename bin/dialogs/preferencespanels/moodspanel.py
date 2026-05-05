@@ -28,6 +28,7 @@
 import wx, os
 import logging
 import numpy
+from bin.beamutils import normalizeMacControlHeight
 from bin.dialogs.editartistbackgrounddialog import EditArtistBackgroundDialog
 from bin.dialogs.editmooddialog import EditMoodDialog
 
@@ -58,7 +59,7 @@ class MoodsPanel(wx.Panel):
         moodsDescription.Wrap(380)        
         moodtransition = wx.StaticText(self, -1, "Mood Transition                     ")
         moodtransition.SetFont(font)
-        self.TransitionDropdown = wx.ComboBox(self,value=self.BeamSettings.getMoodTransition(), choices=['No transition', 'Fade directly','Fade to black'], style=wx.CB_READONLY)
+        self.TransitionDropdown = normalizeMacControlHeight(wx.ComboBox(self,value=self.BeamSettings.getMoodTransition(), choices=['No transition', 'Fade directly','Fade to black'], style=wx.CB_READONLY))
         self.TransitionSpeed = wx.Slider(self, -1, int(self.BeamSettings.getMoodTransitionSpeed()), 500, 5000,(0,0), (233,-1), wx.SL_HORIZONTAL)
         self.TransitionSpeedLabel = wx.StaticText(self, -1, "")
         self.TransitionDropdown.Bind(wx.EVT_COMBOBOX, self.OnTransitionDropdown)
@@ -118,11 +119,11 @@ class MoodsPanel(wx.Panel):
         self.EnableArtistBackgrounds.SetValue(str(artistBackgrounds.get('Enabled', 'False')).lower() == 'true')
         self.EnableArtistBackgrounds.Bind(wx.EVT_CHECKBOX, self.OnArtistBackgroundSettingsChanged)
 
-        self.MatchFieldDropdown = wx.ComboBox(self, value=artistBackgrounds.get('MatchField', '%AlbumArtist'), choices=self.matchFields, style=wx.CB_READONLY)
+        self.MatchFieldDropdown = normalizeMacControlHeight(wx.ComboBox(self, value=artistBackgrounds.get('MatchField', '%AlbumArtist'), choices=self.matchFields, style=wx.CB_READONLY))
         self.MatchFieldDropdown.Bind(wx.EVT_COMBOBOX, self.OnArtistBackgroundSettingsChanged)
-        self.FallbackFieldDropdown = wx.ComboBox(self, value=artistBackgrounds.get('FallbackField', '%Artist'), choices=self.matchFields, style=wx.CB_READONLY)
+        self.FallbackFieldDropdown = normalizeMacControlHeight(wx.ComboBox(self, value=artistBackgrounds.get('FallbackField', '%Artist'), choices=self.matchFields, style=wx.CB_READONLY))
         self.FallbackFieldDropdown.Bind(wx.EVT_COMBOBOX, self.OnArtistBackgroundSettingsChanged)
-        self.DefaultModeDropdown = wx.ComboBox(self, value=artistBackgrounds.get('DefaultMode', 'blend'), choices=['blend', 'replace', 'off'], style=wx.CB_READONLY)
+        self.DefaultModeDropdown = normalizeMacControlHeight(wx.ComboBox(self, value=artistBackgrounds.get('DefaultMode', 'blend'), choices=['blend', 'replace', 'off'], style=wx.CB_READONLY))
         self.DefaultModeDropdown.Bind(wx.EVT_COMBOBOX, self.OnArtistBackgroundSettingsChanged)
         self.DefaultOpacitySlider = wx.Slider(self, -1, int(artistBackgrounds.get('DefaultOpacity', 35)), 0, 100, (0,0), (233,-1), wx.SL_HORIZONTAL)
         self.DefaultOpacitySlider.Bind(wx.EVT_SCROLL, self.OnArtistBackgroundSettingsChanged)

@@ -29,7 +29,7 @@ import socket
 import platform
 
 import wx
-from bin.beamutils import logLevelList, setLogLevel
+from bin.beamutils import logLevelList, normalizeMacControlHeight, setLogLevel
 from bin.modules import mixxxutils
 
 
@@ -784,7 +784,7 @@ class BasicSettingsPanel(wx.Panel):
             style=wx.CB_READONLY,
         )
         control.Bind(wx.EVT_COMBOBOX, self.OnSelectMediaPlayer)
-        return control
+        return normalizeMacControlHeight(control, default_width=233)
 
     def _build_refresh_interval_field(self, parent):
         panel = wx.Panel(parent, wx.ID_ANY)
@@ -811,12 +811,12 @@ class BasicSettingsPanel(wx.Panel):
     def _build_text_field(self, parent, value, handler, style=0):
         control = wx.TextCtrl(parent, wx.ID_ANY, value=value, size=(233, -1), style=style)
         control.Bind(wx.EVT_TEXT, handler)
-        return control
+        return normalizeMacControlHeight(control, default_width=233)
 
     def _build_combo_field(self, parent, value, choices, handler):
         control = wx.ComboBox(parent, wx.ID_ANY, value=value, choices=choices, size=(233, -1), style=wx.CB_READONLY)
         control.Bind(wx.EVT_COMBOBOX, handler)
-        return control
+        return normalizeMacControlHeight(control, default_width=233)
 
     def _build_spin_field(self, parent, value, handler, minimum, maximum):
         control = wx.SpinCtrl(parent, wx.ID_ANY, min=minimum, max=maximum, initial=int(value), size=(100, -1))
@@ -845,7 +845,7 @@ class BasicSettingsPanel(wx.Panel):
         )
         control.Bind(wx.EVT_TEXT, handler)
         control.Bind(wx.EVT_COMBOBOX, handler)
-        return control
+        return normalizeMacControlHeight(control, default_width=120)
 
     def _style_collapsible_pane_header(self, collapsible_pane):
         toggle_button = collapsible_pane.GetChildren()[0] if collapsible_pane.GetChildren() else None
