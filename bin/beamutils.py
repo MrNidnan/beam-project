@@ -160,6 +160,25 @@ def getBeamConfigPath():
     return beamconfigpath
 
 
+def normalizeMacControlHeight(control, default_width=-1):
+    if sys.platform != 'darwin':
+        return control
+
+    best_size = control.GetBestSize()
+    width = control.GetSize().GetWidth()
+    if width <= 0:
+        width = default_width if default_width > 0 else best_size.GetWidth()
+
+    height = max(24, min(best_size.GetHeight(), 27))
+    control.SetMinSize((width, height))
+    if width > 0:
+        control.SetInitialSize((width, height))
+    else:
+        control.SetInitialSize((-1, height))
+
+    return control
+
+
 
 
 
