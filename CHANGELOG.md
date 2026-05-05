@@ -2,7 +2,13 @@
 
 All notable changes in this fork are documented in this file.
 
-## v0.9.0.0 - 2026-05-03
+## v0.9.0.1 - 2026-05-05
+
+### Fixed
+
+- macOs failed on start
+
+## v0.9.0.0 - 2026-05-04
 
 ### Added
 

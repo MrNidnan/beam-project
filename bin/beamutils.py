@@ -100,6 +100,38 @@ def getBeamHomePath():
     return apphomepath
 
 
+def _is_valid_resources_root(resources_path):
+    if not os.path.isdir(resources_path):
+        return False
+
+    strings_path = os.path.join(resources_path, 'json', 'strings.json')
+    return os.path.isfile(strings_path)
+
+
+def _get_frozen_resources_candidates():
+    candidates = []
+    meipass_path = getattr(sys, '_MEIPASS', '')
+    if meipass_path:
+        candidates.append(os.path.join(meipass_path, 'resources'))
+        candidates.append(meipass_path)
+
+    executable_dir = os.path.dirname(sys.executable)
+    candidates.append(os.path.join(executable_dir, 'resources'))
+    candidates.append(os.path.normpath(os.path.join(executable_dir, '..', 'Resources', 'resources')))
+    candidates.append(os.path.normpath(os.path.join(executable_dir, '..', 'Resources')))
+
+    unique_candidates = []
+    seen_candidates = set()
+    for candidate in candidates:
+        normalized_candidate = os.path.normcase(os.path.normpath(candidate))
+        if normalized_candidate in seen_candidates:
+            continue
+        seen_candidates.add(normalized_candidate)
+        unique_candidates.append(candidate)
+
+    return unique_candidates
+
+
 
 def getRelativePath(filepath):
     ## userhomepath = getUserHomePath()
@@ -112,7 +144,12 @@ def getRelativePath(filepath):
     return filepath
 
 def getBeamResourcesPath():
-   return os.path.join(getBeamHomePath(), "resources")
+    if getattr(sys, 'frozen', False):
+        for resources_path in _get_frozen_resources_candidates():
+            if _is_valid_resources_root(resources_path):
+                return resources_path
+
+    return os.path.join(getBeamHomePath(), "resources")
 
 #
 # config directory in user ~/.beam/"

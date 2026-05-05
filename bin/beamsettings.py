@@ -522,7 +522,7 @@ class BeamSettings:
         return self._profileSettings.hasActiveProfileBeenPersisted()
 
     def getDefaultConfigFilePath(self):
-        defaultfilepath = os.path.join(getBeamHomePath(), 'resources', 'json', self.getString("configfilename"))
+        defaultfilepath = os.path.join(getBeamResourcesPath(), 'json', self.getString("configfilename"))
 
         return defaultfilepath
 
