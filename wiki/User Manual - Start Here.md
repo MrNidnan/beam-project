@@ -38,3 +38,5 @@ A basic Beam setup is working when:
 Go directly to [Quick Start Guide.md](Quick%20Start%20Guide.md) or [User Manual - First Run.md](User%20Manual%20-%20First%20Run.md).
 
 That is enough for most users to get Beam working for a live event.
+
+If you are running from source because packaging is not available on your platform, use [For Developer.md](For%20Developer.md).
