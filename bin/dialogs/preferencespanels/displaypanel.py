@@ -385,22 +385,31 @@ class DisplayPanel(wx.Panel):
         if not source_image:
             return None
 
-        cache_key = (getattr(self.nowPlayingData, 'currentCoverArtPath', '') or '', int(size))
+        # Calculate aspect-ratio-preserving dimensions
+        img_w, img_h = source_image.GetWidth(), source_image.GetHeight()
+        if img_w <= 0 or img_h <= 0:
+            return None
+        scale = min(float(size) / img_w, float(size) / img_h)
+        new_w, new_h = int(img_w * scale), int(img_h * scale)
+
+        cache_key = (getattr(self.nowPlayingData, 'currentCoverArtPath', '') or '', int(new_w), int(new_h))
         cached_bitmap = self._cover_art_bitmap_cache.get(cache_key)
         if cached_bitmap is not None:
             self._cover_art_bitmap_cache.move_to_end(cache_key)
             return cached_bitmap
 
-        image = source_image.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
-        radius = self._get_cover_art_corner_radius(size)
+        image = source_image.Scale(new_w, new_h, wx.IMAGE_QUALITY_HIGH)
+        # Use the smaller of width/height for radius calculation
+        min_dim = min(new_w, new_h)
+        radius = self._get_cover_art_corner_radius(min_dim)
         feather = self._get_cover_art_feather_amount(radius)
 
         if radius > 0:
             image.InitAlpha()
-            for x_pos in range(size):
-                nearest_x = min(x_pos, size - 1 - x_pos)
-                for y_pos in range(size):
-                    nearest_y = min(y_pos, size - 1 - y_pos)
+            for x_pos in range(new_w):
+                nearest_x = min(x_pos, new_w - 1 - x_pos)
+                for y_pos in range(new_h):
+                    nearest_y = min(y_pos, new_h - 1 - y_pos)
                     if nearest_x >= radius or nearest_y >= radius:
                         continue
 
@@ -419,44 +428,43 @@ class DisplayPanel(wx.Panel):
             self._cover_art_bitmap_cache.popitem(last=False)
         return bitmap
 
-    def _draw_cover_art_outline(self, dc, horizontal_position, vertical_position, size):
-        if size <= 2 or not self._supports_cover_art_outline(dc):
+    def _draw_cover_art_outline(self, dc, horizontal_position, vertical_position, width, height):
+        if width <= 2 or height <= 2 or not self._supports_cover_art_outline(dc):
             return
 
         try:
-            outline_size = max(1, size - 1)
-            radius = max(2, self._get_cover_art_corner_radius(size) - 1)
+            radius = max(2, self._get_cover_art_corner_radius(min(width, height)) - 1)
             dc.SetPen(wx.Pen(wx.Colour(255, 255, 255, self._cover_art_outline_alpha), self._cover_art_outline_width))
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
-            dc.DrawRoundedRectangle(int(horizontal_position), int(vertical_position), int(outline_size), int(outline_size), int(radius))
+            dc.DrawRoundedRectangle(int(horizontal_position), int(vertical_position), int(width), int(height), int(radius))
         except Exception:
             pass
 
     def drawCoverArt(self, dc, cliWidth, cliHeight, j):
-        #Text and settings
-        # filePath = self.currentDisplayRows[j]
-        # Windows "file:///C:"
-        # filePath = urllib.request.url2pathname(fileUrl[5:])
-        # filePath = Path(fileUrl[8:])
-        # filePath = self.currentDisplayRows[j]
-
         Settings = self.displayData.currentDisplaySettings[j]
 
         # Get (text) size and position
-        # wx.Image.Scale expects integer dimensions across platforms.
         size = max(1, int(Settings['Size'] * cliHeight / 100))
         verticalPosition = int(Settings['Position'][0] * cliHeight / 100)
+
+        # Calculate aspect-ratio-preserving dimensions for alignment
+        source_image = self.displayData.currentCoverArtImage
+        if source_image:
+            img_w, img_h = source_image.GetWidth(), source_image.GetHeight()
+            scale = min(float(size) / img_w, float(size) / img_h)
+            new_w, new_h = int(img_w * scale), int(img_h * scale)
+        else:
+            new_w = new_h = size
 
         # Alignment position
         if Settings['Alignment'] == 'Left':
             horizontalPosition = int(Settings['Position'][1] * cliWidth / 100)
         elif Settings['Alignment'] == 'Right':
-            horizontalPosition = int(cliWidth - (int(Settings['Position'][1] * cliWidth / 100) + size))
+            horizontalPosition = int(cliWidth - (int(Settings['Position'][1] * cliWidth / 100) + new_w))
         elif Settings['Alignment'] == 'Center':
-            horizontalPosition = int((cliWidth - size) / 2)
+            horizontalPosition = int((cliWidth - new_w) / 2)
         else:
             raise Exception("Unknown alignment" + Settings['Alignment'])
-
 
         if self.displayData.currentCoverArtImage:
             try:
@@ -464,25 +472,14 @@ class DisplayPanel(wx.Panel):
                 if bitmap is None:
                     return
                 dc.DrawBitmap(bitmap, int(horizontalPosition), int(verticalPosition), True)
-                self._draw_cover_art_outline(dc, horizontalPosition, verticalPosition, size)
+                # Use the smaller of width/height for outline radius
+                self._draw_cover_art_outline(dc, horizontalPosition, verticalPosition, new_w, new_h)
             except Exception:
                 try:
-                    fallback_image = self.displayData.currentCoverArtImage.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
+                    fallback_image = self.displayData.currentCoverArtImage.Scale(new_w, new_h, wx.IMAGE_QUALITY_HIGH)
                     dc.DrawBitmap(wx.Bitmap(fallback_image), int(horizontalPosition), int(verticalPosition), True)
                 except Exception:
                     pass
-
-            # file_ = OggVorbis(path)
-            # b64_pictures = file_.get("metadata_block_picture", [])
-            # for n, b64_data in enumerate(b64_pictures):
-            #     try:
-            #         data = base64.b64decode(b64_data)
-            #     except (TypeError, ValueError):
-            #         continue
-            #     try:
-            #         picture = Picture(data)
-            #     except FLACError:
-            #         continue
 
     def _wrap_long_token(self, dc, token, max_width):
         if not token:
