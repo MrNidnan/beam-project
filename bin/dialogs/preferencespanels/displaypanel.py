@@ -405,22 +405,42 @@ class DisplayPanel(wx.Panel):
         feather = self._get_cover_art_feather_amount(radius)
 
         if radius > 0:
-            image.InitAlpha()
-            for x_pos in range(new_w):
-                nearest_x = min(x_pos, new_w - 1 - x_pos)
-                for y_pos in range(new_h):
-                    nearest_y = min(y_pos, new_h - 1 - y_pos)
-                    if nearest_x >= radius or nearest_y >= radius:
+            if not image.HasAlpha():
+                image.InitAlpha()
+
+            r = max(0, min(int(radius), new_w // 2, new_h // 2))
+            f = max(1, int(feather))
+
+            half_w = new_w / 2.0
+            half_h = new_h / 2.0
+
+            for y in range(new_h):
+                py = (y + 0.5) - half_h
+
+                for x in range(new_w):
+                    px = (x + 0.5) - half_w
+
+                    # Signed distance to rounded rectangle
+                    qx = abs(px) - (half_w - r)
+                    qy = abs(py) - (half_h - r)
+
+                    ox = max(qx, 0.0)
+                    oy = max(qy, 0.0)
+
+                    outside_dist = (ox * ox + oy * oy) ** 0.5
+                    inside_dist = min(max(qx, qy), 0.0)
+
+                    dist = outside_dist + inside_dist - r
+
+                    # dist <= 0 means inside rounded rectangle
+                    if dist <= -f:
                         continue
 
-                    corner_dx = radius - nearest_x - 0.5
-                    corner_dy = radius - nearest_y - 0.5
-                    distance = (corner_dx * corner_dx + corner_dy * corner_dy) ** 0.5
-                    if distance >= radius:
-                        image.SetAlpha(x_pos, y_pos, 0)
-                    elif feather > 0 and distance > radius - feather:
-                        alpha = int(255 * (radius - distance) / feather)
-                        image.SetAlpha(x_pos, y_pos, max(0, min(255, alpha)))
+                    if dist >= 0:
+                        image.SetAlpha(x, y, 0)
+                    else:
+                        a = int(255 * (-dist / f))
+                        image.SetAlpha(x, y, max(0, min(255, a)))
 
         bitmap = wx.Bitmap(image)
         self._cover_art_bitmap_cache[cache_key] = bitmap
