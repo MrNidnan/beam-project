@@ -43,12 +43,44 @@ BACKGROUND_EXTENSIONS = ('.jpg', '.jpeg', '.png')
 
 def _get_background_picker_path(background_reference):
     resolved_background = resolve_background_reference(background_reference)
+    if resolved_background.get('kind') == 'color':
+        return ''
     return resolved_background['absolutePath'] or str(background_reference or '')
 
 
 def _get_background_label_path(background_reference):
     resolved_background = resolve_background_reference(background_reference)
+    if resolved_background.get('kind') == 'color':
+        return resolved_background.get('colorValue', '') or str(background_reference or '')
     return resolved_background['absolutePath'] or resolved_background['relativePath'] or str(background_reference or '')
+
+
+def _background_reference_is_color(background_reference):
+    return resolve_background_reference(background_reference).get('kind') == 'color'
+
+
+def _background_reference_to_colour(background_reference):
+    resolved_background = resolve_background_reference(background_reference)
+    color_value = str(resolved_background.get('colorValue', '') or '').strip()
+    if color_value.startswith('#'):
+        color_value = color_value[1:]
+
+    if len(color_value) not in (6, 8):
+        return wx.Colour(0, 0, 0)
+
+    try:
+        red = int(color_value[0:2], 16)
+        green = int(color_value[2:4], 16)
+        blue = int(color_value[4:6], 16)
+        alpha = int(color_value[6:8], 16) if len(color_value) == 8 else 255
+    except ValueError:
+        return wx.Colour(0, 0, 0)
+
+    return wx.Colour(red, green, blue, alpha)
+
+
+def _colour_to_background_reference(colour):
+    return 'color:#%02X%02X%02X' % (colour.Red(), colour.Green(), colour.Blue())
 
 
 #
@@ -130,8 +162,9 @@ class EditMoodDialog(wx.Dialog):
             self.vbox.Add(propertiesBox, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
 
         # Background image
-        BackgroundDesc = wx.StaticText(self.panel, -1, "Select background image (1920x1080 recommended)")
+        BackgroundDesc = wx.StaticText(self.panel, -1, "Select a background image or use a solid color")
         self.BrowseBackgroundButton = wx.Button(self.panel, label="Browse")
+        self.ChooseBackgroundColorButton = wx.Button(self.panel, label="Color")
         self.currentBackground = wx.StaticText(self.panel, -1, "")
 
         self.ChangeBackgroundBox = wx.CheckBox(self.panel, label='Rotate backgrounds')
@@ -158,6 +191,7 @@ class EditMoodDialog(wx.Dialog):
         background_image_box = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Background Image")
         background_image_row = wx.BoxSizer(wx.HORIZONTAL)
         background_image_row.Add(self.BrowseBackgroundButton, flag=wx.RIGHT, border=10)
+        background_image_row.Add(self.ChooseBackgroundColorButton, flag=wx.RIGHT, border=10)
         background_image_row.Add(self.currentBackground, proportion=1)
         background_image_box.Add(BackgroundDesc, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         background_image_box.Add(background_image_row, flag=wx.EXPAND | wx.ALL, border=10)
@@ -328,6 +362,7 @@ class EditMoodDialog(wx.Dialog):
         self.EditLayoutItemButton.Bind(wx.EVT_BUTTON, self.OnEditLayoutItem)
         self.DelLayoutItemButton.Bind(wx.EVT_BUTTON, self.OnDelLayoutItem)
         self.BrowseBackgroundButton.Bind(wx.EVT_BUTTON, self.OnBrowseBackground)
+        self.ChooseBackgroundColorButton.Bind(wx.EVT_BUTTON, self.OnChooseBackgroundColor)
 
     #
     # BUILD LIST AND CHECK
@@ -406,6 +441,18 @@ class EditMoodDialog(wx.Dialog):
     # ROTATE/RANDOM BACKGROUND
     #
     def OnRotateBackground(self, event):
+        if _background_reference_is_color(self.EditMood['Background']):
+            self.EditMood['RotateBackground'] = "no"
+            self.ChangeBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
+            if self.mode == "Edit mood":
+                beamSettings.markDirty()
+            self.rotateBackgroundFunction()
+            self._schedule_preview_refresh(immediate=True)
+            return
+
         if self.ChangeBackgroundBox.IsChecked() and not self.RandomBackgroundBox.IsChecked():
             self.EditMood['RotateBackground'] = "linear"
             self.RandomBackgroundBox.Enable()
@@ -445,11 +492,26 @@ class EditMoodDialog(wx.Dialog):
         else:
             self.BackgroundTimerBox.SetSelection(2)
 
+        if _background_reference_is_color(self.EditMood['Background']):
+            self.ChangeBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.SetValue(False)
+            self.ChangeBackgroundBox.Disable()
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
+            self.currentBackground.SetLabel("Color: " + _get_background_label_path(self.EditMood['Background']))
+            return
+
+        self.ChangeBackgroundBox.Enable()
+
         label_path = _get_background_label_path(self.EditMood['Background'])
         path, backgroundfile = os.path.split(os.path.normpath(label_path))
         if self.EditMood['RotateBackground'] == "no":
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
             self.currentBackground.SetLabel("Image: " + backgroundfile)
         else:
+            self.RandomBackgroundBox.Enable()
+            self.BackgroundTimerBox.Enable()
             if os.path.splitext(backgroundfile)[1].lower() in BACKGROUND_EXTENSIONS:
                 folder_name = os.path.split(path)[1]
             else:
@@ -679,6 +741,25 @@ class EditMoodDialog(wx.Dialog):
                 self._schedule_preview_refresh(immediate=True)
         finally:
             open_dialog.Destroy()
+
+    def OnChooseBackgroundColor(self, event):
+        colour_data = wx.ColourData()
+        colour_data.SetChooseFull(True)
+        colour_data.SetColour(_background_reference_to_colour(self.EditMood['Background']))
+        dialog = wx.ColourDialog(self, colour_data)
+        try:
+            if dialog.ShowModal() != wx.ID_OK:
+                return
+
+            selected_colour = dialog.GetColourData().GetColour()
+            self.EditMood['Background'] = _colour_to_background_reference(selected_colour)
+            self.EditMood['RotateBackground'] = 'no'
+            if self.mode == "Edit mood":
+                beamSettings.markDirty()
+            self.rotateBackgroundFunction()
+            self._schedule_preview_refresh(immediate=True)
+        finally:
+            dialog.Destroy()
 
     def OnSelectU1DMXcolour(self, event):
         if not self._dmx_supported or self.U1DMXfixtureColourList is None or self.U1DMXcolourDropdown is None:

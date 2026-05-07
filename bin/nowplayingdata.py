@@ -120,6 +120,7 @@ class NowPlayingData:
             'canonicalReference': resolved_background['canonicalReference'],
             'relativePath': resolved_background['relativePath'],
             'sourcePath': resolved_background['absolutePath'],
+            'colorValue': resolved_background.get('colorValue', ''),
             'rotate': rotate_background,
             'rotateTimer': rotate_timer,
         }

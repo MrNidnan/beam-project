@@ -165,6 +165,9 @@ class DisplayPanel(wx.Panel):
         return getattr(self.displayData, '_legacyBackgroundBitmap', None)
 
     def _get_layer_draw_path(self, layer):
+        if str(layer.get('kind', '')).lower() == 'color':
+            return ''
+
         current_path = layer.get('currentPath', '')
         if current_path:
             return current_path
@@ -178,6 +181,37 @@ class DisplayPanel(wx.Panel):
             source_path,
             prefer_random=rotate_mode == 'random',
         ) or ''
+
+    def _parse_background_colour(self, layer, opacity=1.0):
+        if str(layer.get('kind', '')).lower() != 'color':
+            return None
+
+        color_value = str(layer.get('colorValue', '') or '').strip()
+        if color_value.startswith('#'):
+            color_value = color_value[1:]
+
+        if len(color_value) not in (6, 8):
+            return None
+
+        try:
+            red = int(color_value[0:2], 16)
+            green = int(color_value[2:4], 16)
+            blue = int(color_value[4:6], 16)
+            alpha = int(color_value[6:8], 16) if len(color_value) == 8 else 255
+        except ValueError:
+            return None
+
+        scaled_alpha = max(0, min(255, int(round(alpha * float(opacity)))))
+        return wx.Colour(red, green, blue, scaled_alpha)
+
+    def _fill_background_colour(self, dc, colour, cliWidth, cliHeight):
+        if colour is None:
+            return False
+
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(wx.Brush(colour))
+        dc.DrawRectangle(0, 0, int(cliWidth), int(cliHeight))
+        return True
 
     def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0):
         if not source_path:
@@ -313,28 +347,45 @@ class DisplayPanel(wx.Panel):
 
         base_drawn = False
         if base_layer.get('available'):
-            base_source_path = self._get_layer_draw_path(base_layer)
-            base_bitmap = self._get_scaled_background_bitmap(base_source_path, cliWidth, cliHeight, 1.0)
-            if base_bitmap is not None:
-                self._draw_bitmap_centered(dc, base_bitmap, cliWidth, cliHeight)
-                self.modifiedBitmap = base_bitmap
+            base_colour = self._parse_background_colour(base_layer, 1.0)
+            if self._fill_background_colour(dc, base_colour, cliWidth, cliHeight):
+                self.modifiedBitmap = None
                 base_drawn = True
+            else:
+                base_source_path = self._get_layer_draw_path(base_layer)
+                base_bitmap = self._get_scaled_background_bitmap(base_source_path, cliWidth, cliHeight, 1.0)
+                if base_bitmap is not None:
+                    self._draw_bitmap_centered(dc, base_bitmap, cliWidth, cliHeight)
+                    self.modifiedBitmap = base_bitmap
+                    base_drawn = True
 
         if overlay_layer.get('available'):
-            overlay_source_path = self._get_layer_draw_path(overlay_layer)
-            overlay_bitmap = self._get_scaled_background_bitmap(
-                overlay_source_path,
-                cliWidth,
-                cliHeight,
+            overlay_colour = self._parse_background_colour(
+                overlay_layer,
                 1.0 if overlay_mode == 'replace' else overlay_opacity,
             )
-            if overlay_bitmap is not None:
+            if overlay_colour is not None:
                 if overlay_mode == 'replace':
                     dc.SetBackground(wx.Brush(wx.BLACK))
                     dc.Clear()
-                self._draw_bitmap_centered(dc, overlay_bitmap, cliWidth, cliHeight)
-                self.modifiedBitmap = overlay_bitmap
+                self._fill_background_colour(dc, overlay_colour, cliWidth, cliHeight)
+                self.modifiedBitmap = None
                 base_drawn = True
+            else:
+                overlay_source_path = self._get_layer_draw_path(overlay_layer)
+                overlay_bitmap = self._get_scaled_background_bitmap(
+                    overlay_source_path,
+                    cliWidth,
+                    cliHeight,
+                    1.0 if overlay_mode == 'replace' else overlay_opacity,
+                )
+                if overlay_bitmap is not None:
+                    if overlay_mode == 'replace':
+                        dc.SetBackground(wx.Brush(wx.BLACK))
+                        dc.Clear()
+                    self._draw_bitmap_centered(dc, overlay_bitmap, cliWidth, cliHeight)
+                    self.modifiedBitmap = overlay_bitmap
+                    base_drawn = True
 
         if not base_drawn:
             try:

@@ -40,12 +40,44 @@ BACKGROUND_EXTENSIONS = ('.jpg', '.jpeg', '.png')
 
 def _get_background_picker_path(background_reference):
     resolved_background = resolve_background_reference(background_reference)
+    if resolved_background.get('kind') == 'color':
+        return ''
     return resolved_background['absolutePath'] or str(background_reference or '')
 
 
 def _get_background_label_path(background_reference):
     resolved_background = resolve_background_reference(background_reference)
+    if resolved_background.get('kind') == 'color':
+        return resolved_background.get('colorValue', '') or str(background_reference or '')
     return resolved_background['absolutePath'] or resolved_background['relativePath'] or str(background_reference or '')
+
+
+def _background_reference_is_color(background_reference):
+    return resolve_background_reference(background_reference).get('kind') == 'color'
+
+
+def _background_reference_to_colour(background_reference):
+    resolved_background = resolve_background_reference(background_reference)
+    color_value = str(resolved_background.get('colorValue', '') or '').strip()
+    if color_value.startswith('#'):
+        color_value = color_value[1:]
+
+    if len(color_value) not in (6, 8):
+        return wx.Colour(0, 0, 0)
+
+    try:
+        red = int(color_value[0:2], 16)
+        green = int(color_value[2:4], 16)
+        blue = int(color_value[4:6], 16)
+        alpha = int(color_value[6:8], 16) if len(color_value) == 8 else 255
+    except ValueError:
+        return wx.Colour(0, 0, 0)
+
+    return wx.Colour(red, green, blue, alpha)
+
+
+def _colour_to_background_reference(colour):
+    return 'color:#%02X%02X%02X' % (colour.Red(), colour.Green(), colour.Blue())
 
 
 class DefaultLayoutPanel(wx.Panel):
@@ -59,6 +91,7 @@ class DefaultLayoutPanel(wx.Panel):
         #############
         self.BeamSettings = BeamSettings
         self.parent = parent
+        self.mainFrame = getattr(parent, 'mainFrame', None)
         self.DisplayRows = []
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         
@@ -73,13 +106,15 @@ class DefaultLayoutPanel(wx.Panel):
         ####################
         background = wx.StaticText(self, -1, "Background")
         background.SetFont(font)
-        backdescription = wx.StaticText(self, -1, "Select background image (1920x1080 recommended)")
+        backdescription = wx.StaticText(self, -1, "Select a background image or use a solid color")
         self.browse = wx.Button(self, label="Browse")
         self.browse.Bind(wx.EVT_BUTTON, self.BrowseBackgroundImage)
-        (path,backgroundfile) = os.path.split(self.BeamSettings.getMoods()[0]['Background'])
+        self.chooseColor = wx.Button(self, label="Color")
+        self.chooseColor.Bind(wx.EVT_BUTTON, self.ChooseBackgroundColor)
         self.currentBackground = wx.StaticText(self, -1, "")
         hboxBackground = wx.BoxSizer(wx.HORIZONTAL)
         hboxBackground.Add(self.browse, flag=wx.RIGHT | wx.TOP, border=5)
+        hboxBackground.Add(self.chooseColor, flag=wx.RIGHT | wx.TOP, border=5)
         hboxBackground.Add(self.currentBackground, flag=wx.LEFT | wx.TOP, border=5)
         
         #######################
@@ -152,6 +187,10 @@ class DefaultLayoutPanel(wx.Panel):
         sizer.Add(self.LayoutList, proportion=1, flag= wx.EXPAND| wx.ALL, border=10 )
         sizer.Add(sizerbuttons, flag=wx.LEFT | wx.BOTTOM, border=10)
         self.SetSizer(sizer)
+
+    def updateSettings(self):
+        if self.mainFrame is not None:
+            self.mainFrame.updateSettings()
 
 
 ###################################################################
@@ -232,6 +271,7 @@ class DefaultLayoutPanel(wx.Panel):
                 self.BeamSettings.markDirty()
                 # change current background
                 self.OnRotateBackground()
+                self.updateSettings()
         finally:
             open_dialog.Destroy()
 
@@ -239,6 +279,16 @@ class DefaultLayoutPanel(wx.Panel):
         # ROTATE BACKGROUND #
         #####################
     def OnRotateBackground(self, event=wx.EVT_CHECKBOX):
+        if _background_reference_is_color(self.BeamSettings.getMoods()[0]['Background']):
+            self.BeamSettings.getMoods()[0]['RotateBackground'] = "no"
+            self.ChangeBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.SetValue(False)
+            self.ChangeBackgroundBox.Disable()
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
+            self.rotateBackgroundFunction()
+            return
+
         if self.ChangeBackgroundBox.IsChecked() and not self.RandomBackgroundBox.IsChecked():
             self.BeamSettings.getMoods()[0]['RotateBackground'] = "linear"
             self.RandomBackgroundBox.Enable()
@@ -254,22 +304,56 @@ class DefaultLayoutPanel(wx.Panel):
 
         self.BeamSettings.getMoods()[0]['RotateTimer'] = self.BackgroundTimerBox.getTimeSelection()
         self.rotateBackgroundFunction()
+        self.updateSettings()
 
 
     def rotateBackgroundFunction(self):
         timevalue = int(self.BeamSettings.getMoods()[0]['RotateTimer'])
         self.BackgroundTimerBox.setTimeSelection(timevalue)
 
+        if _background_reference_is_color(self.BeamSettings.getMoods()[0]['Background']):
+            self.ChangeBackgroundBox.SetValue(False)
+            self.RandomBackgroundBox.SetValue(False)
+            self.ChangeBackgroundBox.Disable()
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
+            self.currentBackground.SetLabel("Color: " + _get_background_label_path(self.BeamSettings.getMoods()[0]['Background']))
+            return
+
+        self.ChangeBackgroundBox.Enable()
+
         label_path = _get_background_label_path(self.BeamSettings.getMoods()[0]['Background'])
         path, backgroundfile = os.path.split(os.path.normpath(label_path))
         if self.BeamSettings.getMoods()[0]['RotateBackground'] == "no":
+            self.RandomBackgroundBox.Disable()
+            self.BackgroundTimerBox.Disable()
             self.currentBackground.SetLabel("Image: " + backgroundfile)
         else:
+            self.RandomBackgroundBox.Enable()
+            self.BackgroundTimerBox.Enable()
             if os.path.splitext(backgroundfile)[1].lower() in BACKGROUND_EXTENSIONS:
                 folder_name = os.path.split(path)[1]
             else:
                 folder_name = backgroundfile
             self.currentBackground.SetLabel("Images from folder: " + folder_name)
+
+    def ChooseBackgroundColor(self, event):
+        colour_data = wx.ColourData()
+        colour_data.SetChooseFull(True)
+        colour_data.SetColour(_background_reference_to_colour(self.BeamSettings.getMoods()[0]['Background']))
+        dialog = wx.ColourDialog(self, colour_data)
+        try:
+            if dialog.ShowModal() != wx.ID_OK:
+                return
+
+            selected_colour = dialog.GetColourData().GetColour()
+            self.BeamSettings.getMoods()[0]['Background'] = _colour_to_background_reference(selected_colour)
+            self.BeamSettings.getMoods()[0]['RotateBackground'] = 'no'
+            self.BeamSettings.markDirty()
+            self.rotateBackgroundFunction()
+            self.updateSettings()
+        finally:
+            dialog.Destroy()
 
         ##################
         # LAYOUT BUTTONS #

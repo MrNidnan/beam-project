@@ -11,6 +11,7 @@ from bin.beamutils import getBeamConfigPath, getBeamHomePath, getBeamResourcesPa
 
 BACKGROUND_EXTENSIONS = ('.jpg', '.jpeg', '.png')
 ASSET_PREFIX = 'asset:'
+COLOR_PREFIX = 'color:'
 ASSET_SCOPE_BUILTIN = 'builtin'
 ASSET_SCOPE_USER = 'user'
 ASSET_SCOPE_EXTERNAL = 'external'
@@ -123,6 +124,24 @@ def _build_result(kind, scope, raw_value, reference, relative_path, normalized_r
     }
 
 
+def _normalize_color_reference(raw_value):
+    normalized_value = str(raw_value or '').strip()
+    if not normalized_value.lower().startswith(COLOR_PREFIX):
+        raise ValueError("Invalid color reference '%s'" % raw_value)
+
+    color_value = normalized_value[len(COLOR_PREFIX):].strip()
+    if color_value.startswith('#'):
+        color_value = color_value[1:]
+
+    if len(color_value) not in (6, 8):
+        raise ValueError("Invalid color reference '%s'" % raw_value)
+
+    if not all(character in '0123456789abcdefABCDEF' for character in color_value):
+        raise ValueError("Invalid color reference '%s'" % raw_value)
+
+    return '%s#%s' % (COLOR_PREFIX, color_value.upper())
+
+
 def get_user_background_root(asset_type):
     return os.path.join(getBeamConfigPath(), *_normalize_asset_type(asset_type).split('/'))
 
@@ -138,6 +157,13 @@ def parse_background_reference(value):
     raw_value = '' if value is None else str(value).strip()
     if raw_value == '':
         return _build_result('empty', None, raw_value, '', '', '')
+
+    if raw_value.lower().startswith(COLOR_PREFIX):
+        try:
+            normalized_reference = _normalize_color_reference(raw_value)
+        except ValueError:
+            return _build_result('invalid', None, raw_value, raw_value, '', '')
+        return _build_result('color', None, raw_value, normalized_reference, '', normalized_reference)
 
     if raw_value.startswith(ASSET_PREFIX):
         asset_value = _normalize_slashes(raw_value[len(ASSET_PREFIX):]).strip()
@@ -177,6 +203,8 @@ def normalize_background_reference(value):
     parsed_value = parse_background_reference(value)
     if parsed_value['kind'] == 'empty':
         return ''
+    if parsed_value['kind'] == 'color':
+        return parsed_value['normalizedReference']
     if parsed_value['kind'] in ('asset', 'legacy-resource'):
         return parsed_value['normalizedReference']
     if parsed_value['kind'] in ('absolute', 'relative'):
@@ -188,8 +216,12 @@ def resolve_background_reference(value):
     parsed_value = parse_background_reference(value)
     absolute_path = ''
     canonical_reference = ''
+    color_value = ''
 
-    if parsed_value['kind'] == 'asset':
+    if parsed_value['kind'] == 'color':
+        canonical_reference = parsed_value['normalizedReference']
+        color_value = parsed_value['normalizedReference'][len(COLOR_PREFIX):]
+    elif parsed_value['kind'] == 'asset':
         root_path = _resolve_root_for_scope(parsed_value['scope'])
         absolute_path = os.path.normpath(os.path.join(root_path, *parsed_value['relativePath'].split('/')))
         canonical_reference = parsed_value['normalizedReference']
@@ -210,8 +242,9 @@ def resolve_background_reference(value):
         'rawValue': parsed_value['rawValue'],
         'relativePath': parsed_value['relativePath'],
         'absolutePath': absolute_path,
-        'exists': bool(absolute_path) and (os.path.isfile(absolute_path) or os.path.isdir(absolute_path)),
+        'exists': parsed_value['kind'] == 'color' or (bool(absolute_path) and (os.path.isfile(absolute_path) or os.path.isdir(absolute_path))),
         'canonicalReference': canonical_reference,
+        'colorValue': color_value,
     }
 
 

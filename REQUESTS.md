@@ -13,3 +13,12 @@
   Right now when I disable the default still is loaded in seetings and settings. Maybe it is a limitation because we always need a default mood.
   In that case we shuold be able to transfer the default mood to another one.
   ! This is more a revamp change of core funciotnality moving awaing from moods to display items....
+
+  ## suggestion technical improvements?
+
+  gc = wx.GraphicsContext.Create(dc)
+  gc.DrawBitmap(bitmap, x, y, new_w, new_h)
+  del gc
+
+  instead of :
+  dc.DrawBitmap(bitmap, x, y, True)
