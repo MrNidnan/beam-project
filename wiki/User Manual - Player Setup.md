@@ -66,6 +66,9 @@ To review or rename zones in JRiver Media Center, open `Player > Zone > Manage Z
 If Target Zone selection does not seem to work, enable MCWS first so Beam can resolve JRiver zones more reliably.
 
 To enable MCWS in JRiver Media Center, open `Tools > Options > Media Network` and enable `Use Media Network to share this library and enable DLNA`.
+! MCWS must have reading rights. Should the access be restricted, reading has to be set to "Everyone"
+
+![JRiver MCWS windows settings](../docs/images/user-manual/JRiver_mcws_settings.jpg)
 
 https://wiki.jriver.com/index.php/MCWS_Playback_Info
 https://wiki.jriver.com/index.php/MCWS_Playback_Playlist
