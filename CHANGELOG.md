@@ -2,7 +2,7 @@
 
 All notable changes in this fork are documented in this file.
 
-## v0.9.0.1 - 2026-05-08
+## v0.9.1.0 - 2026-05-08
 
 ### Added
 
