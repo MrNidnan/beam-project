@@ -1,6 +1,8 @@
 # Build
 
-This document describes how to build Beam `v0.7.0` release artifacts for Windows and Linux.
+This document describes how to build Beam release artifacts for Windows and Linux.
+
+For macOS collaborator packaging instructions, see [docs/BUILD_MACOS.md](docs/BUILD_MACOS.md).
 
 Beam is packaged as a single-file executable with PyInstaller. Build on the target OS you want to release for.
 

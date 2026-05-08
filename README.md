@@ -128,6 +128,7 @@ Run Beam directly from source instead of using the packaged app:
 
 - Source-run guide: [wiki/For Developer.md](wiki/For%20Developer.md)
 - Build and release notes: [BUILD.md](BUILD.md)
+- macOS packaging guide for collaborators: [docs/BUILD_MACOS.md](docs/BUILD_MACOS.md)
 
 This is the recommended fallback for developers and for users on platforms where packaging is incomplete.
 
