@@ -273,7 +273,7 @@ class MainFrame(wx.Frame):
 
 
     # UPDATE INFO FROM PREFERENCES WINDOW
-    def updateSettings(self):
+    def updateSettings(self, reload_preferences=True):
         try:
             self.networkService.stop()
             self.networkService.start()
@@ -288,13 +288,24 @@ class MainFrame(wx.Frame):
         except Exception as e:
             logging.error(e, exc_info=True)
         finally:
-            self.reloadPreferencesPanels()
+            if reload_preferences:
+                self.reloadPreferencesPanels()
 
-
-    def refreshDisplay(self):
+    def previewSettings(self):
         try:
-            self.displayFrame.displayPanel.reloadFromSettings()
-            self.previewPanel.reloadFromSettings()
+            self.displayData.processData()
+            self.refreshDisplay(reload_panels=False)
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    def refreshDisplay(self, reload_panels=True):
+        try:
+            if reload_panels:
+                self.displayFrame.displayPanel.reloadFromSettings()
+                self.previewPanel.reloadFromSettings()
+            else:
+                self.displayFrame.displayPanel.Refresh()
+                self.previewPanel.Refresh()
             self.networkService.publish_display_state(self.displayData)
         except Exception as e:
             logging.error(e, exc_info=True)

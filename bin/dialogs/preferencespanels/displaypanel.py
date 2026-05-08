@@ -32,6 +32,7 @@ import wx.html
 
 from bin.beamsettings import beamSettings
 from bin.beamutils import formatMemoryUsageMb, getProcessMemoryUsageBytes
+from bin.mutagenutils import readCoverArtImage
 
 
 #
@@ -165,6 +166,9 @@ class DisplayPanel(wx.Panel):
         return getattr(self.displayData, '_legacyBackgroundBitmap', None)
 
     def _get_layer_draw_path(self, layer):
+        if str(layer.get('kind', '')).lower() == 'color':
+            return ''
+
         current_path = layer.get('currentPath', '')
         if current_path:
             return current_path
@@ -179,12 +183,43 @@ class DisplayPanel(wx.Panel):
             prefer_random=rotate_mode == 'random',
         ) or ''
 
-    def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0):
-        if not source_path:
+    def _parse_background_colour(self, layer, opacity=1.0):
+        if str(layer.get('kind', '')).lower() != 'color':
+            return None
+
+        color_value = str(layer.get('colorValue', '') or '').strip()
+        if color_value.startswith('#'):
+            color_value = color_value[1:]
+
+        if len(color_value) not in (6, 8):
+            return None
+
+        try:
+            red = int(color_value[0:2], 16)
+            green = int(color_value[2:4], 16)
+            blue = int(color_value[4:6], 16)
+            alpha = int(color_value[6:8], 16) if len(color_value) == 8 else 255
+        except ValueError:
+            return None
+
+        scaled_alpha = max(0, min(255, int(round(alpha * float(opacity)))))
+        return wx.Colour(red, green, blue, scaled_alpha)
+
+    def _fill_background_colour(self, dc, colour, cliWidth, cliHeight):
+        if colour is None:
+            return False
+
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(wx.Brush(colour))
+        dc.DrawRectangle(0, 0, int(cliWidth), int(cliHeight))
+        return True
+
+    def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0, source_image=None, cache_source_key=None):
+        if not source_path and source_image is None:
             return None
 
         cache_key = (
-            source_path,
+            cache_source_key or source_path,
             int(cliWidth),
             int(cliHeight),
             round(float(self.displayData.red), 4),
@@ -219,11 +254,14 @@ class DisplayPanel(wx.Panel):
             formatMemoryUsageMb(getProcessMemoryUsageBytes()),
         )
 
-        log_silencer = wx.LogNull()
-        try:
-            image = wx.Image(source_path)
-        finally:
-            del log_silencer
+        if source_image is not None:
+            image = source_image.Copy()
+        else:
+            log_silencer = wx.LogNull()
+            try:
+                image = wx.Image(source_path)
+            finally:
+                del log_silencer
         if not image.IsOk():
             DisplayPanel._log_background_debug(
                 self,
@@ -313,28 +351,54 @@ class DisplayPanel(wx.Panel):
 
         base_drawn = False
         if base_layer.get('available'):
-            base_source_path = self._get_layer_draw_path(base_layer)
-            base_bitmap = self._get_scaled_background_bitmap(base_source_path, cliWidth, cliHeight, 1.0)
-            if base_bitmap is not None:
-                self._draw_bitmap_centered(dc, base_bitmap, cliWidth, cliHeight)
-                self.modifiedBitmap = base_bitmap
+            base_colour = self._parse_background_colour(base_layer, 1.0)
+            if self._fill_background_colour(dc, base_colour, cliWidth, cliHeight):
+                self.modifiedBitmap = None
                 base_drawn = True
+            else:
+                base_source_path = self._get_layer_draw_path(base_layer)
+                base_bitmap = self._get_scaled_background_bitmap(base_source_path, cliWidth, cliHeight, 1.0)
+                if base_bitmap is not None:
+                    self._draw_bitmap_centered(dc, base_bitmap, cliWidth, cliHeight)
+                    self.modifiedBitmap = base_bitmap
+                    base_drawn = True
 
         if overlay_layer.get('available'):
-            overlay_source_path = self._get_layer_draw_path(overlay_layer)
-            overlay_bitmap = self._get_scaled_background_bitmap(
-                overlay_source_path,
-                cliWidth,
-                cliHeight,
+            overlay_colour = self._parse_background_colour(
+                overlay_layer,
                 1.0 if overlay_mode == 'replace' else overlay_opacity,
             )
-            if overlay_bitmap is not None:
+            if overlay_colour is not None:
                 if overlay_mode == 'replace':
                     dc.SetBackground(wx.Brush(wx.BLACK))
                     dc.Clear()
-                self._draw_bitmap_centered(dc, overlay_bitmap, cliWidth, cliHeight)
-                self.modifiedBitmap = overlay_bitmap
+                self._fill_background_colour(dc, overlay_colour, cliWidth, cliHeight)
+                self.modifiedBitmap = None
                 base_drawn = True
+            else:
+                overlay_source_path = self._get_layer_draw_path(overlay_layer)
+                overlay_source_image = None
+                overlay_cache_source_key = None
+                if str(overlay_layer.get('kind', '')).lower() == 'coverart':
+                    overlay_source_image = self.displayData.currentCoverArtImage
+                    overlay_cache_source_key = overlay_layer.get('sourcePath', '') or overlay_layer.get('reference', 'coverArt:current')
+                    if overlay_source_image is None and overlay_source_path:
+                        overlay_source_image = readCoverArtImage(overlay_source_path)
+                overlay_bitmap = self._get_scaled_background_bitmap(
+                    overlay_source_path,
+                    cliWidth,
+                    cliHeight,
+                    1.0 if overlay_mode == 'replace' else overlay_opacity,
+                    source_image=overlay_source_image,
+                    cache_source_key=overlay_cache_source_key,
+                )
+                if overlay_bitmap is not None:
+                    if overlay_mode == 'replace':
+                        dc.SetBackground(wx.Brush(wx.BLACK))
+                        dc.Clear()
+                    self._draw_bitmap_centered(dc, overlay_bitmap, cliWidth, cliHeight)
+                    self.modifiedBitmap = overlay_bitmap
+                    base_drawn = True
 
         if not base_drawn:
             try:
@@ -385,33 +449,62 @@ class DisplayPanel(wx.Panel):
         if not source_image:
             return None
 
-        cache_key = (getattr(self.nowPlayingData, 'currentCoverArtPath', '') or '', int(size))
+        # Calculate aspect-ratio-preserving dimensions
+        img_w, img_h = source_image.GetWidth(), source_image.GetHeight()
+        if img_w <= 0 or img_h <= 0:
+            return None
+        scale = min(float(size) / img_w, float(size) / img_h)
+        new_w, new_h = int(img_w * scale), int(img_h * scale)
+
+        cache_key = (getattr(self.nowPlayingData, 'currentCoverArtPath', '') or '', int(new_w), int(new_h))
         cached_bitmap = self._cover_art_bitmap_cache.get(cache_key)
         if cached_bitmap is not None:
             self._cover_art_bitmap_cache.move_to_end(cache_key)
             return cached_bitmap
 
-        image = source_image.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
-        radius = self._get_cover_art_corner_radius(size)
+        image = source_image.Scale(new_w, new_h, wx.IMAGE_QUALITY_HIGH)
+        # Use the smaller of width/height for radius calculation
+        min_dim = min(new_w, new_h)
+        radius = self._get_cover_art_corner_radius(min_dim)
         feather = self._get_cover_art_feather_amount(radius)
 
         if radius > 0:
-            image.InitAlpha()
-            for x_pos in range(size):
-                nearest_x = min(x_pos, size - 1 - x_pos)
-                for y_pos in range(size):
-                    nearest_y = min(y_pos, size - 1 - y_pos)
-                    if nearest_x >= radius or nearest_y >= radius:
+            if not image.HasAlpha():
+                image.InitAlpha()
+
+            r = max(0, min(int(radius), new_w // 2, new_h // 2))
+            f = max(1, int(feather))
+
+            half_w = new_w / 2.0
+            half_h = new_h / 2.0
+
+            for y in range(new_h):
+                py = (y + 0.5) - half_h
+
+                for x in range(new_w):
+                    px = (x + 0.5) - half_w
+
+                    # Signed distance to rounded rectangle
+                    qx = abs(px) - (half_w - r)
+                    qy = abs(py) - (half_h - r)
+
+                    ox = max(qx, 0.0)
+                    oy = max(qy, 0.0)
+
+                    outside_dist = (ox * ox + oy * oy) ** 0.5
+                    inside_dist = min(max(qx, qy), 0.0)
+
+                    dist = outside_dist + inside_dist - r
+
+                    # dist <= 0 means inside rounded rectangle
+                    if dist <= -f:
                         continue
 
-                    corner_dx = radius - nearest_x - 0.5
-                    corner_dy = radius - nearest_y - 0.5
-                    distance = (corner_dx * corner_dx + corner_dy * corner_dy) ** 0.5
-                    if distance >= radius:
-                        image.SetAlpha(x_pos, y_pos, 0)
-                    elif feather > 0 and distance > radius - feather:
-                        alpha = int(255 * (radius - distance) / feather)
-                        image.SetAlpha(x_pos, y_pos, max(0, min(255, alpha)))
+                    if dist >= 0:
+                        image.SetAlpha(x, y, 0)
+                    else:
+                        a = int(255 * (-dist / f))
+                        image.SetAlpha(x, y, max(0, min(255, a)))
 
         bitmap = wx.Bitmap(image)
         self._cover_art_bitmap_cache[cache_key] = bitmap
@@ -419,44 +512,43 @@ class DisplayPanel(wx.Panel):
             self._cover_art_bitmap_cache.popitem(last=False)
         return bitmap
 
-    def _draw_cover_art_outline(self, dc, horizontal_position, vertical_position, size):
-        if size <= 2 or not self._supports_cover_art_outline(dc):
+    def _draw_cover_art_outline(self, dc, horizontal_position, vertical_position, width, height):
+        if width <= 2 or height <= 2 or not self._supports_cover_art_outline(dc):
             return
 
         try:
-            outline_size = max(1, size - 1)
-            radius = max(2, self._get_cover_art_corner_radius(size) - 1)
+            radius = max(2, self._get_cover_art_corner_radius(min(width, height)) - 1)
             dc.SetPen(wx.Pen(wx.Colour(255, 255, 255, self._cover_art_outline_alpha), self._cover_art_outline_width))
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
-            dc.DrawRoundedRectangle(int(horizontal_position), int(vertical_position), int(outline_size), int(outline_size), int(radius))
+            dc.DrawRoundedRectangle(int(horizontal_position), int(vertical_position), int(width), int(height), int(radius))
         except Exception:
             pass
 
-    def drawCoverArt(self, dc, cliWidth, cliHeight, j):
-        #Text and settings
-        # filePath = self.currentDisplayRows[j]
-        # Windows "file:///C:"
-        # filePath = urllib.request.url2pathname(fileUrl[5:])
-        # filePath = Path(fileUrl[8:])
-        # filePath = self.currentDisplayRows[j]
-
-        Settings = self.displayData.currentDisplaySettings[j]
+    def drawCoverArt(self, dc, cliWidth, cliHeight, settings):
+        Settings = settings
 
         # Get (text) size and position
-        # wx.Image.Scale expects integer dimensions across platforms.
         size = max(1, int(Settings['Size'] * cliHeight / 100))
         verticalPosition = int(Settings['Position'][0] * cliHeight / 100)
+
+        # Calculate aspect-ratio-preserving dimensions for alignment
+        source_image = self.displayData.currentCoverArtImage
+        if source_image:
+            img_w, img_h = source_image.GetWidth(), source_image.GetHeight()
+            scale = min(float(size) / img_w, float(size) / img_h)
+            new_w, new_h = int(img_w * scale), int(img_h * scale)
+        else:
+            new_w = new_h = size
 
         # Alignment position
         if Settings['Alignment'] == 'Left':
             horizontalPosition = int(Settings['Position'][1] * cliWidth / 100)
         elif Settings['Alignment'] == 'Right':
-            horizontalPosition = int(cliWidth - (int(Settings['Position'][1] * cliWidth / 100) + size))
+            horizontalPosition = int(cliWidth - (int(Settings['Position'][1] * cliWidth / 100) + new_w))
         elif Settings['Alignment'] == 'Center':
-            horizontalPosition = int((cliWidth - size) / 2)
+            horizontalPosition = int((cliWidth - new_w) / 2)
         else:
             raise Exception("Unknown alignment" + Settings['Alignment'])
-
 
         if self.displayData.currentCoverArtImage:
             try:
@@ -464,25 +556,14 @@ class DisplayPanel(wx.Panel):
                 if bitmap is None:
                     return
                 dc.DrawBitmap(bitmap, int(horizontalPosition), int(verticalPosition), True)
-                self._draw_cover_art_outline(dc, horizontalPosition, verticalPosition, size)
+                # Use the smaller of width/height for outline radius
+                self._draw_cover_art_outline(dc, horizontalPosition, verticalPosition, new_w, new_h)
             except Exception:
                 try:
-                    fallback_image = self.displayData.currentCoverArtImage.Scale(size, size, wx.IMAGE_QUALITY_HIGH)
+                    fallback_image = self.displayData.currentCoverArtImage.Scale(new_w, new_h, wx.IMAGE_QUALITY_HIGH)
                     dc.DrawBitmap(wx.Bitmap(fallback_image), int(horizontalPosition), int(verticalPosition), True)
                 except Exception:
                     pass
-
-            # file_ = OggVorbis(path)
-            # b64_pictures = file_.get("metadata_block_picture", [])
-            # for n, b64_data in enumerate(b64_pictures):
-            #     try:
-            #         data = base64.b64decode(b64_data)
-            #     except (TypeError, ValueError):
-            #         continue
-            #     try:
-            #         picture = Picture(data)
-            #     except FLACError:
-            #         continue
 
     def _wrap_long_token(self, dc, token, max_width):
         if not token:
@@ -556,12 +637,17 @@ class DisplayPanel(wx.Panel):
             return (cliWidth - text_width) / 2
         raise Exception("Unknown alignment" + alignment)
 
+    def _get_render_state_snapshot(self):
+        display_settings = list(getattr(self.displayData, 'currentDisplaySettings', []) or [])
+        display_rows = list(getattr(self.displayData, 'currentDisplayRows', []) or [])
+        render_count = min(len(display_settings), len(display_rows))
+        return display_settings[:render_count], display_rows[:render_count]
 
-    def drawTextItem(self, dc, cliWidth, cliHeight, j, extra_vertical_offset=0):
+
+    def drawTextItem(self, dc, cliWidth, cliHeight, settings, text, extra_vertical_offset=0):
 
         # Text and settings
-        text = self.displayData.currentDisplayRows[j]
-        Settings = self.displayData.currentDisplaySettings[j]
+        Settings = settings
 
         # Get text size and position 
         # PRS integered size
@@ -688,23 +774,25 @@ class DisplayPanel(wx.Panel):
         if not cliWidth or not cliHeight:
             return
 
+        display_settings, display_rows = self._get_render_state_snapshot()
+
         # Draw images
-        for j in range(0, len(self.displayData.currentDisplaySettings)):
-            field = self.displayData.currentDisplaySettings[j]["Field"]
-            if field.strip() == "%CoverArt" and self.displayData.currentDisplayRows[j] != "":
-                self.drawCoverArt(dc, cliWidth, cliHeight, j)
+        for j, settings in enumerate(display_settings):
+            field = settings["Field"]
+            if field.strip() == "%CoverArt" and display_rows[j] != "":
+                self.drawCoverArt(dc, cliWidth, cliHeight, settings)
 
         # Draw text after/over image. Wrapped rows reserve extra vertical space for later rows.
         text_row_indexes = []
-        for j in range(0, len(self.displayData.currentDisplaySettings)):
-            field = self.displayData.currentDisplaySettings[j]["Field"]
+        for j, settings in enumerate(display_settings):
+            field = settings["Field"]
             if field.strip() != "%CoverArt":
                 text_row_indexes.append(j)
 
         text_row_indexes.sort(
             key=lambda index: (
-                self.displayData.currentDisplaySettings[index]['Position'][0],
-                self.displayData.currentDisplaySettings[index]['Position'][1],
+                display_settings[index]['Position'][0],
+                display_settings[index]['Position'][1],
                 index,
             )
         )
@@ -713,7 +801,7 @@ class DisplayPanel(wx.Panel):
         current_row_position = None
         current_row_extra_height = 0
         for j in text_row_indexes:
-            settings = self.displayData.currentDisplaySettings[j]
+            settings = display_settings[j]
             row_position = settings['Position'][0]
             if current_row_position is None:
                 current_row_position = row_position
@@ -726,7 +814,8 @@ class DisplayPanel(wx.Panel):
                 dc,
                 cliWidth,
                 cliHeight,
-                j,
+                settings,
+                display_rows[j],
                 cumulative_vertical_offset,
             )
             current_row_extra_height = max(current_row_extra_height, row_extra_height)

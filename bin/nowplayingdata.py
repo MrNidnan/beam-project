@@ -120,6 +120,7 @@ class NowPlayingData:
             'canonicalReference': resolved_background['canonicalReference'],
             'relativePath': resolved_background['relativePath'],
             'sourcePath': resolved_background['absolutePath'],
+            'colorValue': resolved_background.get('colorValue', ''),
             'rotate': rotate_background,
             'rotateTimer': rotate_timer,
         }
@@ -129,7 +130,28 @@ class NowPlayingData:
     def _empty_background_layer(self):
         return self._build_background_layer('', 'no', 0)
 
-    def _resolve_artist_background_layer(self, currentSettings, currentSong):
+    def _build_cover_art_background_layer(self, cover_art_path, mode, opacity):
+        return {
+            'available': bool(cover_art_path),
+            'kind': 'coverArt',
+            'scope': 'currentSong',
+            'reference': 'coverArt:current',
+            'canonicalReference': 'coverArt:current',
+            'relativePath': '',
+            'sourcePath': cover_art_path,
+            'colorValue': '',
+            'rotate': 'no',
+            'rotateTimer': 0,
+            'name': 'Cover Art',
+            'mode': mode,
+            'opacity': opacity,
+            'field': '%CoverArt',
+            'matchedField': '%CoverArt',
+            'operator': 'available',
+            'value': '',
+        }
+
+    def _resolve_artist_background_layer(self, currentSettings, currentSong, cover_art_path=''):
         if not currentSettings.getArtistBackgroundsEnabled():
             return self._empty_background_layer()
 
@@ -184,6 +206,13 @@ class NowPlayingData:
 
             return self._empty_background_layer()
 
+        if currentSettings.getArtistBackgroundsUseCoverArt() and cover_art_path:
+            return self._build_cover_art_background_layer(
+                cover_art_path,
+                default_mode,
+                default_opacity,
+            )
+
         return self._empty_background_layer()
 
     def _get_current_song_for_display(self):
@@ -214,17 +243,23 @@ class NowPlayingData:
 
         return display_rows
 
-    def _resolve_cover_art_state_for_settings(self, display_settings, display_rows, current_song):
+    def _resolve_cover_art_state_for_settings(self, display_settings, display_rows, current_song, force_load=False):
         cover_art_path = ""
         cover_art_image = None
+        should_load_cover_art = bool(force_load)
         for j in range(0, len(display_settings)):
             my_display = display_settings[j]
             display_value = str(my_display['Field'])
             if str(display_value).strip() == "%CoverArt" and display_rows[j] != "":
+                should_load_cover_art = True
                 cover_art_path = current_song.FilePath
-                if cover_art_path != "":
-                    cover_art_image = readCoverArtImage(cover_art_path)
                 break
+
+        if cover_art_path == "" and should_load_cover_art:
+            cover_art_path = current_song.FilePath
+
+        if should_load_cover_art and cover_art_path != "":
+            cover_art_image = readCoverArtImage(cover_art_path)
 
         return cover_art_path, cover_art_image
 
@@ -240,7 +275,19 @@ class NowPlayingData:
             mode='base',
             name=mood['Name'],
         )
-        overlay_background_layer = self._resolve_artist_background_layer(currentSettings, current_song)
+
+        display_rows = self._build_display_rows_for_settings(display_settings)
+        cover_art_path, cover_art_image = self._resolve_cover_art_state_for_settings(
+            display_settings,
+            display_rows,
+            current_song,
+            force_load=currentSettings.getArtistBackgroundsUseCoverArt(),
+        )
+        overlay_background_layer = self._resolve_artist_background_layer(
+            currentSettings,
+            current_song,
+            cover_art_path if cover_art_image is not None else '',
+        )
         background_layers = {
             'base': base_background_layer,
             'overlay': overlay_background_layer,
@@ -249,9 +296,6 @@ class NowPlayingData:
         active_background_layer = base_background_layer
         if overlay_background_layer.get('available') and overlay_background_layer.get('mode') == 'replace':
             active_background_layer = overlay_background_layer
-
-        display_rows = self._build_display_rows_for_settings(display_settings)
-        cover_art_path, cover_art_image = self._resolve_cover_art_state_for_settings(display_settings, display_rows, current_song)
 
         return {
             'currentMood': mood,

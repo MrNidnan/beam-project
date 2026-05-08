@@ -2,6 +2,23 @@
 
 All notable changes in this fork are documented in this file.
 
+## v0.9.0.1 - 2026-05-08
+
+### Added
+
+- Add a feature that allows using Cover Art/ Album Art as the Artist background
+  - coverArt background take the default mode for "blend/replace" and the default opacity for displaying.
+  - if specific background artist is defined, will overrule coverArt brackground
+    ![cover_art_as_background](docs/images/user-manual/beam_artist_background.png)
+- **JRiver**: reads singer custom tag from jriver module, reads composer
+- Add an option to define a uniform color for the background instead of a picture.
+
+### Fixed
+
+- Preserve the ratio of CoverArt, don't make them all square
+- Fix coverArt rounding displaying
+- Avoid UI flicker when updating display visualization while changing settings
+
 ## v0.9.0.1 - 2026-05-05
 
 ### Fixed

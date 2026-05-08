@@ -24,6 +24,7 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import socket
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -81,6 +82,24 @@ def get_xml_text(node, default=''):
     return node.text
 
 
+def get_first_non_empty_value(fields, *field_names):
+    for field_name in field_names:
+        field_value = fields.get(field_name, '')
+        if str(field_value).strip() != '':
+            return field_value
+
+    return ''
+
+
+def get_first_non_empty_attribute(target, *attribute_names):
+    for attribute_name in attribute_names:
+        attribute_value = getattr(target, attribute_name, '')
+        if str(attribute_value).strip() != '':
+            return attribute_value
+
+    return ''
+
+
 def get_target_zone():
     return beamSettings.getJRiverTargetZone()
 
@@ -95,11 +114,19 @@ def build_mcws_url(base_url, path, query_params=None):
 
 def fetch_mcws_xml(mcws_base_url, path, query_params=None):
     url = build_mcws_url(mcws_base_url, path, query_params)
-    with urllib.request.urlopen(url) as response:
-        payload = response.read()
-        response.close()
+    request = urllib.request.Request(url, headers={'Connection': 'close'})
 
-    return ET.fromstring(payload)
+    for _attempt in range(2):
+        try:
+            with urllib.request.urlopen(request, timeout=2.5) as response:
+                payload = response.read()
+                response.close()
+            return ET.fromstring(payload)
+        except (ConnectionResetError, socket.timeout, TimeoutError, OSError) as error:
+            if _attempt == 1:
+                raise urllib.error.URLError(error)
+
+    raise urllib.error.URLError('Unable to fetch MCWS XML')
 
 
 def read_mcws_zones(mcws_base_url):
@@ -200,8 +227,10 @@ def populate_song_from_fields(song, fields):
     song.Genre = fields.get('Genre', '')
     song.Comment = fields.get('Comment', '')
     song.Year = fields.get('Date (year)', fields.get('Year', ''))
+    song.Singer = get_first_non_empty_value(fields, 'Original Singer', 'Singer')
     song.AlbumArtist = fields.get('Album Artist', '')
     song.FilePath = fields.get('Filename', '')
+    song.Composer = fields.get('Composer', '')
     return song
 
 
@@ -264,7 +293,7 @@ def run_with_mcws(target_zone):
         "/Playback/Playlist",
         {
             'Zone': resolved_target_zone,
-            'Fields': 'Artist,Album,Name,Genre,Comment,Year,Album Artist,Filename',
+            'Fields': 'Artist,Album,Name,Genre,Composer,Comment,Year,Original Singer,Singer,Album Artist,Filename',
         }
     )
     playlist = read_playlist_from_xml(playlist_xml, minpos)
@@ -344,11 +373,11 @@ def getSongAt(mjplaylist, songpos):
     retSong.Title       = mjfile.Name;
     retSong.Genre       = mjfile.Genre;
     retSong.Comment     = mjfile.Comment;
-    # retSong.Composer    = mjfile.Composer;
+    retSong.Composer    = mjfile.Composer;
     retSong.Year        = mjfile.Year;
-    #retSong._Singer     Defined by beam
+    retSong.Singer      = get_first_non_empty_attribute(mjfile, 'OriginalSinger', 'Singer');
     retSong.AlbumArtist = mjfile.AlbumArtist;
-    # retSong.Performer   = mjfile.Performer;
+    #retSong.Performer   = mjfile.Performer;
     #retSong.IsCortina   Defined by beam
     retSong.FilePath     = mjfile.Filename;
     # 'C:\\Users\\DJ\\Music\\Angélique Kidjo\\Fifa\\Bitchifi - Angélique Kidjo.mp3'

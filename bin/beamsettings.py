@@ -120,6 +120,9 @@ class BeamSettings:
     def getArtistBackgroundsEnabled(self):
         return str(self.getArtistBackgrounds().get('Enabled', 'False')).lower() == 'true'
 
+    def getArtistBackgroundsUseCoverArt(self):
+        return str(self.getArtistBackgrounds().get('UseCoverArt', 'False')).lower() == 'true'
+
     def getDisplayTweaks(self):
         return getattr(self, '_beamConfigData', {}).get('DisplayTweaks', {})
 

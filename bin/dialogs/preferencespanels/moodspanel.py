@@ -49,6 +49,7 @@ class MoodsPanel(wx.Panel):
         self.mainFrame = mainFrame
         self.MoodRows = []
         self.artistBackgroundRows = []
+        self._preview_debounce = None
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         self.matchFields = ["%AlbumArtist", "%Artist", "%Performer"]
 
@@ -118,6 +119,9 @@ class MoodsPanel(wx.Panel):
         self.EnableArtistBackgrounds = wx.CheckBox(self, label='Enable artist backgrounds')
         self.EnableArtistBackgrounds.SetValue(str(artistBackgrounds.get('Enabled', 'False')).lower() == 'true')
         self.EnableArtistBackgrounds.Bind(wx.EVT_CHECKBOX, self.OnArtistBackgroundSettingsChanged)
+        self.UseCoverArtBackgrounds = wx.CheckBox(self, label='Use cover art / album art')
+        self.UseCoverArtBackgrounds.SetValue(str(artistBackgrounds.get('UseCoverArt', 'False')).lower() == 'true')
+        self.UseCoverArtBackgrounds.Bind(wx.EVT_CHECKBOX, self.OnArtistBackgroundSettingsChanged)
 
         self.MatchFieldDropdown = normalizeMacControlHeight(wx.ComboBox(self, value=artistBackgrounds.get('MatchField', '%AlbumArtist'), choices=self.matchFields, style=wx.CB_READONLY))
         self.MatchFieldDropdown.Bind(wx.EVT_COMBOBOX, self.OnArtistBackgroundSettingsChanged)
@@ -132,6 +136,8 @@ class MoodsPanel(wx.Panel):
         artistSettingsGrid = wx.FlexGridSizer(0, 2, 5, 10)
         artistSettingsGrid.AddGrowableCol(1, 1)
         artistSettingsGrid.Add(self.EnableArtistBackgrounds, 0, wx.ALIGN_CENTER_VERTICAL)
+        artistSettingsGrid.Add(wx.StaticText(self, -1, ''))
+        artistSettingsGrid.Add(self.UseCoverArtBackgrounds, 0, wx.ALIGN_CENTER_VERTICAL)
         artistSettingsGrid.Add(wx.StaticText(self, -1, ''))
         artistSettingsGrid.Add(wx.StaticText(self, -1, 'Default match field'), 0, wx.ALIGN_CENTER_VERTICAL)
         artistSettingsGrid.Add(self.MatchFieldDropdown, 0, wx.EXPAND)
@@ -192,7 +198,19 @@ class MoodsPanel(wx.Panel):
 
 
     def updateSettings(self):
-        self.mainFrame.updateSettings();
+        if self._preview_debounce is not None:
+            self._preview_debounce.Stop()
+        self._preview_debounce = wx.CallLater(125, self._run_preview_update)
+
+    def _run_preview_update(self):
+        self._preview_debounce = None
+        self.mainFrame.previewSettings()
+
+    def applyCommittedSettings(self):
+        if self._preview_debounce is not None:
+            self._preview_debounce.Stop()
+            self._preview_debounce = None
+        self.mainFrame.updateSettings(reload_preferences=False)
 
     def reloadFromSettings(self):
         self.TransitionDropdown.SetValue(self.BeamSettings.getMoodTransition())
@@ -201,6 +219,7 @@ class MoodsPanel(wx.Panel):
         self.BuildMoodList()
         artistBackgrounds = self.BeamSettings.getArtistBackgrounds()
         self.EnableArtistBackgrounds.SetValue(str(artistBackgrounds.get('Enabled', 'False')).lower() == 'true')
+        self.UseCoverArtBackgrounds.SetValue(str(artistBackgrounds.get('UseCoverArt', 'False')).lower() == 'true')
         self.MatchFieldDropdown.SetValue(artistBackgrounds.get('MatchField', '%AlbumArtist'))
         self.FallbackFieldDropdown.SetValue(artistBackgrounds.get('FallbackField', '%Artist'))
         self.DefaultModeDropdown.SetValue(artistBackgrounds.get('DefaultMode', 'blend'))
@@ -245,6 +264,7 @@ class MoodsPanel(wx.Panel):
     def updateArtistBackgroundControls(self):
         self.DefaultOpacityLabel.SetLabel(str(self.DefaultOpacitySlider.GetValue()) + '%')
         enabled = self.EnableArtistBackgrounds.GetValue()
+        self.UseCoverArtBackgrounds.Enable(enabled)
         self.MatchFieldDropdown.Enable(enabled)
         self.FallbackFieldDropdown.Enable(enabled)
         self.DefaultModeDropdown.Enable(enabled)
@@ -254,6 +274,7 @@ class MoodsPanel(wx.Panel):
     def OnArtistBackgroundSettingsChanged(self, event):
         artistBackgrounds = self.BeamSettings.getArtistBackgrounds()
         artistBackgrounds['Enabled'] = 'True' if self.EnableArtistBackgrounds.GetValue() else 'False'
+        artistBackgrounds['UseCoverArt'] = 'True' if self.UseCoverArtBackgrounds.GetValue() else 'False'
         artistBackgrounds['MatchField'] = self.MatchFieldDropdown.GetValue()
         artistBackgrounds['FallbackField'] = self.FallbackFieldDropdown.GetValue()
         artistBackgrounds['DefaultMode'] = self.DefaultModeDropdown.GetValue()

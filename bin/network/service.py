@@ -210,10 +210,32 @@ class BeamNetworkService(object):
             return layer_data.get('currentPath', '') or layer_data.get('sourcePath', '')
         return background_data.get('sourcePath', '')
 
+    def _get_snapshot_background_layer(self, layer_name):
+        background_data = self._latest_snapshot.get('background', {})
+        if layer_name == 'base':
+            return background_data.get('base', {}) or {}
+        if layer_name == 'overlay':
+            return background_data.get('overlay', {}) or {}
+
+        overlay_layer = background_data.get('overlay', {}) or {}
+        if overlay_layer.get('available') and str(overlay_layer.get('mode', '')).lower() == 'replace':
+            return overlay_layer
+        return background_data.get('base', {}) or {}
+
     async def _handle_background(self, request):
         layer_name = request.match_info.get('layer', 'current')
         with self._lock:
+            layer_data = self._get_snapshot_background_layer(layer_name)
             background_path = self._get_snapshot_background_path(layer_name)
+
+        if str(layer_data.get('kind', '')).lower() == 'coverart' and background_path:
+            image_bytes, mime_type = readCoverArtData(background_path)
+            if image_bytes:
+                return web.Response(
+                    body=image_bytes,
+                    content_type=mime_type or 'application/octet-stream',
+                    headers={'Cache-Control': 'no-store'},
+                )
 
         if background_path and os.path.isfile(background_path):
             return web.FileResponse(background_path)

@@ -139,15 +139,25 @@ class DisplayData():
 
     def getEffectiveTransitionBackgroundPath(self):
         layer_state = DisplayData._get_effective_transition_layer_state(self)
+        if layer_state.get('kind') == 'color':
+            return layer_state.get('canonicalReference') or layer_state.get('reference') or None
         return layer_state.get('currentPath') or layer_state.get('sourcePath') or None
 
     def hasRenderableLayeredBackground(self):
         for layer_state in (getattr(self, '_backgroundLayerState', {}) or {}).values():
-            if layer_state.get('available') and (layer_state.get('currentPath') or layer_state.get('sourcePath')):
+            if layer_state.get('available') and (
+                layer_state.get('kind') == 'color'
+                or layer_state.get('currentPath')
+                or layer_state.get('sourcePath')
+            ):
                 return True
 
         for layer_state in (getattr(self, 'backgroundLayers', {}) or {}).values():
-            if layer_state.get('available') and (layer_state.get('currentPath') or layer_state.get('sourcePath')):
+            if layer_state.get('available') and (
+                layer_state.get('kind') == 'color'
+                or layer_state.get('currentPath')
+                or layer_state.get('sourcePath')
+            ):
                 return True
 
         return False
@@ -261,6 +271,7 @@ class DisplayData():
         previous_state = previous_state or {}
 
         available = bool(layer_definition.get('available'))
+        kind = str(layer_definition.get('kind', '')).lower()
         source_path = layer_definition.get('sourcePath', '')
         rotate_mode = str(layer_definition.get('rotate', 'no')).lower()
         rotate_timer = int(layer_definition.get('rotateTimer', 0) or 0)
@@ -269,7 +280,14 @@ class DisplayData():
         layer_state['currentPath'] = ''
         layer_state['nextRotationAt'] = None
 
-        if not available or not source_path:
+        if not available:
+            return layer_state
+
+        if kind == 'color':
+            layer_state['currentPath'] = layer_definition.get('canonicalReference') or layer_definition.get('reference', '')
+            return layer_state
+
+        if not source_path:
             return layer_state
 
         same_source = (

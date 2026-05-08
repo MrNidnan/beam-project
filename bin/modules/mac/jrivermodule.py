@@ -75,6 +75,15 @@ def get_xml_text(node, default=''):
     return node.text
 
 
+def get_first_non_empty_value(fields, *field_names):
+    for field_name in field_names:
+        field_value = fields.get(field_name, '')
+        if str(field_value).strip() != '':
+            return field_value
+
+    return ''
+
+
 def get_target_zone():
     return beamSettings.getJRiverTargetZone()
 
@@ -187,6 +196,20 @@ def resolve_mcws_target_zone(mcws_base_url, target_zone):
     return normalized_target_zone
 
 
+def populate_song_from_fields(song, fields):
+    song.Artist = fields.get('Artist', '')
+    song.Album = fields.get('Album', '')
+    song.Title = fields.get('Name', '')
+    song.Genre = fields.get('Genre', '')
+    song.Comment = fields.get('Comment', '')
+    song.Year = fields.get('Date (year)', fields.get('Year', ''))
+    song.Singer = get_first_non_empty_value(fields, 'Original Singer', 'Singer')
+    song.AlbumArtist = fields.get('Album Artist', '')
+    song.FilePath = fields.get('Filename', '')
+    song.Composer = fields.get('Composer', '')
+    return song
+
+
 def run(MaxTandaLength):
     playlist = []
     playbackStatus = ''
@@ -209,7 +232,7 @@ def run(MaxTandaLength):
             "/Playback/Playlist",
             {
                 'Zone': target_zone,
-                'Fields': 'Artist,Album,Name,Genre,Comment,Year,Album Artist,Filename',
+                'Fields': 'Artist,Album,Name,Genre,Composer,Comment,Year,Original Singer,Singer,Album Artist,Filename',
             }
         )
 
@@ -220,33 +243,11 @@ def run(MaxTandaLength):
         for item in xml:
             # drop already played songs
             if (idx >= minpos):
-                # tags = {}
-                # clear retSong
-                retSong = SongObject()
-                # check tag names and fill retSong
+                fields = {}
                 for tag in item:
-                    name = tag.attrib["Name"]
-                    value = get_xml_text(tag)
+                    fields[tag.attrib.get('Name', '')] = get_xml_text(tag)
 
-                    if name == 'Artist':
-                        retSong.Artist = value
-                    elif name == 'Album':
-                        retSong.Album = value
-                    elif name == 'Name':
-                        retSong.Title = value
-                    elif name == 'Genre':
-                        retSong.Genre = value
-                    elif name == 'Comment':
-                        retSong.Comment = value
-                    elif name == 'Date (year)':
-                        retSong.Year = value
-                    elif name == 'Album Artist':
-                        retSong.AlbumArtist = value
-                    elif name == 'Filename':
-                        retSong.FilePath = value
-
-                # add it to playlist
-                playlist.append(retSong)
+                playlist.append(populate_song_from_fields(SongObject(), fields))
             idx = idx + 1
 
         return playlist, playbackStatus

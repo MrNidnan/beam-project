@@ -57,6 +57,9 @@ class FakeSettings:
     def getArtistBackgroundsEnabled(self):
         return str(self.config_data['ArtistBackgrounds'].get('Enabled', 'False')).lower() == 'true'
 
+    def getArtistBackgroundsUseCoverArt(self):
+        return str(self.config_data['ArtistBackgrounds'].get('UseCoverArt', 'False')).lower() == 'true'
+
     def getArtistBackgrounds(self):
         return self.config_data['ArtistBackgrounds']
 
