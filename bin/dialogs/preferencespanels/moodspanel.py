@@ -49,6 +49,7 @@ class MoodsPanel(wx.Panel):
         self.mainFrame = mainFrame
         self.MoodRows = []
         self.artistBackgroundRows = []
+        self._preview_debounce = None
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         self.matchFields = ["%AlbumArtist", "%Artist", "%Performer"]
 
@@ -197,7 +198,19 @@ class MoodsPanel(wx.Panel):
 
 
     def updateSettings(self):
-        self.mainFrame.updateSettings();
+        if self._preview_debounce is not None:
+            self._preview_debounce.Stop()
+        self._preview_debounce = wx.CallLater(125, self._run_preview_update)
+
+    def _run_preview_update(self):
+        self._preview_debounce = None
+        self.mainFrame.previewSettings()
+
+    def applyCommittedSettings(self):
+        if self._preview_debounce is not None:
+            self._preview_debounce.Stop()
+            self._preview_debounce = None
+        self.mainFrame.updateSettings(reload_preferences=False)
 
     def reloadFromSettings(self):
         self.TransitionDropdown.SetValue(self.BeamSettings.getMoodTransition())

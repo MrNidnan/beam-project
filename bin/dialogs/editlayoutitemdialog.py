@@ -274,6 +274,10 @@ class EditLayoutItemDialog(wx.Dialog):
     def _refresh_parent_display(self):
         refresh_owner = self.parent
 
+        if hasattr(refresh_owner, 'applyCommittedSettings'):
+            refresh_owner.applyCommittedSettings()
+            return
+
         if hasattr(refresh_owner, 'updateSettings'):
             refresh_owner.updateSettings()
             return

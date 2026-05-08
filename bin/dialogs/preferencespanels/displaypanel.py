@@ -524,8 +524,8 @@ class DisplayPanel(wx.Panel):
         except Exception:
             pass
 
-    def drawCoverArt(self, dc, cliWidth, cliHeight, j):
-        Settings = self.displayData.currentDisplaySettings[j]
+    def drawCoverArt(self, dc, cliWidth, cliHeight, settings):
+        Settings = settings
 
         # Get (text) size and position
         size = max(1, int(Settings['Size'] * cliHeight / 100))
@@ -637,12 +637,17 @@ class DisplayPanel(wx.Panel):
             return (cliWidth - text_width) / 2
         raise Exception("Unknown alignment" + alignment)
 
+    def _get_render_state_snapshot(self):
+        display_settings = list(getattr(self.displayData, 'currentDisplaySettings', []) or [])
+        display_rows = list(getattr(self.displayData, 'currentDisplayRows', []) or [])
+        render_count = min(len(display_settings), len(display_rows))
+        return display_settings[:render_count], display_rows[:render_count]
 
-    def drawTextItem(self, dc, cliWidth, cliHeight, j, extra_vertical_offset=0):
+
+    def drawTextItem(self, dc, cliWidth, cliHeight, settings, text, extra_vertical_offset=0):
 
         # Text and settings
-        text = self.displayData.currentDisplayRows[j]
-        Settings = self.displayData.currentDisplaySettings[j]
+        Settings = settings
 
         # Get text size and position 
         # PRS integered size
@@ -769,23 +774,25 @@ class DisplayPanel(wx.Panel):
         if not cliWidth or not cliHeight:
             return
 
+        display_settings, display_rows = self._get_render_state_snapshot()
+
         # Draw images
-        for j in range(0, len(self.displayData.currentDisplaySettings)):
-            field = self.displayData.currentDisplaySettings[j]["Field"]
-            if field.strip() == "%CoverArt" and self.displayData.currentDisplayRows[j] != "":
-                self.drawCoverArt(dc, cliWidth, cliHeight, j)
+        for j, settings in enumerate(display_settings):
+            field = settings["Field"]
+            if field.strip() == "%CoverArt" and display_rows[j] != "":
+                self.drawCoverArt(dc, cliWidth, cliHeight, settings)
 
         # Draw text after/over image. Wrapped rows reserve extra vertical space for later rows.
         text_row_indexes = []
-        for j in range(0, len(self.displayData.currentDisplaySettings)):
-            field = self.displayData.currentDisplaySettings[j]["Field"]
+        for j, settings in enumerate(display_settings):
+            field = settings["Field"]
             if field.strip() != "%CoverArt":
                 text_row_indexes.append(j)
 
         text_row_indexes.sort(
             key=lambda index: (
-                self.displayData.currentDisplaySettings[index]['Position'][0],
-                self.displayData.currentDisplaySettings[index]['Position'][1],
+                display_settings[index]['Position'][0],
+                display_settings[index]['Position'][1],
                 index,
             )
         )
@@ -794,7 +801,7 @@ class DisplayPanel(wx.Panel):
         current_row_position = None
         current_row_extra_height = 0
         for j in text_row_indexes:
-            settings = self.displayData.currentDisplaySettings[j]
+            settings = display_settings[j]
             row_position = settings['Position'][0]
             if current_row_position is None:
                 current_row_position = row_position
@@ -807,7 +814,8 @@ class DisplayPanel(wx.Panel):
                 dc,
                 cliWidth,
                 cliHeight,
-                j,
+                settings,
+                display_rows[j],
                 cumulative_vertical_offset,
             )
             current_row_extra_height = max(current_row_extra_height, row_extra_height)

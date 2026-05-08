@@ -657,7 +657,10 @@ class EditMoodDialog(wx.Dialog):
 
         beamSettings.markDirty()
         self.moodsPanel.BuildMoodList()
-        self.moodsPanel.updateSettings()
+        if hasattr(self.moodsPanel, 'applyCommittedSettings'):
+            self.moodsPanel.applyCommittedSettings()
+        else:
+            self.moodsPanel.updateSettings()
         self.Destroy()
 
     #

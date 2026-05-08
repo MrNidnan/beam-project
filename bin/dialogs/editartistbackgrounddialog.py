@@ -265,5 +265,8 @@ class EditArtistBackgroundDialog(wx.Dialog):
 
         beamSettings.markDirty()
         self.moodsPanel.BuildArtistBackgroundList()
-        self.moodsPanel.updateSettings()
+        if hasattr(self.moodsPanel, 'applyCommittedSettings'):
+            self.moodsPanel.applyCommittedSettings()
+        else:
+            self.moodsPanel.updateSettings()
         self.Destroy()

@@ -93,6 +93,7 @@ class DefaultLayoutPanel(wx.Panel):
         self.parent = parent
         self.mainFrame = getattr(parent, 'mainFrame', None)
         self.DisplayRows = []
+        self._preview_debounce = None
         font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         
         ###############
@@ -190,7 +191,16 @@ class DefaultLayoutPanel(wx.Panel):
 
     def updateSettings(self):
         if self.mainFrame is not None:
-            self.mainFrame.updateSettings()
+            if self._preview_debounce is not None:
+                self._preview_debounce.Stop()
+            self._preview_debounce = wx.CallLater(125, self.mainFrame.previewSettings)
+
+    def applyCommittedSettings(self):
+        if self._preview_debounce is not None:
+            self._preview_debounce.Stop()
+            self._preview_debounce = None
+        if self.mainFrame is not None:
+            self.mainFrame.updateSettings(reload_preferences=False)
 
 
 ###################################################################
