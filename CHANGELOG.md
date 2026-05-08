@@ -2,6 +2,18 @@
 
 All notable changes in this fork are documented in this file.
 
+## v0.9.0.1 - 2026-05-08
+
+### Added
+
+- **JRiver**: reads singer custom tag from jriver module, reads composer
+- Add an option to define a uniform color for the background instead of a picture.
+
+### Fixed
+
+- Preserve the ratio of CoverArt, don't make them all square
+- Fix coverArt rounding displaying
+
 ## v0.9.0.1 - 2026-05-05
 
 ### Fixed
