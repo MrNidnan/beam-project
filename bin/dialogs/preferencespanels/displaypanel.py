@@ -32,6 +32,7 @@ import wx.html
 
 from bin.beamsettings import beamSettings
 from bin.beamutils import formatMemoryUsageMb, getProcessMemoryUsageBytes
+from bin.mutagenutils import readCoverArtImage
 
 
 #
@@ -213,12 +214,12 @@ class DisplayPanel(wx.Panel):
         dc.DrawRectangle(0, 0, int(cliWidth), int(cliHeight))
         return True
 
-    def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0):
-        if not source_path:
+    def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0, source_image=None, cache_source_key=None):
+        if not source_path and source_image is None:
             return None
 
         cache_key = (
-            source_path,
+            cache_source_key or source_path,
             int(cliWidth),
             int(cliHeight),
             round(float(self.displayData.red), 4),
@@ -253,11 +254,14 @@ class DisplayPanel(wx.Panel):
             formatMemoryUsageMb(getProcessMemoryUsageBytes()),
         )
 
-        log_silencer = wx.LogNull()
-        try:
-            image = wx.Image(source_path)
-        finally:
-            del log_silencer
+        if source_image is not None:
+            image = source_image.Copy()
+        else:
+            log_silencer = wx.LogNull()
+            try:
+                image = wx.Image(source_path)
+            finally:
+                del log_silencer
         if not image.IsOk():
             DisplayPanel._log_background_debug(
                 self,
@@ -373,11 +377,20 @@ class DisplayPanel(wx.Panel):
                 base_drawn = True
             else:
                 overlay_source_path = self._get_layer_draw_path(overlay_layer)
+                overlay_source_image = None
+                overlay_cache_source_key = None
+                if str(overlay_layer.get('kind', '')).lower() == 'coverart':
+                    overlay_source_image = self.displayData.currentCoverArtImage
+                    overlay_cache_source_key = overlay_layer.get('sourcePath', '') or overlay_layer.get('reference', 'coverArt:current')
+                    if overlay_source_image is None and overlay_source_path:
+                        overlay_source_image = readCoverArtImage(overlay_source_path)
                 overlay_bitmap = self._get_scaled_background_bitmap(
                     overlay_source_path,
                     cliWidth,
                     cliHeight,
                     1.0 if overlay_mode == 'replace' else overlay_opacity,
+                    source_image=overlay_source_image,
+                    cache_source_key=overlay_cache_source_key,
                 )
                 if overlay_bitmap is not None:
                     if overlay_mode == 'replace':
