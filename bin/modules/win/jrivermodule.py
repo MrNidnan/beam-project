@@ -41,6 +41,8 @@ except ImportError:
     win32com = None
 from bin.modules.win.winutils import applicationrunning
 
+_ZONE_RESOLUTION_CACHE = {}
+
 ###############################################################
 #
 # Define operations
@@ -102,6 +104,15 @@ def get_first_non_empty_attribute(target, *attribute_names):
 
 def get_target_zone():
     return beamSettings.getJRiverTargetZone()
+
+
+def get_playlist_fetch_count(max_tanda_length):
+    try:
+        base_count = int(max_tanda_length or 1)
+    except (TypeError, ValueError):
+        base_count = 1
+
+    return max(base_count, 1) + 2
 
 
 def build_mcws_url(base_url, path, query_params=None):
@@ -178,46 +189,72 @@ def resolve_mcws_target_zone(mcws_base_url, target_zone):
         explicit_prefix = ''
         explicit_value = normalized_target_zone
 
-    zones = read_mcws_zones(mcws_base_url)
     if explicit_prefix == 'id':
         return explicit_value or normalized_target_zone
+
+    cache_key = (mcws_base_url, normalized_target_zone)
+    cached_zone_id = _ZONE_RESOLUTION_CACHE.get(cache_key)
+    if cached_zone_id:
+        return cached_zone_id
+
+    zones = read_mcws_zones(mcws_base_url)
+    resolved_zone_id = normalized_target_zone
 
     if explicit_prefix == 'name':
         for zone in zones:
             if zone['name'].lower() == explicit_value.lower():
-                return zone['id']
-        return explicit_value or normalized_target_zone
+                resolved_zone_id = zone['id']
+                break
+        else:
+            resolved_zone_id = explicit_value or normalized_target_zone
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
     if explicit_prefix == 'index':
         try:
             requested_index = int(explicit_value)
         except ValueError:
-            return explicit_value or normalized_target_zone
+            resolved_zone_id = explicit_value or normalized_target_zone
+            _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+            return resolved_zone_id
 
         if 0 <= requested_index < len(zones):
-            return zones[requested_index]['id']
-        return explicit_value or normalized_target_zone
+            resolved_zone_id = zones[requested_index]['id']
+        else:
+            resolved_zone_id = explicit_value or normalized_target_zone
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
     for zone in zones:
         if zone['id'] == normalized_target_zone:
-            return zone['id']
+            resolved_zone_id = zone['id']
+            _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+            return resolved_zone_id
 
     for zone in zones:
         if zone['name'].lower() == normalized_lookup:
-            return zone['id']
+            resolved_zone_id = zone['id']
+            _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+            return resolved_zone_id
 
     try:
         requested_zone_number = int(normalized_target_zone)
     except ValueError:
-        return normalized_target_zone
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
     if 1 <= requested_zone_number <= len(zones):
-        return zones[requested_zone_number - 1]['id']
+        resolved_zone_id = zones[requested_zone_number - 1]['id']
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
     if 0 <= requested_zone_number < len(zones):
-        return zones[requested_zone_number]['id']
+        resolved_zone_id = zones[requested_zone_number]['id']
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
-    return normalized_target_zone
+    _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+    return resolved_zone_id
 
 
 def populate_song_from_fields(song, fields):
@@ -234,12 +271,15 @@ def populate_song_from_fields(song, fields):
     return song
 
 
-def read_playlist_from_xml(xml_root, minpos):
+def read_playlist_from_xml(xml_root, minpos, max_tanda_length):
     playlist = []
+    max_items = get_playlist_fetch_count(max_tanda_length)
 
     for idx, item in enumerate(xml_root):
         if idx < minpos:
             continue
+        if len(playlist) >= max_items:
+            break
 
         fields = {}
         for tag in item:
@@ -281,7 +321,7 @@ def is_jriver_running():
     return False
 
 
-def run_with_mcws(target_zone):
+def run_with_mcws(target_zone, max_tanda_length):
     mcws_base_url = "http://localhost:52199/MCWS/v1"
     resolved_target_zone = resolve_mcws_target_zone(mcws_base_url, target_zone)
     info_xml = fetch_mcws_xml(mcws_base_url, "/Playback/Info", {'Zone': resolved_target_zone})
@@ -296,15 +336,16 @@ def run_with_mcws(target_zone):
             'Fields': 'Artist,Album,Name,Genre,Composer,Comment,Year,Original Singer,Singer,Album Artist,Filename',
         }
     )
-    playlist = read_playlist_from_xml(playlist_xml, minpos)
+    playlist = read_playlist_from_xml(playlist_xml, minpos, max_tanda_length)
     return playlist, playback_status
 
 
-def run_with_com(target_zone):
+def run_with_com(target_zone, max_tanda_length):
     if pythoncom is None or win32com is None:
         raise ImportError()
 
     playlist = []
+    max_items = get_playlist_fetch_count(max_tanda_length)
     pythoncom.CoInitialize()
     try:
         mjautomation = win32com.client.Dispatch("MediaJukebox Application")
@@ -321,7 +362,7 @@ def run_with_com(target_zone):
             mjplaylist = call_with_optional_zone(mjautomation, 'GetCurPlaylist', target_zone)
             minpos = int(getattr(mjplaylist, 'Position', 0))
             maxpos = int(mjplaylist.GetNumberFiles())
-            for songpos in range(minpos, maxpos):
+            for songpos in range(minpos, min(maxpos, minpos + max_items)):
                 playlist.append(getSongAt(mjplaylist, songpos))
         else:
             playback_status = 'Unknown'
@@ -330,10 +371,10 @@ def run_with_com(target_zone):
 
     return playlist, playback_status
 
-def run(_max_tanda_length):
+def run(max_tanda_length):
     target_zone = get_target_zone()
     try:
-        return run_with_mcws(target_zone)
+        return run_with_mcws(target_zone, max_tanda_length)
     except urllib.error.URLError:
         pass
     except (AttributeError, TypeError, ValueError, ET.ParseError):
@@ -345,7 +386,7 @@ def run(_max_tanda_length):
         return [], 'PlayerNotRunning'
 
     try:
-        return run_with_com(target_zone)
+        return run_with_com(target_zone, max_tanda_length)
     except ImportError:
         pass
     except Exception:
