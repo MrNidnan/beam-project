@@ -70,9 +70,10 @@ To enable MCWS in JRiver Media Center, open `Tools > Options > Media Network` an
 
 ![JRiver MCWS windows settings](../docs/images/user-manual/JRiver_mcws_settings.jpg)
 
-https://wiki.jriver.com/index.php/MCWS_Playback_Info
-https://wiki.jriver.com/index.php/MCWS_Playback_Playlist
-https://wiki.jriver.com/index.php/MCWS_File_GetInfo
+Developer docummentation:
+https://wiki.jriver.com/index.php/Web_Service_Interface
+Once MWCS is running:
+http://localhost:52199/MCWS/v1/doc
 
 ## Mixxx
 
