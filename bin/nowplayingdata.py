@@ -230,18 +230,53 @@ class NowPlayingData:
             display_value = str(my_display['Field'])
             for key in sorted(list(self.convDict.keys()), reverse=True):
                 display_value = display_value.replace(str(key), str(self.convDict[key]))
-            if my_display['HideControl'] == "" and my_display['Active'] == "yes":
+            if self._should_display_layout_item(my_display) and my_display['Active'] == "yes":
                 display_rows[j] = display_value
             else:
-                hide_control_eval = str(my_display['HideControl'])
-                for key in sorted(list(self.convDict.keys()), reverse=True):
-                    hide_control_eval = hide_control_eval.replace(str(key), str(self.convDict[key]))
-                if not hide_control_eval == "" and my_display['Active'] == "yes":
-                    display_rows[j] = display_value
-                else:
-                    display_rows[j] = ""
+                display_rows[j] = ""
 
         return display_rows
+
+    def _resolve_layout_condition_value(self, value):
+        normalized_value = str(value or '').strip()
+        if normalized_value.lower() == 'empty':
+            return ''
+        return normalized_value
+
+    def _split_layout_condition_values(self, value):
+        normalized_value = self._resolve_layout_condition_value(value)
+        if normalized_value == '':
+            return ['']
+        values = [part.strip().lower() for part in normalized_value.split(',') if part.strip() != '']
+        if not values:
+            return ['']
+        return values
+
+    def _evaluate_layout_hide_condition(self, settings):
+        hide_control = str(settings.get('HideControl', '') or '')
+        if hide_control == '':
+            return False
+
+        hide_control_eval = hide_control
+        for key in sorted(list(self.convDict.keys()), reverse=True):
+            hide_control_eval = hide_control_eval.replace(str(key), str(self.convDict[key]))
+
+        operator = str(settings.get('HideControlOperator', 'is') or 'is').strip().lower()
+        comparison_value = self._resolve_layout_condition_value(settings.get('HideControlValue', 'empty'))
+        comparison_values = self._split_layout_condition_values(settings.get('HideControlValue', 'empty'))
+        hide_control_eval = str(hide_control_eval).lower()
+
+        if operator == 'is':
+            return hide_control_eval in comparison_values
+        if operator == 'is not':
+            return hide_control_eval not in comparison_values
+        if operator == 'contains':
+            return comparison_value.lower() in hide_control_eval
+
+        return hide_control_eval == ''
+
+    def _should_display_layout_item(self, settings):
+        return not self._evaluate_layout_hide_condition(settings)
 
     def _resolve_cover_art_state_for_settings(self, display_settings, display_rows, current_song, force_load=False):
         cover_art_path = ""

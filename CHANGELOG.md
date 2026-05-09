@@ -2,6 +2,22 @@
 
 All notable changes in this fork are documented in this file.
 
+## v0.9.1.1 - 2026-05-08
+
+### Added
+
+- The layout-item hide condition now supports tag / operator / value instead of only “tag is empty”.
+  • is and is not accept comma-separated values in the layout hide condition.
+
+  Example:
+  %PreviousGenre is Milonga, Tango, Vals
+
+  This is evaluated as: genre is milonga or tango or vals
+
+### Changed
+
+- Windows JRiver module now respects max_tanda_length in both paths and avoids repeated target-zone resolution work
+
 ## v0.9.1.0 - 2026-05-08
 
 ### Added

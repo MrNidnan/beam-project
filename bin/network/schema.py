@@ -75,6 +75,8 @@ def build_display_items(rows, settings):
             'weight': setting.get('Weight', 'Normal'),
             'position': list(setting.get('Position', [0, 0])),
             'hideControl': setting.get('HideControl', ''),
+            'hideControlOperator': setting.get('HideControlOperator', 'is'),
+            'hideControlValue': setting.get('HideControlValue', 'empty'),
             'textFlow': setting.get('TextFlow', 'Cut'),
         })
 

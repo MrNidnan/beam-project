@@ -65,6 +65,7 @@ class EditLayoutItemDialog(wx.Dialog):
         styles = ["Italic","Normal","Slant"]
         alignments = ["Left","Center","Right"]
         text_flow_choices = ["Cut","Scale","Wrap"]
+        hide_operator_choices = ["is", "is not", "contains"]
         
         hide_layout_tags = [
             '', '%Artist', '%Album', '%Title', '%Genre', '%Comment', '%Composer',
@@ -83,7 +84,26 @@ class EditLayoutItemDialog(wx.Dialog):
             self.Settings   = deepcopy(layout_list[self.RowSelected])
         else:
             # Create a new default item
-            self.Settings   = ({"Field": "%Artist", "Font": "Default","Style": "Normal", "Weight": "Bold", "Size": 20, "FontColor": "(255,255,255,255)", "HideControl": "", "Position": [50,50], "Alignment": "Center", "Active": "yes", "TextFlow": "Wrap"})
+            self.Settings   = ({
+                "Field": "%Artist",
+                "Font": "Default",
+                "Style": "Normal",
+                "Weight": "Bold",
+                "Size": 20,
+                "FontColor": "(255,255,255,255)",
+                "HideControl": "",
+                "HideControlOperator": "is",
+                "HideControlValue": "empty",
+                "Position": [50,50],
+                "Alignment": "Center",
+                "Active": "yes",
+                "TextFlow": "Wrap",
+            })
+
+        if 'HideControlOperator' not in self.Settings:
+            self.Settings['HideControlOperator'] = "is"
+        if 'HideControlValue' not in self.Settings:
+            self.Settings['HideControlValue'] = "empty"
 
         # Define fields
         self.LabelText          = wx.TextCtrl(self.EditLayoutPanel, size=(250,-1), value=self.Settings['Field'])
@@ -92,7 +112,9 @@ class EditLayoutItemDialog(wx.Dialog):
         self.WeightDropdown     = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Weight'], choices=weights, style=wx.CB_READONLY)
         self.SizeText           = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings['Size']), min=1, max=99)
         self.ColorField         = wx.ColourPickerCtrl(self.EditLayoutPanel, size=(100,-1))
-        self.HideText           = wx.ComboBox(self.EditLayoutPanel, size=(250,-1), value=self.Settings['HideControl'], choices=hide_layout_tags, style=wx.CB_READONLY)
+        self.HideText           = wx.ComboBox(self.EditLayoutPanel, size=(180,-1), value=self.Settings['HideControl'], choices=hide_layout_tags, style=wx.CB_READONLY)
+        self.HideOperator       = wx.ComboBox(self.EditLayoutPanel, size=(90,-1), value=self.Settings['HideControlOperator'], choices=hide_operator_choices, style=wx.CB_READONLY)
+        self.HideValueText      = wx.TextCtrl(self.EditLayoutPanel, size=(120,-1), value=str(self.Settings['HideControlValue']))
         self.VerticalPos        = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings['Position'][0]), min=1, max=99)
         self.HorizontalPos      = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings['Position'][1]), min=1, max=99)
         self.Alignment          = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Alignment'], choices=alignments, style=wx.CB_READONLY)
@@ -111,6 +133,8 @@ class EditLayoutItemDialog(wx.Dialog):
         self.WeightDropdown.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
         self.SizeText.Bind(wx.EVT_SPINCTRL, self.OnImmediatePreviewChange)
         self.HideText.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
+        self.HideOperator.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
+        self.HideValueText.Bind(wx.EVT_TEXT, self.OnDebouncedPreviewChange)
         self.VerticalPos.Bind(wx.EVT_SPINCTRL, self.OnImmediatePreviewChange)
         self.HorizontalPos.Bind(wx.EVT_SPINCTRL, self.OnImmediatePreviewChange)
         self.TextFlow.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
@@ -119,8 +143,12 @@ class EditLayoutItemDialog(wx.Dialog):
         content_box = wx.StaticBoxSizer(wx.VERTICAL, self.EditLayoutPanel, "Content")
         content_box.Add(wx.StaticText(self.EditLayoutPanel, label="Text template"), 0, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         content_box.Add(self.LabelText, 0, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, border=10)
-        content_box.Add(wx.StaticText(self.EditLayoutPanel, label="Hide when tag is empty"), 0, flag=wx.LEFT | wx.RIGHT, border=10)
-        content_box.Add(self.HideText, 0, flag=wx.ALL | wx.EXPAND, border=10)
+        content_box.Add(wx.StaticText(self.EditLayoutPanel, label="Hide when"), 0, flag=wx.LEFT | wx.RIGHT, border=10)
+        hide_condition_row = wx.BoxSizer(wx.HORIZONTAL)
+        hide_condition_row.Add(self.HideText, 1, flag=wx.RIGHT | wx.EXPAND, border=8)
+        hide_condition_row.Add(self.HideOperator, 0, flag=wx.RIGHT, border=8)
+        hide_condition_row.Add(self.HideValueText, 0)
+        content_box.Add(hide_condition_row, 0, flag=wx.ALL | wx.EXPAND, border=10)
 
         typography_box = wx.StaticBoxSizer(wx.VERTICAL, self.EditLayoutPanel, "Typography")
         typography_grid = wx.FlexGridSizer(6, 2, 5, 12)
@@ -215,6 +243,8 @@ class EditLayoutItemDialog(wx.Dialog):
         settings['Weight'] = self.WeightDropdown.GetValue()
         settings['Size'] = int(self.SizeText.GetValue())
         settings['HideControl'] = self.HideText.GetValue()
+        settings['HideControlOperator'] = self.HideOperator.GetValue()
+        settings['HideControlValue'] = self.HideValueText.GetValue().strip()
         settings['FontColor'] = str(self.ColorField.GetColour())
         settings['Position'] = [int(self.VerticalPos.GetValue()), int(self.HorizontalPos.GetValue())]
         settings['Alignment'] = self.Alignment.GetValue()
