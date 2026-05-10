@@ -72,12 +72,17 @@ def rule_matches(field_value, operator, rule_value):
     return False
 
 
-def trim_trailing_parentheses(curr_value):
+def trim_trailing_suffix_from_symbol(curr_value, start_symbol='('):
     normalized_value = alwaysStr(curr_value).strip()
     if normalized_value == "":
         return ""
 
-    return re.sub(r'\s*(?:\([^()]*\)\s*)+$', '', normalized_value).strip()
+    normalized_symbol = alwaysStr(start_symbol)
+    if normalized_symbol == "":
+        normalized_symbol = '('
+
+    pattern = r'\s*(?:' + re.escape(normalized_symbol) + r'.*)$'
+    return re.sub(pattern, '', normalized_value).strip()
 
 
 class SongObject(object):
@@ -224,7 +229,8 @@ class SongObject(object):
                 #
                 if currentRule['Type'] == 'Trim () in Title' and currentRule['Active'] == 'yes':
                     title_field_name = currentRule.get('Field1', '%Title').replace('%', '')
-                    trimmed_title = trim_trailing_parentheses(getattr(self, title_field_name))
+                    trim_symbol = currentRule.get('Field2', '(')
+                    trimmed_title = trim_trailing_suffix_from_symbol(getattr(self, title_field_name), trim_symbol)
                     setattr(self, title_field_name, trimmed_title)
             except:
                 logging.error("Error at Rule: " + str(i) + " Type: " + currentRule['Type'] + "  First Field " + currentRule['Field1'])
