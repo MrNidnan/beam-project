@@ -703,11 +703,14 @@ class BeamSettings:
                     has_trim_title_rule = True
                     if 'Field1' not in rule:
                         rule['Field1'] = '%Title'
+                    if 'Field2' not in rule or str(rule.get('Field2', '')).strip() == '':
+                        rule['Field2'] = '('
 
             if not has_trim_title_rule:
                 self._beamConfigData['Rules'].append({
                     'Active': 'no',
                     'Field1': '%Title',
+                    'Field2': '(',
                     'Type': 'Trim () in Title',
                 })
 

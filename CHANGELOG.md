@@ -2,6 +2,14 @@
 
 All notable changes in this fork are documented in this file.
 
+## v0.9.1.2 - 2026-05-10
+
+### Added
+
+- The “Trim () in Title” rule is now configurable by start symbol.
+  - symbol ( trims Song "Title (Live)" to Song "Title"
+  - symbol - trims Song "Title - Live" to Song "Title"
+
 ## v0.9.1.1 - 2026-05-08
 
 ### Added
