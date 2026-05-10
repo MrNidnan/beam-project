@@ -24,6 +24,7 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import socket
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -32,6 +33,7 @@ import xml.etree.ElementTree as ET
 from bin.beamsettings import beamSettings
 from bin.songclass import SongObject
 
+_ZONE_RESOLUTION_CACHE = {}
 
 
 ###############################################################
@@ -88,6 +90,15 @@ def get_target_zone():
     return beamSettings.getJRiverTargetZone()
 
 
+def get_playlist_fetch_count(max_tanda_length):
+    try:
+        base_count = int(max_tanda_length or 1)
+    except (TypeError, ValueError):
+        base_count = 1
+
+    return max(base_count, 1) + 2
+
+
 def build_mcws_url(base_url, path, query_params=None):
     encoded_query = urllib.parse.urlencode(query_params or {})
     if encoded_query == '':
@@ -98,11 +109,19 @@ def build_mcws_url(base_url, path, query_params=None):
 
 def fetch_mcws_xml(mcws_base_url, path, query_params=None):
     url = build_mcws_url(mcws_base_url, path, query_params)
-    with urllib.request.urlopen(url) as response:
-        payload = response.read()
-        response.close()
+    request = urllib.request.Request(url, headers={'Connection': 'close'})
 
-    return ET.fromstring(payload)
+    for _attempt in range(2):
+        try:
+            with urllib.request.urlopen(request, timeout=2.5) as response:
+                payload = response.read()
+                response.close()
+            return ET.fromstring(payload)
+        except (ConnectionResetError, socket.timeout, TimeoutError, OSError) as error:
+            if _attempt == 1:
+                raise urllib.error.URLError(error)
+
+    raise urllib.error.URLError('Unable to fetch MCWS XML')
 
 
 def read_mcws_zones(mcws_base_url):
@@ -154,46 +173,72 @@ def resolve_mcws_target_zone(mcws_base_url, target_zone):
         explicit_prefix = ''
         explicit_value = normalized_target_zone
 
-    zones = read_mcws_zones(mcws_base_url)
     if explicit_prefix == 'id':
         return explicit_value or normalized_target_zone
+
+    cache_key = (mcws_base_url, normalized_target_zone)
+    cached_zone_id = _ZONE_RESOLUTION_CACHE.get(cache_key)
+    if cached_zone_id:
+        return cached_zone_id
+
+    zones = read_mcws_zones(mcws_base_url)
+    resolved_zone_id = normalized_target_zone
 
     if explicit_prefix == 'name':
         for zone in zones:
             if zone['name'].lower() == explicit_value.lower():
-                return zone['id']
-        return explicit_value or normalized_target_zone
+                resolved_zone_id = zone['id']
+                break
+        else:
+            resolved_zone_id = explicit_value or normalized_target_zone
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
     if explicit_prefix == 'index':
         try:
             requested_index = int(explicit_value)
         except ValueError:
-            return explicit_value or normalized_target_zone
+            resolved_zone_id = explicit_value or normalized_target_zone
+            _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+            return resolved_zone_id
 
         if 0 <= requested_index < len(zones):
-            return zones[requested_index]['id']
-        return explicit_value or normalized_target_zone
+            resolved_zone_id = zones[requested_index]['id']
+        else:
+            resolved_zone_id = explicit_value or normalized_target_zone
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
     for zone in zones:
         if zone['id'] == normalized_target_zone:
-            return zone['id']
+            resolved_zone_id = zone['id']
+            _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+            return resolved_zone_id
 
     for zone in zones:
         if zone['name'].lower() == normalized_lookup:
-            return zone['id']
+            resolved_zone_id = zone['id']
+            _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+            return resolved_zone_id
 
     try:
         requested_zone_number = int(normalized_target_zone)
     except ValueError:
-        return normalized_target_zone
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
     if 1 <= requested_zone_number <= len(zones):
-        return zones[requested_zone_number - 1]['id']
+        resolved_zone_id = zones[requested_zone_number - 1]['id']
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
     if 0 <= requested_zone_number < len(zones):
-        return zones[requested_zone_number]['id']
+        resolved_zone_id = zones[requested_zone_number]['id']
+        _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+        return resolved_zone_id
 
-    return normalized_target_zone
+    _ZONE_RESOLUTION_CACHE[cache_key] = resolved_zone_id
+    return resolved_zone_id
 
 
 def populate_song_from_fields(song, fields):
@@ -208,6 +253,25 @@ def populate_song_from_fields(song, fields):
     song.FilePath = fields.get('Filename', '')
     song.Composer = fields.get('Composer', '')
     return song
+
+
+def read_playlist_from_xml(xml_root, minpos, max_tanda_length):
+    playlist = []
+    max_items = get_playlist_fetch_count(max_tanda_length)
+
+    for idx, item in enumerate(xml_root):
+        if idx < minpos:
+            continue
+        if len(playlist) >= max_items:
+            break
+
+        fields = {}
+        for tag in item:
+            fields[tag.attrib.get('Name', '')] = get_xml_text(tag)
+
+        playlist.append(populate_song_from_fields(SongObject(), fields))
+
+    return playlist
 
 
 def run(MaxTandaLength):
@@ -239,16 +303,7 @@ def run(MaxTandaLength):
         # header:  < MPL Version = "2.0" Title = "MCWS - Files - 123145321799680" PathSeparator = "/" >
         # value "123145321799680" (example) can change with every readout
 
-        idx = 0
-        for item in xml:
-            # drop already played songs
-            if (idx >= minpos):
-                fields = {}
-                for tag in item:
-                    fields[tag.attrib.get('Name', '')] = get_xml_text(tag)
-
-                playlist.append(populate_song_from_fields(SongObject(), fields))
-            idx = idx + 1
+        playlist = read_playlist_from_xml(xml, minpos, MaxTandaLength)
 
         return playlist, playbackStatus
 
