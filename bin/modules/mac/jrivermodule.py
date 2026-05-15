@@ -34,6 +34,7 @@ from bin.beamsettings import beamSettings
 from bin.songclass import SongObject
 
 _ZONE_RESOLUTION_CACHE = {}
+PLAYLIST_LOOKAHEAD_LIMIT = 64
 
 
 ###############################################################
@@ -255,23 +256,76 @@ def populate_song_from_fields(song, fields):
     return song
 
 
+def _annotate_current_song_since_last_cortina(playlist, previous_songs):
+    if not playlist:
+        return playlist
+
+    rules = beamSettings.getRules()
+    current_song = playlist[0]
+    current_song.applySongRules(rules)
+    if current_song.IsCortina == 'yes':
+        current_song.SinceLastCortinaCountOverride = 0
+        return playlist
+
+    since_last_cortina_count = 1
+
+    for previous_song in reversed(previous_songs):
+        previous_song.applySongRules(rules)
+        if previous_song.IsCortina == 'yes':
+            break
+        since_last_cortina_count = since_last_cortina_count + 1
+
+    current_song.SinceLastCortinaCountOverride = since_last_cortina_count
+    return playlist
+
+
+def _has_next_tanda_boundary(playlist):
+    if len(playlist) < 2:
+        return False
+
+    rules = beamSettings.getRules()
+    current_song = playlist[0]
+    current_song.applySongRules(rules)
+    seen_cortina = current_song.IsCortina == 'yes'
+
+    for song in playlist[1:]:
+        song.applySongRules(rules)
+        if not seen_cortina:
+            if song.IsCortina == 'yes':
+                seen_cortina = True
+            continue
+
+        if song.IsCortina != 'yes':
+            return True
+
+    return False
+
+
 def read_playlist_from_xml(xml_root, minpos, max_tanda_length):
     playlist = []
-    max_items = get_playlist_fetch_count(max_tanda_length)
+    min_items = get_playlist_fetch_count(max_tanda_length)
+    previous_songs = []
 
     for idx, item in enumerate(xml_root):
-        if idx < minpos:
-            continue
-        if len(playlist) >= max_items:
-            break
-
         fields = {}
         for tag in item:
             fields[tag.attrib.get('Name', '')] = get_xml_text(tag)
 
-        playlist.append(populate_song_from_fields(SongObject(), fields))
+        song = populate_song_from_fields(SongObject(), fields)
 
-    return playlist
+        if idx < minpos:
+            previous_songs.append(song)
+            continue
+
+        playlist.append(song)
+
+        if len(playlist) >= PLAYLIST_LOOKAHEAD_LIMIT:
+            break
+
+        if len(playlist) >= min_items and _has_next_tanda_boundary(playlist):
+            break
+
+    return _annotate_current_song_since_last_cortina(playlist, previous_songs)
 
 
 def run(MaxTandaLength):

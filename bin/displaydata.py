@@ -73,6 +73,7 @@ class DisplayData():
         # initially no worker started to get update finished in extract data thread
         self.currentlyUpdating = False
         self._display_time_expiry_refresh_done = False
+        self._restart_display_timer_on_next_apply = False
 
         self.alpha = float(1.0)
         self.red = float(1.0)
@@ -486,6 +487,11 @@ class DisplayData():
         self.backgroundLayers = expired_display_state['backgroundLayers']
         self._refresh_background_layer_state()
 
+    def _update_status_text(self):
+        self.mainFrame.SetStatusText(
+            beamSettings.getSelectedModuleName() + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMoodName
+        )
+
     #
     # called in MainTread
     # starts Thread for processDataThread()
@@ -506,30 +512,72 @@ class DisplayData():
             logging.error(e, exc_info=True)
             pass
 
+    def _apply_processed_mood_state(self):
+        self.currentDisplayRows = self.nowPlayingData.DisplayRows
+        self.currentCoverArtImage = self.nowPlayingData.currentCoverArtImage
+        self.currentPlaybackStatus = self.nowPlayingData.StatusMessage
+
+        self.previousMoodName = deepcopy(self.currentMoodName)
+        self.currentMoodName = self.nowPlayingData.CurrentMoodName
+        self.currentDisplaySettings = self.nowPlayingData.DisplaySettings
+        self.backgroundLayers = deepcopy(self.nowPlayingData.BackgroundLayers)
+        self._refresh_background_layer_state()
+
+        self._update_status_text()
+
+        if self.previousMoodName != self.currentMoodName:
+            self.startTransition('MoodChange')
+        else:
+            self.startTransition('SongChange')
+
+    def _apply_current_display_state(self):
+        if self._restart_display_timer_on_next_apply:
+            self.nowPlayingData.restartDisplayTimer()
+            self._restart_display_timer_on_next_apply = False
+
+        self.currentPlaybackStatus = self.nowPlayingData.StatusMessage
+
+        if self.nowPlayingData.isDisplayTimeExpired():
+            self._apply_expired_display_state()
+            self._display_time_expiry_refresh_done = True
+            self._update_status_text()
+            return
+
+        self._display_time_expiry_refresh_done = False
+        self._apply_processed_mood_state()
+
+    def requestDisplayTimerRestart(self):
+        self._restart_display_timer_on_next_apply = True
+        self._display_time_expiry_refresh_done = False
+
+    #toggling an unused mood: no timer restart
+    #toggling a mood that actually becomes the applied mood: restart only that timed mood
+    def refreshProcessedStateImmediately(self):
+        try:
+            previous_mood_name = self.nowPlayingData.CurrentMoodName
+            self.nowPlayingData.processData(beamSettings)
+
+            next_mood = self.nowPlayingData.currentMood
+            try:
+                next_display_timer = int(next_mood.get('DisplayTimer', 0)) if next_mood else 0
+            except (TypeError, ValueError, AttributeError):
+                next_display_timer = 0
+
+            if self.nowPlayingData.CurrentMoodName != previous_mood_name and next_display_timer > 0:
+                self.nowPlayingData.restartDisplayTimer()
+
+            self._apply_current_display_state()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+            pass
+
     # Running in MainThread
     # After processing data
     # update the mood
     # and refresh the display
     def __updateMood(self, result):
         try:
-            # ??? done above yet
-            self.currentDisplayRows = self.nowPlayingData.DisplayRows
-            self.currentCoverArtImage = self.nowPlayingData.currentCoverArtImage
-            self.currentPlaybackStatus = self.nowPlayingData.StatusMessage
-
-            self.previousMoodName = deepcopy(self.currentMoodName)
-            self.currentMoodName = self.nowPlayingData.CurrentMoodName
-            self.currentDisplaySettings = self.nowPlayingData.DisplaySettings
-            self.backgroundLayers = deepcopy(self.nowPlayingData.BackgroundLayers)
-            self._refresh_background_layer_state()
-
-            self.mainFrame.SetStatusText(beamSettings.getSelectedModuleName() + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMoodName)
-
-            if (self.previousMoodName != self.currentMoodName):
-                self.startTransition('MoodChange')
-            else:
-                self.startTransition('SongChange')
-
+            self._apply_current_display_state()
             self.mainFrame.refreshDisplay()
         except Exception as e:
             logging.error(e, exc_info=True)

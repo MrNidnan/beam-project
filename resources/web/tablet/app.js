@@ -5,9 +5,20 @@ const textMeasurerEl = document.getElementById("text-measurer");
 const COVER_ART_URL = "/media/cover-art/current";
 const ABSOLUTE_MIN_TEXT_SIZE_PX = 10;
 const ABSOLUTE_MAX_TEXT_SIZE_PX = 420;
-const FULLSCREEN_MULTIPLIER_START_PX = 1440;
-const FULLSCREEN_MULTIPLIER_RANGE_PX = 1440;
-const FULLSCREEN_MULTIPLIER_MAX = 1.35;
+const GENERIC_FONT_FAMILIES = new Set([
+  "serif",
+  "sans-serif",
+  "monospace",
+  "cursive",
+  "fantasy",
+  "system-ui",
+  "ui-serif",
+  "ui-sans-serif",
+  "ui-monospace",
+  "math",
+  "emoji",
+  "fangsong",
+]);
 
 let screenWakeLock = null;
 let wakeLockBound = false;
@@ -16,6 +27,7 @@ let reconnectTimer = null;
 let activeSocket = null;
 let lastSnapshot = null;
 let lastSequence = 0;
+let lastBackgroundRenderKey = "";
 
 function clearReconnectTimer() {
   if (reconnectTimer !== null) {
@@ -106,6 +118,26 @@ function normalizeGenre(song) {
     return "tango";
   }
   return "";
+}
+
+function hasEnabledMoodTheme(snapshot, themeName) {
+  const normalizedThemeName = String(themeName || "")
+    .trim()
+    .toLowerCase();
+  if (!normalizedThemeName) {
+    return false;
+  }
+
+  const enabledMoodNames = Array.isArray(snapshot?.enabledMoodNames)
+    ? snapshot.enabledMoodNames
+    : [];
+
+  return enabledMoodNames.some(
+    (moodName) =>
+      String(moodName || "")
+        .trim()
+        .toLowerCase() === normalizedThemeName,
+  );
 }
 
 function formatSongDate(song) {
@@ -278,44 +310,39 @@ function getBaseItemFontSizePx(item, canvasHeight) {
   );
 }
 
-function getFullscreenTextMultiplier() {
-  if (!document.fullscreenElement) {
-    return 1;
-  }
-
-  const screenLongestEdge = Math.max(screen.width || 0, screen.height || 0);
-  if (screenLongestEdge <= FULLSCREEN_MULTIPLIER_START_PX) {
-    return 1;
-  }
-
-  const normalizedBoost = Math.min(
-    1,
-    (screenLongestEdge - FULLSCREEN_MULTIPLIER_START_PX) /
-      FULLSCREEN_MULTIPLIER_RANGE_PX,
-  );
-
-  return 1 + normalizedBoost * (FULLSCREEN_MULTIPLIER_MAX - 1);
-}
-
 function getItemFontSizePx(item, canvasHeight) {
-  const baseFontSizePx = getBaseItemFontSizePx(item, canvasHeight);
-  const boostedFontSizePx = Math.round(
-    baseFontSizePx * getFullscreenTextMultiplier(),
-  );
-
   return Math.min(
     ABSOLUTE_MAX_TEXT_SIZE_PX,
-    Math.max(baseFontSizePx, boostedFontSizePx),
+    getBaseItemFontSizePx(item, canvasHeight),
   );
+}
+
+function quoteFontFamily(fontFamily) {
+  const normalizedFontFamily = String(fontFamily || "").trim();
+  if (!normalizedFontFamily) {
+    return "";
+  }
+
+  const lowerCaseFontFamily = normalizedFontFamily.toLowerCase();
+  if (
+    GENERIC_FONT_FAMILIES.has(lowerCaseFontFamily) ||
+    (normalizedFontFamily.startsWith('"') &&
+      normalizedFontFamily.endsWith('"')) ||
+    (normalizedFontFamily.startsWith("'") && normalizedFontFamily.endsWith("'"))
+  ) {
+    return normalizedFontFamily;
+  }
+
+  return JSON.stringify(normalizedFontFamily);
 }
 
 function getFontFamily(item) {
   const fontFace = String(item.font || "").trim();
   if (!fontFace) {
-    return '"Palatino Linotype", "Book Antiqua", Palatino, "Liberation Sans", serif';
+    return '"Liberation Sans", Arial, sans-serif';
   }
 
-  return `${fontFace}, "Liberation Sans", serif`;
+  return `${quoteFontFamily(fontFace)}, "Liberation Sans", Arial, sans-serif`;
 }
 
 function configureTextMeasurer(item, fontSizePx, options = {}) {
@@ -619,7 +646,10 @@ function getRenderableItems(snapshot) {
 
 function renderLayout(snapshot, sequence) {
   const canvasWidth = layoutCanvasEl.clientWidth;
-  const canvasHeight = layoutCanvasEl.clientHeight;
+  const canvasHeight = Math.max(
+    layoutCanvasEl.clientHeight,
+    globalThis.innerHeight || 0,
+  );
   const renderableItems = getRenderableItems(snapshot);
   const textItems = [];
   const fragment = document.createDocumentFragment();
@@ -707,10 +737,55 @@ function renderLayout(snapshot, sequence) {
     0;
 }
 
+function buildBackgroundRenderKey(snapshot) {
+  const background = snapshot?.background || {};
+  const baseLayer = background.base || {};
+  const overlayLayer = background.overlay || {};
+
+  return JSON.stringify({
+    genre: normalizeGenre(snapshot?.currentSong),
+    base: {
+      available: Boolean(baseLayer.available),
+      kind: String(baseLayer.kind || ""),
+      mode: String(baseLayer.mode || ""),
+      opacity: Number(baseLayer.opacity ?? 100),
+      currentPath: String(baseLayer.currentPath || ""),
+      sourcePath: String(baseLayer.sourcePath || ""),
+      canonicalReference: String(baseLayer.canonicalReference || ""),
+    },
+    overlay: {
+      available: Boolean(overlayLayer.available),
+      kind: String(overlayLayer.kind || ""),
+      mode: String(overlayLayer.mode || ""),
+      opacity: Number(overlayLayer.opacity ?? 100),
+      currentPath: String(overlayLayer.currentPath || ""),
+      sourcePath: String(overlayLayer.sourcePath || ""),
+      canonicalReference: String(overlayLayer.canonicalReference || ""),
+    },
+  });
+}
+
+function buildBackgroundLayerUrl(layerName, layer, sequence) {
+  const params = new URLSearchParams();
+  const resolvedPath = String(layer?.currentPath || layer?.sourcePath || "");
+  const layerKind = String(layer?.kind || "");
+
+  if (resolvedPath) {
+    params.set("path", resolvedPath);
+  }
+  if (layerKind) {
+    params.set("kind", layerKind);
+  }
+  params.set("v", String(sequence || 0));
+
+  return `/media/background/${layerName}?${params.toString()}`;
+}
+
 function applyBackground(snapshot, sequence) {
   const background = snapshot.background || {};
   const baseLayer = background.base || {};
   const overlayLayer = background.overlay || {};
+  const nextBackgroundRenderKey = buildBackgroundRenderKey(snapshot);
   const overlayMode = String(overlayLayer.mode || "")
     .trim()
     .toLowerCase();
@@ -724,13 +799,19 @@ function applyBackground(snapshot, sequence) {
   const overlayRenderOpacity =
     overlayMode === "replace" ? 1 : 0.18 * overlayOpacity;
 
+  if (nextBackgroundRenderKey === lastBackgroundRenderKey) {
+    return;
+  }
+
+  lastBackgroundRenderKey = nextBackgroundRenderKey;
+
   document.body.classList.toggle("with-background-base", showBase);
   document.body.classList.toggle("with-background-overlay", showOverlay);
 
   if (showBase && baseLayer.url) {
     document.body.style.setProperty(
       "--beam-background-base",
-      `url("${baseLayer.url}?v=${sequence}")`,
+      `url("${buildBackgroundLayerUrl("base", baseLayer, sequence)}")`,
     );
   } else {
     document.body.style.removeProperty("--beam-background-base");
@@ -739,7 +820,7 @@ function applyBackground(snapshot, sequence) {
   if (showOverlay && overlayLayer.url) {
     document.body.style.setProperty(
       "--beam-background-overlay",
-      `url("${overlayLayer.url}?v=${sequence}")`,
+      `url("${buildBackgroundLayerUrl("overlay", overlayLayer, sequence)}")`,
     );
     document.body.style.setProperty(
       "--beam-background-overlay-opacity",
@@ -752,8 +833,9 @@ function applyBackground(snapshot, sequence) {
 
   document.body.classList.remove("genre-tango", "genre-vals", "genre-milonga");
   const genre = normalizeGenre(snapshot.currentSong);
-  if (genre) {
-    document.body.classList.add(`genre-${genre}`);
+  const themeGenre = hasEnabledMoodTheme(snapshot, genre) ? genre : "";
+  if (themeGenre) {
+    document.body.classList.add(`genre-${themeGenre}`);
   }
 }
 

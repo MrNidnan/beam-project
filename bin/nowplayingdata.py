@@ -79,6 +79,7 @@ class NowPlayingData:
         self.prevReading = SongObject()
 
         self.SinceLastCortinaCount = 1
+        self.CurrentTandaSongsRemainingCount = 0
         self.TillNextCortinaCount = 0
         
         self.PlaybackStatus = ""
@@ -514,12 +515,19 @@ class NowPlayingData:
         ########################################################
         # PREVIOUS SONG ANALYSIS
         ########################################################
+        since_last_cortina_override = None
+        if self.currentPlaylist:
+            since_last_cortina_override = getattr(self.currentPlaylist[0], 'SinceLastCortinaCountOverride', None)
+
         try:
             if self.LastRead[0] == self.currentPlaylist[0]:
-                pass
+                if since_last_cortina_override is not None:
+                    self.SinceLastCortinaCount = int(since_last_cortina_override)
             else:
                 # Calculate the number of songs that were payed since last cortina
-                if self.currentPlaylist[0].IsCortina == "yes":
+                if since_last_cortina_override is not None:
+                    self.SinceLastCortinaCount = int(since_last_cortina_override)
+                elif self.currentPlaylist[0].IsCortina == "yes":
                     self.SinceLastCortinaCount = 0
                 else:
                     self.SinceLastCortinaCount = self.SinceLastCortinaCount + 1
@@ -532,16 +540,31 @@ class NowPlayingData:
         # Create NextTanda
         ########################################################
         self.nextTandaSong = None
+        self.CurrentTandaSongsRemainingCount = 0
         self.TillNextCortinaCount = 0
-        
-        for i in range(0, len(self.currentPlaylist)-1):
-            # Check if song is cortina
-            if self.currentPlaylist[i].IsCortina == "yes" and not self.currentPlaylist[i+1].IsCortina == "yes":
-                self.nextTandaSong = deepcopy(self.currentPlaylist[i+1])
-                self.nextTandaSong.applySongRules(currentSettings.getRules())
-                break
-            else:
-                self.TillNextCortinaCount = self.TillNextCortinaCount + 1
+
+        seen_cortina = len(self.currentPlaylist) > 0 and self.currentPlaylist[0].IsCortina == "yes"
+
+        for i in range(1, len(self.currentPlaylist)):
+            current_song = self.currentPlaylist[i]
+
+            if not seen_cortina:
+                if current_song.IsCortina == "yes":
+                    seen_cortina = True
+                    self.TillNextCortinaCount = self.CurrentTandaSongsRemainingCount + 1
+                else:
+                    self.CurrentTandaSongsRemainingCount = self.CurrentTandaSongsRemainingCount + 1
+                continue
+
+            if current_song.IsCortina == "yes":
+                continue
+
+            self.nextTandaSong = deepcopy(current_song)
+            self.nextTandaSong.applySongRules(currentSettings.getRules())
+            break
+
+        if not seen_cortina:
+            self.TillNextCortinaCount = self.CurrentTandaSongsRemainingCount + 1
 
 
         ###############################################################
@@ -784,9 +807,9 @@ class NowPlayingData:
 
         #Track number in a tanda
         self.convDict['%SongsSinceLastCortina'] = self.SinceLastCortinaCount
-        self.convDict['%CurrentTandaSongsRemaining'] = self.TillNextCortinaCount - 1
+        self.convDict['%CurrentTandaSongsRemaining'] = self.CurrentTandaSongsRemainingCount
             #current tanda count
-        self.convDict['%CurrentTandaLength'] = self.SinceLastCortinaCount + self.TillNextCortinaCount - 1 
+        self.convDict['%CurrentTandaLength'] = self.SinceLastCortinaCount + self.CurrentTandaSongsRemainingCount
 
     def isDisplayTimeExpired(self):
         timenow = time.time()
@@ -801,6 +824,21 @@ class NowPlayingData:
         isexpired = timenow > (timechanged + displaytimer)
 
         return isexpired
+
+    def restartDisplayTimer(self):
+        if not self.currentMood:
+            return False
+
+        try:
+            displaytimer = int(self.currentMood.get('DisplayTimer', 0))
+        except (TypeError, ValueError, AttributeError):
+            displaytimer = 0
+
+        if displaytimer <= 0:
+            return False
+
+        self.playlistchangetime = time.time()
+        return True
 
 
 

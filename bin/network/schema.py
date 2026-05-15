@@ -3,6 +3,21 @@ from copy import deepcopy
 from bin.network.events import PROTOCOL_VERSION, SCHEMA_VERSION
 
 
+def build_enabled_mood_names(beam_settings):
+    enabled_mood_names = []
+    for mood in beam_settings.getMoods():
+        if str(mood.get('Type', '')).strip().lower() != 'mood':
+            continue
+        if str(mood.get('Active', 'no')).strip().lower() != 'yes':
+            continue
+
+        mood_name = str(mood.get('Name', '')).strip()
+        if mood_name:
+            enabled_mood_names.append(mood_name)
+
+    return enabled_mood_names
+
+
 def background_layer_to_dict(layer, layer_name=''):
     layer = layer or {}
     background_url = ''
@@ -109,6 +124,7 @@ def snapshot_from_display_data(display_data, beam_settings):
         'previousPlaybackStatus': getattr(display_data, 'previousPlaybackStatus', ''),
         'statusMessage': now_playing.StatusMessage,
         'moodName': display_data.currentMoodName,
+        'enabledMoodNames': build_enabled_mood_names(beam_settings),
         'background': {
             'available': bool(legacy_background_path),
             'sourcePath': legacy_background_path,
@@ -142,6 +158,7 @@ def empty_snapshot(beam_settings):
         'previousPlaybackStatus': '',
         'statusMessage': '',
         'moodName': '',
+        'enabledMoodNames': [],
         'background': {
             'available': False,
             'sourcePath': '',

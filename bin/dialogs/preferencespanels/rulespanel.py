@@ -82,7 +82,15 @@ class RulesPanel(wx.Panel):
 
 
     def updateSettings(self):
-        self.mainFrame.updateSettings();
+        self.applyCommittedSettings()
+
+    def applyCommittedSettings(self):
+        if self.mainFrame is None:
+            return
+
+        if hasattr(self.mainFrame, '_persistDirtySettings'):
+            self.mainFrame._persistDirtySettings()
+        self.mainFrame.updateSettings(reload_preferences=False)
 
     def reloadFromSettings(self):
         self.BuildRuleList()
@@ -117,6 +125,7 @@ class RulesPanel(wx.Panel):
                 self.BeamSettings.getRules().pop(RowSelected)
                 self.BeamSettings.markDirty()
                 self.BuildRuleList()
+                self.applyCommittedSettings()
 
 
     #####################
@@ -131,6 +140,7 @@ class RulesPanel(wx.Panel):
                 rule['Active'] = "no"
         self.BeamSettings.markDirty()
         self.BuildRuleList()
+        self.applyCommittedSettings()
 
     #####################
     # BUILD RULELIST #

@@ -2,6 +2,21 @@
 
 All notable changes in this fork are documented in this file.
 
+## v0.9.2.0 - 2026-05-15
+
+### Added
+
+- Removed main Save button and switch the UI to a fully auto-save model. Any change in the ui should be relfected inmediately in the display
+
+### Changed
+
+- doc: update, Temporary Messages on Display Tags.md
+
+### Fixed
+
+- Network consitency on displaying background and typographies
+- Check on/off custom and timed moods. Mood duration will reset and enable the timer again once select
+
 ## v0.9.1.2 - 2026-05-10
 
 ### Added

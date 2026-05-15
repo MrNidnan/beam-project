@@ -351,7 +351,7 @@ class EditRuleDialog(wx.Dialog):
 
         beamSettings.markDirty()
         self.rulesPanel.BuildRuleList()
-        self.rulesPanel.updateSettings()
+        self.rulesPanel.applyCommittedSettings()
         self.Destroy()
     #
     # CANCEL

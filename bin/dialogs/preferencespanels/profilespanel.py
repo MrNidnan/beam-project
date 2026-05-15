@@ -21,7 +21,7 @@ class ProfilesPanel(wx.Panel):
         description = wx.StaticText(
             self,
             wx.ID_ANY,
-            "Profiles store the full Beam configuration. Create a named profile, switch the active profile, or save the current settings back into it.",
+            "Profiles store the full Beam configuration. Create a named profile or switch the active profile. Dirty settings are saved automatically when you switch or exit Beam.",
         )
         description.Wrap(380)
 
@@ -31,20 +31,17 @@ class ProfilesPanel(wx.Panel):
         self.ProfileList.Bind(wx.EVT_LISTBOX_DCLICK, self.OnSwitchProfile)
 
         self.SwitchButton = wx.Button(self, label="Switch")
-        self.SaveButton = wx.Button(self, label="Save")
         self.CreateButton = wx.Button(self, label="Create")
         self.RenameButton = wx.Button(self, label="Rename")
         self.DeleteButton = wx.Button(self, label="Delete")
 
         self.SwitchButton.Bind(wx.EVT_BUTTON, self.OnSwitchProfile)
-        self.SaveButton.Bind(wx.EVT_BUTTON, self.OnSaveProfile)
         self.CreateButton.Bind(wx.EVT_BUTTON, self.OnCreateProfile)
         self.RenameButton.Bind(wx.EVT_BUTTON, self.OnRenameProfile)
         self.DeleteButton.Bind(wx.EVT_BUTTON, self.OnDeleteProfile)
 
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         buttons.Add(self.SwitchButton, flag=wx.RIGHT | wx.TOP, border=10)
-        buttons.Add(self.SaveButton, flag=wx.RIGHT | wx.TOP, border=10)
         buttons.Add(self.CreateButton, flag=wx.RIGHT | wx.TOP, border=10)
         buttons.Add(self.RenameButton, flag=wx.RIGHT | wx.TOP, border=10)
         buttons.Add(self.DeleteButton, flag=wx.RIGHT | wx.TOP, border=10)
@@ -119,7 +116,6 @@ class ProfilesPanel(wx.Panel):
         isLocked = hasSelection and selectedProfile.get('Locked')
 
         self.SwitchButton.Enable(hasSelection and not isActive)
-        self.SaveButton.Enable(hasSelection and isActive)
         self.RenameButton.Enable(hasSelection and not isLocked)
         self.DeleteButton.Enable(hasSelection and not isLocked)
 
@@ -170,21 +166,7 @@ class ProfilesPanel(wx.Panel):
             return
 
         try:
-            if not self.confirmPendingChanges('switching profiles', True):
-                return
             self.BeamSettings.switchProfile(selectedProfileId)
-            self.refreshAfterProfileChange()
-        except Exception as exc:
-            logging.error(exc, exc_info=True)
-            self.showError(str(exc))
-
-    def OnSaveProfile(self, event):
-        selectedProfileId = self.getSelectedProfileId()
-        if selectedProfileId != self.BeamSettings.getActiveProfileId():
-            return
-
-        try:
-            self.BeamSettings.saveActiveProfile()
             self.refreshAfterProfileChange()
         except Exception as exc:
             logging.error(exc, exc_info=True)

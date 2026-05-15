@@ -40,13 +40,15 @@ Release artifact names below use `v0.7.0`.
 ### Prerequisites
 
 - Windows 10 or newer
-- Python 3.12 or newer
+- Python 3.12 or 3.13
 - PowerShell
+
+`wxPython` is required for Beam and does not currently provide a working Windows wheel for Python 3.14 in this project. If you upgrade to Python 3.14, recreate the virtual environment with Python 3.12 or 3.13 before reinstalling dependencies.
 
 ### Build Commands
 
 ```powershell
-py -3.12 -m venv .venv
+py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
 python -m pip install --upgrade pip setuptools wheel
