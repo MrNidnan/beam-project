@@ -2,6 +2,8 @@
 
 Beam is designed so you can make the display fit your event style.
 
+Any setting you change that affects display, should be inmediately visible in the display. Acitvating a rule or a mood will be shown in the display inmediately.
+
 ![Screenshot: Customized Beam display with attractive background and readable text](../docs/images/user-manual/beam_5_preview.png)
 
 ## What You Can Customize
@@ -14,7 +16,7 @@ You can change:
 - backgrounds
 - moods
 - artist or orchestra overlays
-- profiles for different venues or events
+- profiles for different venues, events or contexts
 
 ![Screenshot: Moods and Layout settings](../docs/images/user-manual/beam_2_moods_and_layout.png)
 
@@ -40,6 +42,28 @@ Each mood can define:
 - The current song information is still used, so Beam keeps showing the current track with the default mood styling after the timer runs out.
 
 This is useful when you want a special mood to appear briefly for a new song, intro, or event cue, then return automatically to your normal default display style.
+
+### Pro tip - Temporary Messages
+
+Beam does not currently have a separate message overlay feature, but you can sue a timed mood for temporary messages such as `LAST TANDA` or `MIX TANDA`.
+
+Suggested setup:
+
+- Create a dedicated mood for the message.
+- Put the message text directly in one or more layout items.
+- Set `DisplayTimer` to the number of seconds you want the message to remain visible.
+- Enable that mood when you want to show the message, and disable it again when you do not want it available.
+
+  ![beam temp message 1](../docs/images/user-manual/beam_mood_temporal_message.png)
+  ![last tanda message](../docs/images/user-manual/beam_mood_last_tanda_mood.jpg)
+
+Example ideas:
+
+- `LAST TANDA`
+- `MIX TANDA`
+- `CORTINA COMING`
+
+If you want to show both the message and normal song information, copy the usual layout items into that message mood and add the extra message text where you want it to appear.
 
 ## Backgrounds
 
