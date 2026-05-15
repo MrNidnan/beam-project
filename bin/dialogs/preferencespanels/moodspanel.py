@@ -210,6 +210,8 @@ class MoodsPanel(wx.Panel):
         if self._preview_debounce is not None:
             self._preview_debounce.Stop()
             self._preview_debounce = None
+        if hasattr(self.mainFrame, '_persistDirtySettings'):
+            self.mainFrame._persistDirtySettings()
         self.mainFrame.updateSettings(reload_preferences=False)
 
     def reloadFromSettings(self):
@@ -364,6 +366,7 @@ class MoodsPanel(wx.Panel):
         self.BeamSettings.markDirty()
         # List all configured moods
         self.BuildMoodList()
+        self.applyCommittedSettings()
 
     def OnCheckArtistBackground(self, event):
         mappings = self.BeamSettings.getArtistBackgroundMappings()
@@ -371,7 +374,7 @@ class MoodsPanel(wx.Panel):
             mappings[i]['Active'] = 'yes' if self.ArtistBackgroundList.IsChecked(i) else 'no'
         self.BeamSettings.markDirty()
         self.BuildArtistBackgroundList()
-        self.updateSettings()
+        self.applyCommittedSettings()
 
     # List all configured moods
     def BuildMoodList(self):

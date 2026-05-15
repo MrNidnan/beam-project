@@ -575,6 +575,9 @@ class BeamSettings:
         self.clearDirty()
 
     def switchProfile(self, profileId):
+        if self.isDirty():
+            self.saveActiveProfile()
+
         beamConfigData, defaultConfigData = self._profileSettings.switchProfile(profileId)
         if beamConfigData is None:
             return

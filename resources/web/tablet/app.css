@@ -21,7 +21,7 @@ body {
   margin: 0;
   min-height: 100vh;
   overflow: hidden;
-  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-family: "Liberation Sans", Arial, sans-serif;
   color: var(--text);
   background:
     radial-gradient(circle at top, rgba(255, 241, 225, 0.18), transparent 34%),
@@ -86,17 +86,18 @@ body.with-background-overlay::after {
 }
 
 .page-shell {
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   padding: 0;
 }
 
 .projection-window {
   width: 100%;
-  min-height: 100vh;
-  padding: 2.5vh 2.5vw;
+  height: 100vh;
+  padding: 0;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -115,7 +116,7 @@ body.with-background-overlay::after {
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: 95vh;
+  height: 100%;
   overflow: hidden;
   border-radius: 0;
   background: transparent;
@@ -125,7 +126,7 @@ body.with-background-overlay::after {
   position: absolute;
   margin: 0;
   max-width: 100%;
-  line-height: 0.95;
+  line-height: 1;
   text-shadow: 0 3px 14px rgba(0, 0, 0, 0.34);
 }
 
@@ -215,12 +216,8 @@ body.with-background-overlay::after {
   }
 
   .projection-window {
-    min-height: 100vh;
-    padding: 2vh 3vw;
-  }
-
-  .layout-canvas {
-    min-height: 96vh;
+    height: 100vh;
+    padding: 0;
   }
 
   .layout-cover-art {

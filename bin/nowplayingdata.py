@@ -802,5 +802,20 @@ class NowPlayingData:
 
         return isexpired
 
+    def restartDisplayTimer(self):
+        if not self.currentMood:
+            return False
+
+        try:
+            displaytimer = int(self.currentMood.get('DisplayTimer', 0))
+        except (TypeError, ValueError, AttributeError):
+            displaytimer = 0
+
+        if displaytimer <= 0:
+            return False
+
+        self.playlistchangetime = time.time()
+        return True
+
 
 

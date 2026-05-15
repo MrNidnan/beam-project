@@ -70,6 +70,8 @@ class MainFrame(wx.Frame):
         self.displayFrame = DisplayFrame(self.displayData)
         self.networkService = BeamNetworkService()
         self.networkService.start()
+        self.displayData._apply_expired_display_state()
+        self.networkService.publish_display_state(self.displayData)
 
         # Set Icon
         appPath = getBeamHomePath()
@@ -127,7 +129,7 @@ class MainFrame(wx.Frame):
         ####################
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
-        hbox = wx.BoxSizer(wx.HORIZONTAL) # For buttons
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         #################
         # LISTBOOK MENU #
@@ -137,13 +139,6 @@ class MainFrame(wx.Frame):
         self.previewPanel = self.listBookMenu.pages[0][0]
 
         
-        ###########
-        # BUTTONS #
-        ###########
-        self.saveBtn = wx.Button(panel, label="Save")
-        self.saveBtn.Bind(wx.EVT_BUTTON, self.onSave)
-        hbox.Add(self.saveBtn, flag=wx.LEFT | wx.TOP, border=10)
-
         self.displayBtn = wx.Button(panel, label="Display")
         self.displayBtn.Bind(wx.EVT_BUTTON, self.onDisplay)
         hbox.Add(self.displayBtn, flag= wx.ALL, border=10)
@@ -191,6 +186,10 @@ class MainFrame(wx.Frame):
 
     def destroyFrame(self):
         try:
+            self._persistDirtySettings()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+        try:
             self.networkService.stop()
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -219,15 +218,9 @@ class MainFrame(wx.Frame):
             logging.error(e, exc_info=True)
 
 
-    def onSave(self, event):
-        try:
-            # Save settings
+    def _persistDirtySettings(self, force=False):
+        if force or beamSettings.isDirty():
             beamSettings.dumpConfig()
-            self.reloadPreferencesPanels()
-            # Reload settings in main-window
-            self.updateSettings()
-        except Exception as e:
-            logging.error(e, exc_info=True)
 
 
     def onDisplay(self, event):
@@ -236,6 +229,9 @@ class MainFrame(wx.Frame):
                 self.displayFrame.Hide()
                 # self.displayBtn.SetLabel("Display")
             else:
+                self.displayData.nowPlayingData.restartDisplayTimer()
+                self.displayData._display_time_expiry_refresh_done = False
+                self.displayData.refreshProcessedStateImmediately()
                 self.displayFrame.Show()
                 self.refreshDisplay()
                 # self.displayBtn.SetLabel("Hide")
@@ -278,8 +274,8 @@ class MainFrame(wx.Frame):
             self.networkService.stop()
             self.networkService.start()
             # self.showStatusBar()
-            self.displayData.processData()
-            self.networkService.publish_display_state(self.displayData)
+            self.displayData.refreshProcessedStateImmediately()
+            self.refreshDisplay(reload_panels=False)
             # Starts and stops rotation if it has changed.
             # if (self.RotateBackgroundTimer.IsRunning() and self.RotateBackground == 'no') or (
             #         not self.RotateBackgroundTimer.IsRunning() and not self.RotateBackground == 'no') or (

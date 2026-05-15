@@ -224,9 +224,18 @@ class BeamNetworkService(object):
 
     async def _handle_background(self, request):
         layer_name = request.match_info.get('layer', 'current')
-        with self._lock:
-            layer_data = self._get_snapshot_background_layer(layer_name)
-            background_path = self._get_snapshot_background_path(layer_name)
+        requested_path = request.query.get('path', '')
+        requested_kind = str(request.query.get('kind', '')).strip().lower()
+
+        if requested_path:
+            layer_data = {
+                'kind': requested_kind,
+            }
+            background_path = requested_path
+        else:
+            with self._lock:
+                layer_data = self._get_snapshot_background_layer(layer_name)
+                background_path = self._get_snapshot_background_path(layer_name)
 
         if str(layer_data.get('kind', '')).lower() == 'coverart' and background_path:
             image_bytes, mime_type = readCoverArtData(background_path)
