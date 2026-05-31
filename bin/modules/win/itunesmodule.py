@@ -26,6 +26,7 @@
 # This Python file uses the following encoding: utf-8
 from copy import deepcopy
 import logging
+import time
 
 from bin.songclass import SongObject
 
@@ -45,6 +46,18 @@ from bin.modules.win.winutils import applicationrunning
 
 PLAYER_STATE_STOPPED = 0
 PLAYER_STATE_PLAYING = 1
+LOG_THROTTLE_SECONDS = 30
+
+_last_com_failure_log = {
+    'status': None,
+    'message': None,
+    'time': 0.0,
+}
+
+_last_ambiguous_state_log = {
+    'message': None,
+    'time': 0.0,
+}
 
 
 def run(MaxTandaLength, last_playlist=None):
@@ -156,12 +169,7 @@ def get_non_playing_fallback_playlist(playback_status, last_playlist, raw_player
         return []
 
     if playback_status == 'Ambiguous':
-        logging.warning(
-            "Windows iTunes COM state is ambiguous; preserving last playlist if available. player_state=%r version=%r track=%s",
-            raw_player_state,
-            version,
-            describe_track(current_track),
-        )
+        log_throttled_ambiguous_state(raw_player_state, version, current_track)
         if last_playlist:
             return deepcopy(last_playlist)
         return []
@@ -223,17 +231,63 @@ def describe_track(track):
 
 def handle_itunes_com_failure(error):
     app_running = applicationrunning("iTunes.exe")
-    logging.warning(
-        "Windows iTunes COM access failed; treating as %s. error=%r",
-        'Ambiguous' if app_running else 'PlayerNotRunning',
-        error,
-        exc_info=True,
-    )
+    status = 'Ambiguous' if app_running else 'PlayerNotRunning'
+    error_message = describe_itunes_com_error(error)
+    log_throttled_com_failure(status, error_message)
 
     if app_running:
         return [], 'Ambiguous'
 
     return [], 'PlayerNotRunning'
+
+
+def log_throttled_com_failure(status, error_message):
+    now = time.monotonic()
+    should_log = (
+        _last_com_failure_log['status'] != status
+        or _last_com_failure_log['message'] != error_message
+        or now - _last_com_failure_log['time'] >= LOG_THROTTLE_SECONDS
+    )
+    if not should_log:
+        return
+
+    logging.warning(
+        "Windows iTunes COM access failed; treating as %s. error=%s",
+        status,
+        error_message,
+    )
+    _last_com_failure_log['status'] = status
+    _last_com_failure_log['message'] = error_message
+    _last_com_failure_log['time'] = now
+
+
+def log_throttled_ambiguous_state(raw_player_state, version, current_track):
+    now = time.monotonic()
+    message = "player_state=%r version=%r track=%s" % (
+        raw_player_state,
+        version,
+        describe_track(current_track),
+    )
+    should_log = (
+        _last_ambiguous_state_log['message'] != message
+        or now - _last_ambiguous_state_log['time'] >= LOG_THROTTLE_SECONDS
+    )
+    if not should_log:
+        return
+
+    logging.warning(
+        "Windows iTunes COM state is ambiguous; preserving last playlist if available. %s",
+        message,
+    )
+    _last_ambiguous_state_log['message'] = message
+    _last_ambiguous_state_log['time'] = now
+
+
+def describe_itunes_com_error(error):
+    if isinstance(error, (pythoncom.com_error, pywintypes.com_error)):
+        return '%s %s' % (getattr(error, 'hresult', ''), getattr(error, 'strerror', repr(error)))
+
+    return repr(error)
 
 def getSongAt(itunes, songPosition):
     retSong = SongObject()

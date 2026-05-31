@@ -2,6 +2,12 @@
 
 All notable changes in this fork are documented in this file.
 
+## v0.9.2.1 - 2026-05-31
+
+### Fixed
+
+- iTunes windows 11 module improved stablity and logging
+
 ## v0.9.2.0 - 2026-05-15
 
 ### Added
