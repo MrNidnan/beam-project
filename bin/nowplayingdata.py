@@ -378,7 +378,7 @@ class NowPlayingData:
         # WINDOWS
         if platform.system() == 'Windows':
             if currentSettings.getSelectedModuleName() == 'iTunes':
-                self.currentPlaylist, self.PlaybackStatus = itunesmodule.run(currentSettings.getMaxTandaLength())
+                self.currentPlaylist, self.PlaybackStatus = itunesmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
             if currentSettings.getSelectedModuleName() == 'MediaMonkey':
                 self.currentPlaylist, self.PlaybackStatus = mediamonkeymodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
             if currentSettings.getSelectedModuleName() == 'Spotify':
@@ -450,7 +450,7 @@ class NowPlayingData:
             from bin.modules import icecastmodule
             self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
 
-        if (not self.currentPlaylist) and self.PlaybackStatus == 'Paused' and previous_playlist:
+        if (not self.currentPlaylist) and self.PlaybackStatus in ('Paused', 'Ambiguous') and previous_playlist:
             self.currentPlaylist = deepcopy(previous_playlist)
 
         # sanitizeFields()
@@ -578,7 +578,7 @@ class NowPlayingData:
             currentSong = SongObject()
         
         preserved_song_context = (
-            self.PlaybackStatus == 'Paused'
+            self.PlaybackStatus in ('Paused', 'Ambiguous')
             and self.currentPlaylist and isinstance(self.LastRead, list) and self.LastRead
             and self.currentPlaylist[0] == self.LastRead[0]
         )
