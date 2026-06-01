@@ -352,8 +352,8 @@ def test_png_warning_suppressed_image_loading():
         assert isinstance(opacity_bitmap, FakeBitmap)
         assert len(fake_panel._background_bitmap_cache) == cache_limit
         cached_keys = list(fake_panel._background_bitmap_cache.keys())
-        cached_opacity_paths = [cache_key[0] for cache_key in cached_keys if cache_key[-1] == round(0.35, 4)]
-        cached_full_opacity_paths = [cache_key[0] for cache_key in cached_keys if cache_key[-1] == round(1.0, 4)]
+        cached_opacity_paths = [cache_key[0] for cache_key in cached_keys if cache_key[7] == round(0.35, 4)]
+        cached_full_opacity_paths = [cache_key[0] for cache_key in cached_keys if cache_key[7] == round(1.0, 4)]
         assert cached_opacity_paths == [cache_paths[0]]
         assert cache_paths[0] in cached_full_opacity_paths
 
@@ -446,6 +446,198 @@ def test_beamsettings_background_migration():
     assert settings.isDirty() is False
 
 
+def test_readability_background_mode(temp_root):
+    from bin.network.schema import background_layer_to_dict
+    from bin.nowplayingdata import NowPlayingData
+    from bin.songclass import SongObject
+
+    beam_home, beam_resources, beam_config = build_test_roots(temp_root)
+    base_background = beam_resources / 'backgrounds' / 'readable-mood.png'
+    base_background.parent.mkdir(parents=True, exist_ok=True)
+    write_png(base_background)
+
+    config_data = load_default_config()
+    config_data['Module'] = 'VirtualDJ'
+    config_data['Moods'] = [deepcopy(config_data['Moods'][0])]
+    mood = config_data['Moods'][0]
+    mood['Name'] = 'Default'
+    mood['Background'] = 'asset:builtin/backgrounds/readable-mood.png'
+    # "Keep existing" mode keeps the background and applies the Readability blur/dim.
+    mood['BackgroundMode'] = 'keep'
+    mood['Readability'] = 50
+    config_data['ArtistBackgrounds'] = {'Enabled': 'False', 'Mappings': []}
+
+    current_settings = FakeSettings(config_data)
+    now_playing = NowPlayingData()
+    now_playing.currentPlaylist = [SongObject(p_title='Song')]
+
+    with patch('bin.backgroundassets.getBeamHomePath', return_value=str(beam_home)), \
+         patch('bin.backgroundassets.getBeamResourcesPath', return_value=str(beam_resources)), \
+         patch('bin.backgroundassets.getBeamConfigPath', return_value=str(beam_config)):
+        state = now_playing.build_display_state_for_mood(current_settings, mood)
+
+    base_layer = state['backgroundLayers']['base']
+    # The background reference is preserved (keep existing does not clear it),
+    # and the base layer is flagged so the display can inherit the on-screen background.
+    assert base_layer['available'] is True
+    assert base_layer['keepExisting'] is True
+    assert base_layer['canonicalReference'] == 'asset:builtin/backgrounds/readable-mood.png'
+    assert base_layer['improveReadability'] is True
+    assert base_layer['readability'] == 50
+
+    layer_dict = background_layer_to_dict(base_layer, 'base')
+    assert layer_dict['improveReadability'] is True
+    assert layer_dict['readability'] == 50
+
+    # The legacy "readability" mode name still enables the effect.
+    mood['BackgroundMode'] = 'readability'
+    assert now_playing._resolve_readability_settings(mood)[0] is True
+
+    # Readability 0 means no effect, even in keep mode.
+    mood['BackgroundMode'] = 'keep'
+    mood['Readability'] = 0
+    assert now_playing._resolve_readability_settings(mood)[0] is False
+
+    # Image/Color modes use the mood's own background and never apply readability.
+    mood['BackgroundMode'] = 'image'
+    mood['Readability'] = 80
+    assert now_playing._resolve_readability_settings(mood)[0] is False
+    image_state = now_playing.build_display_state_for_mood(current_settings, mood)
+    assert image_state['backgroundLayers']['base']['keepExisting'] is False
+
+    # Missing fields (legacy configs) default to image (use own background), no effect.
+    mood.pop('BackgroundMode', None)
+    mood.pop('Readability', None)
+    improve_legacy, readability_legacy = now_playing._resolve_readability_settings(mood)
+    assert improve_legacy is False
+    assert readability_legacy == 0
+
+
+def test_keep_existing_inherits_previous_background():
+    from bin.displaydata import DisplayData
+
+    # A "keep existing" mood inherits the background already on screen instead of
+    # replacing it; only the readability tweaks from the new mood are carried over.
+    previous_layers = {
+        'base': {
+            'available': True,
+            'kind': 'asset',
+            'sourcePath': 'C:/managed/previous-bg.png',
+            'currentPath': 'C:/managed/previous-bg.png',
+            'canonicalReference': 'asset:user/backgrounds/moods/previous-bg.png',
+            'improveReadability': False,
+            'readability': 0,
+        },
+        'overlay': {},
+    }
+    fake_display = SimpleNamespace(backgroundLayers=deepcopy(previous_layers))
+
+    keep_layers = {
+        'base': {
+            'available': True,
+            'kind': 'asset',
+            'sourcePath': 'C:/managed/message-mood-bg.png',
+            'canonicalReference': 'asset:user/backgrounds/moods/message-mood-bg.png',
+            'keepExisting': True,
+            'improveReadability': True,
+            'readability': 40,
+        },
+        'overlay': {},
+    }
+    merged = DisplayData._apply_keep_existing_background(fake_display, deepcopy(keep_layers))
+    merged_base = merged['base']
+    # The previously displayed background is kept, not the message mood's own one.
+    assert merged_base['sourcePath'] == 'C:/managed/previous-bg.png'
+    assert merged_base['currentPath'] == 'C:/managed/previous-bg.png'
+    # Readability settings from the new mood are applied to the kept background.
+    assert merged_base['improveReadability'] is True
+    assert merged_base['readability'] == 40
+
+    # A non-keep mood replaces the background as before.
+    replace_layers = {
+        'base': {
+            'available': True,
+            'sourcePath': 'C:/managed/own-bg.png',
+            'keepExisting': False,
+        },
+        'overlay': {},
+    }
+    replaced = DisplayData._apply_keep_existing_background(fake_display, deepcopy(replace_layers))
+    assert replaced['base']['sourcePath'] == 'C:/managed/own-bg.png'
+
+    # Keep mode with nothing to inherit falls back to the mood's own background.
+    empty_display = SimpleNamespace(backgroundLayers={'base': {}, 'overlay': {}})
+    fallback = DisplayData._apply_keep_existing_background(empty_display, deepcopy(keep_layers))
+    assert fallback['base']['sourcePath'] == 'C:/managed/message-mood-bg.png'
+
+
+def test_readability_blur_dim_mapping_and_cache():
+    from bin.dialogs.preferencespanels.displaypanel import DisplayPanel
+
+    assert DisplayPanel._readability_to_blur_dim(0) == (0, 0.0)
+    assert DisplayPanel._readability_to_blur_dim(50) == (10, 0.25)
+    assert DisplayPanel._readability_to_blur_dim(100) == (20, 0.5)
+    # Out-of-range values are clamped.
+    assert DisplayPanel._readability_to_blur_dim(150) == (20, 0.5)
+    assert DisplayPanel._readability_to_blur_dim(-5) == (0, 0.0)
+
+    import wx
+
+    blur_calls = []
+
+    class FakeImage:
+        def __init__(self, source):
+            self.source = source
+
+        def IsOk(self):
+            return True
+
+        def GetWidth(self):
+            return 32
+
+        def GetHeight(self):
+            return 32
+
+        def Scale(self, width, height, quality):
+            return self
+
+        def Blur(self, radius):
+            blur_calls.append(radius)
+            return self
+
+        def AdjustChannels(self, red, green, blue, alpha):
+            return self
+
+    class FakeBitmap:
+        def __init__(self, source):
+            self.source = source
+
+        def GetSize(self):
+            return (64, 64)
+
+    fake_display = SimpleNamespace(red=1.0, green=1.0, blue=1.0, alpha=1.0)
+    fake_panel = SimpleNamespace(
+        _background_bitmap_cache=OrderedDict(),
+        _background_bitmap_cache_limit=8,
+        displayData=fake_display,
+    )
+
+    with patch.object(wx, 'LogNull', lambda: SimpleNamespace()), \
+         patch.object(wx, 'Image', FakeImage), \
+         patch.object(wx, 'Bitmap', FakeBitmap):
+        DisplayPanel._get_scaled_background_bitmap(fake_panel, 'C:/bg.png', 800, 600, 1.0, readability=0)
+        assert blur_calls == []
+
+        DisplayPanel._get_scaled_background_bitmap(fake_panel, 'C:/bg.png', 800, 600, 1.0, readability=50)
+        assert blur_calls == [10]
+
+        # Same readability hits the cache (no second blur), different readability misses.
+        DisplayPanel._get_scaled_background_bitmap(fake_panel, 'C:/bg.png', 800, 600, 1.0, readability=50)
+        assert blur_calls == [10]
+        DisplayPanel._get_scaled_background_bitmap(fake_panel, 'C:/bg.png', 800, 600, 1.0, readability=100)
+        assert blur_calls == [10, 20]
+
+
 def main():
     os.chdir(ROOT)
     temp_home = tempfile.mkdtemp(prefix='beam-background-pipeline-')
@@ -457,6 +649,9 @@ def main():
     test_beamsettings_background_migration()
     test_nowplaying_background_layers_and_snapshot(temp_home)
     test_png_warning_suppressed_image_loading()
+    test_readability_background_mode(temp_home)
+    test_readability_blur_dim_mapping_and_cache()
+    test_keep_existing_inherits_previous_background()
     print('Background pipeline smoke test passed')
 
 

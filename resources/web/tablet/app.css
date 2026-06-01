@@ -4,6 +4,8 @@
   --bg-2: #5e2037;
   --bg-3: #cb8b6c;
   --beam-background-overlay-opacity: 1;
+  --beam-readability-blur: 0px;
+  --beam-readability-dim: 0;
   --panel: rgba(18, 10, 14, 0.7);
   --panel-border: rgba(255, 231, 232, 0.18);
   --text: #fff9f4;
@@ -71,17 +73,29 @@ body.with-background-overlay::after {
   pointer-events: none;
 }
 
+/* Show the background fully (image or solid color) to match the native display. */
 body.with-background-base::before {
-  background-image: var(--beam-background-base);
-  opacity: 0.18;
-  filter: blur(2px);
+  background-image: var(--beam-background-base, none);
+  background-color: var(--beam-background-base-color, transparent);
+  opacity: 1;
   z-index: -2;
 }
 
+/* "Improve readability": blur the existing background (dimming is done on .page-shell). */
+body.with-background-base.readability-active::before {
+  filter: blur(var(--beam-readability-blur, 0px));
+  /* Slight upscale hides the semi-transparent fringe blur leaves at the edges. */
+  transform: scale(1.08);
+}
+
+.page-shell {
+  background-color: rgba(0, 0, 0, var(--beam-readability-dim, 0));
+}
+
 body.with-background-overlay::after {
-  background-image: var(--beam-background-overlay);
+  background-image: var(--beam-background-overlay, none);
+  background-color: var(--beam-background-overlay-color, transparent);
   opacity: var(--beam-background-overlay-opacity);
-  filter: blur(1px);
   z-index: -1;
 }
 

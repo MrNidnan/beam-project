@@ -38,6 +38,8 @@ def background_layer_to_dict(layer, layer_name=''):
         'rotateTimer': layer.get('rotateTimer', 0),
         'mode': layer.get('mode', ''),
         'opacity': layer.get('opacity', 100),
+        'improveReadability': bool(layer.get('improveReadability', False)),
+        'readability': int(layer.get('readability', 0) or 0),
         'name': layer.get('name', ''),
         'field': layer.get('field', ''),
         'matchedField': layer.get('matchedField', ''),

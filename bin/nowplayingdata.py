@@ -131,6 +131,19 @@ class NowPlayingData:
     def _empty_background_layer(self):
         return self._build_background_layer('', 'no', 0)
 
+    def _resolve_readability_settings(self, mood):
+        # "Keep existing" keeps whatever background is already on screen but blurs/dims it
+        # by the Readability amount. ('readability' is the legacy mode name, treated the same.)
+        # Returns (improveReadability, readability) where readability is clamped 0..100.
+        try:
+            readability = int(mood.get('Readability', 0) or 0)
+        except (TypeError, ValueError):
+            readability = 0
+        readability = max(0, min(100, readability))
+        background_mode = str(mood.get('BackgroundMode', 'image')).strip().lower()
+        improve_readability = background_mode in ('keep', 'readability') and readability > 0
+        return improve_readability, readability
+
     def _build_cover_art_background_layer(self, cover_art_path, mode, opacity):
         return {
             'available': bool(cover_art_path),
@@ -304,12 +317,18 @@ class NowPlayingData:
             current_song = self._get_current_song_for_display()
 
         display_settings = mood['Display']
+        improve_readability, readability_value = self._resolve_readability_settings(mood)
+        background_mode = str(mood.get('BackgroundMode', 'image')).strip().lower()
+        keep_existing = background_mode in ('keep', 'readability')
         base_background_layer = self._build_background_layer(
             mood.get('Background', ''),
             mood.get('RotateBackground', 'no'),
             mood.get('RotateTimer', 120),
             mode='base',
             name=mood['Name'],
+            keepExisting=keep_existing,
+            improveReadability=improve_readability,
+            readability=readability_value,
         )
 
         display_rows = self._build_display_rows_for_settings(display_settings)
@@ -378,7 +397,7 @@ class NowPlayingData:
         # WINDOWS
         if platform.system() == 'Windows':
             if currentSettings.getSelectedModuleName() == 'iTunes':
-                self.currentPlaylist, self.PlaybackStatus = itunesmodule.run(currentSettings.getMaxTandaLength())
+                self.currentPlaylist, self.PlaybackStatus = itunesmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
             if currentSettings.getSelectedModuleName() == 'MediaMonkey':
                 self.currentPlaylist, self.PlaybackStatus = mediamonkeymodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
             if currentSettings.getSelectedModuleName() == 'Spotify':
@@ -450,7 +469,7 @@ class NowPlayingData:
             from bin.modules import icecastmodule
             self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
 
-        if (not self.currentPlaylist) and self.PlaybackStatus == 'Paused' and previous_playlist:
+        if (not self.currentPlaylist) and self.PlaybackStatus in ('Paused', 'Ambiguous') and previous_playlist:
             self.currentPlaylist = deepcopy(previous_playlist)
 
         # sanitizeFields()
@@ -578,7 +597,7 @@ class NowPlayingData:
             currentSong = SongObject()
         
         preserved_song_context = (
-            self.PlaybackStatus == 'Paused'
+            self.PlaybackStatus in ('Paused', 'Ambiguous')
             and self.currentPlaylist and isinstance(self.LastRead, list) and self.LastRead
             and self.currentPlaylist[0] == self.LastRead[0]
         )

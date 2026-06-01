@@ -214,10 +214,30 @@ class DisplayPanel(wx.Panel):
         dc.DrawRectangle(0, 0, int(cliWidth), int(cliHeight))
         return True
 
-    def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0, source_image=None, cache_source_key=None):
+    @staticmethod
+    def _readability_to_blur_dim(readability):
+        # "Improve readability": map a single 0..100 value to blur radius and dim opacity.
+        # blur radius = readability * 0.20 (0->0px, 50->10px, 100->20px)
+        # dim opacity = readability * 0.005 (0->0.00, 50->0.25, 100->0.50)
+        readability = max(0, min(100, int(readability or 0)))
+        blur_radius = int(round(readability * 0.20))
+        dim_opacity = readability * 0.005
+        return blur_radius, dim_opacity
+
+    def _draw_readability_dim(self, dc, base_layer, cliWidth, cliHeight):
+        if not base_layer.get('improveReadability'):
+            return
+        _, dim_opacity = self._readability_to_blur_dim(base_layer.get('readability', 0))
+        if dim_opacity <= 0:
+            return
+        dim_alpha = max(0, min(255, int(round(dim_opacity * 255))))
+        self._fill_background_colour(dc, wx.Colour(0, 0, 0, dim_alpha), cliWidth, cliHeight)
+
+    def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0, source_image=None, cache_source_key=None, readability=0):
         if not source_path and source_image is None:
             return None
 
+        readability = max(0, min(100, int(readability or 0)))
         cache_key = (
             cache_source_key or source_path,
             int(cliWidth),
@@ -227,6 +247,7 @@ class DisplayPanel(wx.Panel):
             round(float(self.displayData.blue), 4),
             round(float(self.displayData.alpha), 4),
             round(float(opacity), 4),
+            readability,
         )
         cached_bitmap = self._background_bitmap_cache.get(cache_key)
         if cached_bitmap is not None:
@@ -295,6 +316,13 @@ class DisplayPanel(wx.Panel):
 
         image = image.Scale(scaled_width, scaled_height, wx.IMAGE_QUALITY_HIGH)
 
+        blur_radius, _ = DisplayPanel._readability_to_blur_dim(readability)
+        if blur_radius > 0:
+            try:
+                image = image.Blur(blur_radius)
+            except Exception:
+                pass
+
         red = float(self.displayData.red)
         green = float(self.displayData.green)
         blue = float(self.displayData.blue)
@@ -324,7 +352,7 @@ class DisplayPanel(wx.Panel):
                 evicted_key[0],
                 evicted_key[1],
                 evicted_key[2],
-                float(evicted_key[-1]),
+                float(evicted_key[7]),
                 len(self._background_bitmap_cache),
                 formatMemoryUsageMb(getProcessMemoryUsageBytes()),
             )
@@ -349,6 +377,8 @@ class DisplayPanel(wx.Panel):
         overlay_mode = str(overlay_layer.get('mode', '')).lower()
         overlay_opacity = max(0.0, min(1.0, float(overlay_layer.get('opacity', 100)) / 100.0))
 
+        base_readability = int(base_layer.get('readability', 0) or 0) if base_layer.get('improveReadability') else 0
+
         base_drawn = False
         if base_layer.get('available'):
             base_colour = self._parse_background_colour(base_layer, 1.0)
@@ -357,7 +387,7 @@ class DisplayPanel(wx.Panel):
                 base_drawn = True
             else:
                 base_source_path = self._get_layer_draw_path(base_layer)
-                base_bitmap = self._get_scaled_background_bitmap(base_source_path, cliWidth, cliHeight, 1.0)
+                base_bitmap = self._get_scaled_background_bitmap(base_source_path, cliWidth, cliHeight, 1.0, readability=base_readability)
                 if base_bitmap is not None:
                     self._draw_bitmap_centered(dc, base_bitmap, cliWidth, cliHeight)
                     self.modifiedBitmap = base_bitmap
@@ -408,6 +438,9 @@ class DisplayPanel(wx.Panel):
                 self.modifiedBitmap = bitmap
             except Exception as e:
                 logging.info(e, exc_info=True)
+
+        # "Improve readability": darken the resolved background before drawing text.
+        self._draw_readability_dim(dc, base_layer, cliWidth, cliHeight)
 
         self.displayData.triggerResizeBackground = False
 

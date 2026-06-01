@@ -26,6 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 import wx
+import wx.lib.colourselect as colourselect
 import os
 import platform
 
@@ -39,6 +40,24 @@ from copy import deepcopy
 
 BACKGROUND_FILE_WILDCARD = "Image files(*.png,*.jpg)|*.png;*.jpg"
 BACKGROUND_EXTENSIONS = ('.jpg', '.jpeg', '.png')
+
+# Background mode selector. Order must match BACKGROUND_MODE_VALUES.
+# "Keep existing" inherits the on-screen background and exposes the Readability
+# slider (blur + dim). "Color" sets a solid colour. "Single image" uses one image
+# file (no rotation). "Image slideshow" rotates through images in a folder.
+BACKGROUND_MODE_LABELS = ["Keep existing", "Color", "Single image", "Image slideshow"]
+BACKGROUND_MODE_VALUES = ["keep", "color", "image", "slideshow"]
+BACKGROUND_MODE_KEEP = 0
+BACKGROUND_MODE_COLOR = 1
+BACKGROUND_MODE_IMAGE = 2
+BACKGROUND_MODE_SLIDESHOW = 3
+
+# "Change image every" options and the seconds they map to (index aligned).
+SLIDESHOW_INTERVAL_LABELS = ['Every 15 seconds', 'Every 30 seconds', 'Every 1 minute',
+                            'Every 2 minutes', 'Every 3 minutes', 'Every 5 minutes',
+                            'Every 10 minutes', 'Every 20 minutes']
+SLIDESHOW_INTERVAL_SECONDS = [15, 30, 60, 120, 180, 300, 600, 1200]
+SLIDESHOW_DEFAULT_INTERVAL_INDEX = 1  # 30 seconds
 
 
 def _get_background_picker_path(background_reference):
@@ -161,49 +180,87 @@ class EditMoodDialog(wx.Dialog):
             propertiesBox.Add(propertiesGrid, flag=wx.ALL | wx.EXPAND, border=10)
             self.vbox.Add(propertiesBox, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
 
-        # Background image
-        BackgroundDesc = wx.StaticText(self.panel, -1, "Select a background image or use a solid color")
-        self.BrowseBackgroundButton = wx.Button(self.panel, label="Browse")
-        self.ChooseBackgroundColorButton = wx.Button(self.panel, label="Color")
-        self.currentBackground = wx.StaticText(self.panel, -1, "")
+        # Background: a type dropdown that reveals only the controls for the chosen type.
+        background_box = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Background")
+        type_row = wx.BoxSizer(wx.HORIZONTAL)
+        self.BackgroundTypeChoice = normalizeMacControlHeight(wx.ComboBox(
+            self.panel, choices=BACKGROUND_MODE_LABELS, style=wx.CB_READONLY))
+        self.BackgroundTypeChoice.Bind(wx.EVT_COMBOBOX, self.OnBackgroundModeChanged)
+        type_row.Add(self.BackgroundTypeChoice, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL)
+        background_box.Add(type_row, flag=wx.EXPAND | wx.ALL, border=10)
 
-        self.ChangeBackgroundBox = wx.CheckBox(self.panel, label='Rotate backgrounds')
-        self.BackgroundTimerBox = normalizeMacControlHeight(wx.ComboBox(self.panel,
-                              choices=['Every 15 seconds', 'Every 30 seconds', 'Every 1 minute',
-                                   'Every 2 minutes', 'Every 3 minutes', 'Every 5 minutes',
-                                   'Every 10 minutes', 'Every 20 minutes'], style=wx.CB_READONLY))
-        self.RandomBackgroundBox = wx.CheckBox(self.panel, label='Random order')
-        self.ChangeBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
-        self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnRotateBackground)
-        self.BackgroundTimerBox.Bind(wx.EVT_COMBOBOX, self.OnRotateBackground)
-        if self.EditMood['RotateBackground'] == "linear":
-            self.ChangeBackgroundBox.SetValue(True)
-            self.RandomBackgroundBox.SetValue(False)
-        elif self.EditMood['RotateBackground'] == "random":
-            self.ChangeBackgroundBox.SetValue(True)
-            self.RandomBackgroundBox.SetValue(True)
-        else:
-            self.ChangeBackgroundBox.SetValue(False)
-            self.RandomBackgroundBox.SetValue(False)
-            self.RandomBackgroundBox.Disable()
-            self.BackgroundTimerBox.Disable()
-        self.rotateBackgroundFunction()
-        background_image_box = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Background Image")
-        background_image_row = wx.BoxSizer(wx.HORIZONTAL)
-        background_image_row.Add(self.BrowseBackgroundButton, flag=wx.RIGHT, border=10)
-        background_image_row.Add(self.ChooseBackgroundColorButton, flag=wx.RIGHT, border=10)
-        background_image_row.Add(self.currentBackground, proportion=1)
-        background_image_box.Add(BackgroundDesc, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=10)
-        background_image_box.Add(background_image_row, flag=wx.EXPAND | wx.ALL, border=10)
-        self.vbox.Add(background_image_box, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        # --- Keep existing: Readability slider ---
+        keep_panel = wx.Panel(self.panel)
+        try:
+            initial_readability = int(self.EditMood.get('Readability', 0) or 0)
+        except (TypeError, ValueError):
+            initial_readability = 0
+        initial_readability = max(0, min(100, initial_readability))
+        self.ReadabilityLabel = wx.StaticText(keep_panel, -1, "Readability")
+        self.ReadabilitySlider = wx.Slider(
+            keep_panel, value=initial_readability, minValue=0, maxValue=100,
+            style=wx.SL_HORIZONTAL | wx.SL_LABELS)
+        self.ReadabilitySlider.SetToolTip(
+            "Keeps the on-screen background but blurs and darkens it so text is easier to read")
+        self.ReadabilitySlider.Bind(wx.EVT_SLIDER, self.OnReadabilityChanged)
+        keep_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        keep_sizer.Add(self.ReadabilityLabel, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        keep_sizer.Add(self.ReadabilitySlider, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL)
+        keep_panel.SetSizer(keep_sizer)
 
-        background_rotation_box = wx.StaticBoxSizer(wx.VERTICAL, self.panel, "Background Rotation")
-        rotation_row = wx.BoxSizer(wx.HORIZONTAL)
-        rotation_row.Add(self.ChangeBackgroundBox, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
-        rotation_row.Add(self.BackgroundTimerBox, proportion=1)
-        background_rotation_box.Add(rotation_row, flag=wx.EXPAND | wx.ALL, border=10)
-        background_rotation_box.Add(self.RandomBackgroundBox, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
-        self.vbox.Add(background_rotation_box, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        # --- Color: colour swatch button (shows the colour, opens the picker on click) ---
+        color_panel = wx.Panel(self.panel)
+        self.ChooseBackgroundColorButton = colourselect.ColourSelect(
+            color_panel, -1, "", _background_reference_to_colour(self.EditMood.get('Background', '')),
+            size=(120, 28))
+        self.ChooseBackgroundColorButton.SetToolTip("Pick the solid background color for this mood")
+        self.ChooseBackgroundColorButton.Bind(colourselect.EVT_COLOURSELECT, self.OnChooseBackgroundColor)
+        color_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        color_sizer.Add(wx.StaticText(color_panel, -1, "Color:"), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        color_sizer.Add(self.ChooseBackgroundColorButton, flag=wx.ALIGN_CENTER_VERTICAL)
+        color_panel.SetSizer(color_sizer)
+
+        # --- Single image: Browse image ---
+        image_panel = wx.Panel(self.panel)
+        self.BrowseImageButton = wx.Button(image_panel, label="Browse image...")
+        self.currentImageLabel = wx.StaticText(image_panel, -1, "")
+        self.BrowseImageButton.Bind(wx.EVT_BUTTON, self.OnBrowseImage)
+        image_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        image_sizer.Add(self.BrowseImageButton, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        image_sizer.Add(self.currentImageLabel, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL)
+        image_panel.SetSizer(image_sizer)
+
+        # --- Image slideshow: folder + interval + random order ---
+        slideshow_panel = wx.Panel(self.panel)
+        self.ChooseFolderButton = wx.Button(slideshow_panel, label="Choose folder...")
+        self.currentFolderLabel = wx.StaticText(slideshow_panel, -1, "")
+        self.BackgroundTimerBox = normalizeMacControlHeight(wx.ComboBox(
+            slideshow_panel, choices=SLIDESHOW_INTERVAL_LABELS, style=wx.CB_READONLY))
+        self.RandomBackgroundBox = wx.CheckBox(slideshow_panel, label='Random order')
+        self.ChooseFolderButton.Bind(wx.EVT_BUTTON, self.OnChooseFolder)
+        self.BackgroundTimerBox.Bind(wx.EVT_COMBOBOX, self.OnSlideshowChanged)
+        self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnSlideshowChanged)
+        slideshow_sizer = wx.BoxSizer(wx.VERTICAL)
+        folder_row = wx.BoxSizer(wx.HORIZONTAL)
+        folder_row.Add(self.ChooseFolderButton, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        folder_row.Add(self.currentFolderLabel, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL)
+        slideshow_sizer.Add(folder_row, flag=wx.EXPAND)
+        interval_row = wx.BoxSizer(wx.HORIZONTAL)
+        interval_row.Add(wx.StaticText(slideshow_panel, -1, "Change image every:"),
+                         flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        interval_row.Add(self.BackgroundTimerBox, flag=wx.ALIGN_CENTER_VERTICAL)
+        slideshow_sizer.Add(interval_row, flag=wx.TOP, border=8)
+        slideshow_sizer.Add(self.RandomBackgroundBox, flag=wx.TOP, border=8)
+        slideshow_panel.SetSizer(slideshow_sizer)
+
+        # Panels indexed to match BACKGROUND_MODE_*; only the selected one is shown.
+        self._background_option_panels = [keep_panel, color_panel, image_panel, slideshow_panel]
+        for option_panel in self._background_option_panels:
+            background_box.Add(option_panel, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+        self.vbox.Add(background_box, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+
+        self._set_selected_background_mode(self._resolve_initial_background_mode())
+        self._update_background_controls_state()
 
         # Layout controls
         self.LayoutSettings()
@@ -361,8 +418,7 @@ class EditMoodDialog(wx.Dialog):
         self.AddLayoutItemButton.Bind(wx.EVT_BUTTON, self.OnAddLayoutItem)
         self.EditLayoutItemButton.Bind(wx.EVT_BUTTON, self.OnEditLayoutItem)
         self.DelLayoutItemButton.Bind(wx.EVT_BUTTON, self.OnDelLayoutItem)
-        self.BrowseBackgroundButton.Bind(wx.EVT_BUTTON, self.OnBrowseBackground)
-        self.ChooseBackgroundColorButton.Bind(wx.EVT_BUTTON, self.OnChooseBackgroundColor)
+        # Background controls (image / folder / colour swatch) are bound in __init__.
 
     #
     # BUILD LIST AND CHECK
@@ -438,85 +494,112 @@ class EditMoodDialog(wx.Dialog):
         self._schedule_preview_refresh(immediate=True)
 
     #
-    # ROTATE/RANDOM BACKGROUND
+    # BACKGROUND MODE ("Keep existing" / "Color" / "Single image" / "Image slideshow")
     #
-    def OnRotateBackground(self, event):
-        if _background_reference_is_color(self.EditMood['Background']):
-            self.EditMood['RotateBackground'] = "no"
-            self.ChangeBackgroundBox.SetValue(False)
-            self.RandomBackgroundBox.SetValue(False)
-            self.RandomBackgroundBox.Disable()
-            self.BackgroundTimerBox.Disable()
-            if self.mode == "Edit mood":
-                beamSettings.markDirty()
-            self.rotateBackgroundFunction()
-            self._schedule_preview_refresh(immediate=True)
-            return
+    def _resolve_initial_background_mode(self):
+        # "Keep existing" (and the legacy "readability") inherit the on-screen background.
+        mode = str(self.EditMood.get('BackgroundMode', '')).strip().lower()
+        if mode in ('keep', 'readability'):
+            return BACKGROUND_MODE_KEEP
+        # Otherwise reflect the mood's actual stored background.
+        background_reference = self.EditMood.get('Background', '')
+        if _background_reference_is_color(background_reference):
+            return BACKGROUND_MODE_COLOR
+        # Rotation enabled => slideshow; a plain image reference => single image.
+        rotate = str(self.EditMood.get('RotateBackground', 'no')).strip().lower()
+        if rotate in ('linear', 'random'):
+            return BACKGROUND_MODE_SLIDESHOW
+        if str(background_reference or '').strip():
+            return BACKGROUND_MODE_IMAGE
+        return BACKGROUND_MODE_KEEP
 
-        if self.ChangeBackgroundBox.IsChecked() and not self.RandomBackgroundBox.IsChecked():
-            self.EditMood['RotateBackground'] = "linear"
-            self.RandomBackgroundBox.Enable()
-            self.BackgroundTimerBox.Enable()
-        elif self.ChangeBackgroundBox.IsChecked() and self.RandomBackgroundBox.IsChecked():
-            self.EditMood['RotateBackground'] = "random"
-            self.RandomBackgroundBox.Enable()
-            self.BackgroundTimerBox.Enable()
+    def _get_selected_background_mode(self):
+        selection = self.BackgroundTypeChoice.GetSelection()
+        return selection if selection >= 0 else BACKGROUND_MODE_KEEP
+
+    def _set_selected_background_mode(self, mode_index):
+        mode_index = max(0, min(len(BACKGROUND_MODE_VALUES) - 1, int(mode_index)))
+        self.BackgroundTypeChoice.SetSelection(mode_index)
+
+    def _update_background_controls_state(self):
+        # Show only the controls for the selected background type, then reflow.
+        selection = self._get_selected_background_mode()
+        for mode_index, option_panel in enumerate(self._background_option_panels):
+            option_panel.Show(mode_index == selection)
+        self._update_background_labels()
+        self.panel.Layout()
+
+    def OnBackgroundModeChanged(self, event):
+        selection = self._get_selected_background_mode()
+        self.EditMood['BackgroundMode'] = BACKGROUND_MODE_VALUES[selection]
+        # Rotation is only on for the slideshow mode.
+        if selection == BACKGROUND_MODE_SLIDESHOW:
+            self._apply_slideshow_rotation_from_controls()
         else:
-            self.EditMood['RotateBackground'] = "no"
-            self.RandomBackgroundBox.Disable()
-            self.BackgroundTimerBox.Disable()
-        timerVector = [15, 30, 60, 120, 180, 300, 600, 1200]
-        self.EditMood['RotateTimer'] = timerVector[int(self.BackgroundTimerBox.GetSelection())]
+            self.EditMood['RotateBackground'] = 'no'
+        self._update_background_controls_state()
         if self.mode == "Edit mood":
             beamSettings.markDirty()
-        self.rotateBackgroundFunction()
         self._schedule_preview_refresh(immediate=True)
 
-    def rotateBackgroundFunction(self):
-        if int(self.EditMood['RotateTimer']) == 15:
-            self.BackgroundTimerBox.SetSelection(0)
-        elif int(self.EditMood['RotateTimer']) == 30:
-            self.BackgroundTimerBox.SetSelection(1)
-        elif int(self.EditMood['RotateTimer']) == 60:
-            self.BackgroundTimerBox.SetSelection(2)
-        elif int(self.EditMood['RotateTimer']) == 120:
-            self.BackgroundTimerBox.SetSelection(3)
-        elif int(self.EditMood['RotateTimer']) == 180:
-            self.BackgroundTimerBox.SetSelection(4)
-        elif int(self.EditMood['RotateTimer']) == 300:
-            self.BackgroundTimerBox.SetSelection(5)
-        elif int(self.EditMood['RotateTimer']) == 600:
-            self.BackgroundTimerBox.SetSelection(6)
-        elif int(self.EditMood['RotateTimer']) == 1200:
-            self.BackgroundTimerBox.SetSelection(7)
-        else:
-            self.BackgroundTimerBox.SetSelection(2)
+    def OnReadabilityChanged(self, event):
+        self.EditMood['Readability'] = int(self.ReadabilitySlider.GetValue())
+        if self.mode == "Edit mood":
+            beamSettings.markDirty()
+        self._schedule_preview_refresh(immediate=True)
 
-        if _background_reference_is_color(self.EditMood['Background']):
-            self.ChangeBackgroundBox.SetValue(False)
-            self.RandomBackgroundBox.SetValue(False)
-            self.ChangeBackgroundBox.Disable()
-            self.RandomBackgroundBox.Disable()
-            self.BackgroundTimerBox.Disable()
-            self.currentBackground.SetLabel("Color: " + _get_background_label_path(self.EditMood['Background']))
+    #
+    # IMAGE SLIDESHOW (folder rotation)
+    #
+    def _apply_slideshow_rotation_from_controls(self):
+        self.EditMood['RotateBackground'] = 'random' if self.RandomBackgroundBox.IsChecked() else 'linear'
+        interval_index = self.BackgroundTimerBox.GetSelection()
+        if interval_index < 0:
+            interval_index = SLIDESHOW_DEFAULT_INTERVAL_INDEX
+        self.EditMood['RotateTimer'] = SLIDESHOW_INTERVAL_SECONDS[interval_index]
+
+    def OnSlideshowChanged(self, event):
+        self._apply_slideshow_rotation_from_controls()
+        if self.mode == "Edit mood":
+            beamSettings.markDirty()
+        self._schedule_preview_refresh(immediate=True)
+        event.Skip()
+
+    def _update_color_button_swatch(self):
+        # The ColourSelect button face shows the chosen colour (no separate hex label).
+        background_reference = self.EditMood.get('Background', '')
+        if _background_reference_is_color(background_reference):
+            self.ChooseBackgroundColorButton.SetColour(_background_reference_to_colour(background_reference))
+
+    def _update_background_labels(self):
+        # Reflect the stored interval / random order and the selected image/folder names.
+        try:
+            interval_index = SLIDESHOW_INTERVAL_SECONDS.index(int(self.EditMood.get('RotateTimer', 30)))
+        except (ValueError, TypeError):
+            interval_index = SLIDESHOW_DEFAULT_INTERVAL_INDEX
+        self.BackgroundTimerBox.SetSelection(interval_index)
+        self.RandomBackgroundBox.SetValue(
+            str(self.EditMood.get('RotateBackground', 'no')).strip().lower() == 'random')
+
+        self._update_color_button_swatch()
+
+        background_reference = self.EditMood.get('Background', '')
+        if _background_reference_is_color(background_reference):
+            self.currentImageLabel.SetLabel("")
+            self.currentFolderLabel.SetLabel("")
             return
 
-        self.ChangeBackgroundBox.Enable()
+        label_path = _get_background_label_path(background_reference)
+        if not label_path:
+            self.currentImageLabel.SetLabel("")
+            self.currentFolderLabel.SetLabel("")
+            return
 
-        label_path = _get_background_label_path(self.EditMood['Background'])
-        path, backgroundfile = os.path.split(os.path.normpath(label_path))
-        if self.EditMood['RotateBackground'] == "no":
-            self.RandomBackgroundBox.Disable()
-            self.BackgroundTimerBox.Disable()
-            self.currentBackground.SetLabel("Image: " + backgroundfile)
-        else:
-            self.RandomBackgroundBox.Enable()
-            self.BackgroundTimerBox.Enable()
-            if os.path.splitext(backgroundfile)[1].lower() in BACKGROUND_EXTENSIONS:
-                folder_name = os.path.split(path)[1]
-            else:
-                folder_name = backgroundfile
-            self.currentBackground.SetLabel("Images from folder: " + folder_name)
+        parent_path, background_file = os.path.split(os.path.normpath(label_path))
+        is_image_file = os.path.splitext(background_file)[1].lower() in BACKGROUND_EXTENSIONS
+        self.currentImageLabel.SetLabel(background_file if is_image_file else "")
+        # For a file the slideshow folder is its parent; for a folder it is the folder itself.
+        self.currentFolderLabel.SetLabel(os.path.split(parent_path)[1] if is_image_file else background_file)
 
 
 
@@ -558,9 +641,7 @@ class EditMoodDialog(wx.Dialog):
             self.InputID3Field.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
             self.IsIsNotField.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
         self.DisplayTimerField.Bind(wx.EVT_SPINCTRL, self.OnImmediatePreviewChange)
-        self.ChangeBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnImmediatePreviewChange)
-        self.RandomBackgroundBox.Bind(wx.EVT_CHECKBOX, self.OnImmediatePreviewChange)
-        self.BackgroundTimerBox.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
+        # Slideshow controls (interval / random order) refresh the preview via OnSlideshowChanged.
 
     def OnTextPreviewChange(self, event):
         self._schedule_preview_refresh(immediate=False)
@@ -630,6 +711,14 @@ class EditMoodDialog(wx.Dialog):
             self.EditMood['Field2'] = self.IsIsNotField.GetValue()
             self.EditMood['Field3'] = self.OutputField.GetValue()
         self.EditMood['DisplayTimer'] = self.DisplayTimerField.GetValue()
+        background_mode = self._get_selected_background_mode()
+        self.EditMood['BackgroundMode'] = BACKGROUND_MODE_VALUES[background_mode]
+        self.EditMood['Readability'] = int(self.ReadabilitySlider.GetValue())
+        # Rotation is only enabled for the slideshow mode.
+        if background_mode == BACKGROUND_MODE_SLIDESHOW:
+            self._apply_slideshow_rotation_from_controls()
+        else:
+            self.EditMood['RotateBackground'] = 'no'
         if self._dmx_supported:
             self.EditMood['U1DMXcolour'] = self.U1DMXcolourDropdown.GetValue()
             self.EditMood['U1DMXcolours'] = self.U1DMXColourList()
@@ -672,97 +761,101 @@ class EditMoodDialog(wx.Dialog):
     #
     # Browse for background
     #
-    def OnBrowseBackground(self, event):
-        background_path = _get_background_picker_path(self.EditMood['Background'])
-        if self.EditMood['RotateBackground'] == 'no':
-            dialog_directory, dialog_file = os.path.split(background_path)
-            open_dialog = wx.FileDialog(
-                self,
-                "Set new background image for mood",
-                dialog_directory,
-                dialog_file,
-                BACKGROUND_FILE_WILDCARD,
-                wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
-            )
-        else:
-            dialog_directory = background_path
-            if os.path.splitext(os.path.basename(background_path))[1].lower() in BACKGROUND_EXTENSIONS:
-                dialog_directory = os.path.dirname(background_path)
-            open_dialog = wx.DirDialog(
-                self,
-                "Select background folder for mood",
-                dialog_directory,
-                wx.DD_DIR_MUST_EXIST
-            )
+    def _persist_background_selection(self, selected_path):
+        # Returns a persisted background reference for the chosen file/folder, or
+        # None if the user cancelled or the import failed.
+        persisted_reference = to_persisted_background_reference(selected_path, 'moods')
+        if persisted_reference is not None:
+            return persisted_reference
 
+        message = (
+            "Copy the selected background into Beam's managed background library?\n\n"
+            "Yes: import into ~/.beam/backgrounds/moods\n"
+            "No: keep an unmanaged external path\n"
+            "Cancel: keep the current background"
+        )
+        decision_dialog = wx.MessageDialog(
+            self, message, "Import background", wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION)
         try:
-            if open_dialog.ShowModal() == wx.ID_OK:
-                selected_path = open_dialog.GetPath()
-                persisted_reference = to_persisted_background_reference(selected_path, 'moods')
-                if persisted_reference is None:
-                    message = (
-                        "Copy the selected background into Beam's managed background library?\n\n"
-                        "Yes: import into ~/.beam/backgrounds/moods\n"
-                        "No: keep an unmanaged external path\n"
-                        "Cancel: keep the current background"
-                    )
-                    decision_dialog = wx.MessageDialog(
-                        self,
-                        message,
-                        "Import background",
-                        wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION,
-                    )
-                    try:
-                        decision = decision_dialog.ShowModal()
-                    finally:
-                        decision_dialog.Destroy()
+            decision = decision_dialog.ShowModal()
+        finally:
+            decision_dialog.Destroy()
 
-                    if decision == wx.ID_CANCEL:
-                        return
-                    if decision == wx.ID_YES:
-                        import_result = import_background_asset(selected_path, 'moods')
-                        if import_result['status'] == 'failed':
-                            error_dialog = wx.MessageDialog(
-                                self,
-                                import_result['message'],
-                                "Background import failed",
-                                wx.OK | wx.ICON_ERROR,
-                            )
-                            try:
-                                error_dialog.ShowModal()
-                            finally:
-                                error_dialog.Destroy()
-                            return
-                        persisted_reference = import_result['reference']
-                    else:
-                        persisted_reference = os.path.normpath(selected_path)
+        if decision == wx.ID_CANCEL:
+            return None
+        if decision == wx.ID_YES:
+            import_result = import_background_asset(selected_path, 'moods')
+            if import_result['status'] == 'failed':
+                error_dialog = wx.MessageDialog(
+                    self, import_result['message'], "Background import failed", wx.OK | wx.ICON_ERROR)
+                try:
+                    error_dialog.ShowModal()
+                finally:
+                    error_dialog.Destroy()
+                return None
+            return import_result['reference']
+        return os.path.normpath(selected_path)
 
-                self.EditMood['Background'] = persisted_reference
-                if self.mode == "Edit mood":
-                    beamSettings.markDirty()
-                self.rotateBackgroundFunction()
-                self._schedule_preview_refresh(immediate=True)
+    def OnBrowseImage(self, event):
+        # "Single image" mode: pick one image file (no rotation).
+        background_path = _get_background_picker_path(self.EditMood['Background'])
+        dialog_directory, dialog_file = os.path.split(background_path)
+        open_dialog = wx.FileDialog(
+            self, "Choose background image for mood", dialog_directory, dialog_file,
+            BACKGROUND_FILE_WILDCARD, wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        try:
+            if open_dialog.ShowModal() != wx.ID_OK:
+                return
+            persisted_reference = self._persist_background_selection(open_dialog.GetPath())
+            if persisted_reference is None:
+                return
+            self.EditMood['Background'] = persisted_reference
+            self.EditMood['BackgroundMode'] = 'image'
+            self.EditMood['RotateBackground'] = 'no'
+            self._set_selected_background_mode(BACKGROUND_MODE_IMAGE)
+            if self.mode == "Edit mood":
+                beamSettings.markDirty()
+            self._update_background_controls_state()
+            self._schedule_preview_refresh(immediate=True)
+        finally:
+            open_dialog.Destroy()
+
+    def OnChooseFolder(self, event):
+        # "Image slideshow" mode: pick a folder and rotate through its images.
+        background_path = _get_background_picker_path(self.EditMood['Background'])
+        dialog_directory = background_path
+        if os.path.splitext(os.path.basename(background_path))[1].lower() in BACKGROUND_EXTENSIONS:
+            dialog_directory = os.path.dirname(background_path)
+        open_dialog = wx.DirDialog(
+            self, "Select background folder for mood", dialog_directory, wx.DD_DIR_MUST_EXIST)
+        try:
+            if open_dialog.ShowModal() != wx.ID_OK:
+                return
+            persisted_reference = self._persist_background_selection(open_dialog.GetPath())
+            if persisted_reference is None:
+                return
+            self.EditMood['Background'] = persisted_reference
+            self.EditMood['BackgroundMode'] = 'slideshow'
+            self._set_selected_background_mode(BACKGROUND_MODE_SLIDESHOW)
+            self._apply_slideshow_rotation_from_controls()
+            if self.mode == "Edit mood":
+                beamSettings.markDirty()
+            self._update_background_controls_state()
+            self._schedule_preview_refresh(immediate=True)
         finally:
             open_dialog.Destroy()
 
     def OnChooseBackgroundColor(self, event):
-        colour_data = wx.ColourData()
-        colour_data.SetChooseFull(True)
-        colour_data.SetColour(_background_reference_to_colour(self.EditMood['Background']))
-        dialog = wx.ColourDialog(self, colour_data)
-        try:
-            if dialog.ShowModal() != wx.ID_OK:
-                return
-
-            selected_colour = dialog.GetColourData().GetColour()
-            self.EditMood['Background'] = _colour_to_background_reference(selected_colour)
-            self.EditMood['RotateBackground'] = 'no'
-            if self.mode == "Edit mood":
-                beamSettings.markDirty()
-            self.rotateBackgroundFunction()
-            self._schedule_preview_refresh(immediate=True)
-        finally:
-            dialog.Destroy()
+        # The ColourSelect swatch button handles the picker dialog and reports the colour.
+        selected_colour = event.GetValue()
+        self.EditMood['Background'] = _colour_to_background_reference(selected_colour)
+        self.EditMood['RotateBackground'] = 'no'
+        self.EditMood['BackgroundMode'] = 'color'
+        self._set_selected_background_mode(BACKGROUND_MODE_COLOR)
+        if self.mode == "Edit mood":
+            beamSettings.markDirty()
+        self._update_background_controls_state()
+        self._schedule_preview_refresh(immediate=True)
 
     def OnSelectU1DMXcolour(self, event):
         if not self._dmx_supported or self.U1DMXfixtureColourList is None or self.U1DMXcolourDropdown is None:
