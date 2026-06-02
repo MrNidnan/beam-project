@@ -2,6 +2,59 @@
 
 All notable changes in this fork are documented in this file.
 
+## v0.9.3.0 - 2026-06-02
+
+### Added
+
+- Live display controls: Blackout and temporary Message
+  Two manual overrides next to the Display button:
+  - **Show Message** opens a dialog
+    to display a centered message (5–60s, default 15s) on display; it auto-clears on expiry, and the button toggles to **Clear Message** to remove it early.
+  - **Blackout** turns the output fully black and the button toggles to **Resume**; a temporary message still renders on top of the blackout. These overrides are not persisted and reset to inactive on startup; moods, rules, player state and background rotation keep running underneath.
+    The status bar now reports state as
+    `Player: ... | Mood: ... | Display: ON/OFF/BLACKOUT | [Message: Ns |] Network: ON/OFF`.
+
+- Cut / Trim rule applies to any field
+  The "Trim () in Title" rule is now "Cut / Trim" and works on any input tag, not
+  just the title. The start symbol field ("Start from"), can be a single character or more.
+
+- Blurr dimm existing background on timed moods
+  Example:
+  Steps:
+  1. Add the default mood slider presentation images with no text
+  2. Add a mood with the text you want with a duration for X seconds
+  3. select background "Keep existing" and a readability to blurr the background
+
+  Mood backgrounds now have a "Readability" control. The mood editor's Background
+  options are "Keep existing", "Image" and "Color". "Keep existing" leaves the
+  background that is already on screen unchanged — useful for timed message moods
+  (e.g. LAST TANDA) that should overlay text without swapping the background. When
+  selected, a single "Readability" slider (0–100) applies a combined blur + dark
+  overlay to that background so on-screen text is easier to read (0 = no change,
+  100 = strong blur and darkening). "Image" and "Color" continue to use the mood's
+  own background as before. Works on both the native (wx) and network/browser
+  displays. Old mood configurations continue to load unchanged.
+
+### Changed
+
+- Reworked the mood editor Background section for clarity. The background type is now
+  chosen from a single **Background type** dropdown — **Keep existing**, **Color**,
+  **Single image**, or **Image slideshow** — and only the controls for the selected
+  type are shown, keeping the dialog compact. The rotation interval / random-order
+  options now live inside **Image slideshow** instead of a separate "Background
+  Rotation" group. Existing moods load into the matching type automatically (single
+  image, rotating folder, color, or keep-existing).
+
+### Fixed
+
+- Rotating backgrounds refresh work like a charm now.
+- Alignment with backgrounds, cover art images and opacity settings between web display and normal display
+- Cover art Advanced display options (corner radius, outline enable/alpha/width) now
+  apply to the network/browser display and update live, matching the native display.
+  The browser cover art also preserves aspect ratio (letterbox) like the native render
+  instead of cropping to a square. (Feather is approximated by corner rounding in the browser.)
+- Some other comestic issues in Windows / Linux
+
 ## v0.9.2.1 - 2026-05-31
 
 ### Fixed

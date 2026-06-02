@@ -75,6 +75,29 @@ You can use:
 - your own imported background files
 - rotating background folders
 
+### Background Modes
+
+In the mood editor, the `Background` section has a single `Background type` dropdown. Choosing a type reveals only the controls for that type, keeping the dialog compact:
+
+- **Keep existing** – does **not** change the background. The mood leaves whatever background is already on screen (from the previous or default mood) in place. This is ideal for timed message moods such as `LAST TANDA`, where you want to show extra text over the current background without swapping it. Shows the `Readability` slider (see below).
+- **Color** – use a solid color. Shows a colour swatch button that displays the chosen colour and opens the picker when clicked.
+- **Single image** – use one image file. Shows a `Browse image...` button (file picker). No rotation.
+- **Image slideshow** – rotate through all images in a folder. Shows `Choose folder...`, a `Change image every` interval, and a `Random order` checkbox.
+
+There is no longer a separate "Background Rotation" section: the rotation interval and random-order options appear only when `Image slideshow` is selected. To switch between a single picture and a rotating folder, just change the `Background type` dropdown.
+
+### Readability
+
+When the background mode is `Keep existing`, a single `Readability` slider (from `0` to `100`) is available. It does not replace the background — it keeps whatever is already on screen and applies a blur plus a dark overlay so on-screen text is easier to read:
+
+- `0` means no change at all.
+- Higher values increase both the blur and the darkening together.
+- `100` gives a strong blur and strong darkening.
+
+A typical use is a timed message mood: set its background to `Keep existing`, raise `Readability` until the message is clearly legible over the current background, and the underlying background is never swapped.
+
+This works the same way on the projected (native) display and on the browser/tablet display.
+
 ## Layout Items
 
 The layout controls decide where and which song information appears on screen.

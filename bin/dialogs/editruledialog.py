@@ -52,7 +52,7 @@ class EditRuleDialog(wx.Dialog):
         # self.ButtonCancelRule.Bind(wx.EVT_BUTTON, self.OnCancelRuleItem)
         self.InputFields    = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer"]
         self.OutputFields   = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer", "%Singer"]
-        self.RuleTypes      = ['Copy','Cortina','Parse', 'Ignore','Replace', 'Trim () in Title']
+        self.RuleTypes      = ['Copy','Cortina','Parse', 'Ignore','Replace', 'Cut / Trim']
 
 
     # Check if it is a new line
@@ -251,24 +251,26 @@ class EditRuleDialog(wx.Dialog):
                 self.OutputField2.SetValue("")
 
         ##############################################
-        if RuleSelected == 'Trim () in Title':
-            self.DynamicFieldLabel1.SetLabel('Trim from')
+        if RuleSelected == 'Cut / Trim':
+            self.DynamicFieldLabel1.SetLabel('Start from')
             self.DynamicFieldLabel2.SetLabel('')
-            self.DynamicFieldLabel3.SetLabel('Start symbol')
+            self.DynamicFieldLabel3.SetLabel('')
             self.DynamicFieldLabel4.SetLabel('')
 
+            # Remove fields that are not to be shown
             self.RemoveDynamicElements()
 
-            self.InputID3Field.SetStringSelection('%Title')
-            self.InputID3Field.Disable()
+            self.DynamicFieldLabel3.Hide()
+            self.OutputField3.Hide()
 
-            if self.Settings['Type'] == 'Trim () in Title':
-                self.OutputField3.SetValue(str(self.Settings.get('Field2', '(')))
+            # "Start from" sits next to the Input ID3 tag (sizer1 column).
+            self.OutputField1 = wx.TextCtrl(self.EditRulePanel, value="(", size=(150, -1))
+            self.sizer1.Add(self.OutputField1)
+
+            if self.Settings['Type'] == 'Cut / Trim':
+                self.OutputField1.SetValue(str(self.Settings.get('Field2', '(')))
             else:
-                self.OutputField3.SetValue("(")
-
-            self.DynamicFieldLabel3.Show()
-            self.OutputField3.Show()
+                self.OutputField1.SetValue("(")
 
         self.vbox.SetSizeHints(self)  
         self.EditRulePanel.SetSizer(self.vbox)
@@ -279,23 +281,19 @@ class EditRuleDialog(wx.Dialog):
 #
     def RemoveDynamicElements(self):
         try:
-            self.sizer1.Remove(self.OutputField1)
+            self.sizer1.Detach(self.OutputField1)
             self.OutputField1.Hide()
         except: pass
         try:
-            self.sizer2.Remove(self.OutputField2)
+            self.sizer2.Detach(self.OutputField2)
             self.OutputField2.Hide()
         except: pass
         try:
-            self.sizer1.Remove(self.IsIsNot)
+            self.sizer1.Detach(self.IsIsNot)
             self.IsIsNot.Hide()
         except: pass
         try:
-            self.sizer2.Remove(self.OutputField2)
-            self.OutputField2.Hide()
-        except: pass
-        try:
-            self.sizer3.Remove(self.OutputField3)
+            self.sizer3.Detach(self.OutputField3)
             self.OutputField3.Hide()
         except: pass
         # try:
@@ -332,8 +330,8 @@ class EditRuleDialog(wx.Dialog):
         if RuleSelected == 'Ignore':
             NewRule['Field2']      = self.IsIsNot.GetValue()
             NewRule['Field3']      = self.OutputField2.GetValue()
-        if RuleSelected == 'Trim () in Title':
-            NewRule['Field2']      = self.OutputField3.GetValue().strip() or "("
+        if RuleSelected == 'Cut / Trim':
+            NewRule['Field2']      = self.OutputField1.GetValue().strip() or "("
 
         NewRule['Field1']      = self.InputID3Field.GetValue()
         # Decide where NewRule goes into the vector self.Settings

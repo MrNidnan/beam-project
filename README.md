@@ -103,6 +103,40 @@ Beam lets you change:
 
 ![Screenshot: Layout or mood settings page with a customized preview](docs/images/user-manual/beam_2_moods_and_layout.png)
 
+## Live Display Controls
+
+The buttons at the bottom of the main window give you instant, manual control of
+the projected display. These controls are temporary overrides: they do not change
+your moods, rules, player state, or background rotation, which keep running
+underneath. Nothing here is saved — everything resets to inactive when Beam starts.
+
+- **Show Message** — opens a small dialog to type a message and pick how long it
+  stays on screen (5–60 seconds, default 15). The message appears centered, in
+  large white text, on the preview, the projector, and the browser display. It
+  disappears automatically when the time runs out. While a message is showing,
+  the button becomes **Clear Message** so you can remove it early.
+- **Display** — shows or hides the projector window, as before.
+- **Blackout** — instantly turns the projected display fully black. Your moods,
+  rules, and rotation keep running in the background; only the output is hidden.
+  While active the button becomes **Resume**; press it to return to the live
+  display. A temporary message still appears on top of a blackout.
+
+### Status bar
+
+The bottom status bar summarizes the current state at a glance:
+
+```
+Player: Playing | Mood: Tango | Display: ON | Network: OFF
+```
+
+- **Player** — current playback status from your music player.
+- **Mood** — the mood currently selected for the display.
+- **Display** — `ON` when the projector window is open, `OFF` when closed, or
+  `BLACKOUT` while blackout is active.
+- **Message** — only shown while a temporary message is active; counts down the
+  seconds remaining, e.g. `Message: 12s`.
+- **Network** — `ON` when the browser/tablet display is enabled, otherwise `OFF`.
+
 ## Browser and Tablet Display
 
 Beam can also publish the current display over your local network, so a phone, tablet, or another browser can show the same information.

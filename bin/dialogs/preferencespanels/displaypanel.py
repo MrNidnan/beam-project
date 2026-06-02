@@ -214,10 +214,30 @@ class DisplayPanel(wx.Panel):
         dc.DrawRectangle(0, 0, int(cliWidth), int(cliHeight))
         return True
 
-    def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0, source_image=None, cache_source_key=None):
+    @staticmethod
+    def _readability_to_blur_dim(readability):
+        # "Improve readability": map a single 0..100 value to blur radius and dim opacity.
+        # blur radius = readability * 0.20 (0->0px, 50->10px, 100->20px)
+        # dim opacity = readability * 0.005 (0->0.00, 50->0.25, 100->0.50)
+        readability = max(0, min(100, int(readability or 0)))
+        blur_radius = int(round(readability * 0.20))
+        dim_opacity = readability * 0.005
+        return blur_radius, dim_opacity
+
+    def _draw_readability_dim(self, dc, base_layer, cliWidth, cliHeight):
+        if not base_layer.get('improveReadability'):
+            return
+        _, dim_opacity = self._readability_to_blur_dim(base_layer.get('readability', 0))
+        if dim_opacity <= 0:
+            return
+        dim_alpha = max(0, min(255, int(round(dim_opacity * 255))))
+        self._fill_background_colour(dc, wx.Colour(0, 0, 0, dim_alpha), cliWidth, cliHeight)
+
+    def _get_scaled_background_bitmap(self, source_path, cliWidth, cliHeight, opacity=1.0, source_image=None, cache_source_key=None, readability=0):
         if not source_path and source_image is None:
             return None
 
+        readability = max(0, min(100, int(readability or 0)))
         cache_key = (
             cache_source_key or source_path,
             int(cliWidth),
@@ -227,6 +247,7 @@ class DisplayPanel(wx.Panel):
             round(float(self.displayData.blue), 4),
             round(float(self.displayData.alpha), 4),
             round(float(opacity), 4),
+            readability,
         )
         cached_bitmap = self._background_bitmap_cache.get(cache_key)
         if cached_bitmap is not None:
@@ -295,6 +316,13 @@ class DisplayPanel(wx.Panel):
 
         image = image.Scale(scaled_width, scaled_height, wx.IMAGE_QUALITY_HIGH)
 
+        blur_radius, _ = DisplayPanel._readability_to_blur_dim(readability)
+        if blur_radius > 0:
+            try:
+                image = image.Blur(blur_radius)
+            except Exception:
+                pass
+
         red = float(self.displayData.red)
         green = float(self.displayData.green)
         blue = float(self.displayData.blue)
@@ -324,7 +352,7 @@ class DisplayPanel(wx.Panel):
                 evicted_key[0],
                 evicted_key[1],
                 evicted_key[2],
-                float(evicted_key[-1]),
+                float(evicted_key[7]),
                 len(self._background_bitmap_cache),
                 formatMemoryUsageMb(getProcessMemoryUsageBytes()),
             )
@@ -349,6 +377,8 @@ class DisplayPanel(wx.Panel):
         overlay_mode = str(overlay_layer.get('mode', '')).lower()
         overlay_opacity = max(0.0, min(1.0, float(overlay_layer.get('opacity', 100)) / 100.0))
 
+        base_readability = int(base_layer.get('readability', 0) or 0) if base_layer.get('improveReadability') else 0
+
         base_drawn = False
         if base_layer.get('available'):
             base_colour = self._parse_background_colour(base_layer, 1.0)
@@ -357,7 +387,7 @@ class DisplayPanel(wx.Panel):
                 base_drawn = True
             else:
                 base_source_path = self._get_layer_draw_path(base_layer)
-                base_bitmap = self._get_scaled_background_bitmap(base_source_path, cliWidth, cliHeight, 1.0)
+                base_bitmap = self._get_scaled_background_bitmap(base_source_path, cliWidth, cliHeight, 1.0, readability=base_readability)
                 if base_bitmap is not None:
                     self._draw_bitmap_centered(dc, base_bitmap, cliWidth, cliHeight)
                     self.modifiedBitmap = base_bitmap
@@ -408,6 +438,9 @@ class DisplayPanel(wx.Panel):
                 self.modifiedBitmap = bitmap
             except Exception as e:
                 logging.info(e, exc_info=True)
+
+        # "Improve readability": darken the resolved background before drawing text.
+        self._draw_readability_dim(dc, base_layer, cliWidth, cliHeight)
 
         self.displayData.triggerResizeBackground = False
 
@@ -468,6 +501,21 @@ class DisplayPanel(wx.Panel):
         radius = self._get_cover_art_corner_radius(min_dim)
         feather = self._get_cover_art_feather_amount(radius)
 
+        # DEV NOTE / PERF: the rounded-corner + feather mask below is a pure-Python
+        # per-pixel double loop (O(new_w * new_h)). On a ~500x500 cover that is
+        # ~250k iterations with a SetAlpha() call per edge pixel, run on the UI
+        # thread. The result is memoized in self._cover_art_bitmap_cache, so it
+        # only fires on a cache miss (new cover art or a new render size), but
+        # each miss can briefly stall the UI - most visible under software
+        # rendering (e.g. WSLg/llvmpipe, no GPU accel).
+        #   - This loop is gated by `radius > 0`, NOT by feather. Setting corner
+        #     radius to 0 skips it entirely (fast path); feather 0 does NOT skip
+        #     it (f is clamped to >=1 below) and only narrows the edge falloff.
+        #   - Auto radius = ~8% of size, always > 0, so "auto" never takes the
+        #     fast path.
+        #   - Future optimization: vectorize the mask with numpy (build the
+        #     signed-distance field and alpha channel array-wise) for ~100-1000x
+        #     speedup and no per-song stall.
         if radius > 0:
             if not image.HasAlpha():
                 image.InitAlpha()
@@ -830,7 +878,78 @@ class DisplayPanel(wx.Panel):
         if not cliWidth or not cliHeight:
             return
         dc.Clear()
-        self.drawBackgroundBitmap(dc)
-        self.drawItems(dc)
+
+        # Blackout is a final override: replace the normal Beam output with a
+        # full black screen. The normal pipeline (moods/rules/rotation) keeps
+        # running underneath; only the rendering is suppressed.
+        if self.displayData.isBlackoutActive():
+            self._draw_black_screen(dc, cliWidth, cliHeight)
+        else:
+            self.drawBackgroundBitmap(dc)
+            self.drawItems(dc)
+
+        # The temporary message renders on top of everything, including blackout.
+        message_text = self.displayData.getTempMessageText()
+        if message_text:
+            self._draw_temp_message(dc, cliWidth, cliHeight, message_text)
+
+    def _draw_black_screen(self, dc, cliWidth, cliHeight):
+        dc.SetBackground(wx.Brush(wx.BLACK))
+        dc.Clear()
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(wx.Brush(wx.BLACK))
+        dc.DrawRectangle(0, 0, int(cliWidth), int(cliHeight))
+
+    def _draw_temp_message(self, dc, cliWidth, cliHeight, message_text):
+        blackout_active = self.displayData.isBlackoutActive()
+
+        # Large readable font, sized relative to the display height.
+        font_size = max(12, int(cliHeight * 0.08))
+        try:
+            dc.SetFont(wx.Font(font_size, wx.ROMAN, wx.NORMAL, wx.BOLD, False, "Liberation Sans"))
+        except Exception:
+            dc.SetFont(wx.Font(font_size, wx.ROMAN, wx.NORMAL, wx.BOLD))
+
+        lines = str(message_text).splitlines() or ['']
+
+        line_widths = []
+        line_height = dc.GetTextExtent('Ag')[1] or font_size
+        line_spacing = max(line_height, int(line_height * 1.15))
+        max_line_width = 0
+        for line in lines:
+            line_width, _ = dc.GetTextExtent(line if line else ' ')
+            line_widths.append(line_width)
+            max_line_width = max(max_line_width, line_width)
+
+        total_text_height = line_spacing * len(lines)
+        padding = max(20, int(font_size * 0.5))
+
+        panel_width = min(int(cliWidth * 0.92), max_line_width + padding * 2)
+        panel_height = total_text_height + padding * 2
+        panel_x = int((cliWidth - panel_width) / 2)
+        panel_y = int((cliHeight - panel_height) / 2)
+
+        # Semi-transparent rounded panel behind the text. When blacked out the
+        # screen is already black, so the panel is optional; draw a subtle one
+        # for consistent readability.
+        if blackout_active:
+            panel_colour = wx.Colour(0, 0, 0, 140)
+        else:
+            panel_colour = wx.Colour(0, 0, 0, 180)
+        try:
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.SetBrush(wx.Brush(panel_colour))
+            corner_radius = max(8, int(padding * 0.6))
+            dc.DrawRoundedRectangle(panel_x, panel_y, panel_width, panel_height, corner_radius)
+        except Exception:
+            pass
+
+        # White text, centered horizontally and vertically.
+        dc.SetTextForeground(wx.Colour(255, 255, 255, 255))
+        text_y = panel_y + padding
+        for line, line_width in zip(lines, line_widths):
+            text_x = int((cliWidth - line_width) / 2)
+            dc.DrawText(line, text_x, int(text_y))
+            text_y += line_spacing
 
 

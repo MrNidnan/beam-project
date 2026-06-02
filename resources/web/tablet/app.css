@@ -4,6 +4,8 @@
   --bg-2: #5e2037;
   --bg-3: #cb8b6c;
   --beam-background-overlay-opacity: 1;
+  --beam-readability-blur: 0px;
+  --beam-readability-dim: 0;
   --panel: rgba(18, 10, 14, 0.7);
   --panel-border: rgba(255, 231, 232, 0.18);
   --text: #fff9f4;
@@ -71,17 +73,29 @@ body.with-background-overlay::after {
   pointer-events: none;
 }
 
+/* Show the background fully (image or solid color) to match the native display. */
 body.with-background-base::before {
-  background-image: var(--beam-background-base);
-  opacity: 0.18;
-  filter: blur(2px);
+  background-image: var(--beam-background-base, none);
+  background-color: var(--beam-background-base-color, transparent);
+  opacity: 1;
   z-index: -2;
 }
 
+/* "Improve readability": blur the existing background (dimming is done on .page-shell). */
+body.with-background-base.readability-active::before {
+  filter: blur(var(--beam-readability-blur, 0px));
+  /* Slight upscale hides the semi-transparent fringe blur leaves at the edges. */
+  transform: scale(1.08);
+}
+
+.page-shell {
+  background-color: rgba(0, 0, 0, var(--beam-readability-dim, 0));
+}
+
 body.with-background-overlay::after {
-  background-image: var(--beam-background-overlay);
+  background-image: var(--beam-background-overlay, none);
+  background-color: var(--beam-background-overlay-color, transparent);
   opacity: var(--beam-background-overlay-opacity);
-  filter: blur(1px);
   z-index: -1;
 }
 
@@ -208,6 +222,53 @@ body.with-background-overlay::after {
   visibility: hidden;
   pointer-events: none;
   white-space: pre-wrap;
+}
+
+/* Blackout: full black screen over the normal display. */
+.blackout-layer {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 900;
+}
+
+.blackout-layer[hidden] {
+  display: none;
+}
+
+/* Temporary message: centered overlay on top of everything, incl. blackout. */
+.temp-message-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4vw;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.temp-message-overlay[hidden] {
+  display: none;
+}
+
+.temp-message-panel {
+  max-width: 92vw;
+  padding: 0.6em 0.9em;
+  border-radius: 0.4em;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-family: "Liberation Sans", Arial, sans-serif;
+  font-weight: 700;
+  font-size: 8vh;
+  line-height: 1.15;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.temp-message-overlay.over-blackout .temp-message-panel {
+  background: rgba(0, 0, 0, 0.55);
 }
 
 @media (max-width: 900px) {

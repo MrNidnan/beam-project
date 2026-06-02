@@ -92,7 +92,9 @@ class EditArtistBackgroundDialog(wx.Dialog):
         infoGrid.Add(wx.StaticText(panel, wx.ID_ANY, 'Name'), 0, wx.ALIGN_CENTER_VERTICAL)
         infoGrid.Add(self.NameField, 0, wx.EXPAND)
         infoGrid.Add(wx.StaticText(panel, wx.ID_ANY, 'Active'), 0, wx.ALIGN_CENTER_VERTICAL)
-        infoGrid.Add(self.ActiveCheckbox, 0, wx.EXPAND)
+        # No wx.EXPAND on the checkbox: stretching it triggers a GTK negative-size
+        # assertion ("gtk_box_gadget_distribute: assertion 'size >= 0' failed").
+        infoGrid.Add(self.ActiveCheckbox, 0, wx.ALIGN_CENTER_VERTICAL)
         infoGrid.Add(wx.StaticText(panel, wx.ID_ANY, 'Match field'), 0, wx.ALIGN_CENTER_VERTICAL)
         infoGrid.Add(self.FieldDropdown, 0, wx.EXPAND)
         infoGrid.Add(wx.StaticText(panel, wx.ID_ANY, 'Operator'), 0, wx.ALIGN_CENTER_VERTICAL)

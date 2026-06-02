@@ -1,6 +1,9 @@
 const layoutCanvasEl = document.getElementById("layout-canvas");
 const emptyStateEl = document.getElementById("empty-state");
 const textMeasurerEl = document.getElementById("text-measurer");
+const blackoutLayerEl = document.getElementById("blackout-layer");
+const tempMessageOverlayEl = document.getElementById("temp-message-overlay");
+const tempMessagePanelEl = document.getElementById("temp-message-panel");
 
 const COVER_ART_URL = "/media/cover-art/current";
 const ABSOLUTE_MIN_TEXT_SIZE_PX = 10;
@@ -571,8 +574,46 @@ function createCoverArtElement(
   coverArtEl.style.width = `${sizePx}px`;
   coverArtEl.style.height = `${sizePx}px`;
 
+  applyCoverArtStyle(coverArtEl, snapshot.coverArtStyle || {}, sizePx);
+
   applyHorizontalPosition(coverArtEl, alignment, item, canvasWidth);
   return coverArtEl;
+}
+
+// Mirror the native (wx) cover-art tweaks from Advanced display options so the
+// browser display matches: aspect-preserving fit, configurable corner radius,
+// and optional white outline (alpha 0-255, width in px). Inline styles override
+// the decorative defaults in app.css.
+function applyCoverArtStyle(coverArtEl, style, sizePx) {
+  // Native scales with min(w/iw, h/ih) -> letterbox, i.e. CSS "contain".
+  coverArtEl.style.objectFit = "contain";
+  coverArtEl.style.background = "transparent";
+
+  const cornerRadius = style.cornerRadius;
+  let radiusPx;
+  if (
+    cornerRadius === undefined ||
+    cornerRadius === null ||
+    String(cornerRadius).toLowerCase() === "auto"
+  ) {
+    radiusPx = Math.round(sizePx * 0.08);
+  } else {
+    radiusPx = Math.max(
+      0,
+      Math.min(Number(cornerRadius) || 0, Math.floor(sizePx / 2)),
+    );
+  }
+  coverArtEl.style.borderRadius = `${radiusPx}px`;
+  coverArtEl.style.border = "none";
+
+  const outlineWidth = Math.max(0, Number(style.outlineWidth) || 0);
+  const outlineAlpha = Math.max(0, Math.min(255, Number(style.outlineAlpha) || 0));
+  if (style.outlineEnabled && outlineWidth > 0 && outlineAlpha > 0) {
+    const alpha = (outlineAlpha / 255).toFixed(3);
+    coverArtEl.style.boxShadow = `0 0 0 ${outlineWidth}px rgba(255, 255, 255, ${alpha})`;
+  } else {
+    coverArtEl.style.boxShadow = "none";
+  }
 }
 
 function createTextItemElement(
@@ -749,6 +790,8 @@ function buildBackgroundRenderKey(snapshot) {
       kind: String(baseLayer.kind || ""),
       mode: String(baseLayer.mode || ""),
       opacity: Number(baseLayer.opacity ?? 100),
+      improveReadability: Boolean(baseLayer.improveReadability),
+      readability: Number(baseLayer.readability ?? 0),
       currentPath: String(baseLayer.currentPath || ""),
       sourcePath: String(baseLayer.sourcePath || ""),
       canonicalReference: String(baseLayer.canonicalReference || ""),
@@ -763,6 +806,14 @@ function buildBackgroundRenderKey(snapshot) {
       canonicalReference: String(overlayLayer.canonicalReference || ""),
     },
   });
+}
+
+function parseBackgroundLayerColor(layer) {
+  const reference = String(
+    layer?.canonicalReference || layer?.currentPath || layer?.sourcePath || "",
+  ).trim();
+  const match = reference.match(/^color:#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
+  return match ? `#${match[1]}` : "";
 }
 
 function buildBackgroundLayerUrl(layerName, layer, sequence) {
@@ -796,8 +847,10 @@ function applyBackground(snapshot, sequence) {
     overlayMode === "blend"
       ? Math.max(0, Math.min(1, Number(overlayLayer.opacity ?? 100) / 100))
       : 1;
+  // Match the native display: blend uses the configured opacity directly
+  // (100 -> fully opaque, hiding the base), replace is always opaque.
   const overlayRenderOpacity =
-    overlayMode === "replace" ? 1 : 0.18 * overlayOpacity;
+    overlayMode === "replace" ? 1 : overlayOpacity;
 
   if (nextBackgroundRenderKey === lastBackgroundRenderKey) {
     return;
@@ -805,29 +858,72 @@ function applyBackground(snapshot, sequence) {
 
   lastBackgroundRenderKey = nextBackgroundRenderKey;
 
+  // "Improve readability": keep the existing background but blur + dim it.
+  const baseImproveReadability = Boolean(baseLayer.improveReadability) && showBase;
+  const baseReadability = Math.max(0, Math.min(100, Number(baseLayer.readability ?? 0)));
+  const readabilityActive = baseImproveReadability && baseReadability > 0;
+
   document.body.classList.toggle("with-background-base", showBase);
   document.body.classList.toggle("with-background-overlay", showOverlay);
+  document.body.classList.toggle("readability-active", readabilityActive);
 
-  if (showBase && baseLayer.url) {
+  if (readabilityActive) {
+    document.body.style.setProperty(
+      "--beam-readability-blur",
+      `${baseReadability * 0.2}px`,
+    );
+    document.body.style.setProperty(
+      "--beam-readability-dim",
+      String(baseReadability * 0.005),
+    );
+  } else {
+    document.body.style.removeProperty("--beam-readability-blur");
+    document.body.style.removeProperty("--beam-readability-dim");
+  }
+
+  const baseIsColor =
+    String(baseLayer.kind || "").trim().toLowerCase() === "color";
+  const baseColor = baseIsColor ? parseBackgroundLayerColor(baseLayer) : "";
+
+  if (showBase && baseColor) {
+    // Solid color background: fill with the color, no image (matches native).
+    document.body.style.setProperty("--beam-background-base-color", baseColor);
+    document.body.style.removeProperty("--beam-background-base");
+  } else if (showBase && baseLayer.url) {
     document.body.style.setProperty(
       "--beam-background-base",
       `url("${buildBackgroundLayerUrl("base", baseLayer, sequence)}")`,
     );
+    document.body.style.removeProperty("--beam-background-base-color");
   } else {
     document.body.style.removeProperty("--beam-background-base");
+    document.body.style.removeProperty("--beam-background-base-color");
   }
 
-  if (showOverlay && overlayLayer.url) {
+  const overlayIsColor =
+    String(overlayLayer.kind || "").trim().toLowerCase() === "color";
+  const overlayColor = overlayIsColor ? parseBackgroundLayerColor(overlayLayer) : "";
+
+  if (showOverlay && overlayColor) {
+    document.body.style.setProperty("--beam-background-overlay-color", overlayColor);
+    document.body.style.removeProperty("--beam-background-overlay");
+    document.body.style.setProperty(
+      "--beam-background-overlay-opacity",
+      String(overlayRenderOpacity),
+    );
+  } else if (showOverlay && overlayLayer.url) {
     document.body.style.setProperty(
       "--beam-background-overlay",
       `url("${buildBackgroundLayerUrl("overlay", overlayLayer, sequence)}")`,
     );
+    document.body.style.removeProperty("--beam-background-overlay-color");
     document.body.style.setProperty(
       "--beam-background-overlay-opacity",
       String(overlayRenderOpacity),
     );
   } else {
     document.body.style.removeProperty("--beam-background-overlay");
+    document.body.style.removeProperty("--beam-background-overlay-color");
     document.body.style.removeProperty("--beam-background-overlay-opacity");
   }
 
@@ -839,6 +935,31 @@ function applyBackground(snapshot, sequence) {
   }
 }
 
+function applyDisplayOverrides(snapshot) {
+  // Final overrides drawn on top of the normal display: blackout replaces the
+  // output with a black screen, and the temporary message renders above it.
+  const blackoutActive = Boolean(snapshot?.blackout);
+  if (blackoutLayerEl) {
+    blackoutLayerEl.hidden = !blackoutActive;
+  }
+
+  const tempMessage = snapshot?.tempMessage || {};
+  const messageActive = Boolean(tempMessage.active) && String(tempMessage.text || "").trim();
+  if (tempMessageOverlayEl && tempMessagePanelEl) {
+    if (messageActive) {
+      tempMessagePanelEl.innerHTML = escapeHtml(String(tempMessage.text)).replaceAll(
+        "\n",
+        "<br>",
+      );
+      tempMessageOverlayEl.classList.toggle("over-blackout", blackoutActive);
+      tempMessageOverlayEl.hidden = false;
+    } else {
+      tempMessageOverlayEl.hidden = true;
+      tempMessagePanelEl.textContent = "";
+    }
+  }
+}
+
 function renderSnapshot(snapshot, sequence) {
   lastSnapshot = snapshot;
   lastSequence = sequence || 0;
@@ -847,6 +968,7 @@ function renderSnapshot(snapshot, sequence) {
     : "Beam Remote Display";
   renderLayout(snapshot, sequence || 0);
   applyBackground(snapshot, sequence || 0);
+  applyDisplayOverrides(snapshot);
 }
 
 function rerenderCurrentSnapshot() {

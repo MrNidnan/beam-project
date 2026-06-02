@@ -65,7 +65,8 @@ jobs:
             python3-wxgtk4.0 \
             python3-mutagen \
             python3-numpy \
-            python3-dbus
+            python3-dbus \
+            python3-aiohttp
 
       - name: Validate Linux entrypoint
         run: |

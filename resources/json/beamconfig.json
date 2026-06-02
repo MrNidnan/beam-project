@@ -176,6 +176,8 @@
       "Field3": "-",
       "Field1": "-",
       "Background": "resources/backgrounds/bg1920x1080px.jpg",
+      "BackgroundMode": "image",
+      "Readability": 0,
       "Active": "yes",
       "Type": "Default",
       "RotateBackground": "no",

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Beam Remote Display</title>
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/app.css?v=0.9.3.0">
 </head>
 <body>
   <div class="page-shell">
@@ -19,8 +19,14 @@
     </main>
   </div>
 
+  <div id="blackout-layer" class="blackout-layer" hidden></div>
+
+  <div id="temp-message-overlay" class="temp-message-overlay" hidden>
+    <div id="temp-message-panel" class="temp-message-panel"></div>
+  </div>
+
   <div id="text-measurer" class="text-measurer" aria-hidden="true"></div>
 
-  <script type="module" src="/static/app.js"></script>
+  <script type="module" src="/static/app.js?v=0.9.3.0"></script>
 </body>
 </html>

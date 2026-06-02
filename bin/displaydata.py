@@ -109,7 +109,57 @@ class DisplayData():
         self.FadeDirection = 'In'
         self.RotateBackgroundTrigger = False
 
+        # Manual display overrides. Final overlays on top of the normal
+        # pipeline; never persisted and always reset to inactive on startup.
+        self.blackoutEnabled = False
+        self.tempMessageText = None
+        self.tempMessageUntil = None
+
         ########################## END OF INITIALIZATION #########################
+
+    ########################################################
+    # Manual display overrides (blackout + temporary message)
+    ########################################################
+    def setBlackout(self, enabled):
+        self.blackoutEnabled = bool(enabled)
+
+    def toggleBlackout(self):
+        self.blackoutEnabled = not bool(getattr(self, 'blackoutEnabled', False))
+        return self.blackoutEnabled
+
+    def isBlackoutActive(self):
+        return bool(getattr(self, 'blackoutEnabled', False))
+
+    def showTempMessage(self, text, duration_seconds):
+        self.tempMessageText = text
+        try:
+            duration_seconds = float(duration_seconds)
+        except (TypeError, ValueError):
+            duration_seconds = 0
+        self.tempMessageUntil = time.time() + max(0, duration_seconds)
+
+    def clearTempMessage(self):
+        self.tempMessageText = None
+        self.tempMessageUntil = None
+
+    def isTempMessageActive(self):
+        if not self.tempMessageText:
+            return False
+        if self.tempMessageUntil is None:
+            return False
+        if time.time() >= self.tempMessageUntil:
+            return False
+        return True
+
+    def getTempMessageText(self):
+        if self.isTempMessageActive():
+            return self.tempMessageText
+        return None
+
+    def getTempMessageSecondsRemaining(self):
+        if not self.isTempMessageActive():
+            return 0
+        return max(0, self.tempMessageUntil - time.time())
 
     def getLegacyBackgroundPath(self):
         return DisplayData.getEffectiveTransitionBackgroundPath(self)
@@ -415,8 +465,13 @@ class DisplayData():
         try:
             # copy playing data to current
             # ??? and below again
-            self.currentDisplayRows = self.nowPlayingData.DisplayRows
-            self.currentCoverArtImage = self.nowPlayingData.currentCoverArtImage
+            # Only copy rows and cover art from nowPlayingData when not in expired state.
+            # In expired state, _apply_expired_display_state() owns these fields; copying
+            # nowPlayingData here would overwrite them with stale data from the previously
+            # active (expired) timed mood.
+            if not self.nowPlayingData.isDisplayTimeExpired():
+                self.currentDisplayRows = self.nowPlayingData.DisplayRows
+                self.currentCoverArtImage = self.nowPlayingData.currentCoverArtImage
             self.currentPlaybackStatus = self.nowPlayingData.StatusMessage
             self.previousPlaybackStatus = self.nowPlayingData.PreviousPlaybackStatus
 
@@ -466,6 +521,28 @@ class DisplayData():
         except Exception as e:
             logging.error(e, exc_info=True)
 
+    def _apply_keep_existing_background(self, new_background_layers):
+        # "Keep existing" mood backgrounds inherit whatever background is already on
+        # screen instead of replacing it (e.g. a timed message mood). Only the
+        # readability blur/dim settings from the new mood are carried over.
+        new_background_layers = new_background_layers or {'base': {}, 'overlay': {}}
+        new_base_layer = new_background_layers.get('base') or {}
+        if not new_base_layer.get('keepExisting'):
+            return new_background_layers
+
+        previous_base_layer = deepcopy((getattr(self, 'backgroundLayers', {}) or {}).get('base') or {})
+        if not previous_base_layer.get('available'):
+            # Nothing to inherit yet; fall back to the mood's own background.
+            return new_background_layers
+
+        previous_base_layer['keepExisting'] = True
+        previous_base_layer['improveReadability'] = bool(new_base_layer.get('improveReadability', False))
+        previous_base_layer['readability'] = int(new_base_layer.get('readability', 0) or 0)
+
+        merged_background_layers = dict(new_background_layers)
+        merged_background_layers['base'] = previous_base_layer
+        return merged_background_layers
+
     def _apply_expired_display_state(self):
         moods = beamSettings.getMoods()
         if not moods:
@@ -484,10 +561,14 @@ class DisplayData():
         self.currentDisplaySettings = expired_display_state['displaySettings']
         self.currentDisplayRows = expired_display_state['displayRows']
         self.currentCoverArtImage = expired_display_state['coverArtImage']
-        self.backgroundLayers = expired_display_state['backgroundLayers']
+        self.backgroundLayers = self._apply_keep_existing_background(expired_display_state['backgroundLayers'])
         self._refresh_background_layer_state()
 
     def _update_status_text(self):
+        update_status_bar = getattr(self.mainFrame, 'updateStatusBar', None)
+        if callable(update_status_bar):
+            update_status_bar()
+            return
         self.mainFrame.SetStatusText(
             beamSettings.getSelectedModuleName() + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMoodName
         )
@@ -520,7 +601,7 @@ class DisplayData():
         self.previousMoodName = deepcopy(self.currentMoodName)
         self.currentMoodName = self.nowPlayingData.CurrentMoodName
         self.currentDisplaySettings = self.nowPlayingData.DisplaySettings
-        self.backgroundLayers = deepcopy(self.nowPlayingData.BackgroundLayers)
+        self.backgroundLayers = self._apply_keep_existing_background(deepcopy(self.nowPlayingData.BackgroundLayers))
         self._refresh_background_layer_state()
 
         self._update_status_text()
@@ -541,10 +622,12 @@ class DisplayData():
             self._apply_expired_display_state()
             self._display_time_expiry_refresh_done = True
             self._update_status_text()
+            self._update_background_rotation_timer()
             return
 
         self._display_time_expiry_refresh_done = False
         self._apply_processed_mood_state()
+        self._update_background_rotation_timer()
 
     def requestDisplayTimerRestart(self):
         self._restart_display_timer_on_next_apply = True

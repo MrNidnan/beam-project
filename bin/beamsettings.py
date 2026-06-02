@@ -703,6 +703,8 @@ class BeamSettings:
             has_trim_title_rule = False
             for rule in self._beamConfigData['Rules']:
                 if rule.get('Type') == 'Trim () in Title':
+                    rule['Type'] = 'Cut / Trim'
+                if rule.get('Type') == 'Cut / Trim':
                     has_trim_title_rule = True
                     if 'Field1' not in rule:
                         rule['Field1'] = '%Title'
@@ -714,7 +716,7 @@ class BeamSettings:
                     'Active': 'no',
                     'Field1': '%Title',
                     'Field2': '(',
-                    'Type': 'Trim () in Title',
+                    'Type': 'Cut / Trim',
                 })
 
             # Set OS-specific variables

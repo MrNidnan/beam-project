@@ -176,9 +176,10 @@ class RulesPanel(wx.Panel):
                 if rule['Field2'] =="contains":
                     self.RuleRows.append(str("Ignore song if "+rule['Field1']+' contains '+rule['Field3']))
 
-            if rule['Type'] == "Trim () in Title":
+            if rule['Type'] == "Cut / Trim":
                 trim_symbol = str(rule.get('Field2', '(')).strip() or '('
-                self.RuleRows.append("Trim title from " + trim_symbol)
+                field = str(rule.get('Field1', '%Title'))
+                self.RuleRows.append("Cut / Trim " + field + " from '" + trim_symbol + "'")
         self.RuleList.Set(self.RuleRows)
         # Check the rules
         for i in range(0, len(self.BeamSettings.getRules())):
