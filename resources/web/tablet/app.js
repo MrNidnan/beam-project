@@ -574,8 +574,46 @@ function createCoverArtElement(
   coverArtEl.style.width = `${sizePx}px`;
   coverArtEl.style.height = `${sizePx}px`;
 
+  applyCoverArtStyle(coverArtEl, snapshot.coverArtStyle || {}, sizePx);
+
   applyHorizontalPosition(coverArtEl, alignment, item, canvasWidth);
   return coverArtEl;
+}
+
+// Mirror the native (wx) cover-art tweaks from Advanced display options so the
+// browser display matches: aspect-preserving fit, configurable corner radius,
+// and optional white outline (alpha 0-255, width in px). Inline styles override
+// the decorative defaults in app.css.
+function applyCoverArtStyle(coverArtEl, style, sizePx) {
+  // Native scales with min(w/iw, h/ih) -> letterbox, i.e. CSS "contain".
+  coverArtEl.style.objectFit = "contain";
+  coverArtEl.style.background = "transparent";
+
+  const cornerRadius = style.cornerRadius;
+  let radiusPx;
+  if (
+    cornerRadius === undefined ||
+    cornerRadius === null ||
+    String(cornerRadius).toLowerCase() === "auto"
+  ) {
+    radiusPx = Math.round(sizePx * 0.08);
+  } else {
+    radiusPx = Math.max(
+      0,
+      Math.min(Number(cornerRadius) || 0, Math.floor(sizePx / 2)),
+    );
+  }
+  coverArtEl.style.borderRadius = `${radiusPx}px`;
+  coverArtEl.style.border = "none";
+
+  const outlineWidth = Math.max(0, Number(style.outlineWidth) || 0);
+  const outlineAlpha = Math.max(0, Math.min(255, Number(style.outlineAlpha) || 0));
+  if (style.outlineEnabled && outlineWidth > 0 && outlineAlpha > 0) {
+    const alpha = (outlineAlpha / 255).toFixed(3);
+    coverArtEl.style.boxShadow = `0 0 0 ${outlineWidth}px rgba(255, 255, 255, ${alpha})`;
+  } else {
+    coverArtEl.style.boxShadow = "none";
+  }
 }
 
 function createTextItemElement(

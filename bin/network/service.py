@@ -116,9 +116,21 @@ class BeamNetworkService(object):
                 'snapshot': deepcopy(self._latest_snapshot),
             }
 
+    def _loop_exception_handler(self, loop, context):
+        # On Windows the ProactorEventLoop logs a ConnectionResetError
+        # (WinError 10054) from _ProactorBasePipeTransport._call_connection_lost
+        # whenever a browser tab reloads or closes its socket abruptly. It is
+        # harmless transport teardown noise, so swallow it; defer anything else
+        # to the default handler.
+        exception = context.get('exception')
+        if isinstance(exception, (ConnectionResetError, ConnectionAbortedError)):
+            return
+        loop.default_exception_handler(context)
+
     def _run_server(self):
         self._loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self._loop)
+        self._loop.set_exception_handler(self._loop_exception_handler)
 
         app = web.Application()
         app.router.add_get('/', self._handle_index)

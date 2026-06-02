@@ -273,13 +273,14 @@ class BasicSettingsPanel(wx.Panel):
         )
         network_grid = self._create_form_grid()
         network_pane_sizer.Add(network_description, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=8)
-        network_pane_sizer.Add(network_grid, flag=wx.EXPAND | wx.ALL, border=8)
-        _, _, self.NetworkEnabledCheckBox = self._add_section_row(
+        self.NetworkEnabledCheckBox = self._add_full_width_checkbox(
             network_pane,
-            network_grid,
-            "Enable service",
-            lambda parent: self._build_checkbox_field(parent, 'Enable network display', self.BeamSettings.getNetworkServiceEnabled(), self.OnNetworkEnabled),
+            network_pane_sizer,
+            'Enable network display',
+            self.BeamSettings.getNetworkServiceEnabled(),
+            self.OnNetworkEnabled,
         )
+        network_pane_sizer.Add(network_grid, flag=wx.EXPAND | wx.ALL, border=8)
         _, _, self.NetworkHostField = self._add_section_row(
             network_pane,
             network_grid,
@@ -322,36 +323,47 @@ class BasicSettingsPanel(wx.Panel):
             expert_grid,
             "Background cache limit",
             lambda parent: self._build_spin_field(parent, self.BeamSettings.getBackgroundBitmapCacheLimit(), self.OnBackgroundBitmapCacheLimitChanged, minimum=1, maximum=64),
+            helper_text="Number of cached background bitmaps (1-64). Default: 8.",
         )
         _, _, self.CoverArtCornerRadiusField = self._add_section_row(
             expert_pane,
             expert_grid,
             "Cover art corner radius",
             lambda parent: self._build_auto_numeric_field(parent, self.BeamSettings.getCoverArtCornerRadius(), self.OnCoverArtCornerRadiusChanged),
+            helper_text="Corner rounding in pixels, or 'auto' for proportional. Example: auto.",
         )
         _, _, self.CoverArtFeatherAmountField = self._add_section_row(
             expert_pane,
             expert_grid,
             "Cover art feather amount",
             lambda parent: self._build_auto_numeric_field(parent, self.BeamSettings.getCoverArtFeatherAmount(), self.OnCoverArtFeatherAmountChanged),
+            helper_text="Edge softening in pixels, or 'auto' for proportional. Example: auto.",
         )
-        _, _, self.CoverArtOutlineEnabledField = self._add_section_row(
+
+        # Cover art outline group: the master toggle sits directly above the
+        # outline-only fields (alpha, width) so it reads as their parent control.
+        self.CoverArtOutlineEnabledField = self._add_full_width_checkbox(
             expert_pane,
-            expert_grid,
-            "Cover art outline",
-            lambda parent: self._build_checkbox_field(parent, 'Enable thin translucent outline', self.BeamSettings.getCoverArtOutlineEnabled(), self.OnCoverArtOutlineEnabledChanged),
+            expert_pane_sizer,
+            'Enable cover art outline',
+            self.BeamSettings.getCoverArtOutlineEnabled(),
+            self.OnCoverArtOutlineEnabledChanged,
         )
+        expert_outline_grid = self._create_form_grid()
+        expert_pane_sizer.Add(expert_outline_grid, flag=wx.EXPAND | wx.ALL, border=8)
         _, _, self.CoverArtOutlineAlphaField = self._add_section_row(
             expert_pane,
-            expert_grid,
+            expert_outline_grid,
             "Cover art outline alpha",
             lambda parent: self._build_spin_field(parent, self.BeamSettings.getCoverArtOutlineAlpha(), self.OnCoverArtOutlineAlphaChanged, minimum=0, maximum=255),
+            helper_text="Outline opacity (0 = transparent, 255 = opaque). Default: 56.",
         )
         _, _, self.CoverArtOutlineWidthField = self._add_section_row(
             expert_pane,
-            expert_grid,
+            expert_outline_grid,
             "Cover art outline width",
-            lambda parent: self._build_spin_field(parent, self.BeamSettings.getCoverArtOutlineWidth(), self.OnCoverArtOutlineWidthChanged, minimum=1, maximum=12),
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getCoverArtOutlineWidth(), self.OnCoverArtOutlineWidthChanged, minimum=1, maximum=32),
+            helper_text="Outline thickness in pixels (1-32). Default: 1.",
         )
         left_column_vbox.Add(self.ExpertDisplayTweaksPane, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
@@ -371,6 +383,7 @@ class BasicSettingsPanel(wx.Panel):
         self._sync_column_widths()
         self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
         self.updateNetworkAddressHint()
+        self.Layout()
 
     def reloadFromSettings(self):
         self.ModuleSelectorDropdown.SetValue(self.BeamSettings.getSelectedModuleName())
@@ -648,23 +661,41 @@ class BasicSettingsPanel(wx.Panel):
 
         wx.MessageBox('\n'.join(message_lines), 'VirtualDJ test', wx.OK | wx.ICON_INFORMATION)
 
+    #
+    # Reload the display/preview panels so advanced display tweaks (cover art
+    # radius/feather/outline, background cache) take effect immediately. The
+    # setters already mark settings dirty for save-on-close; this only repaints.
+    # Does not rebuild the preferences panels, so the edited field keeps focus.
+    #
+    def _applyDisplayTweaks(self):
+        main_frame = self.GetTopLevelParent()
+        refresh = getattr(main_frame, 'refreshDisplay', None)
+        if callable(refresh):
+            refresh(reload_panels=True)
+
     def OnBackgroundBitmapCacheLimitChanged(self, event):
         self.BeamSettings.setBackgroundBitmapCacheLimit(self.BackgroundBitmapCacheLimitField.GetValue())
+        self._applyDisplayTweaks()
 
     def OnCoverArtCornerRadiusChanged(self, event):
         self.BeamSettings.setCoverArtCornerRadius(self.CoverArtCornerRadiusField.GetValue())
+        self._applyDisplayTweaks()
 
     def OnCoverArtFeatherAmountChanged(self, event):
         self.BeamSettings.setCoverArtFeatherAmount(self.CoverArtFeatherAmountField.GetValue())
+        self._applyDisplayTweaks()
 
     def OnCoverArtOutlineEnabledChanged(self, event):
         self.BeamSettings.setCoverArtOutlineEnabled(self.CoverArtOutlineEnabledField.GetValue())
+        self._applyDisplayTweaks()
 
     def OnCoverArtOutlineAlphaChanged(self, event):
         self.BeamSettings.setCoverArtOutlineAlpha(self.CoverArtOutlineAlphaField.GetValue())
+        self._applyDisplayTweaks()
 
     def OnCoverArtOutlineWidthChanged(self, event):
         self.BeamSettings.setCoverArtOutlineWidth(self.CoverArtOutlineWidthField.GetValue())
+        self._applyDisplayTweaks()
 
     def updateModuleSpecificSettingsVisibility(self, moduleName):
         show_foobar_settings = moduleName == 'Foobar2000'
@@ -778,21 +809,34 @@ class BasicSettingsPanel(wx.Panel):
         field_sizer = wx.BoxSizer(wx.VERTICAL)
         field_container.SetSizer(field_sizer)
         field_control = field_builder(field_container)
-        # A checkbox has a natural size (indicator + label); stretching it with
-        # wx.EXPAND makes GTK compute a negative gadget width during early layout
-        # ("gtk_box_gadget_distribute: assertion 'size >= 0' failed"). Add it with
-        # no flag (field_sizer is vertical, so vertical-alignment flags are
-        # illegal here). Other controls still fill the growable column.
-        if isinstance(field_control, wx.CheckBox):
-            field_sizer.Add(field_control)
-        else:
-            field_sizer.Add(field_control, flag=wx.EXPAND)
+        field_sizer.Add(field_control, flag=wx.EXPAND)
         if helper_text:
-            helper_label = wx.StaticText(field_container, wx.ID_ANY, helper_text)
-            field_sizer.Add(helper_label, flag=wx.TOP, border=4)
+            # Guidance is shown as a tooltip on the field (and its label) instead
+            # of an always-visible StaticText, keeping rows compact.
+            try:
+                field_control.SetToolTip(helper_text)
+            except Exception:
+                pass
+            label.SetToolTip(helper_text)
         form_grid.Add(label, flag=wx.ALIGN_CENTER_VERTICAL)
         form_grid.Add(field_container, flag=wx.EXPAND)
         return label, field_container, field_control
+
+    #
+    # Add a checkbox as a full-width row directly in a vertical pane sizer instead
+    # of a narrow second grid column. The checkbox label is self-describing, so no
+    # separate label column is used. Avoids the GTK "size >= 0" assertion that
+    # cramped checkbox cells trigger on wxGTK, and prevents label clipping. An
+    # optional help line is rendered below in the default font.
+    #
+    def _add_full_width_checkbox(self, parent, pane_sizer, label, value, handler, help_text=''):
+        checkbox = wx.CheckBox(parent, wx.ID_ANY, label)
+        checkbox.SetValue(value)
+        checkbox.Bind(wx.EVT_CHECKBOX, handler)
+        if help_text:
+            checkbox.SetToolTip(help_text)
+        pane_sizer.Add(checkbox, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=8)
+        return checkbox
 
     def _build_media_player_dropdown(self, parent):
         control = wx.ComboBox(
@@ -842,12 +886,6 @@ class BasicSettingsPanel(wx.Panel):
         control = wx.SpinCtrl(parent, wx.ID_ANY, min=minimum, max=maximum, initial=int(value), size=(100, -1))
         control.Bind(wx.EVT_SPINCTRL, handler)
         control.Bind(wx.EVT_TEXT, handler)
-        return control
-
-    def _build_checkbox_field(self, parent, label, value, handler):
-        control = wx.CheckBox(parent, wx.ID_ANY, label)
-        control.SetValue(value)
-        control.Bind(wx.EVT_CHECKBOX, handler)
         return control
 
     def _build_button_field(self, parent, label, handler):

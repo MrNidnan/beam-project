@@ -53,6 +53,10 @@ All notable changes in this fork are documented in this file.
 
 - Rotating backgrounds refresh work like a charm now.
 - Alignment with background images and opacity settings between web display and normal display
+- Cover art Advanced display options (corner radius, outline enable/alpha/width) now
+  apply to the network/browser display and update live, matching the native display.
+  The browser cover art also preserves aspect ratio (letterbox) like the native render
+  instead of cropping to a square. (Feather is approximated by corner rounding in the browser.)
 
 ## v0.9.2.1 - 2026-05-31
 

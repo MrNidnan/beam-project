@@ -48,6 +48,16 @@ def background_layer_to_dict(layer, layer_name=''):
     }
 
 
+def cover_art_style_to_dict(beam_settings):
+    return {
+        'cornerRadius': beam_settings.getCoverArtCornerRadius(),
+        'featherAmount': beam_settings.getCoverArtFeatherAmount(),
+        'outlineEnabled': bool(beam_settings.getCoverArtOutlineEnabled()),
+        'outlineAlpha': int(beam_settings.getCoverArtOutlineAlpha()),
+        'outlineWidth': int(beam_settings.getCoverArtOutlineWidth()),
+    }
+
+
 def song_to_dict(song):
     if not song:
         return None
@@ -162,6 +172,7 @@ def snapshot_from_display_data(display_data, beam_settings):
             'sourcePath': getattr(now_playing, 'currentCoverArtPath', '') or '',
         },
         'coverArtAvailable': now_playing.currentCoverArtImage is not None,
+        'coverArtStyle': cover_art_style_to_dict(beam_settings),
     }
 
 
@@ -202,4 +213,5 @@ def empty_snapshot(beam_settings):
             'sourcePath': '',
         },
         'coverArtAvailable': False,
+        'coverArtStyle': cover_art_style_to_dict(beam_settings),
     }
