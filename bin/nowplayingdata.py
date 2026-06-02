@@ -552,6 +552,7 @@ class NowPlayingData:
                     self.SinceLastCortinaCount = self.SinceLastCortinaCount + 1
 
                 self.prevPlayedSong = self.LastRead[0]
+                self.prevPlayedSong.applySongRules(currentSettings.getRules())
         except:
             pass
         

@@ -52,7 +52,7 @@ class EditRuleDialog(wx.Dialog):
         # self.ButtonCancelRule.Bind(wx.EVT_BUTTON, self.OnCancelRuleItem)
         self.InputFields    = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer"]
         self.OutputFields   = ["%Artist","%Album","%Title","%Genre","%Comment","%Composer","%Year", "%AlbumArtist", "%Performer", "%Singer"]
-        self.RuleTypes      = ['Copy','Cortina','Parse', 'Ignore','Replace', 'Trim () in Title']
+        self.RuleTypes      = ['Copy','Cortina','Parse', 'Ignore','Replace', 'Cut / Trim']
 
 
     # Check if it is a new line
@@ -251,18 +251,15 @@ class EditRuleDialog(wx.Dialog):
                 self.OutputField2.SetValue("")
 
         ##############################################
-        if RuleSelected == 'Trim () in Title':
-            self.DynamicFieldLabel1.SetLabel('Trim from')
+        if RuleSelected == 'Cut / Trim':
+            self.DynamicFieldLabel1.SetLabel('')
             self.DynamicFieldLabel2.SetLabel('')
-            self.DynamicFieldLabel3.SetLabel('Start symbol')
+            self.DynamicFieldLabel3.SetLabel('Start from')
             self.DynamicFieldLabel4.SetLabel('')
 
             self.RemoveDynamicElements()
 
-            self.InputID3Field.SetStringSelection('%Title')
-            self.InputID3Field.Disable()
-
-            if self.Settings['Type'] == 'Trim () in Title':
+            if self.Settings['Type'] == 'Cut / Trim':
                 self.OutputField3.SetValue(str(self.Settings.get('Field2', '(')))
             else:
                 self.OutputField3.SetValue("(")
@@ -328,7 +325,7 @@ class EditRuleDialog(wx.Dialog):
         if RuleSelected == 'Ignore':
             NewRule['Field2']      = self.IsIsNot.GetValue()
             NewRule['Field3']      = self.OutputField2.GetValue()
-        if RuleSelected == 'Trim () in Title':
+        if RuleSelected == 'Cut / Trim':
             NewRule['Field2']      = self.OutputField3.GetValue().strip() or "("
 
         NewRule['Field1']      = self.InputID3Field.GetValue()
