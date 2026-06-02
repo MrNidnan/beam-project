@@ -445,6 +445,18 @@ class BasicSettingsPanel(wx.Panel):
     def OnNetworkEnabled(self, event):
         self.BeamSettings.setNetworkServiceEnabled(self.NetworkEnabledCheckBox.GetValue())
         self.updateNetworkAddressHint()
+        self._applyNetworkServiceState()
+
+    #
+    # Start/stop the network service to match the current setting. The panel has
+    # no direct reference to the service, so reach the MainFrame (top-level
+    # window) and let it own the start/stop lifecycle.
+    #
+    def _applyNetworkServiceState(self):
+        main_frame = self.GetTopLevelParent()
+        apply_state = getattr(main_frame, 'applyNetworkServiceState', None)
+        if callable(apply_state):
+            apply_state()
 
     def OnNetworkHostChanged(self, event):
         host_value = self.NetworkHostField.GetValue()
@@ -766,7 +778,15 @@ class BasicSettingsPanel(wx.Panel):
         field_sizer = wx.BoxSizer(wx.VERTICAL)
         field_container.SetSizer(field_sizer)
         field_control = field_builder(field_container)
-        field_sizer.Add(field_control, flag=wx.EXPAND)
+        # A checkbox has a natural size (indicator + label); stretching it with
+        # wx.EXPAND makes GTK compute a negative gadget width during early layout
+        # ("gtk_box_gadget_distribute: assertion 'size >= 0' failed"). Add it with
+        # no flag (field_sizer is vertical, so vertical-alignment flags are
+        # illegal here). Other controls still fill the growable column.
+        if isinstance(field_control, wx.CheckBox):
+            field_sizer.Add(field_control)
+        else:
+            field_sizer.Add(field_control, flag=wx.EXPAND)
         if helper_text:
             helper_label = wx.StaticText(field_container, wx.ID_ANY, helper_text)
             field_sizer.Add(helper_label, flag=wx.TOP, border=4)

@@ -452,6 +452,21 @@ class MainFrame(wx.Frame):
         except Exception as e:
             logging.error(e, exc_info=True)
 
+    #
+    # Apply the current "Enable network display" setting to the running service.
+    # Stop first, then (re)start if enabled, so this also handles host/port
+    # changes by rebinding. Safe to call repeatedly; start()/stop() are guarded.
+    #
+    def applyNetworkServiceState(self):
+        try:
+            self.networkService.stop()
+            if beamSettings.getNetworkServiceEnabled():
+                self.networkService.start()
+                self.networkService.publish_display_state(self.displayData)
+            self.updateStatusBar()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
     def reloadPreferencesPanels(self):
         try:
             self.listBookMenu.reloadFromSettings()

@@ -65,18 +65,26 @@ class BeamNetworkService(object):
 
         self._started = False
 
-        if self._loop is not None and self._loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(self._shutdown(), self._loop)
+        loop = self._loop
+        if loop is not None and loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(self._shutdown(), loop)
             try:
                 future.result(timeout=5)
             except Exception as e:
                 logging.error(e, exc_info=True)
 
-        if self._thread is not None:
-            self._thread.join(timeout=5)
+        thread = self._thread
+        if thread is not None:
+            thread.join(timeout=5)
+            if thread.is_alive():
+                # Leave runtime state in place so a later start() does not spawn a
+                # second server thread that would fight for the same port.
+                logging.error('Beam network service thread did not stop within timeout.')
+                return
 
-        self._thread = None
-        self._loop = None
+        # The server thread's own finally clause also resets runtime state once it
+        # unwinds; doing it here guarantees a clean slate for an immediate restart.
+        self._reset_runtime_state()
 
     def publish_display_state(self, display_data):
         if not self._started:
@@ -158,10 +166,10 @@ class BeamNetworkService(object):
                 await client.close()
             except Exception as e:
                 logging.error(e, exc_info=True)
+        self._clients.clear()
 
-        if self._runner is not None:
-            await self._runner.cleanup()
-
+        # Stop run_forever() and let _run_server()'s finally clause own the runner
+        # cleanup and loop close, so the runner is never cleaned up twice.
         self._loop.stop()
 
     async def _broadcast(self, event_document):

@@ -6,6 +6,22 @@ All notable changes in this fork are documented in this file.
 
 ### Added
 
+- Live display controls: Blackout and temporary Message
+  Two manual overrides next to the Display button: **Show Message** opens a dialog
+  to display a centered message (5–60s, default 15s) on preview, projector and
+  browser display; it auto-clears on expiry, and the button toggles to **Clear
+  Message** to remove it early. **Blackout** turns the output fully black and the
+  button toggles to **Resume**; a temporary message still renders on top of the
+  blackout. These overrides are not persisted and reset to inactive on startup;
+  moods, rules, player state and background rotation keep running underneath.
+  The status bar now reports state as
+  `Player: ... | Mood: ... | Display: ON/OFF/BLACKOUT | [Message: Ns |] Network: ON/OFF`.
+
+- Cut / Trim rule applies to any field
+  The "Trim () in Title" rule is now "Cut / Trim" and works on any input tag, not
+  just the title. The start symbol field ("Start from") sits next to the input
+  tag. Existing "Trim () in Title" rules migrate automatically on load.
+
 - Blurr dimm existing background on timed moods
   Example:
   Steps:
