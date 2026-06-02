@@ -40,10 +40,29 @@ def ShowAboutDialog(self):
     info.SetIcon(self.favicon)
     info.SetName(beamSettings.getString("mainframetitle"))
     info.SetVersion(beamSettings.getString("version"))
-    info.SetDescription(textwrap.fill(beamSettings.getString("aboutdialogdescription"), 70))
+
+    # Wrap the prose, then append the link list with raw (un-wrapped) URLs so
+    # textwrap does not break them across lines.
+    description = textwrap.fill(beamSettings.getString("aboutdialogdescription"), 70)
+    description += "\n\n" + "\n".join([
+        "Documentation & setup (GitHub):",
+        beamSettings.getString("aboutgithub"),
+        "",
+        "Facebook:",
+        beamSettings.getString("aboutfacebook"),
+        "",
+        "Project website:",
+        beamSettings.getString("aboutwebsite"),
+        "",
+        "Legacy wiki (Bitbucket, kept for reference):",
+        beamSettings.getString("aboutbitbucket"),
+    ])
+    info.SetDescription(description)
+
     info.SetLicence(textwrap.fill(beamSettings.getString("aboutdialoglicense"), 70))
     info.SetCopyright(beamSettings.getString("aboutcopyright"))
-    info.SetWebSite(beamSettings.getString("aboutwebsite"))
+    # Primary website is now the GitHub documentation / setup page.
+    info.SetWebSite(beamSettings.getString("aboutgithub"), "Beam on GitHub")
     info.AddDeveloper(beamSettings.getString("aboutdeveloper"))
     info.AddArtist(beamSettings.getString("aboutartist"))
 
