@@ -501,6 +501,21 @@ class DisplayPanel(wx.Panel):
         radius = self._get_cover_art_corner_radius(min_dim)
         feather = self._get_cover_art_feather_amount(radius)
 
+        # DEV NOTE / PERF: the rounded-corner + feather mask below is a pure-Python
+        # per-pixel double loop (O(new_w * new_h)). On a ~500x500 cover that is
+        # ~250k iterations with a SetAlpha() call per edge pixel, run on the UI
+        # thread. The result is memoized in self._cover_art_bitmap_cache, so it
+        # only fires on a cache miss (new cover art or a new render size), but
+        # each miss can briefly stall the UI - most visible under software
+        # rendering (e.g. WSLg/llvmpipe, no GPU accel).
+        #   - This loop is gated by `radius > 0`, NOT by feather. Setting corner
+        #     radius to 0 skips it entirely (fast path); feather 0 does NOT skip
+        #     it (f is clamped to >=1 below) and only narrows the edge falloff.
+        #   - Auto radius = ~8% of size, always > 0, so "auto" never takes the
+        #     fast path.
+        #   - Future optimization: vectorize the mask with numpy (build the
+        #     signed-distance field and alpha channel array-wise) for ~100-1000x
+        #     speedup and no per-song stall.
         if radius > 0:
             if not image.HasAlpha():
                 image.InitAlpha()

@@ -48,6 +48,12 @@ PLAYER_STATE_STOPPED = 0
 PLAYER_STATE_PLAYING = 1
 LOG_THROTTLE_SECONDS = 30
 
+# HRESULT 0x80080005 (CO_E_SERVER_EXEC_FAILURE) - "Server execution failed".
+# Raised when COM cannot activate the out-of-process iTunes.Application server.
+# Usually a UAC/integrity mismatch (Beam elevated, iTunes not) or a transient
+# race while iTunes is still launching.
+CO_E_SERVER_EXEC_FAILURE = -2146959355
+
 _last_com_failure_log = {
     'status': None,
     'message': None,
@@ -76,7 +82,7 @@ def run(MaxTandaLength, last_playlist=None):
         pythoncom.CoInitialize()
         try:
             try:
-                iTunes = win32com.client.gencache.EnsureDispatch ("iTunes.Application")
+                iTunes = dispatch_itunes()
                 current_track = getattr(iTunes, 'CurrentTrack', None)
                 raw_player_state = getattr(iTunes, 'PlayerState', None)
                 version = getattr(iTunes, 'Version', None)
@@ -139,6 +145,43 @@ def run(MaxTandaLength, last_playlist=None):
 # Full read - Player specific
 #
 ###############################################################
+
+def com_error_hresult(error):
+    if isinstance(error, (pythoncom.com_error, pywintypes.com_error)):
+        hresult = getattr(error, 'hresult', None)
+        if hresult is not None:
+            return hresult
+        # com_error args are (hresult, strerror, excepinfo, argerror)
+        if getattr(error, 'args', None):
+            return error.args[0]
+    return None
+
+
+def dispatch_itunes():
+    #
+    # gencache.EnsureDispatch builds/reads the win32com gen_py (makepy) cache.
+    # In a frozen PyInstaller build that cache often cannot be written, which
+    # surfaces as an activation failure. Fall back to a late-bound Dispatch,
+    # which talks to iTunes purely through IDispatch and needs no cache.
+    #
+    # CO_E_SERVER_EXEC_FAILURE (0x80080005) is also frequently transient when
+    # iTunes is still launching, so retry the late-bound path once after a
+    # short pause before giving up.
+    #
+    try:
+        return win32com.client.gencache.EnsureDispatch("iTunes.Application")
+    except (AttributeError, pythoncom.com_error, pywintypes.com_error):
+        pass
+
+    try:
+        return win32com.client.Dispatch("iTunes.Application")
+    except (pythoncom.com_error, pywintypes.com_error) as error:
+        if com_error_hresult(error) != CO_E_SERVER_EXEC_FAILURE:
+            raise
+
+    time.sleep(1.0)
+    return win32com.client.Dispatch("iTunes.Application")
+
 
 def normalize_playback_status(raw_player_state, current_track, last_playlist):
     if raw_player_state == PLAYER_STATE_PLAYING:
@@ -285,7 +328,17 @@ def log_throttled_ambiguous_state(raw_player_state, version, current_track):
 
 def describe_itunes_com_error(error):
     if isinstance(error, (pythoncom.com_error, pywintypes.com_error)):
-        return '%s %s' % (getattr(error, 'hresult', ''), getattr(error, 'strerror', repr(error)))
+        hresult = com_error_hresult(error)
+        description = '%s %s' % (hresult if hresult is not None else '', getattr(error, 'strerror', repr(error)))
+        if hresult == CO_E_SERVER_EXEC_FAILURE:
+            description += (
+                ' [0x80080005 server execution failed - iTunes COM server could not'
+                ' start. Most often the Microsoft Store version of iTunes (no COM'
+                ' support); install the desktop iTunes from Apple. Also ensure Beam'
+                ' and iTunes run at the same elevation (run Beam  and ITunes both as admin or none as'
+                ' administrator).]'
+            )
+        return description
 
     return repr(error)
 
@@ -302,10 +355,16 @@ def getSongAt(itunes, songPosition):
     retSong.Year        = iTrack.Year
 
     if iTrack.Kind in [1, 2]: # [ITTrackKindFile, TTrackKindCD]:
-        iTrack = win32com.client.CastTo(iTrack, "IITFileOrCDTrack")
+        try:
+            # CastTo needs the makepy typelib, which may be missing under a
+            # late-bound (frozen-build) dispatch. AlbumArtist/Location are still
+            # reachable via IDispatch, so fall back to direct access.
+            fileTrack = win32com.client.CastTo(iTrack, "IITFileOrCDTrack")
+        except (AttributeError, pythoncom.com_error, pywintypes.com_error):
+            fileTrack = iTrack
 
-        retSong.AlbumArtist = iTrack.AlbumArtist
-        retSong.FilePath   = iTrack.Location
+        retSong.AlbumArtist = safe_track_value(fileTrack, 'AlbumArtist')
+        retSong.FilePath   = safe_track_value(fileTrack, 'Location')
     else:
         logging.warning("iTrack.Kind not in [ITTrackKindFile, TTrackKindCD]")
 
