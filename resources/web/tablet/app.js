@@ -1,6 +1,9 @@
 const layoutCanvasEl = document.getElementById("layout-canvas");
 const emptyStateEl = document.getElementById("empty-state");
 const textMeasurerEl = document.getElementById("text-measurer");
+const blackoutLayerEl = document.getElementById("blackout-layer");
+const tempMessageOverlayEl = document.getElementById("temp-message-overlay");
+const tempMessagePanelEl = document.getElementById("temp-message-panel");
 
 const COVER_ART_URL = "/media/cover-art/current";
 const ABSOLUTE_MIN_TEXT_SIZE_PX = 10;
@@ -894,6 +897,31 @@ function applyBackground(snapshot, sequence) {
   }
 }
 
+function applyDisplayOverrides(snapshot) {
+  // Final overrides drawn on top of the normal display: blackout replaces the
+  // output with a black screen, and the temporary message renders above it.
+  const blackoutActive = Boolean(snapshot?.blackout);
+  if (blackoutLayerEl) {
+    blackoutLayerEl.hidden = !blackoutActive;
+  }
+
+  const tempMessage = snapshot?.tempMessage || {};
+  const messageActive = Boolean(tempMessage.active) && String(tempMessage.text || "").trim();
+  if (tempMessageOverlayEl && tempMessagePanelEl) {
+    if (messageActive) {
+      tempMessagePanelEl.innerHTML = escapeHtml(String(tempMessage.text)).replaceAll(
+        "\n",
+        "<br>",
+      );
+      tempMessageOverlayEl.classList.toggle("over-blackout", blackoutActive);
+      tempMessageOverlayEl.hidden = false;
+    } else {
+      tempMessageOverlayEl.hidden = true;
+      tempMessagePanelEl.textContent = "";
+    }
+  }
+}
+
 function renderSnapshot(snapshot, sequence) {
   lastSnapshot = snapshot;
   lastSequence = sequence || 0;
@@ -902,6 +930,7 @@ function renderSnapshot(snapshot, sequence) {
     : "Beam Remote Display";
   renderLayout(snapshot, sequence || 0);
   applyBackground(snapshot, sequence || 0);
+  applyDisplayOverrides(snapshot);
 }
 
 function rerenderCurrentSnapshot() {

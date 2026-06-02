@@ -109,7 +109,57 @@ class DisplayData():
         self.FadeDirection = 'In'
         self.RotateBackgroundTrigger = False
 
+        # Manual display overrides. Final overlays on top of the normal
+        # pipeline; never persisted and always reset to inactive on startup.
+        self.blackoutEnabled = False
+        self.tempMessageText = None
+        self.tempMessageUntil = None
+
         ########################## END OF INITIALIZATION #########################
+
+    ########################################################
+    # Manual display overrides (blackout + temporary message)
+    ########################################################
+    def setBlackout(self, enabled):
+        self.blackoutEnabled = bool(enabled)
+
+    def toggleBlackout(self):
+        self.blackoutEnabled = not bool(getattr(self, 'blackoutEnabled', False))
+        return self.blackoutEnabled
+
+    def isBlackoutActive(self):
+        return bool(getattr(self, 'blackoutEnabled', False))
+
+    def showTempMessage(self, text, duration_seconds):
+        self.tempMessageText = text
+        try:
+            duration_seconds = float(duration_seconds)
+        except (TypeError, ValueError):
+            duration_seconds = 0
+        self.tempMessageUntil = time.time() + max(0, duration_seconds)
+
+    def clearTempMessage(self):
+        self.tempMessageText = None
+        self.tempMessageUntil = None
+
+    def isTempMessageActive(self):
+        if not self.tempMessageText:
+            return False
+        if self.tempMessageUntil is None:
+            return False
+        if time.time() >= self.tempMessageUntil:
+            return False
+        return True
+
+    def getTempMessageText(self):
+        if self.isTempMessageActive():
+            return self.tempMessageText
+        return None
+
+    def getTempMessageSecondsRemaining(self):
+        if not self.isTempMessageActive():
+            return 0
+        return max(0, self.tempMessageUntil - time.time())
 
     def getLegacyBackgroundPath(self):
         return DisplayData.getEffectiveTransitionBackgroundPath(self)
@@ -515,6 +565,10 @@ class DisplayData():
         self._refresh_background_layer_state()
 
     def _update_status_text(self):
+        update_status_bar = getattr(self.mainFrame, 'updateStatusBar', None)
+        if callable(update_status_bar):
+            update_status_bar()
+            return
         self.mainFrame.SetStatusText(
             beamSettings.getSelectedModuleName() + ": " + self.currentPlaybackStatus + " - Mood: " + self.currentMoodName
         )

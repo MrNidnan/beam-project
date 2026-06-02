@@ -252,20 +252,25 @@ class EditRuleDialog(wx.Dialog):
 
         ##############################################
         if RuleSelected == 'Cut / Trim':
-            self.DynamicFieldLabel1.SetLabel('')
+            self.DynamicFieldLabel1.SetLabel('Start from')
             self.DynamicFieldLabel2.SetLabel('')
-            self.DynamicFieldLabel3.SetLabel('Start from')
+            self.DynamicFieldLabel3.SetLabel('')
             self.DynamicFieldLabel4.SetLabel('')
 
+            # Remove fields that are not to be shown
             self.RemoveDynamicElements()
 
-            if self.Settings['Type'] == 'Cut / Trim':
-                self.OutputField3.SetValue(str(self.Settings.get('Field2', '(')))
-            else:
-                self.OutputField3.SetValue("(")
+            self.DynamicFieldLabel3.Hide()
+            self.OutputField3.Hide()
 
-            self.DynamicFieldLabel3.Show()
-            self.OutputField3.Show()
+            # "Start from" sits next to the Input ID3 tag (sizer1 column).
+            self.OutputField1 = wx.TextCtrl(self.EditRulePanel, value="(", size=(150, -1))
+            self.sizer1.Add(self.OutputField1)
+
+            if self.Settings['Type'] == 'Cut / Trim':
+                self.OutputField1.SetValue(str(self.Settings.get('Field2', '(')))
+            else:
+                self.OutputField1.SetValue("(")
 
         self.vbox.SetSizeHints(self)  
         self.EditRulePanel.SetSizer(self.vbox)
@@ -326,7 +331,7 @@ class EditRuleDialog(wx.Dialog):
             NewRule['Field2']      = self.IsIsNot.GetValue()
             NewRule['Field3']      = self.OutputField2.GetValue()
         if RuleSelected == 'Cut / Trim':
-            NewRule['Field2']      = self.OutputField3.GetValue().strip() or "("
+            NewRule['Field2']      = self.OutputField1.GetValue().strip() or "("
 
         NewRule['Field1']      = self.InputID3Field.GetValue()
         # Decide where NewRule goes into the vector self.Settings

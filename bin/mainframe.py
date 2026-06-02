@@ -26,6 +26,7 @@
 # This Python file uses the following encoding: utf-8
 
 import logging
+import math
 import os
 import platform
 
@@ -47,6 +48,7 @@ if platform.system() == 'Linux' or platform.system() == 'Darwin':
     from bin.dialogs.preferencespanels.dmxcontrolspanel import DMXcontrolsPanel
 
 from bin.dialogs.helpdialog import HelpDialog
+from bin.dialogs.messagedialog import ShowMessageDialog
 from bin.dialogs import aboutdialog
 from bin.dialogs.displayframe import DisplayFrame
 from bin.network import BeamNetworkService
@@ -93,6 +95,12 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_TIMER, self.displayData.transition, self.TransitionTimer)
         self.RotateBackgroundTimer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.rotateBackground, self.RotateBackgroundTimer)
+        # One-shot timer that clears the temporary message when it expires.
+        self.MessageTimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.onMessageExpired, self.MessageTimer)
+        # 1s repeating timer to tick the message countdown in the status bar.
+        self.StatusTimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.onStatusTick, self.StatusTimer)
 
         # Statusbar
         self.statusbar = self.CreateStatusBar(style=0)
@@ -139,9 +147,17 @@ class MainFrame(wx.Frame):
         self.previewPanel = self.listBookMenu.pages[0][0]
 
         
+        self.messageBtn = wx.Button(panel, label="Show Message")
+        self.messageBtn.Bind(wx.EVT_BUTTON, self.onMessage)
+        hbox.Add(self.messageBtn, flag=wx.ALL, border=10)
+
         self.displayBtn = wx.Button(panel, label="Display")
         self.displayBtn.Bind(wx.EVT_BUTTON, self.onDisplay)
         hbox.Add(self.displayBtn, flag= wx.ALL, border=10)
+
+        self.blackoutBtn = wx.Button(panel, label="Blackout")
+        self.blackoutBtn.Bind(wx.EVT_BUTTON, self.onBlackout)
+        hbox.Add(self.blackoutBtn, flag=wx.ALL, border=10)
 
         ###########
         # ARRANGE #
@@ -235,6 +251,136 @@ class MainFrame(wx.Frame):
                 self.displayFrame.Show()
                 self.refreshDisplay()
                 # self.displayBtn.SetLabel("Hide")
+            self.updateStatusBar()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+
+    #
+    # Toggle blackout. Final display override; does not touch moods, rules,
+    # player state, metadata, timers or background rotation.
+    #
+    def onBlackout(self, event):
+        try:
+            blackout_active = self.displayData.toggleBlackout()
+            self.blackoutBtn.SetLabel("Resume" if blackout_active else "Blackout")
+            self.refreshDisplay(reload_panels=False)
+            self.updateStatusBar()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    #
+    # Show Message / Clear Message toggle. While a message is active the button
+    # clears it; otherwise it opens the dialog to show a new one.
+    #
+    def onMessage(self, event):
+        try:
+            if self.displayData.isTempMessageActive():
+                self.clearTempMessage()
+                return
+
+            dialog = ShowMessageDialog(self)
+            try:
+                if dialog.ShowModal() != wx.ID_OK:
+                    return
+                message_text = dialog.getMessageText()
+                duration_seconds = dialog.getDurationSeconds()
+            finally:
+                dialog.Destroy()
+
+            if not message_text.strip():
+                return
+
+            self.displayData.showTempMessage(message_text, duration_seconds)
+            self.refreshDisplay(reload_panels=False)
+
+            # Lightweight one-shot timer to clear the message and refresh once it
+            # expires; no busy loop. Draw() also guards on the expiry timestamp.
+            self.MessageTimer.Stop()
+            self.MessageTimer.Start(int(max(1, duration_seconds)) * 1000, oneShot=True)
+            # 1s ticks keep the status-bar countdown current.
+            self.StatusTimer.Start(1000)
+            self.updateMessageButtonLabel()
+            self.updateStatusBar()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    #
+    # Clear the active temporary message and stop its timers.
+    #
+    def clearTempMessage(self):
+        try:
+            self.MessageTimer.Stop()
+            self.StatusTimer.Stop()
+            self.displayData.clearTempMessage()
+            self.updateMessageButtonLabel()
+            self.refreshDisplay(reload_panels=False)
+            self.updateStatusBar()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    #
+    # Fired by MessageTimer when the temporary message duration elapses.
+    #
+    def onMessageExpired(self, event):
+        self.clearTempMessage()
+
+    #
+    # Fired every second while a message is active to update the countdown.
+    # Self-heals: stops itself once the message is no longer active.
+    #
+    def onStatusTick(self, event):
+        try:
+            if self.displayData.isTempMessageActive():
+                self.updateStatusBar()
+            else:
+                self.StatusTimer.Stop()
+                self.updateMessageButtonLabel()
+                self.updateStatusBar()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    #
+    # Reflect message state on the Show/Clear Message button.
+    #
+    def updateMessageButtonLabel(self):
+        try:
+            if self.displayData.isTempMessageActive():
+                self.messageBtn.SetLabel("Clear Message")
+            else:
+                self.messageBtn.SetLabel("Show Message")
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    #
+    # Compose the segmented status bar:
+    #   Player: ... | Mood: ... | Display: ON/OFF/BLACKOUT | [Message: Ns | ] Network: ON/OFF
+    #
+    def updateStatusBar(self):
+        try:
+            playback = self.displayData.currentPlaybackStatus or "-"
+            mood = self.displayData.currentMoodName or "-"
+
+            if self.displayData.isBlackoutActive():
+                display_state = "BLACKOUT"
+            elif self.displayFrame.IsShown():
+                display_state = "ON"
+            else:
+                display_state = "OFF"
+
+            network_state = "ON" if beamSettings.getNetworkServiceEnabled() else "OFF"
+
+            segments = [
+                "Player: " + playback,
+                "Mood: " + mood,
+                "Display: " + display_state,
+            ]
+            if self.displayData.isTempMessageActive():
+                remaining = int(math.ceil(self.displayData.getTempMessageSecondsRemaining()))
+                segments.append("Message: " + str(max(0, remaining)) + "s")
+            segments.append("Network: " + network_state)
+
+            self.SetStatusText(" | ".join(segments))
         except Exception as e:
             logging.error(e, exc_info=True)
 

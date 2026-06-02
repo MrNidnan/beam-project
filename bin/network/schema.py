@@ -118,10 +118,24 @@ def snapshot_from_display_data(display_data, beam_settings):
             base_layer = background_layers.get('base', {}) or {}
             legacy_background_path = base_layer.get('currentPath') or base_layer.get('sourcePath') or ''
 
+    blackout_active = bool(getattr(display_data, 'isBlackoutActive', lambda: False)())
+    temp_message_active = bool(getattr(display_data, 'isTempMessageActive', lambda: False)())
+    temp_message_text = ''
+    temp_message_until = 0
+    if temp_message_active:
+        temp_message_text = getattr(display_data, 'tempMessageText', '') or ''
+        temp_message_until = getattr(display_data, 'tempMessageUntil', 0) or 0
+
     return {
         'schemaVersion': SCHEMA_VERSION,
         'protocolVersion': PROTOCOL_VERSION,
         'module': beam_settings.getSelectedModuleName(),
+        'blackout': blackout_active,
+        'tempMessage': {
+            'active': temp_message_active,
+            'text': temp_message_text,
+            'until': temp_message_until,
+        },
         'playbackStatus': display_data.currentPlaybackStatus,
         'previousPlaybackStatus': getattr(display_data, 'previousPlaybackStatus', ''),
         'statusMessage': now_playing.StatusMessage,
@@ -156,6 +170,12 @@ def empty_snapshot(beam_settings):
         'schemaVersion': SCHEMA_VERSION,
         'protocolVersion': PROTOCOL_VERSION,
         'module': beam_settings.getSelectedModuleName(),
+        'blackout': False,
+        'tempMessage': {
+            'active': False,
+            'text': '',
+            'until': 0,
+        },
         'playbackStatus': '',
         'previousPlaybackStatus': '',
         'statusMessage': '',
