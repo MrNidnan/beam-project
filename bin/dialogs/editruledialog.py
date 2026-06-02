@@ -279,23 +279,19 @@ class EditRuleDialog(wx.Dialog):
 #
     def RemoveDynamicElements(self):
         try:
-            self.sizer1.Remove(self.OutputField1)
+            self.sizer1.Detach(self.OutputField1)
             self.OutputField1.Hide()
         except: pass
         try:
-            self.sizer2.Remove(self.OutputField2)
+            self.sizer2.Detach(self.OutputField2)
             self.OutputField2.Hide()
         except: pass
         try:
-            self.sizer1.Remove(self.IsIsNot)
+            self.sizer1.Detach(self.IsIsNot)
             self.IsIsNot.Hide()
         except: pass
         try:
-            self.sizer2.Remove(self.OutputField2)
-            self.OutputField2.Hide()
-        except: pass
-        try:
-            self.sizer3.Remove(self.OutputField3)
+            self.sizer3.Detach(self.OutputField3)
             self.OutputField3.Hide()
         except: pass
         # try:
