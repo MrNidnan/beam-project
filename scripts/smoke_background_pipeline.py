@@ -69,6 +69,21 @@ class FakeSettings:
     def getSelectedModuleName(self):
         return self.config_data.get('Module', '')
 
+    def getCoverArtCornerRadius(self):
+        return 'auto'
+
+    def getCoverArtFeatherAmount(self):
+        return 'auto'
+
+    def getCoverArtOutlineEnabled(self):
+        return True
+
+    def getCoverArtOutlineAlpha(self):
+        return 56
+
+    def getCoverArtOutlineWidth(self):
+        return 1
+
 
 def build_test_roots(temp_root):
     beam_home = Path(temp_root) / 'beam-home'
