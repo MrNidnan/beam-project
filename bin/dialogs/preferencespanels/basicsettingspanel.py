@@ -910,12 +910,15 @@ class BasicSettingsPanel(wx.Panel):
         if toggle_button is None:
             return
 
+        # Keep the collapsible-pane header in the platform default font. Forcing
+        # bold / a larger point size here rendered the Network Display and
+        # Advanced section headers as heavy bold text on GTK (Linux).
         current_font = toggle_button.GetFont()
         styled_font = wx.Font(
-            13,
+            current_font.GetPointSize(),
             current_font.GetFamily(),
             current_font.GetStyle(),
-            wx.FONTWEIGHT_BOLD,
+            wx.FONTWEIGHT_NORMAL,
             current_font.GetUnderlined(),
             current_font.GetFaceName(),
         )
