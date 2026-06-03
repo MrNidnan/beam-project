@@ -354,6 +354,16 @@ class BeamSettings:
         self._markDirty()
         return True
 
+    def getSMTC(self):
+        return self._beamConfigData['SMTC']
+
+    def getSMTCPreferredApp(self):
+        return str(self.getSMTC().get('PreferredApp', '')).strip()
+
+    def setSMTCPreferredApp(self, aumid):
+        self.getSMTC()['PreferredApp'] = str(aumid).strip()
+        self._markDirty()
+
     def getMixxxDatabasePath(self):
         return str(self.getMixxx().get('DatabasePath', '')).strip()
 

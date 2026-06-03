@@ -7,4 +7,11 @@ traktor_nowplaying
 # was removed in Python 3.13 (PEP 594). legacy-cgi restores it on 3.13+.
 legacy-cgi; python_version >= "3.13"
 pywin32; platform_system == "Windows"
+# Windows System Media Transport Controls (SMTC) reader for the "Now Playing"
+# source - reads the OS now-playing session via WinRT. Use the pywinrt split
+# packages (prebuilt wheels incl. Python 3.13), NOT the monolithic `winsdk`
+# package, which has no 3.13 wheel and compiles from source (huge, fails on
+# low-RAM/low-disk machines). winrt-runtime is pulled in transitively.
+winrt-Windows.Media.Control; platform_system == "Windows"
+winrt-Windows.Foundation; platform_system == "Windows"
 dbus-python; platform_system == "Linux"

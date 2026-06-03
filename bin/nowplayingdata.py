@@ -43,7 +43,7 @@ from bin.songclass import SongObject, rule_matches
 if platform.system() == 'Linux':
     from bin.modules.lin import audaciousmodule, rhythmboxmodule, clementinemodule, bansheemodule, spotifymodule, mixxxmodule, strawberrymodule
 if platform.system() == 'Windows':
-    from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule, jrivermodule
+    from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule, jrivermodule, smtcmodule
 if platform.system() == 'Darwin':
     from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule, jrivermodule, virtualdjmodule as macvirtualdjmodule
 
@@ -415,6 +415,8 @@ class NowPlayingData:
                 self._apply_mixxx_details(mixxx_details)
             if currentSettings.getSelectedModuleName() == 'JRiver':
                 self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings.getMaxTandaLength())
+            if currentSettings.getSelectedModuleName() == 'Now Playing (SMTC)':
+                self.currentPlaylist, self.PlaybackStatus = smtcmodule.run(currentSettings.getMaxTandaLength(), currentSettings.getSMTCPreferredApp())
 
 
         # LINUX

@@ -38,6 +38,8 @@ VIRTUALDJ_INTEGRATION_MODES = ['History File', 'Network Control', VIRTUALDJ_AUTO
 VIRTUALDJ_HISTORY_DECK_MODES = ['-1', 'Deck 1', 'Deck 2']
 VIRTUALDJ_QUERY_MODES = ['Master', 'Deck 1', 'Deck 2', 'Left', 'Right']
 
+SMTC_ACTIVE_SESSION_LABEL = 'Active session'
+
 
 ###################################################################
 #                      BasicSettingsTab                           #
@@ -71,6 +73,7 @@ class BasicSettingsPanel(wx.Panel):
 
         self.virtualDjHistoryControls = []
         self.virtualDjNetworkControls = []
+        self._smtcLabelToAumid = {SMTC_ACTIVE_SESSION_LABEL: ''}
 
         self.mediaPlayerSection, media_player_grid = self._create_section(
             self.leftColumnPanel,
@@ -271,6 +274,34 @@ class BasicSettingsPanel(wx.Panel):
         )
         right_column_vbox.Add(self.virtualDjSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
+        self.smtcSection, smtc_grid = self._create_section(
+            self.rightColumnPanel,
+            "Now Playing (SMTC)",
+            "Reads the Windows now-playing session (Spotify, Apple Music, YouTube Music, Amazon Music, browsers). Offline, no internet required.",
+        )
+        _, _, self.SMTCSourceDropdown = self._add_section_row(
+            self.smtcSection,
+            smtc_grid,
+            "Source app",
+            lambda parent: self._build_smtc_source_combo(parent),
+            helper_text="Follow a specific app, or 'Active session' to follow whatever is currently playing.",
+        )
+        _, _, self.SMTCDetectButton = self._add_section_row(
+            self.smtcSection,
+            smtc_grid,
+            "Detect sessions",
+            lambda parent: self._build_button_field(parent, 'Detect', self.OnSMTCDetect),
+            helper_text="List the apps currently publishing a now-playing session.",
+        )
+        _, _, self.SMTCTestButton = self._add_section_row(
+            self.smtcSection,
+            smtc_grid,
+            "Test SMTC",
+            lambda parent: self._build_button_field(parent, 'Run test', self.OnSMTCTest),
+            helper_text="Shows the resolved app, playback status, and current metadata.",
+        )
+        right_column_vbox.Add(self.smtcSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+
         self.loggingSection, logging_grid = self._create_section(self.leftColumnPanel, "Logging")
         _, _, self.LogLevelSelectorDropdown = self._add_section_row(
             self.loggingSection,
@@ -420,6 +451,7 @@ class BasicSettingsPanel(wx.Panel):
         self.FoobarPasswordField.ChangeValue(self.BeamSettings.getFoobarBeefwebPassword())
         self.MixxxDatabasePathField.ChangeValue(self.getMixxxDatabasePathDisplayValue())
         self.IcecastPortField.SetValue(self.BeamSettings.getIcecastPort())
+        self._refresh_smtc_source_dropdown()
         self.JRiverTargetZoneField.ChangeValue(self.BeamSettings.getJRiverTargetZone())
         self.VirtualDJIntegrationDropdown.SetValue(self.BeamSettings.getVirtualDJIntegrationMode())
         self.VirtualDJHistoryPathField.ChangeValue(self.BeamSettings.getVirtualDJHistoryPath())
@@ -613,6 +645,113 @@ class BasicSettingsPanel(wx.Panel):
                 wx.OK | wx.ICON_WARNING,
             )
 
+    #
+    # SMTC ("Now Playing") source: an app-agnostic Windows media session reader.
+    # The list of sessions is dynamic (depends on what is playing), so the combo
+    # is populated on demand via the Detect button rather than at panel build.
+    #
+    def _build_smtc_source_combo(self, parent):
+        labels, current_label = self._smtc_combo_state()
+        control = wx.ComboBox(parent, wx.ID_ANY, value=current_label, choices=labels, size=(233, -1), style=wx.CB_READONLY)
+        control.Bind(wx.EVT_COMBOBOX, self.OnSMTCSourceChanged)
+        return normalizeMacControlHeight(control, default_width=233)
+
+    def _smtc_combo_state(self, detected_sessions=None):
+        # Build the label list and the label->AUMID map. Always offers "Active
+        # session" (empty AUMID). The currently configured app is kept selectable
+        # even when it has no live session, so the setting is not lost.
+        preferred_aumid = self.BeamSettings.getSMTCPreferredApp()
+        label_to_aumid = {SMTC_ACTIVE_SESSION_LABEL: ''}
+
+        for session in (detected_sessions or []):
+            aumid = (session.get('aumid') or '').strip()
+            if aumid == '':
+                continue
+            label = session.get('name') or aumid
+            status = session.get('status')
+            if status:
+                label = '{0} ({1})'.format(label, status)
+            label_to_aumid[label] = aumid
+
+        current_label = SMTC_ACTIVE_SESSION_LABEL
+        if preferred_aumid:
+            matched_label = next((label for label, aumid in label_to_aumid.items() if aumid == preferred_aumid), None)
+            if matched_label is None:
+                # Configured app is not currently publishing a session; show its
+                # raw AUMID so the selection is preserved and visible.
+                label_to_aumid[preferred_aumid] = preferred_aumid
+                matched_label = preferred_aumid
+            current_label = matched_label
+
+        self._smtcLabelToAumid = label_to_aumid
+        return list(label_to_aumid.keys()), current_label
+
+    def _refresh_smtc_source_dropdown(self, detected_sessions=None):
+        labels, current_label = self._smtc_combo_state(detected_sessions)
+        self.SMTCSourceDropdown.Set(labels)
+        self.SMTCSourceDropdown.SetValue(current_label)
+
+    def OnSMTCSourceChanged(self, event):
+        label = self.SMTCSourceDropdown.GetValue()
+        aumid = self._smtcLabelToAumid.get(label, '')
+        self.BeamSettings.setSMTCPreferredApp(aumid)
+
+    def OnSMTCDetect(self, event):
+        if platform.system() != 'Windows':
+            wx.MessageBox('SMTC now-playing is only available on Windows.', 'Now Playing (SMTC)', wx.OK | wx.ICON_INFORMATION)
+            return
+
+        from bin.modules.win import smtcmodule
+
+        try:
+            sessions = smtcmodule.list_sessions()
+        except Exception as error:
+            wx.MessageBox(str(error), 'Now Playing (SMTC) detect failed', wx.OK | wx.ICON_ERROR)
+            return
+
+        self._refresh_smtc_source_dropdown(sessions)
+        if not sessions:
+            wx.MessageBox(
+                'No active media sessions detected. Start playback in a supported app (Spotify, Apple Music, YouTube Music, Amazon Music, a browser...) and try again.',
+                'Now Playing (SMTC)',
+                wx.OK | wx.ICON_INFORMATION,
+            )
+
+    def OnSMTCTest(self, event):
+        if platform.system() != 'Windows':
+            wx.MessageBox('SMTC now-playing is only available on Windows.', 'Now Playing (SMTC) test', wx.OK | wx.ICON_INFORMATION)
+            return
+
+        from bin.modules.win import smtcmodule
+
+        try:
+            playlist, status, details = smtcmodule.run_with_details(self.BeamSettings.getMaxTandaLength(), self.BeamSettings.getSMTCPreferredApp())
+        except Exception as error:
+            wx.MessageBox(str(error), 'Now Playing (SMTC) test failed', wx.OK | wx.ICON_ERROR)
+            return
+
+        message_lines = [
+            'Route: {0}'.format(details.get('route', 'unknown')),
+            'Status: {0}'.format(status),
+            'App: {0}'.format(details.get('appName', '') or details.get('aumid', '') or '(none)'),
+            'Sessions detected: {0}'.format(details.get('sessionCount', 0)),
+        ]
+
+        if playlist:
+            song = playlist[0]
+            message_lines.extend([
+                '',
+                'Artist: {0}'.format(song.Artist),
+                'Title: {0}'.format(song.Title),
+                'Album: {0}'.format(song.Album),
+                'Album artist: {0}'.format(song.AlbumArtist),
+                'Genre: {0}'.format(song.Genre),
+            ])
+        elif details.get('error'):
+            message_lines.extend(['', 'Error: {0}'.format(details['error'])])
+
+        wx.MessageBox('\n'.join(message_lines), 'Now Playing (SMTC) test', wx.OK | wx.ICON_INFORMATION)
+
     def OnFoobarTest(self, event):
         if platform.system() != 'Windows':
             wx.MessageBox('Foobar2000 integration is only available on Windows.', 'Foobar2000 test', wx.OK | wx.ICON_INFORMATION)
@@ -765,6 +904,9 @@ class BasicSettingsPanel(wx.Panel):
 
         show_icecast_settings = moduleName == 'Icecast'
         self.icecastSection.Show(show_icecast_settings)
+
+        show_smtc_settings = moduleName == 'Now Playing (SMTC)' and platform.system() == 'Windows'
+        self.smtcSection.Show(show_smtc_settings)
 
         show_jriver_settings = moduleName == 'JRiver' and platform.system() in ('Darwin', 'Windows')
         self.jriverSection.Show(show_jriver_settings)

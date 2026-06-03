@@ -45,6 +45,9 @@
   "Icecast": {
     "Port": 8000
   },
+  "SMTC": {
+    "PreferredApp": ""
+  },
   "ArtistBackgrounds": {
     "Enabled": "False",
     "UseCoverArt": "False",
@@ -87,7 +90,8 @@
         "Winamp/AIMP",
         "Mixxx",
         "Icecast",
-        "JRiver"
+        "JRiver",
+        "Now Playing (SMTC)"
       ],
       "System": "Windows"
     },
