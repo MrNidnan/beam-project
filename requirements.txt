@@ -21,3 +21,7 @@ winrt-Windows.Foundation.Collections; platform_system == "Windows"
 # metadata works without it, only cover art needs it.
 winrt-Windows.Storage.Streams; platform_system == "Windows"
 dbus-python; platform_system == "Linux"
+# Linux MPRIS reader for the "Now Playing" source (mprismodule) - async,
+# pure-python D-Bus binding, preferred backend. Optional: mprismodule falls back
+# to dbus-python (above) when this is absent, so existing installs keep working.
+dbus-next; platform_system == "Linux"

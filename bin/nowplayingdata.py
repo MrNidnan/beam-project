@@ -43,9 +43,13 @@ from bin.songclass import SongObject, rule_matches
 if platform.system() == 'Linux':
     from bin.modules.lin import audaciousmodule, rhythmboxmodule, clementinemodule, bansheemodule, spotifymodule, mixxxmodule, strawberrymodule
 if platform.system() == 'Windows':
-    from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule, jrivermodule, smtcmodule
+    from bin.modules.win import itunesmodule, winampmodule, mediamonkeymodule, spotifymodule, foobar2kmodule, mixxxmodule, jrivermodule
 if platform.system() == 'Darwin':
     from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule, jrivermodule, virtualdjmodule as macvirtualdjmodule
+
+# OS-level "Now Playing" source (SMTC on Windows, MPRIS on Linux). The facade
+# picks the right backend per platform, so dispatch is identical on both.
+from bin.modules import nowplayingsource
 
 ###############################################################
 #
@@ -415,8 +419,8 @@ class NowPlayingData:
                 self._apply_mixxx_details(mixxx_details)
             if currentSettings.getSelectedModuleName() == 'JRiver':
                 self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings.getMaxTandaLength())
-            if currentSettings.getSelectedModuleName() == 'Now Playing (SMTC)':
-                self.currentPlaylist, self.PlaybackStatus = smtcmodule.run(currentSettings.getMaxTandaLength(), currentSettings.getSMTCPreferredApp())
+            if currentSettings.getSelectedModuleName() == 'Now Playing':
+                self.currentPlaylist, self.PlaybackStatus = nowplayingsource.run(currentSettings.getMaxTandaLength(), currentSettings.getSMTCPreferredApp())
 
 
         # LINUX
@@ -436,6 +440,8 @@ class NowPlayingData:
                 self._apply_mixxx_details(mixxx_details)
             if currentSettings.getSelectedModuleName() == 'Strawberry':
                 self.currentPlaylist, self.PlaybackStatus = strawberrymodule.run(currentSettings.getMaxTandaLength())
+            if currentSettings.getSelectedModuleName() == 'Now Playing':
+                self.currentPlaylist, self.PlaybackStatus = nowplayingsource.run(currentSettings.getMaxTandaLength(), currentSettings.getSMTCPreferredApp())
 
 
         # Mac OS X

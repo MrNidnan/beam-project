@@ -64,6 +64,7 @@ https://github.com/MrNidnan/beam-project/issues
 - Spotify
 - Winamp / AIMP
 - Icecast
+- Now Playing (SMTC) — (reads the OS media session of almost any app/browser, that's Spotify Desktop, Youtube Music, Amazon Music, Apple Music, Tidal, Deezer ...)
 
 ### macOS
 
@@ -88,6 +89,7 @@ https://github.com/MrNidnan/beam-project/issues
 - Mixxx
 - Icecast
 - Strawberry
+- Now Playing (MPRIS) — reads the OS media session of almost any app/browser
 
 ## Customizing the Display
 

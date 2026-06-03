@@ -32,6 +32,7 @@ runs:
         "${{ inputs.python-command }}" scripts/smoke_mixxx.py
         "${{ inputs.python-command }}" scripts/smoke_icecast.py
         "${{ inputs.python-command }}" scripts/smoke_smtc.py
+        "${{ inputs.python-command }}" scripts/smoke_mpris.py
         "${{ inputs.python-command }}" scripts/smoke_background_pipeline.py
 
     - name: Reject unsupported smoke suite platform

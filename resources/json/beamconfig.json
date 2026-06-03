@@ -76,7 +76,8 @@
         "Spotify",
         "Mixxx",
         "Icecast",
-        "Strawberry"
+        "Strawberry",
+        "Now Playing"
       ],
       "System": "Linux"
     },
@@ -91,7 +92,7 @@
         "Mixxx",
         "Icecast",
         "JRiver",
-        "Now Playing (SMTC)"
+        "Now Playing"
       ],
       "System": "Windows"
     },
