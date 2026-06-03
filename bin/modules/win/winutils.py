@@ -43,9 +43,13 @@ def applicationrunning(appname):
         logging.debug("winutils.applicationrunning(): empty app name")
         return False
 
+    # tasklist is tried first: wmic is deprecated and removed on recent Windows
+    # (11 24H2+), where invoking it can block for several seconds before failing.
+    # A timeout guards against either command hanging the caller's worker thread,
+    # which previously left a non-daemon thread stuck and blocked app shutdown.
     for method_name, command in (
-        ('wmic', ['wmic', 'process', 'get', 'Caption']),
         ('tasklist', ['tasklist', '/FO', 'CSV', '/NH']),
+        ('wmic', ['wmic', 'process', 'get', 'Caption']),
     ):
         try:
             result = subprocess.run(
@@ -53,6 +57,7 @@ def applicationrunning(appname):
                 capture_output=True,
                 text=True,
                 check=False,
+                timeout=5,
                 creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0),
             )
         except Exception as error:
@@ -94,3 +99,51 @@ def applicationrunning(appname):
 
     logging.debug("winutils.applicationrunning(%s) = False", appname)
     return False
+
+
+def parse_tasklist_pids(csv_output, appname):
+    # Parse `tasklist /FO CSV /NH` output and return the set of PIDs whose image
+    # name matches appname. Kept pure (no subprocess) so it can be unit tested.
+    pids = set()
+    normalized_app_name = str(appname).strip().lower()
+    if normalized_app_name == '':
+        return pids
+
+    for line in (csv_output or '').splitlines():
+        fields = [field.strip().strip('"') for field in line.split('","')]
+        if len(fields) < 2:
+            continue
+        if fields[0].lower() != normalized_app_name:
+            continue
+        try:
+            pids.add(int(fields[1]))
+        except ValueError:
+            continue
+
+    return pids
+
+
+def get_process_ids(appname):
+    # Return the set of PIDs for processes whose image name matches appname.
+    # Used to scope window enumeration to a specific application's windows.
+    normalized_app_name = str(appname).strip().lower()
+    if normalized_app_name == '':
+        return set()
+
+    try:
+        result = subprocess.run(
+            ['tasklist', '/FI', 'IMAGENAME eq ' + appname, '/FO', 'CSV', '/NH'],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0),
+        )
+    except Exception as error:
+        logging.debug("winutils.get_process_ids(%s) failed: %s", appname, error, exc_info=True)
+        return set()
+
+    if result.returncode != 0:
+        return set()
+
+    return parse_tasklist_pids(result.stdout, appname)

@@ -80,7 +80,7 @@ def getSongObjectFromTrack(metadata):
     #retSong.Singer
     
     try:
-        retSong.AlbumArtist = ""
+        retSong.AlbumArtist = (metadata['xesam:albumArtist'])[0]
     except:
         pass
         

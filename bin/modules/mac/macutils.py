@@ -25,7 +25,8 @@
 #
 # This Python file uses the following encoding: utf-8
 
-from subprocess import Popen, PIPE
+import logging
+from subprocess import Popen, PIPE, TimeoutExpired
 
 
 ###############################################################
@@ -34,7 +35,15 @@ from subprocess import Popen, PIPE
 #
 ###############################################################
 
-def AppleScript(scpt, args=[]):
+def AppleScript(scpt, args=[], timeout=5):
      p = Popen(['osascript', '-'] + args, stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-     stdout, stderr = p.communicate(scpt)
+     try:
+         stdout, stderr = p.communicate(scpt, timeout=timeout)
+     except TimeoutExpired:
+         # osascript wedged (e.g. Spotify not responding to Apple events); kill it
+         # so a non-daemon reader thread cannot hang app shutdown. Treat as no data.
+         p.kill()
+         p.communicate()
+         logging.debug("macutils.AppleScript(): osascript timed out after %ss", timeout)
+         return ''
      return stdout

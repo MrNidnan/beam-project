@@ -28,9 +28,11 @@ import logging
 
 try:
 	import win32gui
-except:
-	pass
-from bin.modules.win.winutils import applicationrunning
+	import win32process
+except Exception:
+	win32gui = None
+	win32process = None
+from bin.modules.win.winutils import applicationrunning, get_process_ids
 
 ###############################################################
 #
@@ -38,113 +40,72 @@ from bin.modules.win.winutils import applicationrunning
 #
 ###############################################################
 
+def collect_window_titles_for_pids(pids):
+    # Collect visible top-level window titles owned by the given PIDs. Scoping by
+    # PID (instead of matching a fixed window class) keeps detection working as
+    # Spotify changes its Chromium window class - and avoids grabbing the titles
+    # of other Chromium/Electron apps (Discord, VS Code, Slack) that share it.
+    titles = []
+    if win32gui is None or win32process is None or not pids:
+        return titles
+
+    def _callback(hwnd, _context):
+        try:
+            if not win32gui.IsWindowVisible(hwnd):
+                return
+            text = win32gui.GetWindowText(hwnd)
+            if not text:
+                return
+            _thread_id, process_id = win32process.GetWindowThreadProcessId(hwnd)
+            if process_id in pids:
+                titles.append(text)
+        except Exception:
+            # A window can vanish mid-enumeration; skip it rather than abort.
+            return
+
+    win32gui.EnumWindows(_callback, None)
+    return titles
+
+
+def parse_track_title(title_text):
+    # Spotify's window title is "Artist - Track" while playing. Local files may
+    # only carry a track name, so fall back to an empty artist.
+    try:
+        artist, track = title_text.split(" - ", 1)
+    except ValueError:
+        artist = ''
+        track = title_text
+    return artist, track
+
+
 def run(MaxTandaLength):
     playlist = []
-    
-    # Player Status
-    if applicationrunning("Spotify.exe"):
-        try:
-            windows = []
 
-            spotifyWin = win32gui.FindWindow("SpotifyMainWindow", None)
-            # https: // github.com / XanderMJ / spotilib / issues / 7
-            # does no longer work
-            track = win32gui.GetWindowText(spotifyWin)
-
-            def find_spotify_uwp(hwnd, windows):
-                text = win32gui.GetWindowText(hwnd)
-                classname = win32gui.GetClassName(hwnd)
-                if classname == "Chrome_WidgetWin_0" and len(text) > 0:
-                    windows.append(text)
-
-            if track:
-                windows.append(track)
-            else:
-                win32gui.EnumWindows(find_spotify_uwp, windows)
-
-            # If Spotify isn't running the list will be empty
-            if len(windows) == 0:
-                return playlist, 'PlayerNotRunning'
-
-            # The window title is the default one when paused
-            if windows[0].startswith('Spotify'):
-                return playlist, 'Paused'
-
-            # Local songs may only have a title field
-            try:
-                artist, track = windows[0].split(" - ", 1)
-            except ValueError:
-                artist = ''
-                track = windows[0]
-
-            retSong = SongObject()
-            retSong.Artist = artist
-            retSong.Title = track
-            playlist.append(retSong)
-            # !!! add to playlist
-            # playlist.append(getSongAt(track, 1))
-
-            return playlist, 'Playing'
-        except Exception as e:
-            logging.debug(e, exc_info=True)
-            return playlist, 'PlayerNotRunning'
-    else:
+    if not applicationrunning("Spotify.exe"):
         return playlist, 'PlayerNotRunning'
 
-    if track == "":
-        return playlist, 'PlayerNotRunning'
-
-    #
-    # Playback
-    #
     try:
-        playlist.append(getSongAt(track, 1))
-        playbackStatus = 'Playing'
-    except:
-        playbackStatus = 'Paused'
+        spotify_pids = get_process_ids("Spotify.exe")
+        titles = [title.strip() for title in collect_window_titles_for_pids(spotify_pids) if title.strip()]
 
-    return playlist, playbackStatus
+        # No Spotify-owned window with a title: not playing/visible.
+        if not titles:
+            return playlist, 'PlayerNotRunning'
 
-###############################################################
-#
-# Full read - Player specific
-#
-###############################################################
+        # When paused the window title is just the app name ("Spotify",
+        # "Spotify Premium", "Spotify Free"); a track title contains the song.
+        track_titles = [title for title in titles if not title.startswith('Spotify')]
+        if not track_titles:
+            return playlist, 'Paused'
 
-def getSongAt(Track, songPosition):
-    retSong = SongObject()
-    trackinfo = Track.split(" - ")
-    artist, title = trackinfo[1].split(" \x96 ")
-    
-    retSong.Artist      = artist
-    #retSong.Album       = Track.AlbumName
-    retSong.Title       = title
-    #retSong.Genre       = Track.Genre
-    #retSong.Comment     = Track.Comment
-    #retSong.Composer    = Track.Author
-    #retSong.Year        = Track.Year
-    #retSong._Singer     Defined by beam
-    #retSong.AlbumArtist = Track.AlbumArtistName
-    #retSong.Performer  = (Track.Performer) # Does not exist for iTunes?
-    #retSong.IsCortina   Defined by beam
-    #retSong.fileUrl     = Track.Path
-    #retSong.ModuleMessage = Not needed for iTunes
-    
-    return retSong
+        artist, track = parse_track_title(track_titles[0])
 
-###############################################################
-#
-# Application running Windows-specific
-#
-###############################################################
+        retSong = SongObject()
+        retSong.Artist = artist
+        retSong.Title = track
+        playlist.append(retSong)
 
-def ApplicationRunning(AppName):
-    import subprocess
-    cmd = 'WMIC PROCESS get Caption,Commandline,Processid'
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    for line in proc.stdout:
-        if AppName in line:
-            proc.kill()
-            return True
-    proc.kill()
-    return False
+        return playlist, 'Playing'
+    except Exception as e:
+        logging.debug(e, exc_info=True)
+        return playlist, 'PlayerNotRunning'
