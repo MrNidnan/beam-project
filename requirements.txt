@@ -14,4 +14,10 @@ pywin32; platform_system == "Windows"
 # low-RAM/low-disk machines). winrt-runtime is pulled in transitively.
 winrt-Windows.Media.Control; platform_system == "Windows"
 winrt-Windows.Foundation; platform_system == "Windows"
+# get_sessions() returns an IVectorView, which lives in the collections
+# namespace - without this package iterating sessions raises ModuleNotFoundError.
+winrt-Windows.Foundation.Collections; platform_system == "Windows"
+# Reading the album-art thumbnail stream (DataReader / Buffer). Optional - text
+# metadata works without it, only cover art needs it.
+winrt-Windows.Storage.Streams; platform_system == "Windows"
 dbus-python; platform_system == "Linux"

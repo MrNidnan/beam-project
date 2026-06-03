@@ -710,12 +710,48 @@ class BasicSettingsPanel(wx.Panel):
             return
 
         self._refresh_smtc_source_dropdown(sessions)
-        if not sessions:
+        if sessions:
+            self._flash_smtc_dropdown()
+        else:
             wx.MessageBox(
                 'No active media sessions detected. Start playback in a supported app (Spotify, Apple Music, YouTube Music, Amazon Music, a browser...) and try again.',
                 'Now Playing (SMTC)',
                 wx.OK | wx.ICON_INFORMATION,
             )
+
+    def _flash_smtc_dropdown(self):
+        # Visual confirmation that Detect found something: a brief green glow that
+        # pulses the dropdown background in then fades back to the original, so the
+        # eye is drawn to the freshly populated control. Pure wx.CallLater chain -
+        # no extra deps. Guarded against the panel being closed mid-animation.
+        dropdown = self.SMTCSourceDropdown
+        original = dropdown.GetBackgroundColour()
+        glow = wx.Colour(120, 220, 140)  # soft success green
+        # Ramp up to the glow, then back down: a single in/out "bounce".
+        ramp = [0.0, 0.5, 1.0, 1.0, 0.65, 0.35, 0.0]
+        interval = 55  # ms per frame
+
+        def blend(a, b, t):
+            return wx.Colour(
+                int(a.Red() + (b.Red() - a.Red()) * t),
+                int(a.Green() + (b.Green() - a.Green()) * t),
+                int(a.Blue() + (b.Blue() - a.Blue()) * t),
+            )
+
+        def frame(i):
+            try:
+                if i >= len(ramp):
+                    dropdown.SetBackgroundColour(original)
+                    dropdown.Refresh()
+                    return
+                dropdown.SetBackgroundColour(blend(original, glow, ramp[i]))
+                dropdown.Refresh()
+            except RuntimeError:
+                return  # control destroyed
+            wx.CallLater(interval, frame, i + 1)
+
+        dropdown.SetFocus()
+        frame(0)
 
     def OnSMTCTest(self, event):
         if platform.system() != 'Windows':
@@ -996,7 +1032,11 @@ class BasicSettingsPanel(wx.Panel):
         section_sizer.Add(header_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         if description:
             description_label = wx.StaticText(section_panel, wx.ID_ANY, description)
-            section_sizer.Add(description_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=6)
+            # Wrap to the column width so long descriptions (e.g. the SMTC blurb)
+            # break onto multiple lines instead of overflowing the panel. 330 ~=
+            # the right column min width (360) minus the StaticBox margins.
+            description_label.Wrap(330)
+            section_sizer.Add(description_label, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=6)
         form_grid = self._create_form_grid()
         section_sizer.Add(form_grid, flag=wx.EXPAND | wx.ALL, border=10)
         section_panel.SetSizer(section_sizer)

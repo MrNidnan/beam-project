@@ -187,9 +187,29 @@ def getPreferredId3ApicTag(id3Frame):
     return None
 
 
+_DIRECT_IMAGE_MIME = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.bmp': 'image/bmp',
+    '.gif': 'image/gif',
+}
+
+
 def readCoverArtData(filePath):
     if not filePath:
         return None, None
+
+    # If FilePath is itself an image file (e.g. an SMTC thumbnail written to a
+    # temp .png/.jpg/.bmp), read it directly with the mime its extension implies
+    # rather than trying to parse it as an audio container.
+    direct_mime = _DIRECT_IMAGE_MIME.get(os.path.splitext(filePath)[1].lower())
+    if direct_mime is not None and os.path.isfile(filePath):
+        try:
+            with open(filePath, 'rb') as handle:
+                return handle.read(), direct_mime
+        except Exception:
+            pass
 
     try:
         id3Frame = ID3(filePath)
