@@ -54,6 +54,7 @@ All notable changes in this fork are documented in this file.
   options now live inside **Image slideshow** instead of a separate "Background
   Rotation" group. Existing moods load into the matching type automatically (single
   image, rotating folder, color, or keep-existing).
+- Alignment change with artists background and rotating images
 
 ### Fixed
 
@@ -63,6 +64,8 @@ All notable changes in this fork are documented in this file.
   apply to the network/browser display and update live, matching the native display.
   The browser cover art also preserves aspect ratio (letterbox) like the native render
   instead of cropping to a square. (Feather is approximated by corner rounding in the browser.)
+- Spotify integration
+- Icecast integration
 - Some other comestic issues in Windows / Linux
 
 ## v0.9.2.1 - 2026-05-31
