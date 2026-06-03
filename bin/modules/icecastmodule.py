@@ -1,5 +1,6 @@
 import threading
 import logging
+import socketserver
 
 from bin.songclass import SongObject
 
@@ -9,12 +10,24 @@ from bin.songclass import SongObject
 # dependency is simply not installed. Catch it here so the import succeeds and
 # gets cached: nowplayingdata re-imports this module every read cycle, and an
 # uncaught failure would re-raise and spam the log each time.
+#
+# We use traktor_nowplaying's request-handler factory directly (instead of its
+# Listener class) so Beam owns the TCPServer and can shut it down to rebind on a
+# new port - Listener.start() hides its server in a local variable with no stop
+# hook, which made port changes require an app restart.
 try:
-    from traktor_nowplaying import Listener
+    from traktor_nowplaying.core import create_request_handler
     _LISTENER_IMPORT_ERROR = None
 except Exception as _import_error:  # noqa: BLE001 - report any import-time failure
-    Listener = None
+    create_request_handler = None
     _LISTENER_IMPORT_ERROR = _import_error
+
+
+class _ReusableTCPServer(socketserver.TCPServer):
+    # Allow immediate rebinding of the same port after a shutdown so a port
+    # change (or restart on the same port) does not hit TIME_WAIT errors.
+    allow_reuse_address = True
+
 
 def apply_metadata_to_song(song, data):
     # Pure helper: map an Icecast/Traktor metadata dict onto a SongObject and
@@ -46,10 +59,39 @@ def updateSong(data):
     return
 
 
+def _start_listener(port):
+    handler = create_request_handler(callbacks=[updateSong])
+    server = _ReusableTCPServer(('', port), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+    run.icecastServer = server
+    run.icecastThread = thread
+    run.icecastPort = port
+    logging.debug("icecastmodule: listening on port %s", port)
+
+
+def _stop_listener():
+    if run.icecastServer is not None:
+        try:
+            # shutdown() must be called from another thread than serve_forever;
+            # run() executes on Beam's read thread, so this is safe.
+            run.icecastServer.shutdown()
+            run.icecastServer.server_close()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    if run.icecastThread is not None:
+        run.icecastThread.join(timeout=5)
+
+    run.icecastServer = None
+    run.icecastThread = None
+    run.icecastPort = None
+
 
 def run(maxtandalength, lastlplaylist, port=8000):
-    if Listener is None:
-        # Dependency unavailable; warn once instead of every read cycle.
+    if create_request_handler is None:
+        # Dependency unavailable; log once instead of every read cycle.
         if not run.importErrorLogged:
             logging.error(
                 "icecastmodule: traktor_nowplaying unavailable, Icecast disabled: %s",
@@ -59,46 +101,28 @@ def run(maxtandalength, lastlplaylist, port=8000):
         return [run.currentSong], 'Stopped'
 
     try:
-        if not run.icecastListener:
-            run.icecastListener = Listener(port=port, quiet=True, custom_callback=updateSong)
-            run.icecastPort = port
-
-        # on first run
-        if not run.icecastThread:
-            run.icecastThread = threading.Thread(target=run.icecastListener.start)
-            run.icecastThread.start()
-            logging.debug("icecastmodule: start listener on port %s", port)
-            # listener running in own thread
-        elif run.icecastPort != port and run.warnedPortChange != port:
-            # Port changed in settings but listener already running; the
-            # traktor_nowplaying Listener exposes no stop hook, so the running
-            # thread cannot be rebound to a new port without a clean shutdown.
-            # Warn once per distinct new port instead of every read cycle.
-            logging.warning(
-                "icecastmodule: port changed to %s but listener still on %s; restart Beam to apply",
-                port,
+        if run.icecastServer is None:
+            _start_listener(port)
+        elif run.icecastPort != port:
+            logging.info(
+                "icecastmodule: port changed %s -> %s, restarting listener",
                 run.icecastPort,
+                port,
             )
-            run.warnedPortChange = port
+            _stop_listener()
+            _start_listener(port)
     except Exception as e:
         logging.error(e, exc_info=True)
-        # threading.Thread cannot be force-terminated; reset state so a later
-        # run() can retry starting the listener.
-        run.icecastListener = None
-        run.icecastThread = None
+        # Leave a clean slate so the next run() can retry binding.
+        _stop_listener()
 
-    # ???  thread save access?
     playback_status = 'Playing'
     playlist = [run.currentSong]
     return playlist, playback_status
 
 
-run.icecastListener = None
+run.icecastServer = None
 run.icecastThread = None
 run.icecastPort = None
 run.importErrorLogged = False
-run.warnedPortChange = None
 run.currentSong = SongObject()
-
-
-

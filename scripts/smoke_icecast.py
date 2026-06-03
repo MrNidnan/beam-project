@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import socket
+import socketserver
 import sys
 import types
 from pathlib import Path
@@ -10,27 +12,36 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 
-CREATED_LISTENERS = []
+CAPTURED_CALLBACKS = []
 
 
-class FakeListener:
-    def __init__(self, port=8000, quiet=True, custom_callback=None):
-        self.port = port
-        self.quiet = quiet
-        self.custom_callback = custom_callback
-        self.started = False
-        CREATED_LISTENERS.append(self)
+class _NoopHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        # Smoke test never connects a client; the handler just needs to exist so
+        # the TCPServer can bind and serve.
+        pass
 
-    def start(self):
-        # Listener normally blocks serving the socket; the smoke stub returns
-        # immediately so the worker thread finishes without binding a port.
-        self.started = True
+
+def fake_create_request_handler(callbacks):
+    CAPTURED_CALLBACKS.append(callbacks)
+    return _NoopHandler
 
 
 def install_traktor_nowplaying_stub():
     traktor_module = types.ModuleType("traktor_nowplaying")
-    traktor_module.Listener = FakeListener
+    core_module = types.ModuleType("traktor_nowplaying.core")
+    core_module.create_request_handler = fake_create_request_handler
+    traktor_module.core = core_module
     sys.modules["traktor_nowplaying"] = traktor_module
+    sys.modules["traktor_nowplaying.core"] = core_module
+
+
+def _free_port():
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    probe.bind(('127.0.0.1', 0))
+    port = probe.getsockname()[1]
+    probe.close()
+    return port
 
 
 def test_apply_metadata_to_song():
@@ -65,29 +76,43 @@ def test_update_song_callback_uses_global():
     assert icecastmodule.run.currentSong.Title == 'Bahia Blanca'
 
 
-def test_run_wires_port_and_starts_listener():
+def test_run_starts_hot_restarts_and_reuses():
     from bin.modules import icecastmodule
 
-    # reset module-level listener state for a deterministic run
-    CREATED_LISTENERS.clear()
-    icecastmodule.run.icecastListener = None
-    icecastmodule.run.icecastThread = None
-    icecastmodule.run.icecastPort = None
+    # deterministic starting state
+    icecastmodule._stop_listener()
+    CAPTURED_CALLBACKS.clear()
 
-    playlist, status = icecastmodule.run(4, [], port=9123)
+    port_one = _free_port()
+    playlist, status = icecastmodule.run(4, [], port=port_one)
 
     assert status == 'Playing', status
     assert len(playlist) == 1
-    assert len(CREATED_LISTENERS) == 1, CREATED_LISTENERS
-    assert CREATED_LISTENERS[0].port == 9123, CREATED_LISTENERS[0].port
-    assert CREATED_LISTENERS[0].custom_callback is icecastmodule.updateSong
+    assert icecastmodule.run.icecastServer is not None
+    assert icecastmodule.run.icecastPort == port_one, icecastmodule.run.icecastPort
+    assert icecastmodule.run.icecastThread.is_alive()
+    # the handler factory received our updateSong callback
+    assert CAPTURED_CALLBACKS[-1] == [icecastmodule.updateSong], CAPTURED_CALLBACKS
+    first_server = icecastmodule.run.icecastServer
 
-    if icecastmodule.run.icecastThread is not None:
-        icecastmodule.run.icecastThread.join(timeout=2)
+    # changing the port hot-restarts: old server closed, new one on the new port
+    port_two = _free_port()
+    while port_two == port_one:
+        port_two = _free_port()
+    icecastmodule.run(4, [], port=port_two)
 
-    # a second run with the same port reuses the listener (no new instance)
-    icecastmodule.run(4, [], port=9123)
-    assert len(CREATED_LISTENERS) == 1, CREATED_LISTENERS
+    assert icecastmodule.run.icecastServer is not first_server
+    assert icecastmodule.run.icecastPort == port_two, icecastmodule.run.icecastPort
+    assert first_server.socket.fileno() == -1, 'old server socket should be closed'
+    second_server = icecastmodule.run.icecastServer
+
+    # same port again reuses the running server (no restart)
+    icecastmodule.run(4, [], port=port_two)
+    assert icecastmodule.run.icecastServer is second_server
+
+    icecastmodule._stop_listener()
+    assert icecastmodule.run.icecastServer is None
+    assert icecastmodule.run.icecastPort is None
 
 
 def main():
@@ -95,7 +120,7 @@ def main():
 
     test_apply_metadata_to_song()
     test_update_song_callback_uses_global()
-    test_run_wires_port_and_starts_listener()
+    test_run_starts_hot_restarts_and_reuses()
 
     print('Icecast smoke test passed')
 

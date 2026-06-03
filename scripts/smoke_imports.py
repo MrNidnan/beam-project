@@ -74,18 +74,16 @@ def install_ola_stub():
 
 def install_traktor_nowplaying_stub():
     traktor_module = types.ModuleType("traktor_nowplaying")
+    core_module = types.ModuleType("traktor_nowplaying.core")
 
-    class FakeListener:
-        def __init__(self, port=8000, quiet=True, custom_callback=None):
-            self.port = port
-            self.quiet = quiet
-            self.custom_callback = custom_callback
+    def create_request_handler(callbacks):
+        del callbacks
+        return object
 
-        def start(self):
-            return None
-
-    traktor_module.Listener = FakeListener
+    core_module.create_request_handler = create_request_handler
+    traktor_module.core = core_module
     sys.modules["traktor_nowplaying"] = traktor_module
+    sys.modules["traktor_nowplaying.core"] = core_module
 
 
 def import_module_fresh(module_name):
