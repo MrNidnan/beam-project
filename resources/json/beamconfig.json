@@ -42,6 +42,9 @@
   "JRiver": {
     "TargetZone": "-1"
   },
+  "Icecast": {
+    "Port": 8000
+  },
   "ArtistBackgrounds": {
     "Enabled": "False",
     "UseCoverArt": "False",

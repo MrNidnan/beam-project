@@ -20,6 +20,7 @@ runs:
         & "${{ inputs.python-command }}" .\scripts\smoke_virtualdj.py
         & "${{ inputs.python-command }}" .\scripts\smoke_foobar.py
         & "${{ inputs.python-command }}" .\scripts\smoke_mixxx.py
+        & "${{ inputs.python-command }}" .\scripts\smoke_icecast.py
         & "${{ inputs.python-command }}" .\scripts\smoke_background_pipeline.py
 
     - name: Run Linux smoke suite
@@ -28,6 +29,7 @@ runs:
       run: |
         "${{ inputs.python-command }}" scripts/smoke_imports.py
         "${{ inputs.python-command }}" scripts/smoke_mixxx.py
+        "${{ inputs.python-command }}" scripts/smoke_icecast.py
         "${{ inputs.python-command }}" scripts/smoke_background_pipeline.py
 
     - name: Reject unsupported smoke suite platform

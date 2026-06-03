@@ -467,7 +467,7 @@ class NowPlayingData:
 
         if currentSettings.getSelectedModuleName() == 'Icecast':
             from bin.modules import icecastmodule
-            self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
+            self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist, currentSettings.getIcecastPort())
 
         if (not self.currentPlaylist) and self.PlaybackStatus in ('Paused', 'Ambiguous') and previous_playlist:
             self.currentPlaylist = deepcopy(previous_playlist)

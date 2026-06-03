@@ -72,6 +72,22 @@ def install_ola_stub():
     sys.modules["ola.ClientWrapper"] = client_wrapper_module
 
 
+def install_traktor_nowplaying_stub():
+    traktor_module = types.ModuleType("traktor_nowplaying")
+
+    class FakeListener:
+        def __init__(self, port=8000, quiet=True, custom_callback=None):
+            self.port = port
+            self.quiet = quiet
+            self.custom_callback = custom_callback
+
+        def start(self):
+            return None
+
+    traktor_module.Listener = FakeListener
+    sys.modules["traktor_nowplaying"] = traktor_module
+
+
 def import_module_fresh(module_name):
     sys.modules.pop(module_name, None)
     return importlib.import_module(module_name)
@@ -106,11 +122,13 @@ def import_nowplayingdata_for_platform(platform_name):
 def main():
     install_dbus_stub()
     install_ola_stub()
+    install_traktor_nowplaying_stub()
 
     imported_modules = []
     imported_modules.extend(import_platform_module_group("bin.modules.lin"))
     imported_modules.extend(import_platform_module_group("bin.modules.mac"))
     imported_modules.append(import_module_fresh("bin.DMX.olamodule").__name__)
+    imported_modules.append(import_module_fresh("bin.modules.icecastmodule").__name__)
 
     import_nowplayingdata_for_platform("Linux")
     import_nowplayingdata_for_platform("Darwin")

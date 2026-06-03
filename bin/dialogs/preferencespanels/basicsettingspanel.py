@@ -170,6 +170,27 @@ class BasicSettingsPanel(wx.Panel):
         )
         right_column_vbox.Add(self.mixxxSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
+        self.icecastSection, icecast_grid = self._create_section(
+            self.rightColumnPanel,
+            "Icecast / Traktor",
+            "Used only when Icecast is the selected media player.",
+        )
+        _, _, self.IcecastPortField = self._add_section_row(
+            self.icecastSection,
+            icecast_grid,
+            "Listen port",
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getIcecastPort(), self.OnIcecastPortChanged, minimum=1, maximum=65535),
+            helper_text="Port Beam listens on for Traktor/Icecast stream metadata (HTTP SOURCE). Default: 8000. Restart Beam after changing.",
+        )
+        _, _, self.IcecastTestButton = self._add_section_row(
+            self.icecastSection,
+            icecast_grid,
+            "Test Icecast",
+            lambda parent: self._build_button_field(parent, 'Run test', self.OnIcecastTest),
+            helper_text="Checks whether the configured port is available for Beam to listen on.",
+        )
+        right_column_vbox.Add(self.icecastSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+
         self.virtualDjSection, virtualdj_grid = self._create_section(
             self.rightColumnPanel,
             "VirtualDJ",
@@ -398,6 +419,7 @@ class BasicSettingsPanel(wx.Panel):
         self.FoobarUserField.ChangeValue(self.BeamSettings.getFoobarBeefwebUser())
         self.FoobarPasswordField.ChangeValue(self.BeamSettings.getFoobarBeefwebPassword())
         self.MixxxDatabasePathField.ChangeValue(self.getMixxxDatabasePathDisplayValue())
+        self.IcecastPortField.SetValue(self.BeamSettings.getIcecastPort())
         self.JRiverTargetZoneField.ChangeValue(self.BeamSettings.getJRiverTargetZone())
         self.VirtualDJIntegrationDropdown.SetValue(self.BeamSettings.getVirtualDJIntegrationMode())
         self.VirtualDJHistoryPathField.ChangeValue(self.BeamSettings.getVirtualDJHistoryPath())
@@ -554,6 +576,43 @@ class BasicSettingsPanel(wx.Panel):
 
         wx.MessageBox('\n'.join(message_lines), 'Mixxx test', wx.OK | wx.ICON_INFORMATION)
 
+    def OnIcecastPortChanged(self, event):
+        self.BeamSettings.setIcecastPort(self.IcecastPortField.GetValue())
+
+    #
+    # Icecast support runs Beam as the listener (server); Traktor/Icecast source
+    # clients connect in via HTTP SOURCE. So the meaningful connectivity check is
+    # whether Beam can bind the configured port. Probe by binding a throwaway
+    # socket: success means the port is free, failure (e.g. EADDRINUSE) means
+    # something already holds it - often Beam's own listener already running.
+    #
+    def OnIcecastTest(self, event):
+        port = self.BeamSettings.getIcecastPort()
+        probe_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        bind_error = None
+        try:
+            probe_socket.bind(('0.0.0.0', port))
+        except OSError as error:
+            bind_error = error
+        finally:
+            probe_socket.close()
+
+        if bind_error is None:
+            wx.MessageBox(
+                'Port {0} is available.\n\nBeam can listen on this port for Traktor/Icecast '
+                'stream metadata (HTTP SOURCE).'.format(port),
+                'Icecast test',
+                wx.OK | wx.ICON_INFORMATION,
+            )
+        else:
+            wx.MessageBox(
+                'Port {0} is not available: {1}\n\nIt may already be in use - for example Beam '
+                'is already running and listening on it, or another application holds the port. '
+                'Stop the other listener or choose a different port.'.format(port, bind_error),
+                'Icecast test',
+                wx.OK | wx.ICON_WARNING,
+            )
+
     def OnFoobarTest(self, event):
         if platform.system() != 'Windows':
             wx.MessageBox('Foobar2000 integration is only available on Windows.', 'Foobar2000 test', wx.OK | wx.ICON_INFORMATION)
@@ -703,6 +762,9 @@ class BasicSettingsPanel(wx.Panel):
 
         show_mixxx_settings = moduleName == 'Mixxx'
         self.mixxxSection.Show(show_mixxx_settings)
+
+        show_icecast_settings = moduleName == 'Icecast'
+        self.icecastSection.Show(show_icecast_settings)
 
         show_jriver_settings = moduleName == 'JRiver' and platform.system() in ('Darwin', 'Windows')
         self.jriverSection.Show(show_jriver_settings)
