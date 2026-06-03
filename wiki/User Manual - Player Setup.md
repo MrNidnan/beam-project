@@ -107,6 +107,58 @@ Beam also supports MediaMonkey.
 
 Do not use a portable installation if you want the normal MediaMonkey integration.
 
+## Now Playing (SMTC / MPRIS)
+
+Use **Now Playing** when you just want Beam to follow whatever your computer is
+already playing, without setting up a specific player. It reads the operating
+system's own media session, so it works with almost any app and needs no
+account, internet, or API key.
+
+- **Windows** reads the SMTC session — the same track info Windows shows in the
+  volume / media flyout.
+- **Linux** reads the MPRIS session over D-Bus.
+
+### Supported apps
+
+Anything that publishes an OS media session works. Commonly:
+
+- **Desktop apps:** Spotify, Apple Music (Windows), Amazon Music, YouTube Music
+  desktop, TIDAL, Deezer, and (Linux) VLC, mpv, Rhythmbox, Clementine,
+  Strawberry, Audacious, Elisa, Lollypop.
+- **Browsers:** Chrome, Edge and Firefox while a tab is playing media (YouTube,
+  web Spotify, SoundCloud, etc).
+
+If an app does not show up, it may not publish a media session, or playback may
+need to be running in the foreground tab/window.
+
+### Choosing the source app
+
+- **Source app** lets you follow one specific app, or leave it on **Active
+  session** to follow whatever the system currently reports as playing.
+- **Detect** asks the OS which apps are publishing a session _right now_ and
+  fills the **Source app** dropdown with them (each shown with its status, e.g.
+  `Playing` / `Paused`). The app must be open and have started playback to
+  appear. Pick one to follow only that app; the dropdown briefly glows green
+  when Detect finds sessions. A previously chosen app stays selectable even when
+  it is not currently publishing, so your setting is not lost.
+- **Run test** shows the resolved app, playback status, and the current track.
+
+![Now Playing](../docs/images/user-manual/beam_now_playing.png)
+
+### Limitations
+
+The OS media session only exposes a few fields, so Beam can read:
+
+- **Title** and **Artist** (almost always present),
+- **Album** (often present),
+- **Genre** (the field exists but most apps leave it empty),
+- **Cover art** (when the app provides it — Spotify, YouTube Music and browsers
+  usually do).
+
+Other tags Beam can use with file-based players — comment, composer, year,
+album artist — are generally **not** available from a media session and will be
+blank. If you need those, use a player-specific integration instead.
+
 ## Which One Should You Choose?
 
 Choose the player you already use live.

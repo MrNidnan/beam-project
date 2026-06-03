@@ -72,6 +72,53 @@ def install_ola_stub():
     sys.modules["ola.ClientWrapper"] = client_wrapper_module
 
 
+def install_traktor_nowplaying_stub():
+    traktor_module = types.ModuleType("traktor_nowplaying")
+    core_module = types.ModuleType("traktor_nowplaying.core")
+
+    def create_request_handler(callbacks):
+        del callbacks
+        return object
+
+    core_module.create_request_handler = create_request_handler
+    traktor_module.core = core_module
+    sys.modules["traktor_nowplaying"] = traktor_module
+    sys.modules["traktor_nowplaying.core"] = core_module
+
+
+def install_winrt_stub():
+    # Minimal stand-in for the winrt WinRT SMTC API so bin.modules.win.smtcmodule
+    # can be import-tested off-Windows. Only the names the module imports exist.
+    winrt_module = types.ModuleType("winrt")
+    windows_module = types.ModuleType("winrt.windows")
+    media_module = types.ModuleType("winrt.windows.media")
+    control_module = types.ModuleType("winrt.windows.media.control")
+
+    class GlobalSystemMediaTransportControlsSessionManager:
+        @staticmethod
+        async def request_async():
+            return None
+
+    class GlobalSystemMediaTransportControlsSessionPlaybackStatus:
+        CLOSED = 0
+        OPENED = 1
+        CHANGING = 2
+        STOPPED = 3
+        PLAYING = 4
+        PAUSED = 5
+
+    control_module.GlobalSystemMediaTransportControlsSessionManager = GlobalSystemMediaTransportControlsSessionManager
+    control_module.GlobalSystemMediaTransportControlsSessionPlaybackStatus = GlobalSystemMediaTransportControlsSessionPlaybackStatus
+    media_module.control = control_module
+    windows_module.media = media_module
+    winrt_module.windows = windows_module
+
+    sys.modules["winrt"] = winrt_module
+    sys.modules["winrt.windows"] = windows_module
+    sys.modules["winrt.windows.media"] = media_module
+    sys.modules["winrt.windows.media.control"] = control_module
+
+
 def import_module_fresh(module_name):
     sys.modules.pop(module_name, None)
     return importlib.import_module(module_name)
@@ -106,11 +153,15 @@ def import_nowplayingdata_for_platform(platform_name):
 def main():
     install_dbus_stub()
     install_ola_stub()
+    install_traktor_nowplaying_stub()
+    install_winrt_stub()
 
     imported_modules = []
     imported_modules.extend(import_platform_module_group("bin.modules.lin"))
     imported_modules.extend(import_platform_module_group("bin.modules.mac"))
     imported_modules.append(import_module_fresh("bin.DMX.olamodule").__name__)
+    imported_modules.append(import_module_fresh("bin.modules.icecastmodule").__name__)
+    imported_modules.append(import_module_fresh("bin.modules.win.smtcmodule").__name__)
 
     import_nowplayingdata_for_platform("Linux")
     import_nowplayingdata_for_platform("Darwin")

@@ -2,5 +2,26 @@ wxPython
 mutagen
 numpy
 aiohttp
+traktor_nowplaying
+# traktor_nowplaying's bundled bottle.py imports the stdlib `cgi` module, which
+# was removed in Python 3.13 (PEP 594). legacy-cgi restores it on 3.13+.
+legacy-cgi; python_version >= "3.13"
 pywin32; platform_system == "Windows"
+# Windows System Media Transport Controls (SMTC) reader for the "Now Playing"
+# source - reads the OS now-playing session via WinRT. Use the pywinrt split
+# packages (prebuilt wheels incl. Python 3.13), NOT the monolithic `winsdk`
+# package, which has no 3.13 wheel and compiles from source (huge, fails on
+# low-RAM/low-disk machines). winrt-runtime is pulled in transitively.
+winrt-Windows.Media.Control; platform_system == "Windows"
+winrt-Windows.Foundation; platform_system == "Windows"
+# get_sessions() returns an IVectorView, which lives in the collections
+# namespace - without this package iterating sessions raises ModuleNotFoundError.
+winrt-Windows.Foundation.Collections; platform_system == "Windows"
+# Reading the album-art thumbnail stream (DataReader / Buffer). Optional - text
+# metadata works without it, only cover art needs it.
+winrt-Windows.Storage.Streams; platform_system == "Windows"
 dbus-python; platform_system == "Linux"
+# Linux MPRIS reader for the "Now Playing" source (mprismodule) - async,
+# pure-python D-Bus binding, preferred backend. Optional: mprismodule falls back
+# to dbus-python (above) when this is absent, so existing installs keep working.
+dbus-next; platform_system == "Linux"

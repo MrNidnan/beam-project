@@ -335,6 +335,35 @@ class BeamSettings:
             target_zone = '-1'
         return target_zone
 
+    def getIcecast(self):
+        return self._beamConfigData['Icecast']
+
+    def getIcecastPort(self):
+        try:
+            return max(1, min(65535, int(self.getIcecast().get('Port', 8000))))
+        except (TypeError, ValueError):
+            return 8000
+
+    def setIcecastPort(self, port):
+        try:
+            normalized_port = max(1, min(65535, int(port)))
+        except (TypeError, ValueError):
+            return False
+
+        self.getIcecast()['Port'] = normalized_port
+        self._markDirty()
+        return True
+
+    def getSMTC(self):
+        return self._beamConfigData['SMTC']
+
+    def getSMTCPreferredApp(self):
+        return str(self.getSMTC().get('PreferredApp', '')).strip()
+
+    def setSMTCPreferredApp(self, aumid):
+        self.getSMTC()['PreferredApp'] = str(aumid).strip()
+        self._markDirty()
+
     def getMixxxDatabasePath(self):
         return str(self.getMixxx().get('DatabasePath', '')).strip()
 

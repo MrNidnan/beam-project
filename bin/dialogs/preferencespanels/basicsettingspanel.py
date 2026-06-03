@@ -38,6 +38,8 @@ VIRTUALDJ_INTEGRATION_MODES = ['History File', 'Network Control', VIRTUALDJ_AUTO
 VIRTUALDJ_HISTORY_DECK_MODES = ['-1', 'Deck 1', 'Deck 2']
 VIRTUALDJ_QUERY_MODES = ['Master', 'Deck 1', 'Deck 2', 'Left', 'Right']
 
+SMTC_ACTIVE_SESSION_LABEL = 'Active session'
+
 
 ###################################################################
 #                      BasicSettingsTab                           #
@@ -71,6 +73,7 @@ class BasicSettingsPanel(wx.Panel):
 
         self.virtualDjHistoryControls = []
         self.virtualDjNetworkControls = []
+        self._smtcLabelToAumid = {SMTC_ACTIVE_SESSION_LABEL: ''}
 
         self.mediaPlayerSection, media_player_grid = self._create_section(
             self.leftColumnPanel,
@@ -170,6 +173,27 @@ class BasicSettingsPanel(wx.Panel):
         )
         right_column_vbox.Add(self.mixxxSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
+        self.icecastSection, icecast_grid = self._create_section(
+            self.rightColumnPanel,
+            "Icecast / Traktor",
+            "Used only when Icecast is the selected media player.",
+        )
+        _, _, self.IcecastPortField = self._add_section_row(
+            self.icecastSection,
+            icecast_grid,
+            "Listen port",
+            lambda parent: self._build_spin_field(parent, self.BeamSettings.getIcecastPort(), self.OnIcecastPortChanged, minimum=1, maximum=65535),
+            helper_text="Port Beam listens on for Traktor/Icecast stream metadata (HTTP SOURCE). Default: 8000. Restart Beam after changing.",
+        )
+        _, _, self.IcecastTestButton = self._add_section_row(
+            self.icecastSection,
+            icecast_grid,
+            "Test Icecast",
+            lambda parent: self._build_button_field(parent, 'Run test', self.OnIcecastTest),
+            helper_text="Checks whether the configured port is available for Beam to listen on.",
+        )
+        right_column_vbox.Add(self.icecastSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+
         self.virtualDjSection, virtualdj_grid = self._create_section(
             self.rightColumnPanel,
             "VirtualDJ",
@@ -249,6 +273,35 @@ class BasicSettingsPanel(wx.Panel):
             helper_text="Runs the current VirtualDJ integration and shows the detected route, status, and metadata.",
         )
         right_column_vbox.Add(self.virtualDjSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+
+        self.smtcSection, smtc_grid = self._create_section(
+            self.rightColumnPanel,
+            "Now Playing",
+            "Reads the OS now-playing session (Windows SMTC / Linux MPRIS): Spotify, "
+            "Apple Music, YouTube Music, browsers and more. Offline, no internet required.",
+        )
+        _, _, self.SMTCSourceDropdown = self._add_section_row(
+            self.smtcSection,
+            smtc_grid,
+            "Source app",
+            lambda parent: self._build_smtc_source_combo(parent),
+            helper_text="Follow a specific app, or 'Active session' to follow whatever is currently playing.",
+        )
+        _, _, self.SMTCDetectButton = self._add_section_row(
+            self.smtcSection,
+            smtc_grid,
+            "Detect sessions",
+            lambda parent: self._build_button_field(parent, 'Detect', self.OnSMTCDetect),
+            helper_text="List the apps currently publishing a now-playing session.",
+        )
+        _, _, self.SMTCTestButton = self._add_section_row(
+            self.smtcSection,
+            smtc_grid,
+            "Test",
+            lambda parent: self._build_button_field(parent, 'Run test', self.OnSMTCTest),
+            helper_text="Shows the resolved app, playback status, and current metadata.",
+        )
+        right_column_vbox.Add(self.smtcSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
         self.loggingSection, logging_grid = self._create_section(self.leftColumnPanel, "Logging")
         _, _, self.LogLevelSelectorDropdown = self._add_section_row(
@@ -398,6 +451,8 @@ class BasicSettingsPanel(wx.Panel):
         self.FoobarUserField.ChangeValue(self.BeamSettings.getFoobarBeefwebUser())
         self.FoobarPasswordField.ChangeValue(self.BeamSettings.getFoobarBeefwebPassword())
         self.MixxxDatabasePathField.ChangeValue(self.getMixxxDatabasePathDisplayValue())
+        self.IcecastPortField.SetValue(self.BeamSettings.getIcecastPort())
+        self._refresh_smtc_source_dropdown()
         self.JRiverTargetZoneField.ChangeValue(self.BeamSettings.getJRiverTargetZone())
         self.VirtualDJIntegrationDropdown.SetValue(self.BeamSettings.getVirtualDJIntegrationMode())
         self.VirtualDJHistoryPathField.ChangeValue(self.BeamSettings.getVirtualDJHistoryPath())
@@ -554,6 +609,186 @@ class BasicSettingsPanel(wx.Panel):
 
         wx.MessageBox('\n'.join(message_lines), 'Mixxx test', wx.OK | wx.ICON_INFORMATION)
 
+    def OnIcecastPortChanged(self, event):
+        self.BeamSettings.setIcecastPort(self.IcecastPortField.GetValue())
+
+    #
+    # Icecast support runs Beam as the listener (server); Traktor/Icecast source
+    # clients connect in via HTTP SOURCE. So the meaningful connectivity check is
+    # whether Beam can bind the configured port. Probe by binding a throwaway
+    # socket: success means the port is free, failure (e.g. EADDRINUSE) means
+    # something already holds it - often Beam's own listener already running.
+    #
+    def OnIcecastTest(self, event):
+        port = self.BeamSettings.getIcecastPort()
+        probe_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        bind_error = None
+        try:
+            probe_socket.bind(('0.0.0.0', port))
+        except OSError as error:
+            bind_error = error
+        finally:
+            probe_socket.close()
+
+        if bind_error is None:
+            wx.MessageBox(
+                'Port {0} is available.\n\nBeam can listen on this port for Traktor/Icecast '
+                'stream metadata (HTTP SOURCE).'.format(port),
+                'Icecast test',
+                wx.OK | wx.ICON_INFORMATION,
+            )
+        else:
+            wx.MessageBox(
+                'Port {0} is not available: {1}\n\nIt may already be in use - for example Beam '
+                'is already running and listening on it, or another application holds the port. '
+                'Stop the other listener or choose a different port.'.format(port, bind_error),
+                'Icecast test',
+                wx.OK | wx.ICON_WARNING,
+            )
+
+    #
+    # SMTC ("Now Playing") source: an app-agnostic Windows media session reader.
+    # The list of sessions is dynamic (depends on what is playing), so the combo
+    # is populated on demand via the Detect button rather than at panel build.
+    #
+    def _build_smtc_source_combo(self, parent):
+        labels, current_label = self._smtc_combo_state()
+        control = wx.ComboBox(parent, wx.ID_ANY, value=current_label, choices=labels, size=(233, -1), style=wx.CB_READONLY)
+        control.Bind(wx.EVT_COMBOBOX, self.OnSMTCSourceChanged)
+        return normalizeMacControlHeight(control, default_width=233)
+
+    def _smtc_combo_state(self, detected_sessions=None):
+        # Build the label list and the label->AUMID map. Always offers "Active
+        # session" (empty AUMID). The currently configured app is kept selectable
+        # even when it has no live session, so the setting is not lost.
+        preferred_aumid = self.BeamSettings.getSMTCPreferredApp()
+        label_to_aumid = {SMTC_ACTIVE_SESSION_LABEL: ''}
+
+        for session in (detected_sessions or []):
+            aumid = (session.get('aumid') or '').strip()
+            if aumid == '':
+                continue
+            label = session.get('name') or aumid
+            status = session.get('status')
+            if status:
+                label = '{0} ({1})'.format(label, status)
+            label_to_aumid[label] = aumid
+
+        current_label = SMTC_ACTIVE_SESSION_LABEL
+        if preferred_aumid:
+            matched_label = next((label for label, aumid in label_to_aumid.items() if aumid == preferred_aumid), None)
+            if matched_label is None:
+                # Configured app is not currently publishing a session; show its
+                # friendly name (falling back to the raw identifier) so the
+                # selection is preserved and visible.
+                from bin.modules import nowplayingsource
+                matched_label = nowplayingsource.aumid_friendly_name(preferred_aumid) or preferred_aumid
+                label_to_aumid[matched_label] = preferred_aumid
+            current_label = matched_label
+
+        self._smtcLabelToAumid = label_to_aumid
+        return list(label_to_aumid.keys()), current_label
+
+    def _refresh_smtc_source_dropdown(self, detected_sessions=None):
+        labels, current_label = self._smtc_combo_state(detected_sessions)
+        self.SMTCSourceDropdown.Set(labels)
+        self.SMTCSourceDropdown.SetValue(current_label)
+
+    def OnSMTCSourceChanged(self, event):
+        label = self.SMTCSourceDropdown.GetValue()
+        aumid = self._smtcLabelToAumid.get(label, '')
+        self.BeamSettings.setSMTCPreferredApp(aumid)
+
+    def OnSMTCDetect(self, event):
+        from bin.modules import nowplayingsource
+        if not nowplayingsource.is_available():
+            wx.MessageBox('Now Playing is only available on Windows (SMTC) and Linux (MPRIS).', 'Now Playing', wx.OK | wx.ICON_INFORMATION)
+            return
+
+        try:
+            sessions = nowplayingsource.list_sessions()
+        except Exception as error:
+            wx.MessageBox(str(error), 'Now Playing detect failed', wx.OK | wx.ICON_ERROR)
+            return
+
+        self._refresh_smtc_source_dropdown(sessions)
+        if sessions:
+            self._flash_smtc_dropdown()
+        else:
+            wx.MessageBox(
+                'No active media sessions detected. Start playback in a supported app (Spotify, YouTube Music, a browser...) and try again.',
+                'Now Playing',
+                wx.OK | wx.ICON_INFORMATION,
+            )
+
+    def _flash_smtc_dropdown(self):
+        # Visual confirmation that Detect found something: a brief green glow that
+        # pulses the dropdown background in then fades back to the original, so the
+        # eye is drawn to the freshly populated control. Pure wx.CallLater chain -
+        # no extra deps. Guarded against the panel being closed mid-animation.
+        dropdown = self.SMTCSourceDropdown
+        original = dropdown.GetBackgroundColour()
+        glow = wx.Colour(120, 220, 140)  # soft success green
+        # Ramp up to the glow, then back down: a single in/out "bounce".
+        ramp = [0.0, 0.5, 1.0, 1.0, 0.65, 0.35, 0.0]
+        interval = 55  # ms per frame
+
+        def blend(a, b, t):
+            return wx.Colour(
+                int(a.Red() + (b.Red() - a.Red()) * t),
+                int(a.Green() + (b.Green() - a.Green()) * t),
+                int(a.Blue() + (b.Blue() - a.Blue()) * t),
+            )
+
+        def frame(i):
+            try:
+                if i >= len(ramp):
+                    dropdown.SetBackgroundColour(original)
+                    dropdown.Refresh()
+                    return
+                dropdown.SetBackgroundColour(blend(original, glow, ramp[i]))
+                dropdown.Refresh()
+            except RuntimeError:
+                return  # control destroyed
+            wx.CallLater(interval, frame, i + 1)
+
+        dropdown.SetFocus()
+        frame(0)
+
+    def OnSMTCTest(self, event):
+        from bin.modules import nowplayingsource
+        if not nowplayingsource.is_available():
+            wx.MessageBox('Now Playing is only available on Windows (SMTC) and Linux (MPRIS).', 'Now Playing test', wx.OK | wx.ICON_INFORMATION)
+            return
+
+        try:
+            playlist, status, details = nowplayingsource.run_with_details(self.BeamSettings.getMaxTandaLength(), self.BeamSettings.getSMTCPreferredApp())
+        except Exception as error:
+            wx.MessageBox(str(error), 'Now Playing test failed', wx.OK | wx.ICON_ERROR)
+            return
+
+        message_lines = [
+            'Route: {0}'.format(details.get('route', 'unknown')),
+            'Status: {0}'.format(status),
+            'App: {0}'.format(details.get('appName', '') or details.get('aumid', '') or '(none)'),
+            'Sessions detected: {0}'.format(details.get('sessionCount', 0)),
+        ]
+
+        if playlist:
+            song = playlist[0]
+            message_lines.extend([
+                '',
+                'Artist: {0}'.format(song.Artist),
+                'Title: {0}'.format(song.Title),
+                'Album: {0}'.format(song.Album),
+                'Album artist: {0}'.format(song.AlbumArtist),
+                'Genre: {0}'.format(song.Genre),
+            ])
+        elif details.get('error'):
+            message_lines.extend(['', 'Error: {0}'.format(details['error'])])
+
+        wx.MessageBox('\n'.join(message_lines), 'Now Playing test', wx.OK | wx.ICON_INFORMATION)
+
     def OnFoobarTest(self, event):
         if platform.system() != 'Windows':
             wx.MessageBox('Foobar2000 integration is only available on Windows.', 'Foobar2000 test', wx.OK | wx.ICON_INFORMATION)
@@ -704,6 +939,12 @@ class BasicSettingsPanel(wx.Panel):
         show_mixxx_settings = moduleName == 'Mixxx'
         self.mixxxSection.Show(show_mixxx_settings)
 
+        show_icecast_settings = moduleName == 'Icecast'
+        self.icecastSection.Show(show_icecast_settings)
+
+        show_smtc_settings = moduleName == 'Now Playing' and platform.system() in ('Windows', 'Linux')
+        self.smtcSection.Show(show_smtc_settings)
+
         show_jriver_settings = moduleName == 'JRiver' and platform.system() in ('Darwin', 'Windows')
         self.jriverSection.Show(show_jriver_settings)
 
@@ -792,7 +1033,11 @@ class BasicSettingsPanel(wx.Panel):
         section_sizer.Add(header_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=10)
         if description:
             description_label = wx.StaticText(section_panel, wx.ID_ANY, description)
-            section_sizer.Add(description_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=6)
+            # Wrap to the column width so long descriptions (e.g. the SMTC blurb)
+            # break onto multiple lines instead of overflowing the panel. 330 ~=
+            # the right column min width (360) minus the StaticBox margins.
+            description_label.Wrap(330)
+            section_sizer.Add(description_label, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=6)
         form_grid = self._create_form_grid()
         section_sizer.Add(form_grid, flag=wx.EXPAND | wx.ALL, border=10)
         section_panel.SetSizer(section_sizer)

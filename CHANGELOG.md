@@ -2,9 +2,19 @@
 
 All notable changes in this fork are documented in this file.
 
-## v0.9.3.0 - 2026-06-02
+## v0.9.3.0 - 2026-06-03
 
 ### Added
+
+- New player: Now Playing (SMTC / MPRIS)
+  An OS-level, app-agnostic "Now Playing" reader — no per-app integration, offline.
+  Windows reads the SMTC session (the volume/media flyout); Linux reads MPRIS over
+  D-Bus. One **Now Playing** module backed by a platform facade
+  (`bin/modules/nowplayingsource.py`) that picks `smtcmodule` on Windows and
+  `mprismodule` on Linux. The Linux backend prefers `dbus-next` and falls back to
+  `dbus-python` (already a Linux dependency), so it works without the new package.
+  Preferences offer a **Source app** picker (Detect / Active session) and a test
+  button; album art is read when the app provides it (genre when present).
 
 - Live display controls: Blackout and temporary Message
   Two manual overrides next to the Display button:
@@ -44,6 +54,7 @@ All notable changes in this fork are documented in this file.
   options now live inside **Image slideshow** instead of a separate "Background
   Rotation" group. Existing moods load into the matching type automatically (single
   image, rotating folder, color, or keep-existing).
+- Alignment change with artists background and rotating images
 
 ### Fixed
 
@@ -53,6 +64,8 @@ All notable changes in this fork are documented in this file.
   apply to the network/browser display and update live, matching the native display.
   The browser cover art also preserves aspect ratio (letterbox) like the native render
   instead of cropping to a square. (Feather is approximated by corner rounding in the browser.)
+- Spotify integration
+- Icecast integration
 - Some other comestic issues in Windows / Linux
 
 ## v0.9.2.1 - 2026-05-31

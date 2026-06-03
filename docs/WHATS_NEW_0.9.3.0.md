@@ -104,6 +104,47 @@ aspect ratio (letterbox) instead of being cropped to a square.
 
 ---
 
+## New player: Now Playing (SMTC / MPRIS)
+
+A new **Now Playing** player reads the operating system's own "now playing"
+session, so it works with almost any app without a per-app integration —
+Spotify, YouTube Music, Apple Music, Amazon Music, web players in your browser,
+and more.
+
+- **Windows** reads the media session shown in the volume/media flyout (SMTC).
+- **Linux** reads the desktop media session over MPRIS (D-Bus).
+- It is offline — no accounts, no internet, no API keys.
+
+How to use it:
+1. In **Preferences → Basic**, set the player to **Now Playing**.
+2. Start playback in any supported app.
+3. (Optional) Click **Detect** to list the apps currently publishing a session,
+   then pick one in **Source app** to follow only that app — or leave it on
+   **Active session** to follow whatever is currently playing.
+4. **Run test** shows the resolved app, playback status and current track.
+
+**How Detect works:** it asks the OS which apps are publishing a media session
+*right now* and fills the **Source app** dropdown with them, each shown with its
+status (`Playing` / `Paused`). An app must be open and have started playback to
+appear. The dropdown briefly glows green when Detect finds sessions. A
+previously chosen app stays selectable even when it is not currently publishing,
+so your setting is not lost.
+
+**Limitation — only a few fields are available.** A media session exposes far
+less than a file-based player. Beam can read:
+
+- **Title** and **Artist** (almost always present),
+- **Album** (often present),
+- **Genre** (the field exists but most apps leave it empty),
+- **Cover art** (when the app provides it — Spotify, YouTube Music and browsers
+  usually do).
+
+Other tags (comment, composer, year, album artist) are generally **not**
+provided by a media session and will be blank — use a player-specific
+integration if you need those.
+
+---
+
 ## Other fixes
 
 - Network display enable/disable now actually starts and stops the service, and
@@ -115,5 +156,3 @@ aspect ratio (letterbox) instead of being cropped to a square.
   version of iTunes, which has no COM support).
 - Various cosmetic fixes on Windows and Linux (no bold section headers on GTK,
   checkbox layout, field help shown as tooltips).
-</content>
-</invoke>

@@ -47,6 +47,10 @@ if platform.system() == 'Windows':
 if platform.system() == 'Darwin':
     from bin.modules.mac import itunesmodule, decibelmodule, swinsianmodule, spotifymodule, voxmodule, cogmodule, embracemodule, mixxxmodule, jrivermodule, virtualdjmodule as macvirtualdjmodule
 
+# OS-level "Now Playing" source (SMTC on Windows, MPRIS on Linux). The facade
+# picks the right backend per platform, so dispatch is identical on both.
+from bin.modules import nowplayingsource
+
 ###############################################################
 #
 # LOAD DMX MODULES
@@ -415,6 +419,8 @@ class NowPlayingData:
                 self._apply_mixxx_details(mixxx_details)
             if currentSettings.getSelectedModuleName() == 'JRiver':
                 self.currentPlaylist, self.PlaybackStatus = jrivermodule.run(currentSettings.getMaxTandaLength())
+            if currentSettings.getSelectedModuleName() == 'Now Playing':
+                self.currentPlaylist, self.PlaybackStatus = nowplayingsource.run(currentSettings.getMaxTandaLength(), currentSettings.getSMTCPreferredApp())
 
 
         # LINUX
@@ -434,6 +440,8 @@ class NowPlayingData:
                 self._apply_mixxx_details(mixxx_details)
             if currentSettings.getSelectedModuleName() == 'Strawberry':
                 self.currentPlaylist, self.PlaybackStatus = strawberrymodule.run(currentSettings.getMaxTandaLength())
+            if currentSettings.getSelectedModuleName() == 'Now Playing':
+                self.currentPlaylist, self.PlaybackStatus = nowplayingsource.run(currentSettings.getMaxTandaLength(), currentSettings.getSMTCPreferredApp())
 
 
         # Mac OS X
@@ -467,7 +475,7 @@ class NowPlayingData:
 
         if currentSettings.getSelectedModuleName() == 'Icecast':
             from bin.modules import icecastmodule
-            self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist)
+            self.currentPlaylist, self.PlaybackStatus = icecastmodule.run(currentSettings.getMaxTandaLength(), self.rawPlaylist, currentSettings.getIcecastPort())
 
         if (not self.currentPlaylist) and self.PlaybackStatus in ('Paused', 'Ambiguous') and previous_playlist:
             self.currentPlaylist = deepcopy(previous_playlist)

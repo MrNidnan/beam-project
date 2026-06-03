@@ -42,6 +42,12 @@
   "JRiver": {
     "TargetZone": "-1"
   },
+  "Icecast": {
+    "Port": 8000
+  },
+  "SMTC": {
+    "PreferredApp": ""
+  },
   "ArtistBackgrounds": {
     "Enabled": "False",
     "UseCoverArt": "False",
@@ -70,7 +76,8 @@
         "Spotify",
         "Mixxx",
         "Icecast",
-        "Strawberry"
+        "Strawberry",
+        "Now Playing"
       ],
       "System": "Linux"
     },
@@ -84,7 +91,8 @@
         "Winamp/AIMP",
         "Mixxx",
         "Icecast",
-        "JRiver"
+        "JRiver",
+        "Now Playing"
       ],
       "System": "Windows"
     },
