@@ -690,6 +690,10 @@ class DisplayData():
                 self.currentTransition = 'FadeDirect'
                 self.initiateTransition()
             elif beamSettings.getMoodTransition() == 'Fade to black':
+                # Always begin with the darken (Out) phase. FadeDirection persists
+                # across transitions, so without this a first or interrupted
+                # fade-to-black can start in 'In' and skip darkening entirely.
+                self.FadeDirection = 'Out'
                 self.currentTransition = 'FadeToBlack'
                 self.initiateTransition()
             else:
@@ -715,13 +719,30 @@ class DisplayData():
     ########################################################
     def initiateTransition(self):
 
-        self.transitionSpeed = int(int(beamSettings.getMoodTransitionSpeed()) / 100)
-        self.delta = float(1 / float(self.transitionSpeed))
+        # Cancel any in-flight fade so two transitions cannot drive the timer
+        # at once and leave channel/alpha state half-applied.
+        self.mainFrame.TransitionTimer.Stop()
+
+        # MoodTransitionSpeed is the total fade duration in ms (slider 500..5000).
+        # Run the timer at a fixed frame rate and derive the per-frame step from
+        # the duration, instead of tying the timer interval to the speed (which
+        # made the slow end fire at ~200 Hz and thrash the UI thread).
+        TRANSITION_FRAME_MS = 33  # ~30 fps
+        duration_ms = max(1, int(beamSettings.getMoodTransitionSpeed()))
+        self.transitionSpeed = TRANSITION_FRAME_MS
+        self.delta = float(TRANSITION_FRAME_MS) / float(duration_ms)
 
         # FADE DIRECTLY
         if self.currentTransition == 'FadeDirect':
 
             self.alpha = float(0.0)
+            # Reset the colour multipliers: a FadeDirect only animates alpha, so
+            # any darkening left over from an interrupted FadeToBlack must be
+            # cleared or it sticks permanently and the display keeps getting
+            # darker with no way to recover.
+            self.red = float(1.0)
+            self.green = float(1.0)
+            self.blue = float(1.0)
             # Load the legacy fallback only when no layered background is available.
             if self.shouldUseLegacyBackgroundFallback() and self.getEffectiveTransitionBackgroundPath() is not None:
                 self._load_background()
@@ -770,6 +791,12 @@ class DisplayData():
     ########################################################
     def switchBackground(self):
 
+        # No transition: snap to a fully opaque, un-darkened background so leftover
+        # fade state cannot persist.
+        self.red = float(1.0)
+        self.green = float(1.0)
+        self.blue = float(1.0)
+        self.alpha = float(1.0)
         self.triggerResizeBackground = True
         if self.shouldUseLegacyBackgroundFallback():
             self._load_background()

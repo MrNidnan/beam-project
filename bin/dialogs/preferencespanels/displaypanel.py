@@ -877,6 +877,9 @@ class DisplayPanel(wx.Panel):
         cliWidth, cliHeight = self.GetClientSize()
         if not cliWidth or not cliHeight:
             return
+        # GCDC.Clear() defaults to a white brush; force black so partially
+        # transparent fades (Fade directly) reveal black, not white.
+        dc.SetBackground(wx.Brush(wx.BLACK))
         dc.Clear()
 
         # Blackout is a final override: replace the normal Beam output with a

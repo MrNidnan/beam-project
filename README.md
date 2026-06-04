@@ -142,6 +142,7 @@ Player: Playing | Mood: Tango | Display: ON | Network: OFF
 ## Browser and Tablet Display
 
 Beam can also publish the current display over your local network, so a phone, tablet, or another browser can show the same information.
+Make sure you have the firewall port open if erun under Linux!
 
 This is useful for:
 
