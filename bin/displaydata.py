@@ -106,6 +106,9 @@ class DisplayData():
         # trigger
         self.triggerResizeBackground = True
         self.textsAreVisible = False
+        # 0..1 opacity for the foreground text, ramped during a mood transition so
+        # the text fades with the background instead of popping on/off.
+        self.textAlpha = float(1.0)
         self.FadeDirection = 'In'
         self.RotateBackgroundTrigger = False
 
@@ -690,6 +693,10 @@ class DisplayData():
                 self.currentTransition = 'FadeDirect'
                 self.initiateTransition()
             elif beamSettings.getMoodTransition() == 'Fade to black':
+                # Always begin with the darken (Out) phase. FadeDirection persists
+                # across transitions, so without this a first or interrupted
+                # fade-to-black can start in 'In' and skip darkening entirely.
+                self.FadeDirection = 'Out'
                 self.currentTransition = 'FadeToBlack'
                 self.initiateTransition()
             else:
@@ -715,13 +722,30 @@ class DisplayData():
     ########################################################
     def initiateTransition(self):
 
-        self.transitionSpeed = int(int(beamSettings.getMoodTransitionSpeed()) / 100)
-        self.delta = float(1 / float(self.transitionSpeed))
+        # Cancel any in-flight fade so two transitions cannot drive the timer
+        # at once and leave channel/alpha state half-applied.
+        self.mainFrame.TransitionTimer.Stop()
+
+        # MoodTransitionSpeed is the total fade duration in ms (slider 500..5000).
+        # Run the timer at a fixed frame rate and derive the per-frame step from
+        # the duration, instead of tying the timer interval to the speed (which
+        # made the slow end fire at ~200 Hz and thrash the UI thread).
+        TRANSITION_FRAME_MS = 33  # ~30 fps
+        duration_ms = max(1, int(beamSettings.getMoodTransitionSpeed()))
+        self.transitionSpeed = TRANSITION_FRAME_MS
+        self.delta = float(TRANSITION_FRAME_MS) / float(duration_ms)
 
         # FADE DIRECTLY
         if self.currentTransition == 'FadeDirect':
 
             self.alpha = float(0.0)
+            # Reset the colour multipliers: a FadeDirect only animates alpha, so
+            # any darkening left over from an interrupted FadeToBlack must be
+            # cleared or it sticks permanently and the display keeps getting
+            # darker with no way to recover.
+            self.red = float(1.0)
+            self.green = float(1.0)
+            self.blue = float(1.0)
             # Load the legacy fallback only when no layered background is available.
             if self.shouldUseLegacyBackgroundFallback() and self.getEffectiveTransitionBackgroundPath() is not None:
                 self._load_background()
@@ -729,6 +753,8 @@ class DisplayData():
             # Set triggers
             self.triggerResizeBackground = True
             self.textsAreVisible = True
+            # Fade the text in alongside the background.
+            self.textAlpha = float(0.0)
 
             # start the timer for the transition
             self.mainFrame.TransitionTimer.Start(self.transitionSpeed)
@@ -737,7 +763,11 @@ class DisplayData():
         # FADE TO BLACK
         if self.currentTransition == 'FadeToBlack':
             if self.FadeDirection == 'Out':
-                self.textsAreVisible = False
+                # The new mood/text is already swapped in before the transition
+                # starts, so hide the text through the whole darken+black phase
+                # and only fade it in during the In phase.
+                self.textsAreVisible = True
+                self.textAlpha = float(0.0)
                 self.red = float(1.0)
                 self.green = float(1.0)
                 self.blue = float(1.0)
@@ -752,6 +782,8 @@ class DisplayData():
                 # Set triggers
                 self.triggerResizeBackground = True
                 self.textsAreVisible = True
+                # Text starts hidden and fades back in with the new background.
+                self.textAlpha = float(0.0)
 
                 self.red = float(0.0)
                 self.green = float(0.0)
@@ -770,6 +802,13 @@ class DisplayData():
     ########################################################
     def switchBackground(self):
 
+        # No transition: snap to a fully opaque, un-darkened background so leftover
+        # fade state cannot persist.
+        self.red = float(1.0)
+        self.green = float(1.0)
+        self.blue = float(1.0)
+        self.alpha = float(1.0)
+        self.textAlpha = float(1.0)
         self.triggerResizeBackground = True
         if self.shouldUseLegacyBackgroundFallback():
             self._load_background()
@@ -799,6 +838,8 @@ class DisplayData():
             self.alpha = 1.0
             self.mainFrame.TransitionTimer.Stop()
             self.RotateBackgroundTrigger = False
+        # Text opacity tracks the background fade-in.
+        self.textAlpha = max(0.0, min(1.0, self.alpha))
         self.mainFrame.refreshDisplay()
 
     ########################################################
@@ -812,12 +853,14 @@ class DisplayData():
 
         if self.red >= 0 and self.red <= 1:
             self.triggerResizeBackground = True
-            self.textsAreVisible = False
+            # Keep the new text hidden until the In phase fades it in.
+            self.textAlpha = float(0.0)
             self.mainFrame.refreshDisplay()
         else:
             self.red = float(0.0)
             self.green = float(0.0)
             self.blue = float(0.0)
+            self.textAlpha = float(0.0)
             self.direction = 'in'  # Change fading direction
             self.mainFrame.TransitionTimer.Stop()
             self.mainFrame.refreshDisplay()
@@ -833,11 +876,14 @@ class DisplayData():
 
         if self.red >= 0 and self.red <= 1:
             self.triggerResizeBackground = True
+            # Fade the text back in with the brightening background.
+            self.textAlpha = max(0.0, min(1.0, self.red))
             self.mainFrame.refreshDisplay()
         else:
             self.red = float(1.0)
             self.green = float(1.0)
             self.blue = float(1.0)
+            self.textAlpha = float(1.0)
             self.FadeDirection = 'Out'
             self.mainFrame.TransitionTimer.Stop()
             self.mainFrame.refreshDisplay()

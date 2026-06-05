@@ -78,6 +78,7 @@ def _build_html(s):
 
 <h3>Developers</h3>
 <p>{developer}</p>
+<p><a href="{authors}">Full authors list (AUTHORS.md)</a></p>
 
 <h3>License</h3>
 <p style="font-size:9pt; color:#555;">{license}</p>
@@ -95,6 +96,7 @@ def _build_html(s):
         website=s("aboutwebsite"),
         bitbucket=s("aboutbitbucket"),
         developer=s("aboutdeveloper").replace("\n", "<br>"),
+        authors=s("aboutauthors"),
         license=s("aboutdialoglicense"),
         artist=s("aboutartist"),
     )

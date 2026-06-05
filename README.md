@@ -43,10 +43,6 @@ Choose the shortest path that matches what you need:
 - Full user manual: see [wiki/User Manual - Start Here.md](wiki/User%20Manual%20-%20Start%20Here.md)
 - Player setup overview: see [wiki/User Manual - Player Setup.md](wiki/User%20Manual%20-%20Player%20Setup.md)
 - Display customization: see [wiki/User Manual - Customize the Display.md](wiki/User%20Manual%20-%20Customize%20the%20Display.md)
-- Browser or tablet display: see [docs/NETWORK_DISPLAY.md](docs/NETWORK_DISPLAY.md)
-- Foobar2000: see [docs/FOOBAR_MODULE.md](docs/FOOBAR_MODULE.md)
-- Mixxx: see [docs/MIXXX_MODULE.md](docs/MIXXX_MODULE.md)
-- VirtualDJ: see [docs/VIRTUALDJ_MODULE.md](docs/VIRTUALDJ_MODULE.md)
 
 ## Supported Players
 
@@ -142,6 +138,7 @@ Player: Playing | Mood: Tango | Display: ON | Network: OFF
 ## Browser and Tablet Display
 
 Beam can also publish the current display over your local network, so a phone, tablet, or another browser can show the same information.
+Make sure you have the firewall port open if erun under Linux!
 
 This is useful for:
 
@@ -158,21 +155,46 @@ If something does not work, start here:
 - [wiki/User Manual - Troubleshooting.md](wiki/User%20Manual%20-%20Troubleshooting.md)
 - [wiki/FAQ.md](wiki/FAQ.md)
 
-## If Packaging Does Not Work
+## If Packaging Does Not Work, Run Beam locally from source
 
-Run Beam directly from source instead of using the packaged app:
+For Windows and Linux the commands are basically the same.
+The current fork is meant to be run from the repository root with Python 3 and the dependencies listed in `requirements.txt`.
 
-- Source-run guide: [wiki/For Developer.md](wiki/For%20Developer.md)
-- Build and release notes: [BUILD.md](BUILD.md)
+Clone or download the repository, then open a terminal in the project root and create a virtual environment.
+
+#### Windows
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python .\beam.py
+```
+
+#### Linux
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python beam.py
+```
+
+#### MacOS
+
 - macOS packaging guide for collaborators: [docs/BUILD_MACOS.md](docs/BUILD_MACOS.md)
+
+More details in:
+
+- Build and release notes: [BUILD.md](BUILD.md)
 
 This is the recommended fallback for developers and for users on platforms where packaging is incomplete.
 
 ## Advanced Configuration
 
 If you want rendering controls or technical details:
-
-- Change history: [CHANGELOG.md](CHANGELOG.md)
 
 Beam also includes an expert-only `DisplayTweaks` section for rendering controls that are hidden behind `Settings > Display Expert Controls > Show expert display tweaks`.
 
@@ -192,3 +214,7 @@ These values are saved in the active profile JSON under `DisplayTweaks` and curr
 This fork is licensed under the GNU General Public License, version 2 or later.
 
 See `LICENSE.md` for details.
+
+## Changelog
+
+- Change history: [CHANGELOG.md](CHANGELOG.md)

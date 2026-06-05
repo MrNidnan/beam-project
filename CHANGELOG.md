@@ -2,6 +2,12 @@
 
 All notable changes in this fork are documented in this file.
 
+## v0.9.3.1 - 2026-06-04
+
+### Fixed
+
+- Modd transitions made smooth, text and backgrounds fade in together like a good couple should dance.
+
 ## v0.9.3.0 - 2026-06-03
 
 ### Added

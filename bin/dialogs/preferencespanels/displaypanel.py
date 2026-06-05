@@ -721,7 +721,18 @@ class DisplayPanel(wx.Panel):
                                "Liberation Sans"))
 
         # Set font color, in the future, drawing a shadow ofsetted with the same text first might make a shadow!
-        dc.SetTextForeground(eval(Settings['FontColor']))
+        # Apply the transition text opacity (requires GCDC for alpha text; plain
+        # DC ignores the alpha channel and just draws the text fully opaque).
+        text_colour = wx.Colour(eval(Settings['FontColor']))
+        text_alpha = max(0.0, min(1.0, float(getattr(self.displayData, 'textAlpha', 1.0))))
+        if text_alpha < 1.0:
+            text_colour = wx.Colour(
+                text_colour.Red(),
+                text_colour.Green(),
+                text_colour.Blue(),
+                int(round(255 * text_alpha)),
+            )
+        dc.SetTextForeground(text_colour)
 
         # Check if the text fits, cut it and add ...
         # if platform.system() == 'Darwin':
@@ -877,6 +888,9 @@ class DisplayPanel(wx.Panel):
         cliWidth, cliHeight = self.GetClientSize()
         if not cliWidth or not cliHeight:
             return
+        # GCDC.Clear() defaults to a white brush; force black so partially
+        # transparent fades (Fade directly) reveal black, not white.
+        dc.SetBackground(wx.Brush(wx.BLACK))
         dc.Clear()
 
         # Blackout is a final override: replace the normal Beam output with a

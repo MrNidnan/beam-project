@@ -1,114 +1,13 @@
-# For Developer
+# Developer Guide
 
-Use this page if the packaged app does not work for you, or if you want to run Beam directly from the repository.
+Internals and conventions for working on Beam.
 
-## Run Beam From Source
+## Developer documentation
 
-Run all commands from the repository root. The local entry point is `beam.py` and dependencies are listed in `requirements.txt`.
+Deeper internals and subsystem notes:
 
-## MacOS Step by Step for non tech users
-
-If you do not have a packaged macOS app, you can run Beam from source. Step by step guide.
-
-1. Open Terminal.
-2. Press `Cmd + Space`.
-3. Type `Terminal`.
-4. Press `Enter`.
-5. Install Apple command line tools:
-
-```bash
-xcode-select --install
-```
-
-6. Verify the tools:
-
-```bash
-xcode-select -p
-git --version
-```
-
-If `git` is missing, install it from the official Git website: https://git-scm.com/download/mac
-
-7. Check Python 3:
-
-```bash
-python3 --version
-```
-
-If Python 3 is missing, install it from https://www.python.org/downloads/macos/
-
-Recommended starting version for older Macs: Python `3.11`
-
-8. Get the Beam source code.
-
-Option A: clone the repository:
-
-```bash
-cd ~
-git clone <your-repo-url> beam-project
-cd beam-project
-```
-
-Option B: download and unzip the source release, then open it:
-
-```bash
-cd ~/beam-project
-```
-
-9. Check that you are in the correct folder:
-
-```bash
-ls
-```
-
-You should see `beam.py`, `requirements.txt`, `bin`, and `resources`.
-
-10. Create and activate a virtual environment:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-11. Install dependencies:
-
-```bash
-python3 -m pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
-```
-
-12. Start Beam:
-
-```bash
-python beam.py
-```
-
-## Run Beam locally from source
-
-For Windows and Linux the commandas are basically the same.
-The current fork is meant to be run from the repository root with Python 3 and the dependencies listed in `requirements.txt`.
-
-Clone or download the repository, then open a terminal in the project root and create a virtual environment.
-
-### Windows
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python .\beam.py
-```
-
-### Linux
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python beam.py
-```
+- Network display protocol/architecture: [docs/NETWORK_DISPLAY.md](docs/NETWORK_DISPLAY.md)
+- Background layering implementation plan: [docs/BACKGROUND_LAYERING_IMPLEMENTATION_PLAN.md](docs/BACKGROUND_LAYERING_IMPLEMENTATION_PLAN.md)
 
 ## Build And Release
 
@@ -221,7 +120,7 @@ rules, player polling and background rotation keep running underneath.
 
 - `bin/mainframe.py` — the Blackout/Resume and Show/Clear Message buttons, their
   state, and the one-line status bar (`Player | Mood | Display | [Message |]
-  Network`).
+Network`).
 - `bin/dialogs/messagedialog.py` — message text + duration (5–60s, default 15)
   dialog.
 - `bin/displaydata.py` / `bin/dialogs/preferencespanels/displaypanel.py` — apply
@@ -238,7 +137,7 @@ The mood **Background** section is now a single **Background type** dropdown
 - `bin/dialogs/editmooddialog.py` — the rework (the big diff): the type dropdown,
   showing only relevant controls, and the **Readability** slider (0–100) used
   with `Keep existing`.
-- **Readability** = combined blur + dark overlay applied to the *current*
+- **Readability** = combined blur + dark overlay applied to the _current_
   background so overlaid text stays legible. Resolved into display-layer state in
   `bin/nowplayingdata.py` and rendered in `displaydata` / `displaypanel`.
 - Background layer resolution / managed-asset model is documented in the
@@ -264,120 +163,61 @@ and update live. See `bin/network/schema.py` (payload) and
 browser cover art letterboxes (preserves aspect) instead of cropping; the
 native soft "feather" edge is approximated by corner rounding in the browser.
 
-(venvs) MacBookPro:master UserName$ python3 -m pip install pypiwin32
-(venvs) MacBookPro:master UserName$ python3 -m pip install traktor_nowplaying
-(venvs) MacBookPro:master UserName$ python3 -m pip install ola
-(venvs) MacBookPro:master UserName$ python3 -m pip install pyinstaller
+## Settings Storage
 
- 
+All user settings live in JSON on disk and in a single in-memory dictionary at
+runtime. `BeamSettings` (`bin/beamsettings.py`) owns that dictionary
+(`self._beamConfigData`) and exposes typed `get*` / `set*` accessors; UI panels
+never touch the JSON directly.
 
-### There are still other modules missing that are no longer part of the Python3 package and must be installed later:
+### Locations
 
-(venvs) MacBookPro:master UserName$ python3 -m pip install legacy-cgi
-(venvs) MacBookPro:master UserName$ python3 -m pip install numpy
+- Config directory: `~/.beam/` (`getBeamConfigPath()` in `bin/beamutils.py`).
+- Active config file name: `beamconfig.json` (the `configfilename` key in
+  `resources/json/strings.json`).
+- Bundled defaults: `resources/json/beamconfig.json`
+  (`getDefaultConfigFilePath()`). Shipped read-only; used to seed new installs
+  and to backfill missing keys.
+- Profiles manifest: `~/.beam/beamprofiles.json`.
+- Per-profile config: `~/.beam/profiles/<profileId>.json` (default profile id is
+  `default`).
 
- 
+Files are written with `json.dump(..., indent=2, ensure_ascii=False)`. The
+`~/.beam/` directory (and `profiles/` subdirectory) are created on first save.
 
-### If you have logged out in the meantime or created a new terminal window, it must be sourced:
+### Profiles
 
-$ python3 -m venv /Users/UserName/.local/pipx/venvs
-$ source /Users/UserName/.local/pipx/venvs/bin/activate
+`ProfileSettingsStore` (`bin/profilesettings.py`) manages multiple named profiles.
+The manifest lists each profile (`Id`, `Name`, `File`, `Locked`, `Persisted`);
+the active profile's JSON file holds the actual settings. `BeamSettings`
+delegates profile load/save/switch/create/rename/delete to this store.
 
- 
+### Load flow
 
-### Another problem: The icons do not have the correct format.
+1. `loadProfiles()` reads the manifest and the active profile file. Missing
+   files fall back, in order, to: legacy `~/.beam/beamconfig.json`, very old
+   `~/BeamConfig.json`, then the bundled default.
+2. `__setConfigData()` merges defaults into the loaded data with
+   `complementDict()` — it **adds** keys absent from the user data without
+   overwriting existing user values or lists. `AllModules` and `DMX` are always
+   taken from the default config; every mood is backfilled from the default
+   mood template.
+3. In-memory migrations run last (background references, title text-flow rules,
+   etc.) so old config files load cleanly into the current schema.
 
-'/Users/UserName/Beam/master/resources/icons/icon_iOSapp/icon_iOSapp_512px.png' which exists but is not in the correct format.
-On this platform, only ('icns',) images may be used as icons.
-Please install Pillow or convert your 'png' file to one of ('icns',) and try again.
+### Saving and dirty tracking
 
-### I did the conversion manually using Preview. That works too.
+- Each `set*` accessor calls `_markDirty()`, flipping `self._isDirty`.
+- `saveActiveProfile()` (and `dumpConfig()`) write the active profile via
+  `dumpConfigData()` and then `clearDirty()`.
+- `switchProfile()` auto-saves a dirty profile before switching away.
+- Dirty tracking can be suspended (`self._suspendDirtyTracking`) while config is
+  being loaded/merged so seeding defaults does not mark the profile dirty.
 
- 
+### Adding a new setting
 
- 
-pyinstaller --noconfirm --clean --onefile --windowed --osx-bundle-identifier="com.beam-project.beam" \
- --icon="resources/icons/icon_iOSapp/icon_iOSapp_512px.icns" --add-data="resources:resources" \
- --add-data="docs:docs" --name="beam-osx-v0.6.2.1" beam.py
-
- 
-198 INFO: PyInstaller: 6.11.1, contrib hooks: 2025.1
-199 INFO: Python: 3.13.1
-215 INFO: Platform: macOS-15.3-x86_64-i386-64bit-Mach-O
-215 INFO: Python environment: /Users/UserName/.local/pipx/venvs/pyinstaller
-216 INFO: wrote /Users/UserName/Beam/master/beam-osx-v0.6.2.1.spec
-...
-13109 INFO: Building BUNDLE BUNDLE-00.toc
-13116 INFO: Signing the BUNDLE...
-13218 INFO: Building BUNDLE BUNDLE-00.toc completed successfully.
-
-```
-
-# Linux
-
-Distributions where the executable gets tested:
-
-- Ubuntu 20.04 LTS
-- Mint 20 Chinnamon
-
-## Install Python3
-
-These are instructions for a global installation.
-
-A virtual environment installation might have advantages if you use Python also for other applications.
-
-```
-
-sudo apt-get -y install python3
-sudo apt-get -y install python3-pip
-sudo apt-get -y install python3-wxgtk4.0
-sudo apt-get -y install python3-mutagen
-sudo apt-get -y install python3-setuptools
-sudo apt-get -y install python3-dev
-sudo apt-get -y install python3-dbus
-
-# Optional: preferred backend for the Now Playing (MPRIS) module. If omitted,
-# mprismodule falls back to python3-dbus (installed above).
-sudo pip3 install dbus-next
-
-sudo pip3 install traktor_nowplaying
-sudo pip3 install ola
-sudo pip3 install pyinstaller
-
-```
-
-Now you can run Beam from your source directory:
-
-```
-
-python beam.py
-
-```
-
-or maybe
-
-```
-
-python3 beam.py
-
-```
-
-## Build an executable
-
-```
-
-cd ~/beam-project/beam
-pyinstaller --noconfirm --noconsole --clean --onefile --add-data="resources:resources" --add-data="docs:docs" --name="beam-lin" beam.py
-
-```
-
-Run it:
-
-```
-
-$ chmod u+x ./dist/beam-lin
-$ ./dist/beam-lin
-
-```
-
-```
+1. Add the key with its default to `resources/json/beamconfig.json` (so existing
+   user configs get it backfilled via `complementDict()`).
+2. Add `get<Name>()` / `set<Name>()` accessors on `BeamSettings`; the setter must
+   call `self._markDirty()`.
+3. Read/write only through those accessors from the UI/runtime.

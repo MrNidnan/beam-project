@@ -348,12 +348,6 @@ class BasicSettingsPanel(wx.Panel):
             lambda parent: self._build_spin_field(parent, self.BeamSettings.getNetworkServicePort(), self.OnNetworkPortChanged, minimum=1, maximum=65535),
             helper_text='Default: 8765.',
         )
-        _, _, self.NetworkAddressHint = self._add_section_row(
-            network_pane,
-            network_grid,
-            "Address",
-            lambda parent: wx.StaticText(parent, wx.ID_ANY, ""),
-        )
         left_column_vbox.Add(self.NetworkDisplayPane, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
         self.ExpertDisplayTweaksPane = wx.CollapsiblePane(self.leftColumnPanel, wx.ID_ANY, "Advanced display options")
@@ -435,7 +429,6 @@ class BasicSettingsPanel(wx.Panel):
         self.SetSizer(outer_vbox)
         self._sync_column_widths()
         self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
-        self.updateNetworkAddressHint()
         self.Layout()
 
     def reloadFromSettings(self):
@@ -470,7 +463,6 @@ class BasicSettingsPanel(wx.Panel):
         self.updateRefreshTimeLabel()
         self.updateTandaLengthLabel()
         self.updateModuleSpecificSettingsVisibility(self.BeamSettings.getSelectedModuleName())
-        self.updateNetworkAddressHint()
 
 
 
@@ -512,7 +504,6 @@ class BasicSettingsPanel(wx.Panel):
 
     def OnNetworkEnabled(self, event):
         self.BeamSettings.setNetworkServiceEnabled(self.NetworkEnabledCheckBox.GetValue())
-        self.updateNetworkAddressHint()
         self._applyNetworkServiceState()
 
     #
@@ -530,11 +521,9 @@ class BasicSettingsPanel(wx.Panel):
         host_value = self.NetworkHostField.GetValue()
         self.BeamSettings.setNetworkServiceHost(host_value)
         self.networkBindDisplayHost = host_value.strip() or self.getNetworkHostDisplayValue()
-        self.updateNetworkAddressHint()
 
     def OnNetworkPortChanged(self, event):
         self.BeamSettings.setNetworkServicePort(self.NetworkPortField.GetValue())
-        self.updateNetworkAddressHint()
 
     def OnFoobarUrlChanged(self, event):
         self.BeamSettings.setFoobarBeefwebUrl(self.FoobarUrlField.GetValue())
@@ -1008,21 +997,6 @@ class BasicSettingsPanel(wx.Panel):
             pass
 
         return fallback_ip
-
-    def updateNetworkAddressHint(self):
-        configured_host = self.BeamSettings.getNetworkServiceHost().strip()
-        display_host = self.NetworkHostField.GetValue().strip() or self.getNetworkHostDisplayValue()
-        port = self.BeamSettings.getNetworkServicePort()
-
-        if configured_host in ('', '0.0.0.0', '::'):
-            self.NetworkAddressHint.SetLabel('Local address: http://{0}:{1}  (binding to all interfaces)'.format(display_host, port))
-            return
-
-        if configured_host in ('127.0.0.1', 'localhost', '::1'):
-            self.NetworkAddressHint.SetLabel('Local-only address: http://{0}:{1}'.format(display_host, port))
-            return
-
-        self.NetworkAddressHint.SetLabel('Address: http://{0}:{1}'.format(display_host, port))
 
     def _create_section(self, parent, title, description=''):
         section_panel = wx.Panel(parent, wx.ID_ANY)
