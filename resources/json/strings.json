@@ -1,6 +1,6 @@
 {
   "comment": "This JSON files contains the string resources to be used by Beam",
-  "version": "0.9.3.0",
+  "version": "0.9.3.1",
   "configfilename": "beamconfig.json",
   "logfilename": "beamlog.txt",
   "mainframetitle": "Beam",
@@ -12,5 +12,6 @@
   "aboutfacebook": "https://www.facebook.com/beamtheproject",
   "aboutbitbucket": "https://www.bitbucket.org/beam-project/main/wiki/Home",
   "aboutdeveloper": "Mikael Holber, Horia Uifăleanu, Martin Ziemer, Piotr R. Sidorowicz, Angel de Paz\n",
+  "aboutauthors": "https://github.com/MrNidnan/beam-project/blob/master/AUTHORS.md",
   "aboutartist": "Artwork by Andreea Vlad - www.andreeavlad.com"
 }
