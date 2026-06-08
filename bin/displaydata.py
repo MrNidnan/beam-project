@@ -116,9 +116,11 @@ class DisplayData():
         self.textAlpha = float(1.0)
         self.FadeDirection = 'In'
         self.RotateBackgroundTrigger = False
-        # New mood background held back during a fade-to-black so the OLD
-        # background can darken to black first; applied at the black point.
-        self._pendingBackgroundLayers = None
+        # Resolved runtime state of a new mood background held back during a
+        # fade-to-black so the OLD background can darken to black first; applied
+        # at the black point. The network display switches to it immediately
+        # (it does not fade) via getNetworkBackgroundLayers.
+        self._pendingBackgroundLayerState = None
 
         # Manual display overrides. Final overlays on top of the normal
         # pipeline; never persisted and always reset to inactive on startup.
@@ -374,14 +376,21 @@ class DisplayData():
 
         return layer_state
 
-    def _refresh_background_layer_state(self):
-        previous_states = self._backgroundLayerState
-        refreshed_states = {}
+    def _build_background_layer_state(self, background_layers, previous_states):
+        background_layers = background_layers or {}
+        previous_states = previous_states or {}
+        built_states = {}
         for layer_name in ('base', 'overlay'):
-            refreshed_states[layer_name] = self._build_layer_runtime_state(
-                self.backgroundLayers.get(layer_name, {}),
+            built_states[layer_name] = self._build_layer_runtime_state(
+                background_layers.get(layer_name, {}),
                 previous_states.get(layer_name, {}),
             )
+        return built_states
+
+    def _refresh_background_layer_state(self):
+        refreshed_states = self._build_background_layer_state(
+            self.backgroundLayers, self._backgroundLayerState
+        )
 
         self._backgroundLayerState = refreshed_states
 
@@ -390,15 +399,33 @@ class DisplayData():
 
         self._sync_active_background_state()
 
+    def getNetworkBackgroundLayers(self):
+        # The network display does a direct switch (no fade), so it must always
+        # reflect the final mood background, even while the native display is
+        # still holding the old background back for a fade-to-black. The pending
+        # state is already resolved to concrete paths, so the network and native
+        # displays converge on the exact same background (no re-roll/glitch).
+        pending_state = getattr(self, '_pendingBackgroundLayerState', None)
+        if pending_state is not None:
+            return pending_state
+        return self.backgroundLayers
+
     def _apply_pending_background_layers(self):
         # Swap in a mood background that was held back during a fade-to-black so
         # the OLD background could darken to black first (old -> black -> new).
-        pending = getattr(self, '_pendingBackgroundLayers', None)
-        if pending is None:
+        # The pending state was already resolved when the transition started, so
+        # apply it verbatim instead of re-resolving (which could pick a different
+        # rotating image than the network display already switched to).
+        pending_state = getattr(self, '_pendingBackgroundLayerState', None)
+        if pending_state is None:
             return
-        self._pendingBackgroundLayers = None
-        self.backgroundLayers = pending
-        self._refresh_background_layer_state()
+        self._pendingBackgroundLayerState = None
+        self._backgroundLayerState = pending_state
+        self.backgroundLayers = {
+            layer_name: deepcopy(layer_state)
+            for layer_name, layer_state in pending_state.items()
+        }
+        self._sync_active_background_state()
         self._update_background_rotation_timer()
 
     def _get_active_background_layer_name(self):
@@ -635,9 +662,15 @@ class DisplayData():
         defer_background = is_mood_change and beamSettings.getMoodTransition() == 'Fade to black'
 
         if defer_background:
-            self._pendingBackgroundLayers = new_background_layers
+            # Resolve the new background now and stash it. The native display
+            # keeps rendering the OLD background (still in self.backgroundLayers)
+            # until the fade reaches black, but the network display switches to
+            # this resolved state immediately (see getNetworkBackgroundLayers).
+            self._pendingBackgroundLayerState = self._build_background_layer_state(
+                new_background_layers, self._backgroundLayerState
+            )
         else:
-            self._pendingBackgroundLayers = None
+            self._pendingBackgroundLayerState = None
             self.backgroundLayers = new_background_layers
             self._refresh_background_layer_state()
 

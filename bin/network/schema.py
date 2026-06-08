@@ -116,17 +116,22 @@ def snapshot_from_display_data(display_data, beam_settings):
     for song in now_playing.currentPlaylist:
         playlist.append(song_to_dict(song))
 
-    legacy_background_path_getter = getattr(display_data, 'getLegacyBackgroundPath', None)
-    if callable(legacy_background_path_getter):
-        legacy_background_path = legacy_background_path_getter()
+    # The network display does a direct switch (it never fades), so it must show
+    # the final mood background even while the native display is mid fade-to-black
+    # (which holds the old background back). getNetworkBackgroundLayers returns the
+    # target/resolved layers; fall back to the raw layers if it is unavailable.
+    network_layers_getter = getattr(display_data, 'getNetworkBackgroundLayers', None)
+    if callable(network_layers_getter):
+        background_layers = network_layers_getter() or {}
     else:
         background_layers = getattr(display_data, 'backgroundLayers', {}) or {}
-        overlay_layer = background_layers.get('overlay', {}) or {}
-        if overlay_layer.get('available') and str(overlay_layer.get('mode', '')).lower() == 'replace':
-            legacy_background_path = overlay_layer.get('currentPath') or overlay_layer.get('sourcePath') or ''
-        else:
-            base_layer = background_layers.get('base', {}) or {}
-            legacy_background_path = base_layer.get('currentPath') or base_layer.get('sourcePath') or ''
+
+    overlay_layer = background_layers.get('overlay', {}) or {}
+    if overlay_layer.get('available') and str(overlay_layer.get('mode', '')).lower() == 'replace':
+        legacy_background_path = overlay_layer.get('currentPath') or overlay_layer.get('sourcePath') or ''
+    else:
+        base_layer = background_layers.get('base', {}) or {}
+        legacy_background_path = base_layer.get('currentPath') or base_layer.get('sourcePath') or ''
 
     blackout_active = bool(getattr(display_data, 'isBlackoutActive', lambda: False)())
     temp_message_active = bool(getattr(display_data, 'isTempMessageActive', lambda: False)())
@@ -155,8 +160,8 @@ def snapshot_from_display_data(display_data, beam_settings):
             'available': bool(legacy_background_path),
             'sourcePath': legacy_background_path,
             'url': '/media/background/current',
-            'base': background_layer_to_dict(display_data.backgroundLayers.get('base'), 'base'),
-            'overlay': background_layer_to_dict(display_data.backgroundLayers.get('overlay'), 'overlay'),
+            'base': background_layer_to_dict(background_layers.get('base'), 'base'),
+            'overlay': background_layer_to_dict(background_layers.get('overlay'), 'overlay'),
         },
         'displayRows': list(display_data.currentDisplayRows),
         'displayItems': build_display_items(display_data.currentDisplayRows, display_data.currentDisplaySettings),
