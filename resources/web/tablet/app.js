@@ -32,6 +32,17 @@ let lastSnapshot = null;
 let lastSequence = 0;
 let lastBackgroundRenderKey = "";
 
+// Media is loaded into in-memory blob object URLs and only re-fetched when the
+// content identity changes, so an unchanged song/mood never reloads (no blink)
+// and a real change swaps in a pre-decoded image instantly (direct, no fade).
+let coverArtElement = null;
+let coverArtIdentity = "";
+let coverArtObjectUrl = "";
+const backgroundObjectUrls = {
+  "--beam-background-base": "",
+  "--beam-background-overlay": "",
+};
+
 function clearReconnectTimer() {
   if (reconnectTimer !== null) {
     globalThis.clearTimeout(reconnectTimer);
@@ -540,20 +551,74 @@ function applyHorizontalPosition(element, alignment, item, canvasWidth) {
   element.style.right = "auto";
 }
 
-function createCoverArtElement(
-  item,
-  snapshot,
-  sequence,
-  canvasWidth,
-  canvasHeight,
-) {
+// A song change only changes the cover-art *image*, not its slot. The element is
+// reused across renders and its bitmap is only re-fetched when the identity
+// changes, so unrelated snapshots (status, playlist) never reload it (no blink).
+function coverArtIdentityKey(snapshot) {
+  const coverArt = snapshot.coverArt || {};
+  return String(
+    coverArt.sourcePath ||
+      snapshot.currentSong?.filePath ||
+      snapshot.currentSong?.title ||
+      "",
+  );
+}
+
+function removeCoverArt() {
+  if (coverArtElement) {
+    coverArtElement.remove();
+    coverArtElement.removeAttribute("src");
+  }
+  coverArtIdentity = "";
+  if (coverArtObjectUrl) {
+    URL.revokeObjectURL(coverArtObjectUrl);
+    coverArtObjectUrl = "";
+  }
+}
+
+async function loadCoverArtImage(url, identity) {
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`cover art request failed: ${response.status}`);
+    }
+    const objectUrl = URL.createObjectURL(await response.blob());
+    const decoder = new Image();
+    decoder.src = objectUrl;
+    if (typeof decoder.decode === "function") {
+      await decoder.decode().catch(() => {});
+    }
+    // Drop stale loads: the song may have changed again while fetching.
+    if (identity !== coverArtIdentity || !coverArtElement) {
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+    coverArtElement.src = objectUrl;
+    const previousObjectUrl = coverArtObjectUrl;
+    coverArtObjectUrl = objectUrl;
+    if (previousObjectUrl) {
+      URL.revokeObjectURL(previousObjectUrl);
+    }
+  } catch {
+    // Fall back to the direct URL so something shows if the blob load fails.
+    if (identity === coverArtIdentity && coverArtElement) {
+      coverArtElement.src = url;
+    }
+  }
+}
+
+function updateCoverArt(item, snapshot, canvasWidth, canvasHeight) {
   const coverArt = snapshot.coverArt || {};
   const isAvailable = Boolean(coverArt.available ?? snapshot.coverArtAvailable);
-  if (!isAvailable) {
-    return null;
+  if (!item || !isAvailable) {
+    removeCoverArt();
+    return;
   }
 
-  const coverArtEl = document.createElement("img");
+  if (!coverArtElement) {
+    coverArtElement = document.createElement("img");
+  }
+
   const alignment = normalizeAlignment(item.alignment);
   const sizePx = Math.max(
     48,
@@ -563,21 +628,29 @@ function createCoverArtElement(
     (Number(item?.position?.[0] ?? 0) / 100) * canvasHeight,
   );
 
-  coverArtEl.className = `layout-cover-art align-${alignment}`;
-  coverArtEl.alt = snapshot.currentSong?.title
+  coverArtElement.className = `layout-cover-art align-${alignment}`;
+  coverArtElement.alt = snapshot.currentSong?.title
     ? `${snapshot.currentSong.title} cover art`
     : "Current cover art";
-  coverArtEl.src = `${coverArt.url || COVER_ART_URL}?v=${sequence}`;
-  coverArtEl.width = sizePx;
-  coverArtEl.height = sizePx;
-  coverArtEl.style.top = `${topPx}px`;
-  coverArtEl.style.width = `${sizePx}px`;
-  coverArtEl.style.height = `${sizePx}px`;
+  coverArtElement.width = sizePx;
+  coverArtElement.height = sizePx;
+  coverArtElement.style.top = `${topPx}px`;
+  coverArtElement.style.width = `${sizePx}px`;
+  coverArtElement.style.height = `${sizePx}px`;
+  applyCoverArtStyle(coverArtElement, snapshot.coverArtStyle || {}, sizePx);
+  applyHorizontalPosition(coverArtElement, alignment, item, canvasWidth);
+  if (!coverArtElement.isConnected) {
+    layoutCanvasEl.append(coverArtElement);
+  }
 
-  applyCoverArtStyle(coverArtEl, snapshot.coverArtStyle || {}, sizePx);
-
-  applyHorizontalPosition(coverArtEl, alignment, item, canvasWidth);
-  return coverArtEl;
+  // Only (re)fetch the bitmap when the cover art identity actually changes.
+  const identity = coverArtIdentityKey(snapshot);
+  if (identity === coverArtIdentity && coverArtObjectUrl) {
+    return;
+  }
+  coverArtIdentity = identity;
+  const url = `${coverArt.url || COVER_ART_URL}?v=${encodeURIComponent(identity)}`;
+  loadCoverArtImage(url, identity);
 }
 
 // Mirror the native (wx) cover-art tweaks from Advanced display options so the
@@ -685,7 +758,7 @@ function getRenderableItems(snapshot) {
   return buildFallbackDisplayItems(snapshot);
 }
 
-function renderLayout(snapshot, sequence) {
+function renderLayout(snapshot) {
   const canvasWidth = layoutCanvasEl.clientWidth;
   const canvasHeight = Math.max(
     layoutCanvasEl.clientHeight,
@@ -695,26 +768,18 @@ function renderLayout(snapshot, sequence) {
   const textItems = [];
   const fragment = document.createDocumentFragment();
 
-  Array.from(
-    layoutCanvasEl.querySelectorAll(".layout-item, .layout-cover-art"),
-  ).forEach((node) => {
+  // Text items are rebuilt each render; the cover art element is persistent
+  // (managed by updateCoverArt) so it is not torn down and re-fetched here.
+  Array.from(layoutCanvasEl.querySelectorAll(".layout-item")).forEach((node) => {
     node.remove();
   });
 
+  let coverArtItem = null;
   renderableItems.forEach((item) => {
     const fieldName = String(item.field || "").trim();
     const text = String(item.text || "").trim();
     if (fieldName === "%CoverArt") {
-      const coverArtEl = createCoverArtElement(
-        item,
-        snapshot,
-        sequence,
-        canvasWidth,
-        canvasHeight,
-      );
-      if (coverArtEl) {
-        fragment.append(coverArtEl);
-      }
+      coverArtItem = item;
       return;
     }
 
@@ -724,6 +789,8 @@ function renderLayout(snapshot, sequence) {
 
     textItems.push(item);
   });
+
+  updateCoverArt(coverArtItem, snapshot, canvasWidth, canvasHeight);
 
   textItems.sort((leftItem, rightItem) => {
     const verticalDelta =
@@ -816,7 +883,47 @@ function parseBackgroundLayerColor(layer) {
   return match ? `#${match[1]}` : "";
 }
 
-function buildBackgroundLayerUrl(layerName, layer, sequence) {
+// Load a decoded image off-screen, then swap a CSS variable to its blob object
+// URL. The current background stays up until the new one is fully decoded, so the
+// switch is direct (no fade) and flash-free. The renderKey guard drops stale
+// loads so a newer background that arrived meanwhile is never overwritten.
+async function setBackgroundImageFromUrl(cssVar, url, renderKey) {
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`background request failed: ${response.status}`);
+    }
+    const objectUrl = URL.createObjectURL(await response.blob());
+    const decoder = new Image();
+    decoder.src = objectUrl;
+    if (typeof decoder.decode === "function") {
+      await decoder.decode().catch(() => {});
+    }
+    if (renderKey !== lastBackgroundRenderKey) {
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+    document.body.style.setProperty(cssVar, `url("${objectUrl}")`);
+    const previousObjectUrl = backgroundObjectUrls[cssVar];
+    backgroundObjectUrls[cssVar] = objectUrl;
+    if (previousObjectUrl) {
+      URL.revokeObjectURL(previousObjectUrl);
+    }
+  } catch {
+    // Leave the current background in place on failure rather than blanking it.
+  }
+}
+
+function clearBackgroundImage(cssVar) {
+  document.body.style.removeProperty(cssVar);
+  const previousObjectUrl = backgroundObjectUrls[cssVar];
+  if (previousObjectUrl) {
+    URL.revokeObjectURL(previousObjectUrl);
+    backgroundObjectUrls[cssVar] = "";
+  }
+}
+
+function buildBackgroundLayerUrl(layerName, layer) {
   const params = new URLSearchParams();
   const resolvedPath = String(layer?.currentPath || layer?.sourcePath || "");
   const layerKind = String(layer?.kind || "");
@@ -827,12 +934,11 @@ function buildBackgroundLayerUrl(layerName, layer, sequence) {
   if (layerKind) {
     params.set("kind", layerKind);
   }
-  params.set("v", String(sequence || 0));
 
   return `/media/background/${layerName}?${params.toString()}`;
 }
 
-function applyBackground(snapshot, sequence) {
+function applyBackground(snapshot) {
   const background = snapshot.background || {};
   const baseLayer = background.base || {};
   const overlayLayer = background.overlay || {};
@@ -888,15 +994,16 @@ function applyBackground(snapshot, sequence) {
   if (showBase && baseColor) {
     // Solid color background: fill with the color, no image (matches native).
     document.body.style.setProperty("--beam-background-base-color", baseColor);
-    document.body.style.removeProperty("--beam-background-base");
+    clearBackgroundImage("--beam-background-base");
   } else if (showBase && baseLayer.url) {
-    document.body.style.setProperty(
+    setBackgroundImageFromUrl(
       "--beam-background-base",
-      `url("${buildBackgroundLayerUrl("base", baseLayer, sequence)}")`,
+      buildBackgroundLayerUrl("base", baseLayer),
+      nextBackgroundRenderKey,
     );
     document.body.style.removeProperty("--beam-background-base-color");
   } else {
-    document.body.style.removeProperty("--beam-background-base");
+    clearBackgroundImage("--beam-background-base");
     document.body.style.removeProperty("--beam-background-base-color");
   }
 
@@ -906,15 +1013,16 @@ function applyBackground(snapshot, sequence) {
 
   if (showOverlay && overlayColor) {
     document.body.style.setProperty("--beam-background-overlay-color", overlayColor);
-    document.body.style.removeProperty("--beam-background-overlay");
+    clearBackgroundImage("--beam-background-overlay");
     document.body.style.setProperty(
       "--beam-background-overlay-opacity",
       String(overlayRenderOpacity),
     );
   } else if (showOverlay && overlayLayer.url) {
-    document.body.style.setProperty(
+    setBackgroundImageFromUrl(
       "--beam-background-overlay",
-      `url("${buildBackgroundLayerUrl("overlay", overlayLayer, sequence)}")`,
+      buildBackgroundLayerUrl("overlay", overlayLayer),
+      nextBackgroundRenderKey,
     );
     document.body.style.removeProperty("--beam-background-overlay-color");
     document.body.style.setProperty(
@@ -922,7 +1030,7 @@ function applyBackground(snapshot, sequence) {
       String(overlayRenderOpacity),
     );
   } else {
-    document.body.style.removeProperty("--beam-background-overlay");
+    clearBackgroundImage("--beam-background-overlay");
     document.body.style.removeProperty("--beam-background-overlay-color");
     document.body.style.removeProperty("--beam-background-overlay-opacity");
   }
@@ -966,8 +1074,8 @@ function renderSnapshot(snapshot, sequence) {
   document.title = snapshot?.currentSong?.title
     ? `Beam Remote Display - ${snapshot.currentSong.title}`
     : "Beam Remote Display";
-  renderLayout(snapshot, sequence || 0);
-  applyBackground(snapshot, sequence || 0);
+  renderLayout(snapshot);
+  applyBackground(snapshot);
   applyDisplayOverrides(snapshot);
 }
 
@@ -975,7 +1083,7 @@ function rerenderCurrentSnapshot() {
   if (!lastSnapshot) {
     return;
   }
-  renderLayout(lastSnapshot, lastSequence);
+  renderLayout(lastSnapshot);
 }
 
 async function loadInitialState() {

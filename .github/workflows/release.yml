@@ -170,7 +170,7 @@ jobs:
           }
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ needs.prepare.outputs.windows_artifact_name }}
           path: ${{ needs.prepare.outputs.windows_artifact_path }}
@@ -208,7 +208,7 @@ jobs:
             beam.py
 
       - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ needs.prepare.outputs.linux_artifact_name }}
           path: ${{ needs.prepare.outputs.linux_artifact_path }}
@@ -225,13 +225,13 @@ jobs:
 
     steps:
       - name: Download Windows artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ needs.prepare.outputs.windows_artifact_name }}
           path: release-artifacts
 
       - name: Download Linux artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ needs.prepare.outputs.linux_artifact_name }}
           path: release-artifacts
@@ -266,13 +266,13 @@ jobs:
 
     steps:
       - name: Download Windows artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ needs.prepare.outputs.windows_artifact_name }}
           path: release-artifacts
 
       - name: Download Linux artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ needs.prepare.outputs.linux_artifact_name }}
           path: release-artifacts

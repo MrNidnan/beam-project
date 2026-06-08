@@ -599,6 +599,22 @@ class DisplayPanel(wx.Panel):
             raise Exception("Unknown alignment" + Settings['Alignment'])
 
         if self.displayData.currentCoverArtImage:
+            # Cover art fades with the text during a transition: hidden while the
+            # screen darkens (textAlpha == 0 in the fade-to-black "out" phase) and
+            # ramped back in alongside the text. Apply the opacity through the
+            # GCDC graphics context, since DrawBitmap has no global-alpha arg.
+            cover_alpha = max(0.0, min(1.0, float(getattr(self.displayData, 'textAlpha', 1.0))))
+            if cover_alpha <= 0.0:
+                return
+
+            graphics_context = None
+            if cover_alpha < 1.0 and isinstance(dc, wx.GCDC):
+                try:
+                    graphics_context = dc.GetGraphicsContext()
+                    graphics_context.BeginLayer(cover_alpha)
+                except Exception:
+                    graphics_context = None
+
             try:
                 bitmap = self._get_cover_art_bitmap(size)
                 if bitmap is None:
@@ -612,6 +628,12 @@ class DisplayPanel(wx.Panel):
                     dc.DrawBitmap(wx.Bitmap(fallback_image), int(horizontalPosition), int(verticalPosition), True)
                 except Exception:
                     pass
+            finally:
+                if graphics_context is not None:
+                    try:
+                        graphics_context.EndLayer()
+                    except Exception:
+                        pass
 
     def _wrap_long_token(self, dc, token, max_width):
         if not token:
