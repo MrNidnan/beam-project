@@ -61,7 +61,7 @@ class DisplayData():
     # Text legibility matters more than a slow cross-fade. The foreground text
     # reaches full opacity once the background fade is this far along, so the
     # text settles well before the slower background does.
-    TEXT_FADE_PORTION = 0.6
+    TEXT_FADE_PORTION = 0.75
 
     def _log_background_debug(self, message, *args):
         if logging.getLogger().isEnabledFor(logging.DEBUG):
