@@ -58,6 +58,11 @@ class DisplayData():
 
     _background_extensions = ('.jpg', '.jpeg', '.png')
 
+    # Text legibility matters more than a slow cross-fade. The foreground text
+    # reaches full opacity once the background fade is this far along, so the
+    # text settles well before the slower background does.
+    TEXT_FADE_PORTION = 0.6
+
     def _log_background_debug(self, message, *args):
         if logging.getLogger().isEnabledFor(logging.DEBUG):
             logging.debug(message, *args)
@@ -111,6 +116,9 @@ class DisplayData():
         self.textAlpha = float(1.0)
         self.FadeDirection = 'In'
         self.RotateBackgroundTrigger = False
+        # New mood background held back during a fade-to-black so the OLD
+        # background can darken to black first; applied at the black point.
+        self._pendingBackgroundLayers = None
 
         # Manual display overrides. Final overlays on top of the normal
         # pipeline; never persisted and always reset to inactive on startup.
@@ -382,6 +390,17 @@ class DisplayData():
 
         self._sync_active_background_state()
 
+    def _apply_pending_background_layers(self):
+        # Swap in a mood background that was held back during a fade-to-black so
+        # the OLD background could darken to black first (old -> black -> new).
+        pending = getattr(self, '_pendingBackgroundLayers', None)
+        if pending is None:
+            return
+        self._pendingBackgroundLayers = None
+        self.backgroundLayers = pending
+        self._refresh_background_layer_state()
+        self._update_background_rotation_timer()
+
     def _get_active_background_layer_name(self):
         overlay_state = self._backgroundLayerState.get('overlay', {})
         if overlay_state.get('available') and str(overlay_state.get('mode', '')).lower() == 'replace':
@@ -604,12 +623,27 @@ class DisplayData():
         self.previousMoodName = deepcopy(self.currentMoodName)
         self.currentMoodName = self.nowPlayingData.CurrentMoodName
         self.currentDisplaySettings = self.nowPlayingData.DisplaySettings
-        self.backgroundLayers = self._apply_keep_existing_background(deepcopy(self.nowPlayingData.BackgroundLayers))
-        self._refresh_background_layer_state()
+
+        new_background_layers = self._apply_keep_existing_background(deepcopy(self.nowPlayingData.BackgroundLayers))
+
+        is_mood_change = self.previousMoodName != self.currentMoodName
+        # Fade to black should read brown -> black -> green, darkening the OLD
+        # background before revealing the new one. Hold the new background back
+        # and swap it in at the black point (_apply_pending_background_layers);
+        # otherwise the background pops to the new mood instantly and only then
+        # fades out/in.
+        defer_background = is_mood_change and beamSettings.getMoodTransition() == 'Fade to black'
+
+        if defer_background:
+            self._pendingBackgroundLayers = new_background_layers
+        else:
+            self._pendingBackgroundLayers = None
+            self.backgroundLayers = new_background_layers
+            self._refresh_background_layer_state()
 
         self._update_status_text()
 
-        if self.previousMoodName != self.currentMoodName:
+        if is_mood_change:
             self.startTransition('MoodChange')
         else:
             self.startTransition('SongChange')
@@ -738,6 +772,10 @@ class DisplayData():
         # FADE DIRECTLY
         if self.currentTransition == 'FadeDirect':
 
+            # A fade-to-black that was superseded by a direct fade never reached
+            # its black point; apply any held-back background now so it is visible.
+            self._apply_pending_background_layers()
+
             self.alpha = float(0.0)
             # Reset the colour multipliers: a FadeDirect only animates alpha, so
             # any darkening left over from an interrupted FadeToBlack must be
@@ -776,6 +814,10 @@ class DisplayData():
                 self.mainFrame.TransitionTimer.Start(self.transitionSpeed)
 
             else:
+                # We are at full black: reveal the new mood's background that was
+                # held back during the darken phase, so the brighten phase fades
+                # in the new background instead of the old one.
+                self._apply_pending_background_layers()
                 # Load the legacy fallback only when no layered background is available.
                 if self.shouldUseLegacyBackgroundFallback():
                     self._load_background()
@@ -802,6 +844,9 @@ class DisplayData():
     ########################################################
     def switchBackground(self):
 
+        # Apply any background held back by an interrupted fade-to-black.
+        self._apply_pending_background_layers()
+
         # No transition: snap to a fully opaque, un-darkened background so leftover
         # fade state cannot persist.
         self.red = float(1.0)
@@ -814,6 +859,17 @@ class DisplayData():
             self._load_background()
         self.textsAreVisible = True
         self.mainFrame.refreshDisplay()
+
+    def _text_alpha_for_progress(self, progress):
+        # Map background fade progress (0..1) to text opacity. Linear alpha
+        # tracks perceived brightness poorly and makes text feel slow, so the
+        # text both finishes early (TEXT_FADE_PORTION) and uses an ease-out curve
+        # to become legible quickly instead of lingering faint.
+        progress = max(0.0, min(1.0, float(progress)))
+        scaled = progress / self.TEXT_FADE_PORTION if self.TEXT_FADE_PORTION > 0 else 1.0
+        scaled = max(0.0, min(1.0, scaled))
+        eased = 1.0 - (1.0 - scaled) * (1.0 - scaled)
+        return max(0.0, min(1.0, eased))
 
     ########################################################
     # TIMER - USED for Fade directly and Fade to black
@@ -838,8 +894,9 @@ class DisplayData():
             self.alpha = 1.0
             self.mainFrame.TransitionTimer.Stop()
             self.RotateBackgroundTrigger = False
-        # Text opacity tracks the background fade-in.
-        self.textAlpha = max(0.0, min(1.0, self.alpha))
+        # Text opacity tracks the background fade-in, but ramps faster so it
+        # becomes legible quickly instead of feeling sluggish.
+        self.textAlpha = self._text_alpha_for_progress(self.alpha)
         self.mainFrame.refreshDisplay()
 
     ########################################################
@@ -876,8 +933,9 @@ class DisplayData():
 
         if self.red >= 0 and self.red <= 1:
             self.triggerResizeBackground = True
-            # Fade the text back in with the brightening background.
-            self.textAlpha = max(0.0, min(1.0, self.red))
+            # Fade the text back in with the brightening background, but ramp it
+            # faster so it becomes legible quickly instead of feeling sluggish.
+            self.textAlpha = self._text_alpha_for_progress(self.red)
             self.mainFrame.refreshDisplay()
         else:
             self.red = float(1.0)
