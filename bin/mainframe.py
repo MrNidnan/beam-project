@@ -48,6 +48,7 @@ if platform.system() == 'Linux' or platform.system() == 'Darwin':
     from bin.dialogs.preferencespanels.dmxcontrolspanel import DMXcontrolsPanel
 
 from bin.dialogs.helpdialog import HelpDialog
+from bin.dialogs.logviewerdialog import LogViewerDialog
 from bin.dialogs.messagedialog import ShowMessageDialog
 from bin.dialogs import aboutdialog
 from bin.dialogs.displayframe import DisplayFrame
@@ -115,11 +116,12 @@ class MainFrame(wx.Frame):
         # self.menuFullScreen  = self.filemenu.Append(wx.ID_ANY, "&Fullscreen\tF11", "Set fullscreen")
         self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
         self.menuHelp    = self.Aboutmenu.Append(wx.ID_ANY, "&Help"," Getting started")
+        self.menuLogViewer = self.Aboutmenu.Append(wx.ID_ANY, "Open &Log Viewer"," View the Beam log in real time")
 
         # Creating the menubar.
         self.menuBar = wx.MenuBar()
         self.menuBar.Append(self.filemenu,"&File")    # Adding the "file menu" to the MenuBar
-        self.menuBar.Append(self.Aboutmenu,"&About")  # Adding the "About menu" to the MenuBar
+        self.menuBar.Append(self.Aboutmenu,"&Help")  # Adding the "About menu" to the MenuBar
         self.SetMenuBar(self.menuBar)  # Adding the MenuBar to the Frame content.
 
         # Events.
@@ -127,6 +129,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onClose, self.menuExit)
         self.Bind(wx.EVT_MENU, self.onAbout, self.menuAbout)
         self.Bind(wx.EVT_MENU, self.onHelp, self.menuHelp)
+        self.Bind(wx.EVT_MENU, self.onOpenLogViewer, self.menuLogViewer)
         # self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         # self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
@@ -230,6 +233,23 @@ class MainFrame(wx.Frame):
         try:
             help_dialog = HelpDialog(self)
             help_dialog.Show()
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    #
+    # Show the live log viewer (modeless). Reuse a single instance so repeated
+    # clicks raise the existing window instead of stacking copies.
+    #
+    def onOpenLogViewer(self, event):
+        try:
+            # A destroyed wx window is falsy, so this reuses a still-open viewer
+            # and otherwise opens a fresh one.
+            existing = getattr(self, '_logViewer', None)
+            if existing:
+                existing.Raise()
+                return
+            self._logViewer = LogViewerDialog(self, beamSettings.getLogFilePath())
+            self._logViewer.Show()
         except Exception as e:
             logging.error(e, exc_info=True)
 

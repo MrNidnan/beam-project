@@ -1,0 +1,89 @@
+🎉 Beam has a new fork! and it has been going to the gym since v0.7
+
+For anyone using Beam at milongas, DJ nights, practicas, classes, or any event where the projector has exactly one job: there is now an updated fork with many new features, improvements, and fixes.
+
+Latest release:
+https://github.com/MrNidnan/beam-project/releases
+
+✨ Highlights since v0.7
+
+🖥️ Browser / Network Display
+Project Beam through a browser on another screen, tablet, laptop, or device on the local network. Useful when the DJ laptop and display devices are multiple or not the same.
+
+🎧 Better player support
+- Foobar2000 works again through Beefweb.
+- VirtualDJ support was added.
+- MediaMonkey is fixed.
+- AIMP for Windows was added.
+- JRiver, Mixxx, iTunes, and Spotify received improvements.
+- New “Now Playing” source for Windows and Linux that can read many modern apps and web players like Spotify, YouTube Music, Apple Music, Tidal, and more.
+
+👤 Profiles
+Create separate setups for different venues, DJs, projectors, or “special nights" configurations.
+
+🎨 Smarter backgrounds
+Beam now supports artist/album-artist backgrounds, cover art as background, color backgrounds, layered backgrounds, opacity, and image slideshows.
+
+🖼️ Better album art
+Cover art can now preserve aspect ratio and can use outline, rounded corners, feathering, and opacity. Album art should now behave more like album art and less like a square being punished.
+
+🧠 Better moods
+Timed moods now behave better, and their duration resets correctly when selected.
+
+A new Readability option can blur/dim the current background so text stays readable without replacing the venue slideshow or current background of another mood.
+
+Perfect if you do not want to show song information all the time and want to keep a slide presentation of the Milonga and future events visible most of the time.
+
+📝 Live display controls
+New quick buttons:
+
+Show Message / Clear Message  
+Blackout / Resume
+
+You can show a temporary centered message for 5–60 seconds, or blackout the display. Messages can also appear on top of blackout.
+
+Perfect for:
+BREAK - BACK IN 10 MINUTES  
+ÚLTIMAS DOS TANDAS  
+PERFORMANCE IN 5 MINUTES  
+DJ NEEDS COFFEE
+
+📊 Smarter status bar
+Beam now tells you what the audience is seeing:
+
+Player: Playing | Mood: Tango | Display: BLACKOUT | Message: 12s | Network: ON
+
+⚙️ Better rules and hide conditions
+
+- The new Cut / Trim rule can clean messy metadata from any tag.
+- Hide conditions are more flexible and can use tag/operator/value logic with comma-separated values.
+	Example:
+	%PreviousGenre is Milonga, Tango, Vals
+
+	Beam reads that as: 
+	previous genre is Milonga OR Tango OR Vals
+
+💾 Auto-save UI
+The main Save button is gone. Changes should apply immediately in the display and save automatically when closing the app. We hope. 😄
+
+🐛 Fixes
+A lot of gremlins have been evicted, especially around Windows usability, player integrations, backgrounds, cover art and UI behavior.
+
+Report issues here:
+https://github.com/MrNidnan/beam-project/issues
+
+Full technical changelog:
+https://github.com/MrNidnan/beam-project/blob/master/CHANGELOG.md
+
+❤️ Final note
+This fork started from a friend’s request to make Beam usable on Windows again, and it grew from there thanks to comments, tests, and suggestions.
+
+The goal is to bring it back to the main branch eventually and keep Beam lightly maintained.
+
+Beam may still look complex because it offers a lot of flexibility, but that also means there are workarounds for many different setups. Don’t be afraid to explore the possibilities.
+
+Try it, enjoy it, and report anything that behaves like it had too much coffee.
+
+Thanks for testing, commenting, and reporting issues.
+
+-- Angel

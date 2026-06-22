@@ -65,7 +65,7 @@ try:
         logging.error(e, exc_info=True)
 
     if os.path.isdir(logpath):
-        logfilepath = os.path.join(logpath, beamSettings.getString("logfilename"))
+        logfilepath = beamSettings.getLogFilePath()
         # set up additional logging to file
         fileHandler = logging.FileHandler(logfilepath,  mode='w')
         # w=overwrwrite

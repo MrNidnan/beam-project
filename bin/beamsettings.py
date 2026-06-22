@@ -322,6 +322,12 @@ class BeamSettings:
 
     def getLogPath(self):
         return self._beamConfigData['LogPath']
+
+    def getLogFilePath(self):
+        # Single source of truth for the active log file location, shared by the
+        # file logging setup (beam.py) and the in-app log viewer so they never
+        # drift apart.
+        return os.path.join(self.getLogPath(), self.getString("logfilename"))
     def setLogPath(self, logPath):
         self._beamConfigData['LogPath'] = logPath
         self._markDirty()
