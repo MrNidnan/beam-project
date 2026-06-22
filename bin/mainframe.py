@@ -47,7 +47,6 @@ from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel
 if platform.system() == 'Linux' or platform.system() == 'Darwin':
     from bin.dialogs.preferencespanels.dmxcontrolspanel import DMXcontrolsPanel
 
-from bin.dialogs.helpdialog import HelpDialog
 from bin.dialogs.logviewerdialog import LogViewerDialog
 from bin.dialogs.messagedialog import ShowMessageDialog
 from bin.dialogs import aboutdialog
@@ -115,7 +114,6 @@ class MainFrame(wx.Frame):
         # self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl-+"," Configuration tool")
         # self.menuFullScreen  = self.filemenu.Append(wx.ID_ANY, "&Fullscreen\tF11", "Set fullscreen")
         self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
-        self.menuHelp    = self.Aboutmenu.Append(wx.ID_ANY, "&Help"," Getting started")
         self.menuLogViewer = self.Aboutmenu.Append(wx.ID_ANY, "Open &Log Viewer"," View the Beam log in real time")
 
         # Creating the menubar.
@@ -128,7 +126,6 @@ class MainFrame(wx.Frame):
         # self.Bind(wx.EVT_MENU, self.OnPreferences, self.menuPreferences)
         self.Bind(wx.EVT_MENU, self.onClose, self.menuExit)
         self.Bind(wx.EVT_MENU, self.onAbout, self.menuAbout)
-        self.Bind(wx.EVT_MENU, self.onHelp, self.menuHelp)
         self.Bind(wx.EVT_MENU, self.onOpenLogViewer, self.menuLogViewer)
         # self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
         self.Bind(wx.EVT_CLOSE, self.onClose)
@@ -223,16 +220,6 @@ class MainFrame(wx.Frame):
     def onAbout(self, event):
         try:
             aboutdialog.ShowAboutDialog(self)
-        except Exception as e:
-            logging.error(e, exc_info=True)
-
-    #
-    # Show 'Help'
-    #
-    def onHelp(self, event):
-        try:
-            help_dialog = HelpDialog(self)
-            help_dialog.Show()
         except Exception as e:
             logging.error(e, exc_info=True)
 
