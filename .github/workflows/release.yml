@@ -66,11 +66,12 @@ jobs:
 
           release_tag = os.environ['RELEASE_TAG']
           changelog_lines = Path('CHANGELOG.md').read_text(encoding='utf-8').splitlines()
-          header = f'## {release_tag} - '
+          header = f'## {release_tag}'
 
           start = None
           for index, line in enumerate(changelog_lines):
-              if line.startswith(header):
+              stripped = line.rstrip()
+              if stripped == header or stripped.startswith(header + ' '):
                   start = index + 1
                   break
 

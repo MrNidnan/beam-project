@@ -2,12 +2,12 @@
 
 All notable changes in this fork are documented in this file.
 
-## v0.9.4
+## v0.9.4 - 2026-06-22
 
 ### Added
 
 - Played History (DJ Session History): automatically save the songs played during a
-  session. New `Settings > Played History` 
+  session. New `Settings > Played History`
   A Beam run produces one file set named by session start time. TXT and CSV files also record non-track
   events (player changed, playback paused/stopped/resumed, display opened,
   blackout on/off, quick messages). M3U8 is best-effort and only includes tracks with a
