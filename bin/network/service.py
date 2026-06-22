@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import threading
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from copy import deepcopy
 
 from bin.beamsettings import beamSettings
@@ -26,7 +27,9 @@ class BeamNetworkService(object):
         self._thread = None
         self._runner = None
         self._site = None
+        self._shutdown_future = None
         self._started = False
+        self._stopping = False
         self._available = web is not None
         self._sequence = 0
         self._latest_snapshot = empty_snapshot(beamSettings)
@@ -36,9 +39,11 @@ class BeamNetworkService(object):
         self._clients = set()
         self._runner = None
         self._site = None
+        self._shutdown_future = None
         self._thread = None
         self._loop = None
         self._started = False
+        self._stopping = False
 
     def start(self):
         if not beamSettings.getNetworkServiceEnabled():
@@ -53,6 +58,7 @@ class BeamNetworkService(object):
 
         try:
             self._started = True
+            self._stopping = False
             self._thread = threading.Thread(target=self._run_server, name='BeamNetworkService', daemon=True)
             self._thread.start()
         except Exception as e:
@@ -63,24 +69,42 @@ class BeamNetworkService(object):
         if not self._started:
             return
 
-        self._started = False
-
         loop = self._loop
+        thread = self._thread
+
+        if loop is None or thread is None:
+            self._reset_runtime_state()
+            return
+
+        self._stopping = True
+
         if loop is not None and loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(self._shutdown(), loop)
             try:
+                future = asyncio.run_coroutine_threadsafe(self._shutdown(), loop)
+                self._shutdown_future = future
                 future.result(timeout=5)
+            except FutureTimeoutError:
+                logging.error(
+                    'Beam network service graceful shutdown timed out; '
+                    'server may still hold the port.'
+                )
             except Exception as e:
                 logging.error(e, exc_info=True)
+            finally:
+                self._shutdown_future = None
 
-        thread = self._thread
-        if thread is not None:
+        if thread.is_alive():
             thread.join(timeout=5)
-            if thread.is_alive():
-                # Leave runtime state in place so a later start() does not spawn a
-                # second server thread that would fight for the same port.
-                logging.error('Beam network service thread did not stop within timeout.')
-                return
+
+        if thread.is_alive():
+            # Keep _started=True so start() does not spawn a second listener.
+            self._started = True
+            self._stopping = False
+            logging.error(
+                'Beam network service thread did not stop within timeout; '
+                'port may still be held. Relaunch Beam to recover.'
+            )
+            return
 
         # The server thread's own finally clause also resets runtime state once it
         # unwinds; doing it here guarantees a clean slate for an immediate restart.
@@ -141,7 +165,7 @@ class BeamNetworkService(object):
         app.router.add_get('/media/cover-art/current', self._handle_cover_art)
         app.router.add_static('/static/', self._get_static_directory())
 
-        self._runner = web.AppRunner(app)
+        self._runner = web.AppRunner(app, shutdown_timeout=1.0)
 
         try:
             self._loop.run_until_complete(self._runner.setup())
@@ -149,6 +173,11 @@ class BeamNetworkService(object):
                 self._runner,
                 beamSettings.getNetworkServiceHost(),
                 beamSettings.getNetworkServicePort(),
+                # Without SO_REUSEADDR a just-stopped listener lingers in
+                # TIME_WAIT and the same port cannot be rebound on an immediate
+                # restart (e.g. after changing the port or relaunching Beam),
+                # which is what leaves "old" ports apparently still held.
+                reuse_address=True,
             )
             self._loop.run_until_complete(self._site.start())
             logging.info(
@@ -163,7 +192,7 @@ class BeamNetworkService(object):
         finally:
             try:
                 if self._runner is not None:
-                    self._loop.run_until_complete(self._runner.cleanup())
+                    self._loop.run_until_complete(asyncio.wait_for(self._runner.cleanup(), timeout=3))
             except Exception as e:
                 logging.error(e, exc_info=True)
             try:
@@ -173,16 +202,56 @@ class BeamNetworkService(object):
 
     async def _shutdown(self):
         clients = list(self._clients)
-        for client in clients:
-            try:
-                await client.close()
-            except Exception as e:
-                logging.error(e, exc_info=True)
+        # WebSocketResponse.close() sends a close frame and then waits (up to
+        # ~10s by default) for the peer's acknowledgement. A browser tab that
+        # went to sleep or vanished never acks, so closing clients serially can
+        # outlast stop()'s 5s join window - the loop never reaches loop.stop(),
+        # the server thread stays alive, and its port is never released. Bound
+        # each close so teardown always completes promptly.
+        if clients:
+            await asyncio.gather(
+                *(self._close_client(client, code=1001, message=b'Beam network service shutting down') for client in clients),
+                return_exceptions=True,
+            )
         self._clients.clear()
 
-        # Stop run_forever() and let _run_server()'s finally clause own the runner
-        # cleanup and loop close, so the runner is never cleaned up twice.
-        self._loop.stop()
+        site = self._site
+        if site is not None:
+            try:
+                await site.stop()
+            except Exception as e:
+                logging.error(e, exc_info=True)
+            finally:
+                self._site = None
+
+        runner = self._runner
+        if runner is not None:
+            try:
+                await asyncio.wait_for(runner.cleanup(), timeout=3)
+            except Exception as e:
+                logging.error(e, exc_info=True)
+            finally:
+                self._runner = None
+
+        current_task = asyncio.current_task()
+        pending_tasks = [
+            task for task in asyncio.all_tasks(self._loop)
+            if task is not current_task and not task.done()
+        ]
+        for task in pending_tasks:
+            task.cancel()
+        if pending_tasks:
+            await asyncio.gather(*pending_tasks, return_exceptions=True)
+
+        # Stop run_forever() only after aiohttp teardown has completed.
+        if self._loop is not None and not self._loop.is_closed():
+            self._loop.call_soon(self._loop.stop)
+
+    async def _close_client(self, client, code=1001, message=b''):
+        try:
+            await asyncio.wait_for(client.close(code=code, message=message), timeout=2)
+        except Exception as e:
+            logging.error(e, exc_info=True)
 
     async def _broadcast(self, event_document):
         clients = list(self._clients)

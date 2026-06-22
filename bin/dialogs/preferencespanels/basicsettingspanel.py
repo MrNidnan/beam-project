@@ -56,6 +56,15 @@ class BasicSettingsPanel(wx.Panel):
         #############
         self.BeamSettings = BeamSettings
         self.networkBindDisplayHost = self.getNetworkHostDisplayValue()
+        # Guard against reentrant field-change handlers firing while we push
+        # values into the controls during reloadFromSettings(). Text fields use
+        # ChangeValue() (no event), but wx.SpinCtrl/wx.ComboBox have no such
+        # method - their SetValue() emits EVT_TEXT, which would write a stale
+        # GetValue() back into settings and mark the config dirty. A spurious
+        # dirty flag is then persisted into the wrong profile on the next
+        # switchProfile(), causing the network port (and other spin fields) to
+        # drift between machines/profiles.
+        self._suspendFieldEvents = False
 
         ##########
         # SIZERS #
@@ -495,6 +504,13 @@ class BasicSettingsPanel(wx.Panel):
         self.Layout()
 
     def reloadFromSettings(self):
+        self._suspendFieldEvents = True
+        try:
+            self._reloadFieldsFromSettings()
+        finally:
+            self._suspendFieldEvents = False
+
+    def _reloadFieldsFromSettings(self):
         self.ModuleSelectorDropdown.SetValue(self.BeamSettings.getSelectedModuleName())
         self.RefreshTime.SetValue(int(self.BeamSettings.getUpdtime()))
         self.TandaLength.SetValue(int(self.BeamSettings.getMaxTandaLength()))
@@ -641,6 +657,8 @@ class BasicSettingsPanel(wx.Panel):
         self.networkBindDisplayHost = host_value.strip() or self.getNetworkHostDisplayValue()
 
     def OnNetworkPortChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setNetworkServicePort(self.NetworkPortField.GetValue())
 
     def OnFoobarUrlChanged(self, event):
@@ -717,6 +735,8 @@ class BasicSettingsPanel(wx.Panel):
         wx.MessageBox('\n'.join(message_lines), 'Mixxx test', wx.OK | wx.ICON_INFORMATION)
 
     def OnIcecastPortChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setIcecastPort(self.IcecastPortField.GetValue())
 
     #
@@ -944,6 +964,8 @@ class BasicSettingsPanel(wx.Panel):
         self.BeamSettings.setVirtualDJHost(self.VirtualDJHostField.GetValue())
 
     def OnVirtualDJPortChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setVirtualDJPort(self.VirtualDJPortField.GetValue())
 
     def OnVirtualDJIntegrationModeChanged(self, event):
@@ -954,6 +976,8 @@ class BasicSettingsPanel(wx.Panel):
         self.BeamSettings.setVirtualDJHistoryPath(self.VirtualDJHistoryPathField.GetValue())
 
     def OnVirtualDJRecentTrackWindowChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setVirtualDJRecentTrackWindowSec(self.VirtualDJRecentWindowField.GetValue())
 
     def OnVirtualDJHistoryDeckChanged(self, event):
@@ -1016,6 +1040,8 @@ class BasicSettingsPanel(wx.Panel):
             refresh(reload_panels=True)
 
     def OnBackgroundBitmapCacheLimitChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setBackgroundBitmapCacheLimit(self.BackgroundBitmapCacheLimitField.GetValue())
         self._applyDisplayTweaks()
 
@@ -1032,10 +1058,14 @@ class BasicSettingsPanel(wx.Panel):
         self._applyDisplayTweaks()
 
     def OnCoverArtOutlineAlphaChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setCoverArtOutlineAlpha(self.CoverArtOutlineAlphaField.GetValue())
         self._applyDisplayTweaks()
 
     def OnCoverArtOutlineWidthChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setCoverArtOutlineWidth(self.CoverArtOutlineWidthField.GetValue())
         self._applyDisplayTweaks()
 
