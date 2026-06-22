@@ -163,6 +163,46 @@ and update live. See `bin/network/schema.py` (payload) and
 browser cover art letterboxes (preserves aspect) instead of cropping; the
 native soft "feather" edge is approximated by corner rounding in the browser.
 
+## Played History (Session History)
+
+Automatic per-session log of played tracks plus important non-track events.
+Backend-independent: it consumes the already normalized `SongObject` / display
+state, so it works for any player module.
+
+- `bin/playedhistory.py` — `PlayedHistoryLogger`. One instance per Beam run, held
+  by `NowPlayingData` (`self.playedHistory`). The session timestamp is fixed on
+  the first write and never changes for the process lifetime — **one run = one
+  file set**. Player/playback/blackout/display changes never start a new session.
+  A `threading.Lock` serialises writes because they arrive from two threads (see
+  below). Each entry is opened/appended/closed immediately so history survives an
+  abrupt close.
+- **Track path (worker thread):** `NowPlayingData.processData()` calls
+  `playedHistory.observe(song, mood, player, status, settings)` at the end (inside
+  the `processDataThread` worker). `observe()` detects player/playback
+  transitions, then logs the current track only while `status == 'Playing'`.
+- **Event path (main thread):** `bin/mainframe.py` calls
+  `playedHistory.log_event(text, beamSettings)` via the `_logHistoryEvent` helper
+  for display-opened, blackout on/off, and message shown/cleared/expired.
+  `clearTempMessage(reason=...)` distinguishes manual clear from timer expiry.
+
+**Dedup / no spam.** Tracks: a track is skipped if its identity
+(title/artist/file path) equals the last logged one, or reappeared within
+`DUPLICATE_WINDOW_SECONDS` (30s) — guards A→B→A flapping. Events: playback events
+fire only on a real state change (`_KNOWN_STATUSES`, last-status tracking); player
+events only when the selected player actually changes. Source lost/restored is
+intentionally **not** emitted — not reliably distinguishable from `Stopped`.
+
+**Outputs (UTF-8).** TXT is human-readable (`[Type] Artist - Singer > Title Year`)
+with events as `# HH:MM:SS text` comment lines. CSV columns are
+`timestamp,row_type,player,mood,genre,album_artist,artist,singer,title,year,album,file_path,event`;
+`row_type` is `track` or `event`.
+
+**M3U8 limitation.** The playlist stays a clean, playable list: `#EXTM3U` header +
+`#EXTINF` entries only — no comments/events. A track is written **only** if it has
+an absolute local file path (`os.path.isabs`). Sources without file paths (Now
+Playing / SMTC / MPRIS, Spotify, network/streaming) are skipped in the `.m3u8` but
+still logged to TXT/CSV. M3U8 is best-effort by design.
+
 ## Settings Storage
 
 All user settings live in JSON on disk and in a single in-memory dictionary at

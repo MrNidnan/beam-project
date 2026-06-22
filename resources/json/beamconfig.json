@@ -58,6 +58,13 @@
     "DefaultOpacity": 35,
     "Mappings": []
   },
+  "PlayedHistory": {
+    "Enabled": "True",
+    "Folder": "",
+    "FormatTxt": "True",
+    "FormatCsv": "True",
+    "FormatM3u8": "True"
+  },
   "DisplayTweaks": {
     "BackgroundBitmapCacheLimit": 8,
     "CoverArtCornerRadius": "auto",

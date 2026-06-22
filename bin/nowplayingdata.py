@@ -32,6 +32,7 @@ from copy import deepcopy
 from bin.backgroundassets import resolve_background_reference
 from bin.beamsettings import beamSettings
 from bin.mutagenutils import readCoverArtImage
+from bin.playedhistory import PlayedHistoryLogger
 from bin.songclass import SongObject, rule_matches
 
 ###############################################################
@@ -107,6 +108,8 @@ class NowPlayingData:
         self.DisplaySettings = {}
 
         self.convDict = dict()
+
+        self.playedHistory = PlayedHistoryLogger()
 
     def _get_song_field_value(self, currentSong, field_name):
         attribute_name = str(field_name or '').replace('%', '').strip()
@@ -701,6 +704,24 @@ class NowPlayingData:
 
         if platform.system() == 'Windows':
             pass
+
+        #######################################
+        # Played History (Session History)
+        #######################################
+        # Best-effort. observe() detects player/playback transitions and logs the
+        # current track only while playing. Wrapped so a history failure never
+        # breaks display updates.
+        try:
+            current_song = self.currentPlaylist[0] if self.currentPlaylist else None
+            self.playedHistory.observe(
+                current_song,
+                self.CurrentMoodName,
+                currentSettings.getSelectedModuleName(),
+                self.PlaybackStatus,
+                currentSettings,
+            )
+        except Exception as historyError:
+            logging.error("PlayedHistory logging failed: %s", historyError, exc_info=True)
 
 
 ########################################################

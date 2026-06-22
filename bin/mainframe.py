@@ -239,6 +239,15 @@ class MainFrame(wx.Frame):
             beamSettings.dumpConfig()
 
 
+    #
+    # Record a non-track Played History event (best effort, never raises).
+    #
+    def _logHistoryEvent(self, event_text):
+        try:
+            self.displayData.nowPlayingData.playedHistory.log_event(event_text, beamSettings)
+        except Exception as e:
+            logging.error("PlayedHistory event failed: %s", e, exc_info=True)
+
     def onDisplay(self, event):
         try:
             if self.displayFrame.IsShown():
@@ -250,6 +259,7 @@ class MainFrame(wx.Frame):
                 self.displayData.refreshProcessedStateImmediately()
                 self.displayFrame.Show()
                 self.refreshDisplay()
+                self._logHistoryEvent('Display opened')
                 # self.displayBtn.SetLabel("Hide")
             self.updateStatusBar()
         except Exception as e:
@@ -265,6 +275,7 @@ class MainFrame(wx.Frame):
             blackout_active = self.displayData.toggleBlackout()
             self.blackoutBtn.SetLabel("Resume" if blackout_active else "Blackout")
             self.refreshDisplay(reload_panels=False)
+            self._logHistoryEvent('Blackout ON' if blackout_active else 'Blackout OFF / Resume')
             self.updateStatusBar()
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -293,6 +304,7 @@ class MainFrame(wx.Frame):
 
             self.displayData.showTempMessage(message_text, duration_seconds)
             self.refreshDisplay(reload_panels=False)
+            self._logHistoryEvent('Message shown: ' + message_text.strip())
 
             # Lightweight one-shot timer to clear the message and refresh once it
             # expires; no busy loop. Draw() also guards on the expiry timestamp.
@@ -308,13 +320,18 @@ class MainFrame(wx.Frame):
     #
     # Clear the active temporary message and stop its timers.
     #
-    def clearTempMessage(self):
+    def clearTempMessage(self, reason='cleared'):
         try:
+            # Only log a clear/expire event if a message was actually active, so
+            # idle button presses or duplicate timer fires do not spam events.
+            was_active = self.displayData.isTempMessageActive()
             self.MessageTimer.Stop()
             self.StatusTimer.Stop()
             self.displayData.clearTempMessage()
             self.updateMessageButtonLabel()
             self.refreshDisplay(reload_panels=False)
+            if was_active:
+                self._logHistoryEvent('Message expired' if reason == 'expired' else 'Message cleared')
             self.updateStatusBar()
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -323,7 +340,7 @@ class MainFrame(wx.Frame):
     # Fired by MessageTimer when the temporary message duration elapses.
     #
     def onMessageExpired(self, event):
-        self.clearTempMessage()
+        self.clearTempMessage(reason='expired')
 
     #
     # Fired every second while a message is active to update the countdown.

@@ -14,6 +14,7 @@ It is made for milongas and tango events, but it can also be used anywhere you w
 - Support browser and tablet display over the local network
 - Work with several popular music players, including Foobar2000, VirtualDJ, JRiver, Mixxx, MediaMonkey, and more
 - Use and configure DMX lights (only supported in macOS and Linux)
+- Keep history track of what has been displayed, in a log file and if the player allows it creates a playlist file based on sessions history.
 
 ## Who Beam Is For
 
@@ -135,6 +136,51 @@ Player: Playing | Mood: Tango | Display: ON | Network: OFF
   seconds remaining, e.g. `Message: 12s`.
 - **Network** — `ON` when the browser/tablet display is enabled, otherwise `OFF`.
 
+## Played History (Session History)
+
+Beam can automatically keep a record of the songs you played during a session, so
+you have a setlist after each event. Turn it on in `Settings > Played History`.
+
+- **Auto-save played songs** — off by default. When on, Beam appends an entry
+  whenever the current track changes. The same track is not logged twice in a row
+  (a duplicate guard ignores polling repeats and quick re-reads within ~30s).
+- **Save folder** — where history files are written. Defaults to the Beam user
+  data folder (`~/.beam/history`). Use **Browse** to change it, or **Open history
+  folder** to reveal it in your file manager.
+- **Formats** — choose any combination of **Text log**, **CSV**, and **M3U8
+  playlist** (all on by default).
+
+One Beam run produces one set of history files, named by the session start time:
+
+```
+Beam History 2025-08-31 12-38.txt
+Beam History 2025-08-31 12-38.csv
+Beam History 2025-08-31 12-38.m3u8
+```
+
+Changing the player, pausing/stopping, blackout/resume, or showing a message does
+**not** start a new file — a single run stays in one coherent set. A new set is
+only created the next time you launch Beam.
+
+The text and CSV logs also record important non-track events (session start,
+player changed, playback paused/stopped/resumed, display opened, blackout on/off,
+and messages shown/cleared/expired), so the log reads as a timeline of the night.
+
+- **Text log** is human-readable, e.g. `[Tango] Tipica Victor - Pato 1926`, with
+  events as comment lines like `# 12:58:30 Blackout ON`.
+- **CSV** opens in any spreadsheet (UTF-8); a `row_type` column marks each row as
+  `track` or `event`.
+
+### M3U8 playlist limitation
+
+The `.m3u8` playlist is **best-effort**. It only contains tracks for which your
+player exposes a real local file path. Many sources — notably **Now Playing
+(SMTC / MPRIS)**, Spotify, and other streaming/network sources — do not report a
+file path, so those tracks are **skipped in the `.m3u8`** (they are still written
+to the text log and CSV). If your player does not export file paths, the playlist
+may be empty or partial; this is expected, not a bug. The text log and CSV always
+contain the full history.
+
 ## Browser and Tablet Display
 
 Beam can also publish the current display over your local network, so a phone, tablet, or another browser can show the same information.
@@ -206,6 +252,12 @@ These values are saved in the active profile JSON under `DisplayTweaks` and curr
 - `CoverArtOutlineEnabled`
 - `CoverArtOutlineAlpha`
 - `CoverArtOutlineWidth`
+
+Played History is stored in the active profile JSON under `PlayedHistory`:
+
+- `Enabled` (`"True"`/`"False"`) — auto-save on/off
+- `Folder` — save folder; empty means `~/.beam/history`
+- `FormatTxt`, `FormatCsv`, `FormatM3u8` (`"True"`/`"False"`) — which files to write
 
 `CoverArtCornerRadius` and `CoverArtFeatherAmount` accept either `auto` or a numeric pixel value.
 
