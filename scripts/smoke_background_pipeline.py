@@ -84,6 +84,24 @@ class FakeSettings:
     def getCoverArtOutlineWidth(self):
         return 1
 
+    # PlayedHistory interface expected by NowPlayingData.processData.
+    # Smoke tests here focus on background pipeline behavior, so keep history
+    # logging disabled to avoid unrelated file I/O and interface noise.
+    def getPlayedHistoryEnabled(self):
+        return False
+
+    def getPlayedHistoryFolder(self):
+        return ''
+
+    def getPlayedHistoryTxtEnabled(self):
+        return False
+
+    def getPlayedHistoryCsvEnabled(self):
+        return False
+
+    def getPlayedHistoryM3u8Enabled(self):
+        return False
+
 
 def build_test_roots(temp_root):
     beam_home = Path(temp_root) / 'beam-home'
