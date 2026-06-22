@@ -16,24 +16,13 @@ runs:
       if: inputs.platform == 'windows'
       shell: pwsh
       run: |
-        & "${{ inputs.python-command }}" .\scripts\smoke_imports.py
-        & "${{ inputs.python-command }}" .\scripts\smoke_virtualdj.py
-        & "${{ inputs.python-command }}" .\scripts\smoke_foobar.py
-        & "${{ inputs.python-command }}" .\scripts\smoke_mixxx.py
-        & "${{ inputs.python-command }}" .\scripts\smoke_icecast.py
-        & "${{ inputs.python-command }}" .\scripts\smoke_smtc.py
-        & "${{ inputs.python-command }}" .\scripts\smoke_background_pipeline.py
+        & "${{ inputs.python-command }}" .\scripts\run_smoke_tests.py --platform windows
 
     - name: Run Linux smoke suite
       if: inputs.platform == 'linux'
       shell: bash
       run: |
-        "${{ inputs.python-command }}" scripts/smoke_imports.py
-        "${{ inputs.python-command }}" scripts/smoke_mixxx.py
-        "${{ inputs.python-command }}" scripts/smoke_icecast.py
-        "${{ inputs.python-command }}" scripts/smoke_smtc.py
-        "${{ inputs.python-command }}" scripts/smoke_mpris.py
-        "${{ inputs.python-command }}" scripts/smoke_background_pipeline.py
+        "${{ inputs.python-command }}" scripts/run_smoke_tests.py --platform linux
 
     - name: Reject unsupported smoke suite platform
       if: inputs.platform != 'windows' && inputs.platform != 'linux'

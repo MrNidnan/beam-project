@@ -47,7 +47,7 @@ from bin.dialogs.preferencespanels.tagspreviewpanel import TagsPreviewPanel
 if platform.system() == 'Linux' or platform.system() == 'Darwin':
     from bin.dialogs.preferencespanels.dmxcontrolspanel import DMXcontrolsPanel
 
-from bin.dialogs.helpdialog import HelpDialog
+from bin.dialogs.logviewerdialog import LogViewerDialog
 from bin.dialogs.messagedialog import ShowMessageDialog
 from bin.dialogs import aboutdialog
 from bin.dialogs.displayframe import DisplayFrame
@@ -114,19 +114,19 @@ class MainFrame(wx.Frame):
         # self.menuPreferences = self.filemenu.Append(wx.ID_ANY, "&Preferences\tCtrl-+"," Configuration tool")
         # self.menuFullScreen  = self.filemenu.Append(wx.ID_ANY, "&Fullscreen\tF11", "Set fullscreen")
         self.menuAbout   = self.Aboutmenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
-        self.menuHelp    = self.Aboutmenu.Append(wx.ID_ANY, "&Help"," Getting started")
+        self.menuLogViewer = self.Aboutmenu.Append(wx.ID_ANY, "Open &Log Viewer"," View the Beam log in real time")
 
         # Creating the menubar.
         self.menuBar = wx.MenuBar()
         self.menuBar.Append(self.filemenu,"&File")    # Adding the "file menu" to the MenuBar
-        self.menuBar.Append(self.Aboutmenu,"&About")  # Adding the "About menu" to the MenuBar
+        self.menuBar.Append(self.Aboutmenu,"&Help")  # Adding the "About menu" to the MenuBar
         self.SetMenuBar(self.menuBar)  # Adding the MenuBar to the Frame content.
 
         # Events.
         # self.Bind(wx.EVT_MENU, self.OnPreferences, self.menuPreferences)
         self.Bind(wx.EVT_MENU, self.onClose, self.menuExit)
         self.Bind(wx.EVT_MENU, self.onAbout, self.menuAbout)
-        self.Bind(wx.EVT_MENU, self.onHelp, self.menuHelp)
+        self.Bind(wx.EVT_MENU, self.onOpenLogViewer, self.menuLogViewer)
         # self.Bind(wx.EVT_MENU, self.fullScreen, self.menuFullScreen)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         # self.Bind(wx.EVT_LEFT_DCLICK, self.fullScreen)
@@ -224,12 +224,19 @@ class MainFrame(wx.Frame):
             logging.error(e, exc_info=True)
 
     #
-    # Show 'Help'
+    # Show the live log viewer (modeless). Reuse a single instance so repeated
+    # clicks raise the existing window instead of stacking copies.
     #
-    def onHelp(self, event):
+    def onOpenLogViewer(self, event):
         try:
-            help_dialog = HelpDialog(self)
-            help_dialog.Show()
+            # A destroyed wx window is falsy, so this reuses a still-open viewer
+            # and otherwise opens a fresh one.
+            existing = getattr(self, '_logViewer', None)
+            if existing:
+                existing.Raise()
+                return
+            self._logViewer = LogViewerDialog(self, beamSettings.getLogFilePath())
+            self._logViewer.Show()
         except Exception as e:
             logging.error(e, exc_info=True)
 
@@ -238,6 +245,15 @@ class MainFrame(wx.Frame):
         if force or beamSettings.isDirty():
             beamSettings.dumpConfig()
 
+
+    #
+    # Record a non-track Played History event (best effort, never raises).
+    #
+    def _logHistoryEvent(self, event_text):
+        try:
+            self.displayData.nowPlayingData.playedHistory.log_event(event_text, beamSettings)
+        except Exception as e:
+            logging.error("PlayedHistory event failed: %s", e, exc_info=True)
 
     def onDisplay(self, event):
         try:
@@ -250,6 +266,7 @@ class MainFrame(wx.Frame):
                 self.displayData.refreshProcessedStateImmediately()
                 self.displayFrame.Show()
                 self.refreshDisplay()
+                self._logHistoryEvent('Display opened')
                 # self.displayBtn.SetLabel("Hide")
             self.updateStatusBar()
         except Exception as e:
@@ -265,6 +282,7 @@ class MainFrame(wx.Frame):
             blackout_active = self.displayData.toggleBlackout()
             self.blackoutBtn.SetLabel("Resume" if blackout_active else "Blackout")
             self.refreshDisplay(reload_panels=False)
+            self._logHistoryEvent('Blackout ON' if blackout_active else 'Blackout OFF / Resume')
             self.updateStatusBar()
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -293,6 +311,7 @@ class MainFrame(wx.Frame):
 
             self.displayData.showTempMessage(message_text, duration_seconds)
             self.refreshDisplay(reload_panels=False)
+            self._logHistoryEvent('Message shown: ' + message_text.strip())
 
             # Lightweight one-shot timer to clear the message and refresh once it
             # expires; no busy loop. Draw() also guards on the expiry timestamp.
@@ -308,13 +327,18 @@ class MainFrame(wx.Frame):
     #
     # Clear the active temporary message and stop its timers.
     #
-    def clearTempMessage(self):
+    def clearTempMessage(self, reason='cleared'):
         try:
+            # Only log a clear/expire event if a message was actually active, so
+            # idle button presses or duplicate timer fires do not spam events.
+            was_active = self.displayData.isTempMessageActive()
             self.MessageTimer.Stop()
             self.StatusTimer.Stop()
             self.displayData.clearTempMessage()
             self.updateMessageButtonLabel()
             self.refreshDisplay(reload_panels=False)
+            if was_active:
+                self._logHistoryEvent('Message expired' if reason == 'expired' else 'Message cleared')
             self.updateStatusBar()
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -323,7 +347,7 @@ class MainFrame(wx.Frame):
     # Fired by MessageTimer when the temporary message duration elapses.
     #
     def onMessageExpired(self, event):
-        self.clearTempMessage()
+        self.clearTempMessage(reason='expired')
 
     #
     # Fired every second while a message is active to update the countdown.
@@ -417,8 +441,6 @@ class MainFrame(wx.Frame):
     # UPDATE INFO FROM PREFERENCES WINDOW
     def updateSettings(self, reload_preferences=True):
         try:
-            self.networkService.stop()
-            self.networkService.start()
             # self.showStatusBar()
             self.displayData.refreshProcessedStateImmediately()
             self.refreshDisplay(reload_panels=False)
@@ -457,12 +479,22 @@ class MainFrame(wx.Frame):
     # Stop first, then (re)start if enabled, so this also handles host/port
     # changes by rebinding. Safe to call repeatedly; start()/stop() are guarded.
     #
-    def applyNetworkServiceState(self):
+    def applyNetworkServiceState(self, reason=None):
         try:
+            if reason:
+                logging.info('Applying network display changes (%s).', reason)
             self.networkService.stop()
             if beamSettings.getNetworkServiceEnabled():
                 self.networkService.start()
                 self.networkService.publish_display_state(self.displayData)
+                if reason:
+                    logging.info(
+                        'Network display active on http://%s:%s',
+                        beamSettings.getNetworkServiceHost(),
+                        beamSettings.getNetworkServicePort(),
+                    )
+            elif reason:
+                logging.info('Network display disabled after apply.')
             self.updateStatusBar()
         except Exception as e:
             logging.error(e, exc_info=True)

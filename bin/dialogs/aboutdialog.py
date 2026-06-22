@@ -68,6 +68,23 @@ def _build_html(s):
 
 <p>{description}</p>
 
+<h3>Getting started</h3>
+<p>Beam takes the ID3 tags from your music files &ndash; Artist, Title,
+Album, and so on &ndash; and displays information about the previous,
+current or next song. Tag values can optionally be modified or corrected
+before they are shown.</p>
+<p>With custom rules, Beam can filter and detect relevant information about
+the current playlist or song and display it however you need. See the
+documentation links below to set up players and rules.</p>
+<p>Custom read tags can be placed in any layout field using a
+<code>%TagName</code> placeholder &ndash; e.g. <code>%Artist</code>,
+<code>%Title</code>, <code>%NextTitle</code> &ndash; and Beam substitutes
+the live value at display time.</p>
+<ul>
+  <li><a href="{customize}">User Manual &ndash; Customize the Display</a></li>
+  <li><a href="{displaytags}">Display Tags reference</a></li>
+</ul>
+
 <h3>Links</h3>
 <ul>
   <li><a href="{github}">Documentation &amp; setup (GitHub)</a></li>
@@ -89,6 +106,8 @@ def _build_html(s):
 </body>
 </html>""".format(
         version=s("version"),
+        customize="https://github.com/MrNidnan/beam-project/blob/master/wiki/User%20Manual%20-%20Customize%20the%20Display.md",
+        displaytags="https://github.com/MrNidnan/beam-project/blob/master/wiki/Display%20Tags.md",
         copyright=s("aboutcopyright"),
         description=s("aboutdialogdescription"),
         github=s("aboutgithub"),

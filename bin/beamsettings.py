@@ -239,6 +239,54 @@ class BeamSettings:
         self._markDirty()
         return True
 
+    def getPlayedHistory(self):
+        played_history = getattr(self, '_beamConfigData', {}).get('PlayedHistory')
+        if not isinstance(played_history, dict):
+            played_history = {}
+            self._beamConfigData['PlayedHistory'] = played_history
+        return played_history
+
+    def getPlayedHistoryEnabled(self):
+        return str(self.getPlayedHistory().get('Enabled', 'False')).lower() == 'true'
+
+    def setPlayedHistoryEnabled(self, enabled):
+        self.getPlayedHistory()['Enabled'] = 'True' if enabled else 'False'
+        self._markDirty()
+
+    #
+    # Empty folder falls back to the Beam user data folder / history.
+    #
+    def getPlayedHistoryFolder(self):
+        folder = str(self.getPlayedHistory().get('Folder', '')).strip()
+        if folder == '':
+            folder = os.path.join(getBeamConfigPath(), 'history')
+        return folder
+
+    def setPlayedHistoryFolder(self, folder):
+        self.getPlayedHistory()['Folder'] = str(folder).strip()
+        self._markDirty()
+
+    def getPlayedHistoryTxtEnabled(self):
+        return str(self.getPlayedHistory().get('FormatTxt', 'True')).lower() == 'true'
+
+    def setPlayedHistoryTxtEnabled(self, enabled):
+        self.getPlayedHistory()['FormatTxt'] = 'True' if enabled else 'False'
+        self._markDirty()
+
+    def getPlayedHistoryCsvEnabled(self):
+        return str(self.getPlayedHistory().get('FormatCsv', 'True')).lower() == 'true'
+
+    def setPlayedHistoryCsvEnabled(self, enabled):
+        self.getPlayedHistory()['FormatCsv'] = 'True' if enabled else 'False'
+        self._markDirty()
+
+    def getPlayedHistoryM3u8Enabled(self):
+        return str(self.getPlayedHistory().get('FormatM3u8', 'True')).lower() == 'true'
+
+    def setPlayedHistoryM3u8Enabled(self, enabled):
+        self.getPlayedHistory()['FormatM3u8'] = 'True' if enabled else 'False'
+        self._markDirty()
+
     def getRules(self):
         return self._beamConfigData['Rules']
 
@@ -274,6 +322,12 @@ class BeamSettings:
 
     def getLogPath(self):
         return self._beamConfigData['LogPath']
+
+    def getLogFilePath(self):
+        # Single source of truth for the active log file location, shared by the
+        # file logging setup (beam.py) and the in-app log viewer so they never
+        # drift apart.
+        return os.path.join(self.getLogPath(), self.getString("logfilename"))
     def setLogPath(self, logPath):
         self._beamConfigData['LogPath'] = logPath
         self._markDirty()

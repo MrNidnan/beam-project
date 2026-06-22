@@ -126,6 +126,7 @@ class ProfilesPanel(wx.Panel):
 
     def refreshAfterProfileChange(self):
         self.mainFrame.updateSettings()
+        self.mainFrame.applyNetworkServiceState(reason='profile switch')
 
     def confirmPendingChanges(self, actionLabel, willReplaceCurrentState):
         if not self.BeamSettings.isDirty():

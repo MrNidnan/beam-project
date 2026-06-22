@@ -1,0 +1,6 @@
+title: Beam
+description: A clean live song display for milongas — on a projector, TV, or any browser
+theme: jekyll-theme-cayman
+permalink: pretty
+plugins:
+  - jekyll-seo-tag

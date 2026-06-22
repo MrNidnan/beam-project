@@ -25,8 +25,11 @@
 #
 # This Python file uses the following encoding: utf-8
 
+import os
 import socket
 import platform
+import subprocess
+import sys
 
 import wx
 from bin.beamutils import logLevelList, normalizeMacControlHeight, setLogLevel
@@ -53,6 +56,15 @@ class BasicSettingsPanel(wx.Panel):
         #############
         self.BeamSettings = BeamSettings
         self.networkBindDisplayHost = self.getNetworkHostDisplayValue()
+        # Guard against reentrant field-change handlers firing while we push
+        # values into the controls during reloadFromSettings(). Text fields use
+        # ChangeValue() (no event), but wx.SpinCtrl/wx.ComboBox have no such
+        # method - their SetValue() emits EVT_TEXT, which would write a stale
+        # GetValue() back into settings and mark the config dirty. A spurious
+        # dirty flag is then persisted into the wrong profile on the next
+        # switchProfile(), causing the network port (and other spin fields) to
+        # drift between machines/profiles.
+        self._suspendFieldEvents = False
 
         ##########
         # SIZERS #
@@ -312,6 +324,66 @@ class BasicSettingsPanel(wx.Panel):
         )
         left_column_vbox.Add(self.loggingSection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
+        #
+        # Played History (Session History): automatically save the songs played
+        # during a session. Built manually so the enable toggle, folder picker,
+        # format toggles and "Open history folder" read top-to-bottom.
+        #
+        self.playedHistorySection = wx.Panel(self.leftColumnPanel, wx.ID_ANY)
+        played_history_box = wx.StaticBoxSizer(wx.VERTICAL, self.playedHistorySection, "")
+        played_history_header = wx.StaticText(self.playedHistorySection, wx.ID_ANY, "Played History")
+        played_history_header.SetFont(wx.Font(13, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+        played_history_box.Add(played_history_header, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+        played_history_description = wx.StaticText(
+            self.playedHistorySection,
+            wx.ID_ANY,
+            "Automatically save a history of the songs played during a session.",
+        )
+        played_history_description.Wrap(330)
+        played_history_box.Add(played_history_description, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=6)
+        self.PlayedHistoryEnabledCheckBox = self._add_full_width_checkbox(
+            self.playedHistorySection,
+            played_history_box,
+            'Auto-save played songs',
+            self.BeamSettings.getPlayedHistoryEnabled(),
+            self.OnPlayedHistoryEnabled,
+        )
+        played_history_grid = self._create_form_grid()
+        played_history_box.Add(played_history_grid, flag=wx.EXPAND | wx.ALL, border=8)
+        self._add_section_row(
+            self.playedHistorySection,
+            played_history_grid,
+            "Save folder",
+            lambda parent: self._build_played_history_folder_field(parent),
+            helper_text="Where history files are written. Defaults to the Beam user data folder / history.",
+        )
+        self.PlayedHistoryTxtCheckBox = self._add_full_width_checkbox(
+            self.playedHistorySection,
+            played_history_box,
+            'Text log (.txt)',
+            self.BeamSettings.getPlayedHistoryTxtEnabled(),
+            self.OnPlayedHistoryTxt,
+        )
+        self.PlayedHistoryCsvCheckBox = self._add_full_width_checkbox(
+            self.playedHistorySection,
+            played_history_box,
+            'CSV (.csv)',
+            self.BeamSettings.getPlayedHistoryCsvEnabled(),
+            self.OnPlayedHistoryCsv,
+        )
+        self.PlayedHistoryM3u8CheckBox = self._add_full_width_checkbox(
+            self.playedHistorySection,
+            played_history_box,
+            'M3U8 playlist (when file paths are available)',
+            self.BeamSettings.getPlayedHistoryM3u8Enabled(),
+            self.OnPlayedHistoryM3u8,
+        )
+        self.PlayedHistoryOpenButton = wx.Button(self.playedHistorySection, wx.ID_ANY, label='Open history folder')
+        self.PlayedHistoryOpenButton.Bind(wx.EVT_BUTTON, self.OnPlayedHistoryOpenFolder)
+        played_history_box.Add(self.PlayedHistoryOpenButton, flag=wx.ALL, border=8)
+        self.playedHistorySection.SetSizer(played_history_box)
+        left_column_vbox.Add(self.playedHistorySection, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+
         self.NetworkDisplayPane = wx.CollapsiblePane(self.leftColumnPanel, wx.ID_ANY, "Network display")
         self.NetworkDisplayPane.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnNetworkDisplayPaneChanged)
         self.NetworkDisplayPane.Collapse(True)
@@ -348,6 +420,11 @@ class BasicSettingsPanel(wx.Panel):
             lambda parent: self._build_spin_field(parent, self.BeamSettings.getNetworkServicePort(), self.OnNetworkPortChanged, minimum=1, maximum=65535),
             helper_text='Default: 8765.',
         )
+        self.NetworkApplyChangesButton = wx.Button(network_pane, wx.ID_ANY, label='Apply')
+        self.NetworkApplyChangesButton.SetToolTip('Apply current network display host/port/enable settings.')
+        self.NetworkApplyChangesButton.Bind(wx.EVT_BUTTON, self.OnApplyNetworkChanges)
+        network_grid.Add(self.NetworkApplyChangesButton, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        network_grid.Add((1, 1), flag=wx.EXPAND)
         left_column_vbox.Add(self.NetworkDisplayPane, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
         self.ExpertDisplayTweaksPane = wx.CollapsiblePane(self.leftColumnPanel, wx.ID_ANY, "Advanced display options")
@@ -432,10 +509,22 @@ class BasicSettingsPanel(wx.Panel):
         self.Layout()
 
     def reloadFromSettings(self):
+        self._suspendFieldEvents = True
+        try:
+            self._reloadFieldsFromSettings()
+        finally:
+            self._suspendFieldEvents = False
+
+    def _reloadFieldsFromSettings(self):
         self.ModuleSelectorDropdown.SetValue(self.BeamSettings.getSelectedModuleName())
         self.RefreshTime.SetValue(int(self.BeamSettings.getUpdtime()))
         self.TandaLength.SetValue(int(self.BeamSettings.getMaxTandaLength()))
         self.LogLevelSelectorDropdown.SetValue(self.BeamSettings.getLogLevel())
+        self.PlayedHistoryEnabledCheckBox.SetValue(self.BeamSettings.getPlayedHistoryEnabled())
+        self.PlayedHistoryFolderField.ChangeValue(self.BeamSettings.getPlayedHistoryFolder())
+        self.PlayedHistoryTxtCheckBox.SetValue(self.BeamSettings.getPlayedHistoryTxtEnabled())
+        self.PlayedHistoryCsvCheckBox.SetValue(self.BeamSettings.getPlayedHistoryCsvEnabled())
+        self.PlayedHistoryM3u8CheckBox.SetValue(self.BeamSettings.getPlayedHistoryM3u8Enabled())
         self.NetworkEnabledCheckBox.SetValue(self.BeamSettings.getNetworkServiceEnabled())
         self.networkBindDisplayHost = self.getNetworkHostDisplayValue()
         self.NetworkHostField.ChangeValue(self.networkBindDisplayHost)
@@ -502,20 +591,73 @@ class BasicSettingsPanel(wx.Panel):
         self.BeamSettings.setLogLevel(self.LogLevelSelectorDropdown.GetValue())
         setLogLevel(self.BeamSettings.getLogLevel())
 
+    def OnPlayedHistoryEnabled(self, event):
+        self.BeamSettings.setPlayedHistoryEnabled(self.PlayedHistoryEnabledCheckBox.GetValue())
+
+    def OnPlayedHistoryTxt(self, event):
+        self.BeamSettings.setPlayedHistoryTxtEnabled(self.PlayedHistoryTxtCheckBox.GetValue())
+
+    def OnPlayedHistoryCsv(self, event):
+        self.BeamSettings.setPlayedHistoryCsvEnabled(self.PlayedHistoryCsvCheckBox.GetValue())
+
+    def OnPlayedHistoryM3u8(self, event):
+        self.BeamSettings.setPlayedHistoryM3u8Enabled(self.PlayedHistoryM3u8CheckBox.GetValue())
+
+    def OnPlayedHistoryFolderChanged(self, event):
+        self.BeamSettings.setPlayedHistoryFolder(self.PlayedHistoryFolderField.GetValue())
+
+    def OnPlayedHistoryBrowse(self, event):
+        dialog = wx.DirDialog(
+            self,
+            "Choose history folder",
+            defaultPath=self.BeamSettings.getPlayedHistoryFolder(),
+            style=wx.DD_DEFAULT_STYLE,
+        )
+        try:
+            if dialog.ShowModal() == wx.ID_OK:
+                selected_path = dialog.GetPath()
+                self.BeamSettings.setPlayedHistoryFolder(selected_path)
+                self.PlayedHistoryFolderField.ChangeValue(selected_path)
+        finally:
+            dialog.Destroy()
+
+    #
+    # Open the history folder in the OS file manager. Create it first so the
+    # button works even before the first session file is written.
+    #
+    def OnPlayedHistoryOpenFolder(self, event):
+        folder = self.BeamSettings.getPlayedHistoryFolder()
+        try:
+            os.makedirs(folder, exist_ok=True)
+        except OSError:
+            pass
+        try:
+            if platform.system() == 'Windows':
+                os.startfile(folder)
+            elif platform.system() == 'Darwin':
+                subprocess.Popen(['open', folder])
+            else:
+                subprocess.Popen(['xdg-open', folder])
+        except Exception:
+            wx.MessageBox("Could not open the history folder:\n" + folder, "Played History", wx.OK | wx.ICON_INFORMATION)
+
     def OnNetworkEnabled(self, event):
         self.BeamSettings.setNetworkServiceEnabled(self.NetworkEnabledCheckBox.GetValue())
-        self._applyNetworkServiceState()
+        self._applyNetworkServiceState(reason='enable toggle')
+
+    def OnApplyNetworkChanges(self, event):
+        self._applyNetworkServiceState(reason='manual apply button')
 
     #
     # Start/stop the network service to match the current setting. The panel has
     # no direct reference to the service, so reach the MainFrame (top-level
     # window) and let it own the start/stop lifecycle.
     #
-    def _applyNetworkServiceState(self):
+    def _applyNetworkServiceState(self, reason=None):
         main_frame = self.GetTopLevelParent()
         apply_state = getattr(main_frame, 'applyNetworkServiceState', None)
         if callable(apply_state):
-            apply_state()
+            apply_state(reason=reason)
 
     def OnNetworkHostChanged(self, event):
         host_value = self.NetworkHostField.GetValue()
@@ -523,6 +665,8 @@ class BasicSettingsPanel(wx.Panel):
         self.networkBindDisplayHost = host_value.strip() or self.getNetworkHostDisplayValue()
 
     def OnNetworkPortChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setNetworkServicePort(self.NetworkPortField.GetValue())
 
     def OnFoobarUrlChanged(self, event):
@@ -599,6 +743,8 @@ class BasicSettingsPanel(wx.Panel):
         wx.MessageBox('\n'.join(message_lines), 'Mixxx test', wx.OK | wx.ICON_INFORMATION)
 
     def OnIcecastPortChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setIcecastPort(self.IcecastPortField.GetValue())
 
     #
@@ -826,6 +972,8 @@ class BasicSettingsPanel(wx.Panel):
         self.BeamSettings.setVirtualDJHost(self.VirtualDJHostField.GetValue())
 
     def OnVirtualDJPortChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setVirtualDJPort(self.VirtualDJPortField.GetValue())
 
     def OnVirtualDJIntegrationModeChanged(self, event):
@@ -836,6 +984,8 @@ class BasicSettingsPanel(wx.Panel):
         self.BeamSettings.setVirtualDJHistoryPath(self.VirtualDJHistoryPathField.GetValue())
 
     def OnVirtualDJRecentTrackWindowChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setVirtualDJRecentTrackWindowSec(self.VirtualDJRecentWindowField.GetValue())
 
     def OnVirtualDJHistoryDeckChanged(self, event):
@@ -898,6 +1048,8 @@ class BasicSettingsPanel(wx.Panel):
             refresh(reload_panels=True)
 
     def OnBackgroundBitmapCacheLimitChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setBackgroundBitmapCacheLimit(self.BackgroundBitmapCacheLimitField.GetValue())
         self._applyDisplayTweaks()
 
@@ -914,10 +1066,14 @@ class BasicSettingsPanel(wx.Panel):
         self._applyDisplayTweaks()
 
     def OnCoverArtOutlineAlphaChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setCoverArtOutlineAlpha(self.CoverArtOutlineAlphaField.GetValue())
         self._applyDisplayTweaks()
 
     def OnCoverArtOutlineWidthChanged(self, event):
+        if self._suspendFieldEvents:
+            return
         self.BeamSettings.setCoverArtOutlineWidth(self.CoverArtOutlineWidthField.GetValue())
         self._applyDisplayTweaks()
 
@@ -1111,6 +1267,18 @@ class BasicSettingsPanel(wx.Panel):
         control = wx.Button(parent, wx.ID_ANY, label=label)
         control.Bind(wx.EVT_BUTTON, handler)
         return control
+
+    def _build_played_history_folder_field(self, parent):
+        panel = wx.Panel(parent, wx.ID_ANY)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel.SetSizer(sizer)
+        self.PlayedHistoryFolderField = wx.TextCtrl(panel, wx.ID_ANY, value=self.BeamSettings.getPlayedHistoryFolder(), size=(170, -1))
+        self.PlayedHistoryFolderField.Bind(wx.EVT_TEXT, self.OnPlayedHistoryFolderChanged)
+        browse_button = wx.Button(panel, wx.ID_ANY, label='Browse')
+        browse_button.Bind(wx.EVT_BUTTON, self.OnPlayedHistoryBrowse)
+        sizer.Add(normalizeMacControlHeight(self.PlayedHistoryFolderField, default_width=170), 1, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 6)
+        sizer.Add(browse_button, 0, wx.ALIGN_CENTER_VERTICAL)
+        return panel
 
     def _build_auto_numeric_field(self, parent, value, handler):
         control = wx.ComboBox(
