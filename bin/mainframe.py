@@ -434,8 +434,6 @@ class MainFrame(wx.Frame):
     # UPDATE INFO FROM PREFERENCES WINDOW
     def updateSettings(self, reload_preferences=True):
         try:
-            self.networkService.stop()
-            self.networkService.start()
             # self.showStatusBar()
             self.displayData.refreshProcessedStateImmediately()
             self.refreshDisplay(reload_panels=False)
@@ -474,12 +472,22 @@ class MainFrame(wx.Frame):
     # Stop first, then (re)start if enabled, so this also handles host/port
     # changes by rebinding. Safe to call repeatedly; start()/stop() are guarded.
     #
-    def applyNetworkServiceState(self):
+    def applyNetworkServiceState(self, reason=None):
         try:
+            if reason:
+                logging.info('Applying network display changes (%s).', reason)
             self.networkService.stop()
             if beamSettings.getNetworkServiceEnabled():
                 self.networkService.start()
                 self.networkService.publish_display_state(self.displayData)
+                if reason:
+                    logging.info(
+                        'Network display active on http://%s:%s',
+                        beamSettings.getNetworkServiceHost(),
+                        beamSettings.getNetworkServicePort(),
+                    )
+            elif reason:
+                logging.info('Network display disabled after apply.')
             self.updateStatusBar()
         except Exception as e:
             logging.error(e, exc_info=True)

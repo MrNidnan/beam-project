@@ -420,6 +420,11 @@ class BasicSettingsPanel(wx.Panel):
             lambda parent: self._build_spin_field(parent, self.BeamSettings.getNetworkServicePort(), self.OnNetworkPortChanged, minimum=1, maximum=65535),
             helper_text='Default: 8765.',
         )
+        self.NetworkApplyChangesButton = wx.Button(network_pane, wx.ID_ANY, label='Apply')
+        self.NetworkApplyChangesButton.SetToolTip('Apply current network display host/port/enable settings.')
+        self.NetworkApplyChangesButton.Bind(wx.EVT_BUTTON, self.OnApplyNetworkChanges)
+        network_grid.Add(self.NetworkApplyChangesButton, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        network_grid.Add((1, 1), flag=wx.EXPAND)
         left_column_vbox.Add(self.NetworkDisplayPane, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
         self.ExpertDisplayTweaksPane = wx.CollapsiblePane(self.leftColumnPanel, wx.ID_ANY, "Advanced display options")
@@ -638,18 +643,21 @@ class BasicSettingsPanel(wx.Panel):
 
     def OnNetworkEnabled(self, event):
         self.BeamSettings.setNetworkServiceEnabled(self.NetworkEnabledCheckBox.GetValue())
-        self._applyNetworkServiceState()
+        self._applyNetworkServiceState(reason='enable toggle')
+
+    def OnApplyNetworkChanges(self, event):
+        self._applyNetworkServiceState(reason='manual apply button')
 
     #
     # Start/stop the network service to match the current setting. The panel has
     # no direct reference to the service, so reach the MainFrame (top-level
     # window) and let it own the start/stop lifecycle.
     #
-    def _applyNetworkServiceState(self):
+    def _applyNetworkServiceState(self, reason=None):
         main_frame = self.GetTopLevelParent()
         apply_state = getattr(main_frame, 'applyNetworkServiceState', None)
         if callable(apply_state):
-            apply_state()
+            apply_state(reason=reason)
 
     def OnNetworkHostChanged(self, event):
         host_value = self.NetworkHostField.GetValue()
