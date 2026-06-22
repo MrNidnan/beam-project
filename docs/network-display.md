@@ -3,7 +3,7 @@
 Beam can publish the live display over your local network, so a phone, tablet,
 laptop, or any browser can show the same song information as your projector.
 
-![Beam browser display on a tablet](images/user-manual/beam_web_tablet.jpeg)
+![Beam browser display on a tablet](../images/user-manual/beam_web_tablet.jpeg)
 
 ## What it does
 
@@ -25,7 +25,7 @@ devices can connect at the same time, with low latency.
 3. Enable the network display service.
 4. Beam shows the local address you can open in a browser.
 
-![Network display settings with host, port, and the local URL](images/user-manual/beam_network_settings.png)
+![Network display settings with host, port, and the local URL](../images/user-manual/beam_network_settings.png)
 
 The status bar shows **Network: ON** when the service is running, and
 **Network: OFF** when it is not.

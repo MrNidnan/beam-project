@@ -12,7 +12,7 @@ Check:
 - you clicked `Apply` after changing settings
 - the player-specific setup is complete (see [Player Support](../player-support))
 
-![Beam open with no active song in the preview](images/user-manual/beam_empty_preview.png)
+![Beam open with no active song in the preview](../images/user-manual/beam_empty_preview.png)
 
 ## Wrong song, or the display does not update
 

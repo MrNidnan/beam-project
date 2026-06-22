@@ -5,7 +5,7 @@ module for that player — it does not mean every version has been heavily teste
 If you hit a problem, please report it:
 <https://github.com/MrNidnan/beam-project/issues>
 
-![Player selection dropdown in Beam settings](images/user-manual/beam_1_media_selector.png)
+![Player selection dropdown in Beam settings](../images/user-manual/beam_1_media_selector.png)
 
 ## Which one should I choose?
 
@@ -55,7 +55,7 @@ Beam also offers a deck selector and cover art from history parsing.
 
 Full details: [VIRTUALDJ_MODULE.md](../VIRTUALDJ_MODULE)
 
-![VirtualDJ settings in Beam](images/user-manual/beam_virtualdj.png)
+![VirtualDJ settings in Beam](../images/user-manual/beam_virtualdj.png)
 
 ## JRiver (Windows, macOS)
 
@@ -69,7 +69,7 @@ control option; turning it on lets Beam read JRiver more reliably.
 - Enable MCWS in `Tools > Options > Media Network` and make sure reading access is
   set to "Everyone".
 
-![JRiver selected in Beam settings](images/user-manual/beam_jriver.png)
+![JRiver selected in Beam settings](../images/user-manual/beam_jriver.png)
 
 ## Mixxx (Windows, macOS, Linux)
 
@@ -117,7 +117,7 @@ Use **Detect** to list apps publishing a session right now, pick a **Source app*
 or leave it on **Active session** to follow whatever is playing. **Run test** shows
 the resolved app, status, and current track.
 
-![Now Playing settings](images/user-manual/beam_now_playing.png)
+![Now Playing settings](../images/user-manual/beam_now_playing.png)
 
 ### Limitations
 

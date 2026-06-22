@@ -24,7 +24,7 @@ Keep separate, named setups for different venues, DJs, projectors, or event
 styles — for example one profile for a formal milonga and one for practica nights.
 Create, switch, rename, and delete profiles in Preferences.
 
-![Profiles screen](images/user-manual/beam_profiles.png)
+![Profiles screen](../images/user-manual/beam_profiles.png)
 
 ## Layout customization
 
@@ -33,7 +33,7 @@ shown, font size and position, fonts and colors, and alignment. Layout positions
 use percentages, so they scale to any screen. Long titles wrap instead of being
 cut off.
 
-![Edit layout item](images/user-manual/beam_edit_layout_item.png)
+![Edit layout item](../images/user-manual/beam_edit_layout_item.png)
 
 ## Backgrounds
 
@@ -54,7 +54,7 @@ dims the current background so text stays legible. See
 Beam can show an extra background layer based on the current artist or orchestra,
 blended over (or replacing) the mood background. Useful for a per-orchestra look.
 
-![Artist background mapping](images/user-manual/beam_background_orchestra.png)
+![Artist background mapping](../images/user-manual/beam_background_orchestra.png)
 
 ## Cover art
 
@@ -68,7 +68,7 @@ Publish the same live display to phones, tablets, side monitors, or any browser 
 your local network — with low latency and multiple devices at once. See
 [Network Display](../network-display).
 
-![Beam browser display on a tablet](images/user-manual/beam_3_web.png)
+![Beam browser display on a tablet](../images/user-manual/beam_3_web.png)
 
 ## Live display controls
 
@@ -109,7 +109,7 @@ including comma-separated lists. Example:
 
 Beam reads that as: previous genre is Milonga **or** Tango **or** Vals.
 
-![Rules panel](images/user-manual/beam_rules.png)
+![Rules panel](../images/user-manual/beam_rules.png)
 
 ## Played history (session history)
 

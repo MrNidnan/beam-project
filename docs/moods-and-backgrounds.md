@@ -3,7 +3,7 @@
 Moods and backgrounds are how you make Beam fit the style of your event. Any change
 you make is shown on the display right away.
 
-![Customized Beam display with background and readable text](images/user-manual/beam_5_preview.png)
+![Customized Beam display with background and readable text](../images/user-manual/beam_5_preview.png)
 
 ## What moods are
 
@@ -16,7 +16,7 @@ based on the current song or playback state. Each mood can define:
 - its own DMX color settings (macOS/Linux)
 - an optional **Mood Timing** (timer)
 
-![Mood editor](images/user-manual/beam_mood_editor.png)
+![Mood editor](../images/user-manual/beam_mood_editor.png)
 
 ## Timed moods (Mood Timing)
 
@@ -39,7 +39,7 @@ returns to your normal display automatically.
 4. Give it a **Mood Timing** of, say, 20 seconds.
 5. Enable it when you want the message; it clears itself when the timer ends.
 
-![Last tanda message mood](images/user-manual/beam_mood_last_tanda_mood.jpg)
+![Last tanda message mood](../images/user-manual/beam_mood_last_tanda_mood.jpg)
 
 > For quick, unplanned messages you can also use the **Show Message** button — see
 > [Live Display Controls](../live-display-controls).
@@ -82,7 +82,7 @@ on top of (or replacing) the mood background. Matching prefers the album artist
 first, then falls back to the artist. Useful for a per-orchestra look over a venue
 slideshow.
 
-![Artist background mapping](images/user-manual/beam_background_orchestra.png)
+![Artist background mapping](../images/user-manual/beam_background_orchestra.png)
 
 ## Cover art as background
 
@@ -90,7 +90,7 @@ Cover art / album art can be used as the artist background. It takes the default
 blend/replace mode and opacity; if you have defined a specific artist background,
 that one wins over cover art.
 
-![Cover art as background](images/user-manual/beam_artist_background.png)
+![Cover art as background](../images/user-manual/beam_artist_background.png)
 
 ## Practical examples for milongas
 

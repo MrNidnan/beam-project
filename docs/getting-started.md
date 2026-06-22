@@ -4,7 +4,7 @@ This page gets Beam working for a live event in a few minutes. You are ready whe
 Beam shows your current song and the display is on your projector, TV, or second
 screen.
 
-![Beam main window with the player selection and preview](images/user-manual/beam_1_media_selector.png)
+![Beam main window with the player selection and preview](../images/user-manual/beam_1_media_selector.png)
 
 ## 1. Install and launch Beam
 
@@ -27,7 +27,7 @@ notes for your player.
 
 If the preview shows the song, the connection is working.
 
-![Beam preview showing the current song](images/user-manual/beam_5_preview.png)
+![Beam preview showing the current song](../images/user-manual/beam_5_preview.png)
 
 ## 4. Open the display
 
@@ -35,7 +35,7 @@ If the preview shows the song, the connection is working.
 2. Move that window to your projector, TV, or second monitor.
 3. Press `F11` to toggle full screen if you need it.
 
-![Beam preview and display](images/user-manual/beam_6_preview_display.jpg)
+![Beam preview and display](../images/user-manual/beam_6_preview_display.jpg)
 
 ## 5. Select a mood
 
