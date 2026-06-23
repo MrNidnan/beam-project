@@ -1,39 +1,8 @@
 # Download Beam
 
-The easiest way to get Beam is from the GitHub releases page:
+## All Releases
 
-**<https://github.com/MrNidnan/beam-project/releases>**
-
-Open the latest release and download the file that matches your system. Look at
-the release date to make sure you are getting a recent build.
-
-> **Note about platforms:** Which ready-to-run files exist depends on what each
-> release actually provides. If there is no packaged build for your system in the
-> latest release, you can always [run Beam from source](#run-from-source-all-platforms).
-> Beam does not ship installers for platforms that are not listed in a release.
-
-## Windows
-
-1. Download the Windows build from the latest release.
-2. Copy it to a folder you like.
-3. Double-click it to start, or run it from a command line to see log output if
-   something goes wrong.
-
-## Linux
-
-1. Download the Linux build from the latest release.
-2. Copy it to a folder you like.
-3. Start it from your file manager, or run it from a shell to see log output.
-
-If you are on Linux and use the network/browser display, you may need to open the
-firewall port. See [Network Display](../network-display).
-
-## macOS
-
-A prebuilt macOS app may not always be available. If the latest release does not
-include a macOS build, [run Beam from source](#run-from-source-all-platforms)
-instead. A packaging guide for collaborators lives in
-[BUILD_MACOS.md](../BUILD_MACOS).
+- [Browse all GitHub releases](https://github.com/MrNidnan/beam-project/releases)
 
 ## Run from source (all platforms)
 

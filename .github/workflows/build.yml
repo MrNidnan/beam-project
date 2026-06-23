@@ -39,6 +39,14 @@ jobs:
         run: |
           .\.venv\Scripts\python.exe -m py_compile beam.py
 
+      - name: Sync docs version data from canonical strings
+        shell: pwsh
+        run: |
+          $source = Get-Content resources/json/strings.json -Raw | ConvertFrom-Json
+          $docsVersion = @{ version = $source.version } | ConvertTo-Json -Compress
+
+          Set-Content docs/_data/strings.json -Value $docsVersion -NoNewline -Encoding utf8
+
       - name: Run Windows smoke suite
         uses: ./.github/actions/run-python-smoke-suite
         with:

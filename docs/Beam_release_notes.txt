@@ -66,6 +66,12 @@ Player: Playing | Mood: Tango | Display: BLACKOUT | Message: 12s | Network: ON
 💾 Auto-save UI
 The main Save button is gone. Changes should apply immediately in the display and save automatically when closing the app. We hope. 😄
 
+💿 Session DJ history
+Beam now keeps session history for the DJ set, what has been displayed in Beam, and a playlist.
+
+📜 Log viewer
+Beam now has a built-in log viewer, so when something goes sideways you can peek at the drama without hunting for the log file like a lost DJ USB stick.
+
 🐛 Fixes
 A lot of gremlins have been evicted, especially around Windows usability, player integrations, backgrounds, cover art and UI behavior.
 

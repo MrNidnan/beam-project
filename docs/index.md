@@ -14,8 +14,8 @@ It is made for milongas and tango events, but it works anywhere you want a clean
 live "now playing" display. If you can start your music player and use a settings
 window, you can use Beam.
 
-[Download Beam](https://github.com/MrNidnan/beam-project/releases){: .btn }
-[Getting Started](getting-started){: .btn }
+More:
+[All downloads](download) · [Getting Started](getting-started)
 
 ![Beam in use on a projector or second screen](images/user-manual/beam_0_hero.jpeg)
 
@@ -93,16 +93,6 @@ a setlist of every track you play as text, CSV, and a best-effort M3U8 playlist.
 
 ![Rules panel](images/user-manual/beam_rules.png)
 
-## Download
-
-Get the latest build from the GitHub releases page:
-
-[Download Beam](https://github.com/MrNidnan/beam-project/releases){: .btn }
-
-No packaged build for your system? You can always
-[run Beam from source](download). Beam does not ship installers for platforms a
-release does not list.
-
 ## Documentation
 
 - [Download](download)
@@ -117,8 +107,10 @@ release does not list.
 
 ## Project status
 
-Beam is a **maintained fork** of the original beam-project, kept lightly maintained
-with regular fixes and new features. Found a bug or have a suggestion? Please open
-an issue: <https://github.com/MrNidnan/beam-project/issues>
+Beam is a further developed and **maintained fork** of the original beam-project. 
+
+See what's new since then: [Beam release notes](Beam_release_notes.txt)
+
+Found a bug or have a suggestion? Please open an issue: <https://github.com/MrNidnan/beam-project/issues>
 
 This fork is licensed under the GNU General Public License, version 2 or later.
