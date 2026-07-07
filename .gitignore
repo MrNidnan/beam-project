@@ -4,3 +4,15 @@ __pycache__/
 env/
 .venv*
 .claude/
+
+# ------------------------------
+# Keep lockfiles committed
+# ------------------------------
+# package-lock.json
+# pnpm-lock.yaml
+# yarn.lock
+
+# Graphifyy
+
+graphify-out/cost.json 
+graphify-out/cache/
