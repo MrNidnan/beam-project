@@ -31,7 +31,7 @@ import os
 import platform
 
 from bin.backgroundassets import import_background_asset, resolve_background_reference, to_persisted_background_reference
-from bin.beamutils import normalizeMacControlHeight
+from bin.beamutils import keepWindowOnScreen, normalizeMacControlHeight
 from bin.DMX import dmxmodule
 from bin.beamsettings import beamSettings
 from bin.dialogs.editlayoutitemdialog import EditLayoutItemDialog
@@ -126,6 +126,7 @@ class EditMoodDialog(wx.Dialog):
         self.isDefaultMood = False
         self._preview_debounce = None
         self._layout_tooltips = []
+        self._dialog_fitted = False
         self._dmx_supported = platform.system() != 'Windows'
 
         # Define choices
@@ -338,8 +339,21 @@ class EditMoodDialog(wx.Dialog):
         self.vbox.Fit(self.panel)
         best_size = self.panel.GetBestSize()
         fitted_size = wx.Size(max(min_width, best_size.GetWidth()), best_size.GetHeight())
-        self.SetClientSize(fitted_size)
+
+        # Never size the dialog beyond the visible display area; the layout
+        # list falls back to its scrollbar when the content cannot fit.
+        display_index = wx.Display.GetFromWindow(self)
+        if display_index == wx.NOT_FOUND:
+            display_index = 0
+        display_area = wx.Display(display_index).GetClientArea()
+        frame_decoration = max(0, self.GetSize().GetHeight() - self.GetClientSize().GetHeight())
+        fitted_size.SetWidth(min(fitted_size.GetWidth(), display_area.GetWidth()))
+        fitted_size.SetHeight(min(fitted_size.GetHeight(), display_area.GetHeight() - frame_decoration))
+
         self.SetMinSize(fitted_size)
+        self.SetClientSize(fitted_size)
+        keepWindowOnScreen(self)
+        self._dialog_fitted = True
 
     #
     # Crates fields and sets values
@@ -440,6 +454,19 @@ class EditMoodDialog(wx.Dialog):
             else:
                 self.LayoutList.Check(i, check=False)
         self._update_layout_list_tooltip()
+        self._fit_layout_list_to_rows()
+
+    def _fit_layout_list_to_rows(self):
+        # Grow the list with its rows (capped) so added items stay visible
+        # instead of forcing a scrollbar in a fixed-height list.
+        visible_rows = max(3, min(len(self.DisplayRows), 12))
+        row_height = max(20, self.LayoutList.GetCharHeight() + 6)
+        min_height = visible_rows * row_height + 10
+        if self.LayoutList.GetMinSize().GetHeight() == min_height:
+            return
+        self.LayoutList.SetMinSize(wx.Size(-1, min_height))
+        if self._dialog_fitted:
+            self._fit_dialog_to_content(self.GetClientSize().GetWidth())
 
     def _format_layout_item_label(self, settings):
         field_value = str(settings.get('Field', '')).strip()

@@ -19,6 +19,13 @@ All notable changes in this fork are documented in this file.
 
 ### Fixed
 
+- Edit Mood dialog: the "On-screen Text Layout" list now grows with its rows
+  (up to a cap) when layout items are added, instead of keeping its initial
+  height and forcing a scrollbar; the dialog re-fits and stays within the
+  visible screen area.
+- Add/Edit layout item dialog no longer opens partially off-screen (hiding the
+  Save button) when the parent window sits near the screen edge; it is clamped
+  to the visible display area.
 - Left/Right-aligned layout items now compute their available text width
   correctly; long corner text (previous song, next tanda, clock) shrinks and
   truncates instead of running off the edge of the screen.

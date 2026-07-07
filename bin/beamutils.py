@@ -160,6 +160,23 @@ def getBeamConfigPath():
     return beamconfigpath
 
 
+def keepWindowOnScreen(window):
+    # Clamp a top-level window's position to the visible area of its display
+    # so the title bar and bottom buttons stay reachable.
+    import wx
+
+    display_index = wx.Display.GetFromWindow(window)
+    if display_index == wx.NOT_FOUND:
+        display_index = 0
+    display_area = wx.Display(display_index).GetClientArea()
+
+    width, height = window.GetSize()
+    x, y = window.GetPosition()
+    x = max(display_area.GetLeft(), min(x, display_area.GetRight() - width + 1))
+    y = max(display_area.GetTop(), min(y, display_area.GetBottom() - height + 1))
+    window.SetPosition(wx.Point(x, y))
+
+
 def normalizeMacControlHeight(control, default_width=-1):
     if sys.platform != 'darwin':
         return control

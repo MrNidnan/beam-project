@@ -30,6 +30,7 @@
 import wx, wx.html
 from copy import deepcopy
 from bin.beamsettings import beamSettings
+from bin.beamutils import keepWindowOnScreen
 
 
 
@@ -215,6 +216,7 @@ class EditLayoutItemDialog(wx.Dialog):
         self.vboxLayout.Add(self.hboxLayout, 0, flag=wx.ALL | wx.ALIGN_RIGHT)
         self.EditLayoutPanel.SetSizer(self.vboxLayout)
         self.vboxLayout.SetSizeHints(self)
+        keepWindowOnScreen(self)
         self._update_horizontal_position_state()
         self.Bind(wx.EVT_CLOSE, self.OnCancelLayoutItem)
         
