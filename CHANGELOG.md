@@ -17,6 +17,20 @@ All notable changes in this fork are documented in this file.
   push lower fields off-screen. Applies to both the native display and the
   browser/network display.
 
+### Changed
+
+- Settings > Layout redesign: "Moods" and "Artist Backgrounds" now live in a
+  tab pane on the left, and selecting an item opens its editor embedded in the
+  right column (the separate edit windows and the Edit buttons are gone).
+  Changing the selection, switching tabs or pressing Save saves the open
+  editor; Add creates the item immediately and opens it for editing. The mood
+  editor scrolls when its content is taller than the window.
+- The layout item editor (Add/Edit layout item) is now a modal dialog: only
+  one can be open at a time and it must be saved or cancelled first. This
+  prevents two simultaneous layout item editors from corrupting each other's
+  edits; the live preview on the display window keeps updating while it is
+  open.
+
 ### Fixed
 
 - Edit Mood dialog: the "On-screen Text Layout" list now grows with its rows

@@ -64,8 +64,8 @@ class EditRuleDialog(wx.Dialog):
             self.Settings   = ({"Type": "Copy", "Field1": "%Comment","Field2": "%Singer", "Active": "yes"})
 
         # Build the static elements
-        self.InputID3Field      = wx.ComboBox(self.EditRulePanel, size=(150,-1), value=self.Settings['Field1'], choices=self.InputFields, style=wx.CB_READONLY)
-        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=(150,-1), value=self.Settings['Type'], choices=self.RuleTypes, style=wx.CB_READONLY)
+        self.InputID3Field      = wx.ComboBox(self.EditRulePanel, size=wx.Size(150,-1), value=self.Settings['Field1'], choices=self.InputFields, style=wx.CB_READONLY)
+        self.RuleSelectDropdown     = wx.ComboBox(self.EditRulePanel, size=wx.Size(150,-1), value=self.Settings['Type'], choices=self.RuleTypes, style=wx.CB_READONLY)
         self.RuleSelectDropdown.Bind(wx.EVT_COMBOBOX, self.ChangeRuleType)
         self.RuleOrder          = wx.SpinCtrl(self.EditRulePanel, value=str(self.RowSelected+1), min=1, max=99)
 
@@ -75,15 +75,15 @@ class EditRuleDialog(wx.Dialog):
         self.DynamicFieldLabel3 = wx.StaticText(self.EditRulePanel, label="")
         self.DynamicFieldLabel4 = wx.StaticText(self.EditRulePanel, label="")
 
-        self.OutputField3 = wx.TextCtrl(self.EditRulePanel, value="", size=(150,-1))
+        self.OutputField3 = wx.TextCtrl(self.EditRulePanel, value="", size=wx.Size(150,-1))
 
         self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer3 = wx.BoxSizer(wx.HORIZONTAL)
 
         InfoGrid    =   wx.FlexGridSizer(4, 4, 5, 5)
-        InfoGrid.AddMany ( [(wx.StaticText(self.EditRulePanel, label="Rule type", size=(100,-1)), 0, wx.EXPAND),
-                        (wx.StaticText(self.EditRulePanel, label="Input ID3 tag", size=(100,-1)), 0, wx.EXPAND),
+        InfoGrid.AddMany ( [(wx.StaticText(self.EditRulePanel, label="Rule type", size=wx.Size(100,-1)), 0, wx.EXPAND),
+                        (wx.StaticText(self.EditRulePanel, label="Input ID3 tag", size=wx.Size(100,-1)), 0, wx.EXPAND),
                         (self.DynamicFieldLabel1, 0, wx.EXPAND),
                         (self.DynamicFieldLabel2, 0, wx.EXPAND),
                         (self.RuleSelectDropdown, 0, wx.EXPAND),
@@ -134,7 +134,7 @@ class EditRuleDialog(wx.Dialog):
             self.OutputField3.Hide()
 
             #Add correct fields
-            self.OutputField1 = wx.ComboBox(self.EditRulePanel, size=(150,-1), value="%Artist", choices=self.OutputFields, style=wx.CB_READONLY)
+            self.OutputField1 = wx.ComboBox(self.EditRulePanel, size=wx.Size(150,-1), value="%Artist", choices=self.OutputFields, style=wx.CB_READONLY)
             self.sizer1.Add(self.OutputField1)
 
             if self.Settings['Type'] == 'Copy':
@@ -152,9 +152,9 @@ class EditRuleDialog(wx.Dialog):
             self.RemoveDynamicElements()
 
             #Add correct fields
-            self.OutputField1       = wx.ComboBox(self.EditRulePanel,value="%Artist", size=(150,-1), choices=self.OutputFields,style=wx.CB_READONLY)
+            self.OutputField1       = wx.ComboBox(self.EditRulePanel,value="%Artist", size=wx.Size(150,-1), choices=self.OutputFields,style=wx.CB_READONLY)
             self.sizer1.Add(self.OutputField1)
-            self.OutputField2       = wx.ComboBox(self.EditRulePanel,value="%Artist", size=(150,-1), choices=self.OutputFields,style=wx.CB_READONLY)
+            self.OutputField2       = wx.ComboBox(self.EditRulePanel,value="%Artist", size=wx.Size(150,-1), choices=self.OutputFields,style=wx.CB_READONLY)
             self.sizer2.Add(self.OutputField2)
 
             if self.Settings['Type'] == 'Parse':
@@ -179,12 +179,12 @@ class EditRuleDialog(wx.Dialog):
             self.RemoveDynamicElements()
 
             # Add correct fields
-            self.OutputField1 = wx.ComboBox(self.EditRulePanel, value="%Artist", size=(150, -1),
+            self.OutputField1 = wx.ComboBox(self.EditRulePanel, value="%Artist", size=wx.Size(150, -1),
                                                 choices=self.OutputFields, style=wx.CB_READONLY)
             self.sizer1.Add(self.OutputField1)
-            self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="Señor del Tango", size=(150, -1))
+            self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="Señor del Tango", size=wx.Size(150, -1))
             self.sizer2.Add(self.OutputField2)
-            self.OutputField3 = wx.TextCtrl(self.EditRulePanel, value="Sarli", size=(150, -1))
+            self.OutputField3 = wx.TextCtrl(self.EditRulePanel, value="Sarli", size=wx.Size(150, -1))
             self.sizer3.Add(self.OutputField3)
 
             if self.Settings['Type'] == 'Replace':
@@ -215,7 +215,7 @@ class EditRuleDialog(wx.Dialog):
             #Add correct fields
             self.IsIsNot    = wx.ComboBox(self.EditRulePanel,value="is", choices=["is", "is not","contains"], style=wx.CB_READONLY)
             self.sizer1.Add(self.IsIsNot)
-            self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="", size=(165,-1))
+            self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="", size=wx.Size(165,-1))
             self.sizer2.Add(self.OutputField2)
 
             if self.Settings['Type'] == 'Cortina':
@@ -240,7 +240,7 @@ class EditRuleDialog(wx.Dialog):
             #Add correct fields
             self.IsIsNot    = wx.ComboBox(self.EditRulePanel,value="is", choices=["is", "is not","contains"], style=wx.CB_READONLY)
             self.sizer1.Add(self.IsIsNot)
-            self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="", size=(165,-1))
+            self.OutputField2 = wx.TextCtrl(self.EditRulePanel, value="", size=wx.Size(165,-1))
             self.sizer2.Add(self.OutputField2)
             
             if self.Settings['Type'] == 'Ignore':
@@ -264,7 +264,7 @@ class EditRuleDialog(wx.Dialog):
             self.OutputField3.Hide()
 
             # "Start from" sits next to the Input ID3 tag (sizer1 column).
-            self.OutputField1 = wx.TextCtrl(self.EditRulePanel, value="(", size=(150, -1))
+            self.OutputField1 = wx.TextCtrl(self.EditRulePanel, value="(", size=wx.Size(150, -1))
             self.sizer1.Add(self.OutputField1)
 
             if self.Settings['Type'] == 'Cut / Trim':

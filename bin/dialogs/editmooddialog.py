@@ -31,11 +31,10 @@ import os
 import platform
 
 from bin.backgroundassets import import_background_asset, resolve_background_reference, to_persisted_background_reference
-from bin.beamutils import keepWindowOnScreen, normalizeMacControlHeight
+from bin.beamutils import normalizeMacControlHeight
 from bin.DMX import dmxmodule
 from bin.beamsettings import beamSettings
 from bin.dialogs.editlayoutitemdialog import EditLayoutItemDialog
-from copy import deepcopy
 
 
 BACKGROUND_FILE_WILDCARD = "Image files(*.png,*.jpg)|*.png;*.jpg"
@@ -103,30 +102,24 @@ def _colour_to_background_reference(colour):
 
 
 #
-# Mood layout edit window
+# Mood editor panel, embedded in the right column of the moods panel.
+# Always edits an existing mood in place; the moods panel creates the mood
+# first when adding and calls saveChanges() before switching selection.
 #
 
-class EditMoodDialog(wx.Dialog):
-    def __init__(self, moodsPanel, RowSelected, mode):
-        xpos, ypos = moodsPanel.GetScreenPosition()
-        dialog_width, dialog_height = moodsPanel.BeamSettings._moodSize
-#        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), style=wx.RESIZE_BORDER)
-        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=wx.Point(xpos + 50, ypos + 50),
-#                           size=moodsPanel.BeamSettings._moodSize, style=wx.RESIZE_BORDER)
-                           size=wx.Size(dialog_width, dialog_height))
-        # #        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
-#                          size=self.moodsPanel.BeamSettings._moodSize,
-#                          style=wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+class MoodEditorPanel(wx.Panel):
+    def __init__(self, parent, moodsPanel, RowSelected):
+        wx.Panel.__init__(self, parent)
 
         # MoodsPanel
         self.moodsPanel = moodsPanel
         self.RowSelected = RowSelected
-        self.mode = mode
+        self.mode = "Edit mood"
         self.EditMood = {}
         self.isDefaultMood = False
         self._preview_debounce = None
         self._layout_tooltips = []
-        self._dialog_fitted = False
+        self._content_built = False
         self._dmx_supported = platform.system() != 'Windows'
 
         # Define choices
@@ -152,26 +145,25 @@ class EditMoodDialog(wx.Dialog):
                       })
         '''
 
-        # Get item
-        if self.RowSelected < len(beamSettings.getMoods()):
-            # Get the properties of the selected item
-            # DefaultDisplay is a list and does not get erged
-            self.EditMood = beamSettings.getMoods()[self.RowSelected]
-        else:
-            self.EditMood = deepcopy(beamSettings.getMoods()[0])
-            self.EditMood["Name"] = "New Mood"
+        # Get the properties of the selected item
+        # DefaultDisplay is a list and does not get merged
+        self.EditMood = beamSettings.getMoods()[self.RowSelected]
 
         self.isDefaultMood = self.EditMood.get('Name') == 'Default'
+        header_font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        self.headerLabel = wx.StaticText(self, -1, "")
+        self.headerLabel.SetFont(header_font)
         self._update_dialog_title()
 
-        # Build the panel
-        self.panel = wx.Panel(self)
+        # Build the content area; it scrolls when taller than the window
+        self.panel = wx.ScrolledWindow(self)
+        self.panel.SetScrollRate(0, 12)
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        # Save/Cancel-buttons
+        # Save button
         self.OkButton = wx.Button(self.panel, label="Save")
-        self.OkButton.Bind(wx.EVT_BUTTON, self.OnOk)
+        self.OkButton.Bind(wx.EVT_BUTTON, self.OnSave)
         self.hbox.Add(self.OkButton, flag=wx.LEFT | wx.BOTTOM | wx.TOP, border=10)
 
         # Description Settings
@@ -331,29 +323,18 @@ class EditMoodDialog(wx.Dialog):
         # Set sizers
         self.vbox.Add(self.hbox, flag=wx.ALIGN_RIGHT)
         self.panel.SetSizer(self.vbox)
-        self._fit_dialog_to_content(dialog_width)
+        outer_sizer = wx.BoxSizer(wx.VERTICAL)
+        outer_sizer.Add(self.headerLabel, flag=wx.LEFT | wx.TOP | wx.RIGHT, border=10)
+        outer_sizer.Add(self.panel, 1, flag=wx.EXPAND)
+        self.SetSizer(outer_sizer)
+        self._content_built = True
+        self._refit_content()
         self._bind_live_preview_events()
 
-    def _fit_dialog_to_content(self, min_width):
+    def _refit_content(self):
         self.panel.Layout()
-        self.vbox.Fit(self.panel)
-        best_size = self.panel.GetBestSize()
-        fitted_size = wx.Size(max(min_width, best_size.GetWidth()), best_size.GetHeight())
-
-        # Never size the dialog beyond the visible display area; the layout
-        # list falls back to its scrollbar when the content cannot fit.
-        display_index = wx.Display.GetFromWindow(self)
-        if display_index == wx.NOT_FOUND:
-            display_index = 0
-        display_area = wx.Display(display_index).GetClientArea()
-        frame_decoration = max(0, self.GetSize().GetHeight() - self.GetClientSize().GetHeight())
-        fitted_size.SetWidth(min(fitted_size.GetWidth(), display_area.GetWidth()))
-        fitted_size.SetHeight(min(fitted_size.GetHeight(), display_area.GetHeight() - frame_decoration))
-
-        self.SetMinSize(fitted_size)
-        self.SetClientSize(fitted_size)
-        keepWindowOnScreen(self)
-        self._dialog_fitted = True
+        self.panel.FitInside()
+        self.Layout()
 
     #
     # Crates fields and sets values
@@ -465,8 +446,8 @@ class EditMoodDialog(wx.Dialog):
         if self.LayoutList.GetMinSize().GetHeight() == min_height:
             return
         self.LayoutList.SetMinSize(wx.Size(-1, min_height))
-        if self._dialog_fitted:
-            self._fit_dialog_to_content(self.GetClientSize().GetWidth())
+        if self._content_built:
+            self._refit_content()
 
     def _format_layout_item_label(self, settings):
         field_value = str(settings.get('Field', '')).strip()
@@ -634,14 +615,19 @@ class EditMoodDialog(wx.Dialog):
     # LAYOUT BUTTONS
     #
     def OnAddLayoutItem(self, event):
-        self.EditLayoutItemButton = EditLayoutItemDialog(self, len(self.DisplayRows), "Add layout item", self.EditMood['Display'])
-        self.EditLayoutItemButton.Show()
+        self._show_layout_item_dialog(len(self.DisplayRows), "Add layout item")
 
     def OnEditLayoutItem(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected > -1:
-            self.EditLayoutItemButton = EditLayoutItemDialog(self, RowSelected, "Edit layout item", self.EditMood['Display'])
-            self.EditLayoutItemButton.Show()
+            self._show_layout_item_dialog(RowSelected, "Edit layout item")
+
+    def _show_layout_item_dialog(self, row_selected, mode):
+        dialog = EditLayoutItemDialog(self, row_selected, mode, self.EditMood['Display'])
+        try:
+            dialog.ShowModal()
+        finally:
+            dialog.Destroy()
 
     def OnDelLayoutItem(self, event):
         RowSelected = self.LayoutList.GetSelection()
@@ -711,7 +697,7 @@ class EditMoodDialog(wx.Dialog):
 
     def _update_dialog_title(self):
         mood_name = str(self.EditMood.get('Name', '')).strip() or 'New Mood'
-        self.SetTitle('Edit Mood: ' + mood_name)
+        self.headerLabel.SetLabel('Edit Mood: ' + mood_name)
 
     def updateSettings(self):
         self._schedule_preview_refresh(immediate=True)
@@ -719,7 +705,12 @@ class EditMoodDialog(wx.Dialog):
     #
     # Save mood layout
     #
-    def OnOk(self, e):
+    def OnSave(self, event):
+        self.saveChanges()
+
+    def saveChanges(self):
+        if not self or self.IsBeingDeleted():
+            return
         if self._preview_debounce is not None:
             self._preview_debounce.Stop()
             self._preview_debounce = None
@@ -758,18 +749,12 @@ class EditMoodDialog(wx.Dialog):
         else:
             moodorder = int(self.MoodOrderField.GetValue())
 
-        # Place settings in moods
-        if self.mode == "Add mood":
-            if moodorder < self.RowSelected:
-                beamSettings.getMoods().insert(moodorder, self.EditMood)  # Insert in at position
-            else:
-                beamSettings.getMoods().append(self.EditMood)  # Append in the end
-        else:  # Edit mood
-            if moodorder == self.RowSelected:
-                beamSettings.getMoods()[moodorder] = self.EditMood  # Overwrite
-            else:
-                beamSettings.getMoods().pop(self.RowSelected)  # Move up and down in list
-                beamSettings.getMoods().insert(moodorder, self.EditMood)
+        # Reorder the mood in the list when the order field changed
+        moods = beamSettings.getMoods()
+        if moodorder != self.RowSelected and self.RowSelected < len(moods):
+            moods.pop(self.RowSelected)
+            moods.insert(min(moodorder, len(moods)), self.EditMood)
+            self.RowSelected = moods.index(self.EditMood)
 
         beamSettings.markDirty()
         self.moodsPanel.BuildMoodList()
@@ -777,13 +762,6 @@ class EditMoodDialog(wx.Dialog):
             self.moodsPanel.applyCommittedSettings()
         else:
             self.moodsPanel.updateSettings()
-        self.Destroy()
-
-    #
-    # Cancel mood layout
-    #
-    # def onCancel(self, e):
-    #    self.Destroy()
 
     #
     # Browse for background

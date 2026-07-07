@@ -369,14 +369,19 @@ class DefaultLayoutPanel(wx.Panel):
         # LAYOUT BUTTONS #
         ##################
     def OnAddLayout(self, event):
-        self.EditLayout = EditLayoutItemDialog(self, len(self.DisplayRows), "Add layout item", self.BeamSettings.getMoods()[0]['Display'])
-        self.EditLayout.Show()
-    
+        self._show_layout_item_dialog(len(self.DisplayRows), "Add layout item")
+
     def OnEditLayout(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected>-1:
-            self.EditLayout = EditLayoutItemDialog(self, RowSelected, "Edit layout item", self.BeamSettings.getMoods()[0]['Display'])
-            self.EditLayout.Show()
+            self._show_layout_item_dialog(RowSelected, "Edit layout item")
+
+    def _show_layout_item_dialog(self, row_selected, mode):
+        dialog = EditLayoutItemDialog(self, row_selected, mode, self.BeamSettings.getMoods()[0]['Display'])
+        try:
+            dialog.ShowModal()
+        finally:
+            dialog.Destroy()
     def OnDelLayout(self, event):
         RowSelected = self.LayoutList.GetSelection()
         if RowSelected >= 0:

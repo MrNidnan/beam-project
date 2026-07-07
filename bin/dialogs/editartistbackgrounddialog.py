@@ -41,32 +41,38 @@ def _get_background_label_path(background_reference):
     return resolved_background['absolutePath'] or resolved_background['relativePath'] or str(background_reference or '')
 
 
-class EditArtistBackgroundDialog(wx.Dialog):
-    def __init__(self, moodsPanel, rowSelected, mode):
-        xpos, ypos = moodsPanel.GetScreenPosition()
-        wx.Dialog.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50), size=(520, 560))
+def create_default_artist_background_mapping():
+    return {
+        'Name': 'New artist background',
+        'Field': '%AlbumArtist',
+        'Operator': 'is',
+        'Value': '',
+        'Background': '',
+        'Mode': 'blend',
+        'Opacity': 35,
+        'RotateBackground': 'no',
+        'RotateTimer': 120,
+        'Active': 'yes',
+    }
+
+
+#
+# Artist background mapping editor panel, embedded in the right column of the
+# moods panel. Always edits an existing mapping; the moods panel creates the
+# mapping first when adding and calls saveChanges() before switching selection.
+#
+class ArtistBackgroundEditorPanel(wx.Panel):
+    def __init__(self, parent, moodsPanel, rowSelected):
+        wx.Panel.__init__(self, parent)
 
         self.moodsPanel = moodsPanel
         self.rowSelected = rowSelected
-        self.mode = mode
-        self.mapping = {}
 
         mappings = beamSettings.getArtistBackgroundMappings()
         if self.rowSelected < len(mappings):
             self.mapping = dict(mappings[self.rowSelected])
         else:
-            self.mapping = {
-                'Name': 'New artist background',
-                'Field': '%AlbumArtist',
-                'Operator': 'is',
-                'Value': '',
-                'Background': '',
-                'Mode': 'blend',
-                'Opacity': 35,
-                'RotateBackground': 'no',
-                'RotateTimer': 120,
-                'Active': 'yes',
-            }
+            self.mapping = create_default_artist_background_mapping()
 
         panel = wx.Panel(self)
         self.panel = panel
@@ -163,11 +169,9 @@ class EditArtistBackgroundDialog(wx.Dialog):
             background_box.Add(option_panel, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
-        okButton = wx.Button(panel, wx.ID_OK, 'OK')
-        okButton.Bind(wx.EVT_BUTTON, self.OnOk)
-        cancelButton = wx.Button(panel, wx.ID_CANCEL, 'Cancel')
-        buttonSizer.Add(okButton, flag=wx.RIGHT, border=10)
-        buttonSizer.Add(cancelButton)
+        saveButton = wx.Button(panel, label='Save')
+        saveButton.Bind(wx.EVT_BUTTON, self.OnSave)
+        buttonSizer.Add(saveButton)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(title, flag=wx.LEFT | wx.TOP, border=10)
@@ -175,6 +179,9 @@ class EditArtistBackgroundDialog(wx.Dialog):
         sizer.Add(background_box, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=10)
         sizer.Add(buttonSizer, flag=wx.ALIGN_RIGHT | wx.ALL, border=10)
         panel.SetSizer(sizer)
+        outer_sizer = wx.BoxSizer(wx.VERTICAL)
+        outer_sizer.Add(panel, 1, flag=wx.EXPAND)
+        self.SetSizer(outer_sizer)
 
         self._set_selected_background_type(self._resolve_initial_background_type())
         self.OnOpacityChanged(None)
@@ -335,7 +342,12 @@ class EditArtistBackgroundDialog(wx.Dialog):
         finally:
             open_dialog.Destroy()
 
-    def OnOk(self, event):
+    def OnSave(self, event):
+        self.saveChanges()
+
+    def saveChanges(self):
+        if not self or self.IsBeingDeleted():
+            return
         mappings = beamSettings.getArtistBackgroundMappings()
         self.mapping['Name'] = self.NameField.GetValue().strip() or 'Artist background'
         self.mapping['Field'] = self.FieldDropdown.GetValue()
@@ -360,6 +372,7 @@ class EditArtistBackgroundDialog(wx.Dialog):
             if insert_index > self.rowSelected:
                 insert_index -= 1
         mappings.insert(insert_index, dict(self.mapping))
+        self.rowSelected = insert_index
 
         beamSettings.markDirty()
         self.moodsPanel.BuildArtistBackgroundList()
@@ -367,4 +380,3 @@ class EditArtistBackgroundDialog(wx.Dialog):
             self.moodsPanel.applyCommittedSettings()
         else:
             self.moodsPanel.updateSettings()
-        self.Destroy()

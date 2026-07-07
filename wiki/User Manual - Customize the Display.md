@@ -20,6 +20,19 @@ You can change:
 
 ![Screenshot: Moods and Layout settings](../docs/images/user-manual/beam_2_moods_and_layout.png)
 
+## The Layout Page
+
+Open `Settings > Layout`. The page has two columns:
+
+- On the left, a tab pane with the `Moods` and `Artist Backgrounds` tabs, each with its list of items.
+- On the right, the editor for the currently selected item.
+
+Select a mood or an artist background in the list and its editor opens on the right — there is no separate edit window and no `Edit` button. Your changes are saved automatically when you select another item, switch tabs, or press `Save`.
+
+- `Add` creates a new item, selects it, and opens it for editing on the right.
+- `Delete` removes the selected item (after a confirmation).
+- The check box in front of each item activates or deactivates it.
+
 ## Moods
 
 Moods let Beam switch the display style automatically based on the current song or playback state.
@@ -77,7 +90,7 @@ You can use:
 
 ### Background Modes
 
-In the mood editor, the `Background` section has a single `Background type` dropdown. Choosing a type reveals only the controls for that type, keeping the dialog compact:
+In the mood editor, the `Background` section has a single `Background type` dropdown. Choosing a type reveals only the controls for that type, keeping the editor compact:
 
 - **Keep existing** – does **not** change the background. The mood leaves whatever background is already on screen (from the previous or default mood) in place. This is ideal for timed message moods such as `LAST TANDA`, where you want to show extra text over the current background without swapping it. Shows the `Readability` slider (see below).
 - **Color** – use a solid color. Shows a colour swatch button that displays the chosen colour and opens the picker when clicked.
@@ -100,7 +113,7 @@ This works the same way on the projected (native) display and on the browser/tab
 
 ## Layout Items
 
-The layout controls decide where and which song information appears on screen.
+The layout controls decide where and which song information appears on screen. Each mood has its own `On-screen Text Layout` list in the mood editor; `Add` and `Edit` (or a double click) open the layout item editor in its own window, which must be saved or cancelled before you continue. The display preview updates live while you edit.
 
 ![Screenshot: Moods edit](../docs/images/user-manual/beam_edit_layout_item.png)
 
@@ -138,6 +151,8 @@ The same rules apply on the browser/network display.
 Beam can also show an extra background layer based on the current artist or orchestra.
 
 This is useful if you want a mood background plus a specific orchestra image.
+
+Open the `Artist Backgrounds` tab on the `Settings > Layout` page. The tab holds the general settings (enable, cover art, match fields, default mode and opacity) and the list of mappings; selecting a mapping opens its editor on the right, like moods.
 
 ![Screenshot: Artist background mapping settings](../docs/images/user-manual/beam_background_orchestra.png)
 

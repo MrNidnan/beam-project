@@ -219,7 +219,14 @@ class EditLayoutItemDialog(wx.Dialog):
         keepWindowOnScreen(self)
         self._update_horizontal_position_state()
         self.Bind(wx.EVT_CLOSE, self.OnCancelLayoutItem)
-        
+
+    def _close_dialog(self, return_code):
+        # Shown with ShowModal(); the caller destroys the dialog afterwards.
+        if self.IsModal():
+            self.EndModal(return_code)
+        else:
+            self.Destroy()
+
     def DisableHorizontalBox(self, event):
         self._update_horizontal_position_state()
         event.Skip()
@@ -321,7 +328,7 @@ class EditLayoutItemDialog(wx.Dialog):
         elif getattr(self.parent, 'mode', None) == "Edit mood":
             beamSettings.markDirty()
 
-        self.Destroy()
+        self._close_dialog(wx.ID_OK)
 
     def _refresh_parent_display(self):
         refresh_owner = self.parent
@@ -350,6 +357,6 @@ class EditLayoutItemDialog(wx.Dialog):
             self._preview_debounce = None
 
         self._replace_live_layout_list(deepcopy(self._original_layout_list))
-        self.Destroy()
+        self._close_dialog(wx.ID_CANCEL)
 
 
