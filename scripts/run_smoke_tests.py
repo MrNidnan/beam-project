@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SMOKE_SCRIPTS = {
     'windows': [
         'scripts/smoke_imports.py',
+        'scripts/smoke_text_fitting.py',
         'scripts/smoke_virtualdj.py',
         'scripts/smoke_foobar.py',
         'scripts/smoke_mixxx.py',
@@ -23,6 +24,7 @@ SMOKE_SCRIPTS = {
     ],
     'linux': [
         'scripts/smoke_imports.py',
+        'scripts/smoke_text_fitting.py',
         'scripts/smoke_mixxx.py',
         'scripts/smoke_icecast.py',
         'scripts/smoke_mpris.py',

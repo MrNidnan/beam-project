@@ -30,6 +30,7 @@ from collections import OrderedDict
 import wx
 import wx.html
 
+from bin import textfit
 from bin.beamsettings import beamSettings
 from bin.beamutils import formatMemoryUsageMb, getProcessMemoryUsageBytes
 from bin.mutagenutils import readCoverArtImage
@@ -47,6 +48,9 @@ class DisplayPanel(wx.Panel):
     _cover_art_outline_enabled = True
     _cover_art_outline_alpha = 56
     _cover_art_outline_width = 1
+    DEFAULT_CENTER_MAX_WIDTH_PERCENT = 85
+    VERTICAL_SAFE_BOTTOM_RATIO = 0.92
+    _BLOCK_FIT_MAX_ITERATIONS = 60
 
     def _log_background_debug(self, message, *args):
         if logging.getLogger().isEnabledFor(logging.DEBUG):
@@ -636,67 +640,10 @@ class DisplayPanel(wx.Panel):
                         pass
 
     def _wrap_long_token(self, dc, token, max_width):
-        if not token:
-            return ['']
-
-        wrapped_parts = []
-        remaining = token
-        while remaining:
-            split_index = 1
-            while split_index <= len(remaining):
-                candidate = remaining[:split_index]
-                candidate_width, _ = dc.GetTextExtent(candidate)
-                if candidate_width > max_width:
-                    split_index -= 1
-                    break
-                split_index += 1
-
-            if split_index <= 0:
-                split_index = 1
-            if split_index > len(remaining):
-                split_index = len(remaining)
-
-            wrapped_parts.append(remaining[:split_index])
-            remaining = remaining[split_index:]
-
-        return wrapped_parts
+        return textfit.wrap_long_token(dc.GetTextExtent, token, max_width)
 
     def _wrap_text_lines(self, dc, text, max_width):
-        if max_width <= 0:
-            return [text]
-
-        wrapped_lines = []
-        for paragraph in str(text).splitlines() or ['']:
-            words = paragraph.split()
-            if not words:
-                wrapped_lines.append('')
-                continue
-
-            current_line = ''
-            for word in words:
-                candidate = word if not current_line else current_line + ' ' + word
-                candidate_width, _ = dc.GetTextExtent(candidate)
-                if candidate_width <= max_width:
-                    current_line = candidate
-                    continue
-
-                if current_line:
-                    wrapped_lines.append(current_line)
-                    current_line = ''
-
-                word_width, _ = dc.GetTextExtent(word)
-                if word_width <= max_width:
-                    current_line = word
-                    continue
-
-                wrapped_word_parts = self._wrap_long_token(dc, word, max_width)
-                wrapped_lines.extend(wrapped_word_parts[:-1])
-                current_line = wrapped_word_parts[-1]
-
-            if current_line or not wrapped_lines:
-                wrapped_lines.append(current_line)
-
-        return wrapped_lines or ['']
+        return textfit.wrap_text_lines(dc.GetTextExtent, text, max_width)
 
     def _get_text_width_position(self, alignment, horizontal_setting, cliWidth, text_width):
         if alignment == 'Left':
@@ -714,38 +661,124 @@ class DisplayPanel(wx.Panel):
         return display_settings[:render_count], display_rows[:render_count]
 
 
-    def drawTextItem(self, dc, cliWidth, cliHeight, settings, text, extra_vertical_offset=0):
-
-        # Text and settings
-        Settings = settings
-
-        # Get text size and position 
-        # PRS integered size
-        Size = int(Settings['Size'] * cliHeight / 100)
-        HeightPosition = int(Settings['Position'][0] * cliHeight / 100) + int(extra_vertical_offset)
-
-        # Set font from settings
-        face = Settings['Font']
-
+    def _create_item_font(self, size_px, settings):
         try:
-            dc.SetFont(wx.Font(Size,
-                               wx.ROMAN,
-                               beamSettings.FontStyleDictionary[Settings['Style']],
-                               beamSettings.FontWeightDictionary[Settings['Weight']],
-                               False,
-                               face))
+            return wx.Font(size_px,
+                           wx.ROMAN,
+                           beamSettings.FontStyleDictionary[settings['Style']],
+                           beamSettings.FontWeightDictionary[settings['Weight']],
+                           False,
+                           settings['Font'])
         except:
-            dc.SetFont(wx.Font(Size,
-                               wx.ROMAN,
-                               beamSettings.FontStyleDictionary[Settings['Style']],
-                               beamSettings.FontWeightDictionary[Settings['Weight']],
-                               False,
-                               "Liberation Sans"))
+            return wx.Font(size_px,
+                           wx.ROMAN,
+                           beamSettings.FontStyleDictionary[settings['Style']],
+                           beamSettings.FontWeightDictionary[settings['Weight']],
+                           False,
+                           "Liberation Sans")
 
-        # Set font color, in the future, drawing a shadow ofsetted with the same text first might make a shadow!
-        # Apply the transition text opacity (requires GCDC for alpha text; plain
-        # DC ignores the alpha channel and just draws the text fully opaque).
-        text_colour = wx.Colour(eval(Settings['FontColor']))
+    def _resolve_fit_settings(self, settings, cliHeight):
+        adaptive = settings.get('AdaptiveSize', 'yes') == 'yes'
+        min_size_setting = int(settings.get('MinSize', 0) or 0)
+        if min_size_setting <= 0:
+            min_size_setting = max(1, int(round(settings['Size'] * 0.75)))
+        min_size_px = max(1, int(min_size_setting * cliHeight / 100))
+        max_lines = int(settings.get('MaxLines', 0) or 0)
+        max_width_percent = int(settings.get('MaxWidthPercent', 0) or 0)
+        return adaptive, min_size_px, max_lines, max_width_percent
+
+    def _get_text_space_available(self, settings, cliWidth, max_width_percent):
+        if max_width_percent > 0:
+            return int(cliWidth * max_width_percent / 100)
+        if settings['Alignment'] == 'Center':
+            return int(cliWidth * self.DEFAULT_CENTER_MAX_WIDTH_PERCENT / 100)
+        return int((100 - settings['Position'][1]) * cliWidth / 100)
+
+    def _measure_at_size(self, dc, settings, size_px, text):
+        dc.SetFont(self._create_item_font(size_px, settings))
+        return dc.GetTextExtent(text)
+
+    def _layout_text_item(self, dc, cliWidth, cliHeight, settings, text,
+                          forced_size_px=None, forced_max_lines=None,
+                          tight_spacing=False):
+        base_size = int(settings['Size'] * cliHeight / 100)
+        top_px = int(settings['Position'][0] * cliHeight / 100)
+        adaptive, min_size_px, max_lines, max_width_percent = \
+            self._resolve_fit_settings(settings, cliHeight)
+        if forced_max_lines is not None:
+            max_lines = forced_max_lines
+        if forced_size_px is not None:
+            base_size = max(1, min(base_size, int(forced_size_px)))
+        min_size_px = min(min_size_px, base_size)
+
+        text_space = self._get_text_space_available(settings, cliWidth, max_width_percent)
+        text_flow = settings.get('TextFlow', 'Cut')
+
+        def measure_at_size(size, value):
+            return self._measure_at_size(dc, settings, size, value)
+
+        def measure_at_base(value):
+            return measure_at_size(base_size, value)
+
+        if text_flow == 'Wrap':
+            if max_lines <= 0:
+                text_lines = textfit.wrap_text_lines(measure_at_base, text, text_space)
+                size_px = base_size
+            elif adaptive:
+                fitted = textfit.fit_text(measure_at_size, text, text_space,
+                                          base_size, min_size_px, max_lines=max_lines)
+                text_lines = fitted['lines']
+                size_px = fitted['size']
+            else:
+                text_lines = textfit.wrap_text_lines(measure_at_base, text, text_space)
+                if len(text_lines) > max_lines:
+                    last_line = ' '.join(line for line in text_lines[max_lines - 1:] if line)
+                    text_lines = text_lines[:max_lines - 1] + [
+                        textfit.ellipsize_line(measure_at_base, last_line, text_space)
+                    ]
+                size_px = base_size
+        elif text_flow == 'Scale':
+            fitted = textfit.fit_text(measure_at_size, text, int(text_space * 0.95),
+                                      base_size, min_size_px, single_line=True)
+            text_lines = fitted['lines']
+            size_px = fitted['size']
+        else:  # Cut
+            if adaptive:
+                fitted = textfit.fit_text(measure_at_size, text, text_space,
+                                          base_size, min_size_px, single_line=True)
+                text_lines = fitted['lines']
+                size_px = fitted['size']
+            else:
+                text_lines = [textfit.ellipsize_line(measure_at_base, text, text_space)]
+                size_px = base_size
+
+        dc.SetFont(self._create_item_font(size_px, settings))
+        line_height = dc.GetTextExtent('Ag')[1]
+        if tight_spacing:
+            line_spacing = line_height
+        else:
+            line_spacing = max(line_height, int(line_height * 1.1))
+        extra_height = max(0, (len(text_lines) - 1) * line_spacing)
+
+        return {
+            'settings': settings,
+            'text': text,
+            'text_lines': text_lines,
+            'size_px': size_px,
+            'line_spacing': line_spacing,
+            'top_px': top_px,
+            'total_height': line_height + extra_height,
+            'extra_height': extra_height,
+        }
+
+    def _draw_text_layout(self, dc, cliWidth, layout, extra_vertical_offset=0):
+        settings = layout['settings']
+        dc.SetFont(self._create_item_font(layout['size_px'], settings))
+
+        # Set font color. Apply the transition text opacity (requires GCDC for
+        # alpha text; plain DC ignores the alpha channel and just draws the
+        # text fully opaque).
+        text_colour = wx.Colour(eval(settings['FontColor']))
         text_alpha = max(0.0, min(1.0, float(getattr(self.displayData, 'textAlpha', 1.0))))
         if text_alpha < 1.0:
             text_colour = wx.Colour(
@@ -756,95 +789,117 @@ class DisplayPanel(wx.Panel):
             )
         dc.SetTextForeground(text_colour)
 
-        # Check if the text fits, cut it and add ...
-        # if platform.system() == 'Darwin':
-        #     try:
-        #         text = text.decode('utf-8')
-        #     except:
-        #         pass
-        TextWidth, TextHeight = dc.GetTextExtent(text)
-        text_flow = Settings.get('TextFlow', 'Cut')
+        height_position = layout['top_px'] + int(extra_vertical_offset)
+        for line_index, line in enumerate(layout['text_lines']):
+            line_width, _ = dc.GetTextExtent(line)
+            width_position = self._get_text_width_position(
+                settings['Alignment'],
+                settings['Position'][1],
+                cliWidth,
+                line_width,
+            )
+            dc.DrawText(line, int(width_position),
+                        int(height_position + (line_index * layout['line_spacing'])))
 
-        #
-        # Find length and position of text
-        #
-        if Settings['Alignment'] == 'Center':
-            TextSpaceAvailable = cliWidth
-        else:
-            TextSpaceAvailable = int((100 - Settings['Position'][1]) * cliWidth)
+        return layout['extra_height']
 
-        #
-        # TEXT FLOW = CUT
-        #
-        if text_flow == 'Cut':
-            while TextWidth > TextSpaceAvailable:
-                try:
-                    text = text[:-1]
-                    TextWidth, TextHeight = dc.GetTextExtent(text)
-                except:
-                    text = text[:-2]
-                    TextWidth, TextHeight = dc.GetTextExtent(text)
-                if TextWidth < TextSpaceAvailable:
-                    try:
-                        text = text[:-2]
-                        TextWidth, TextHeight = dc.GetTextExtent(text)
-                    except:
-                        text = text[:-3]
-                        TextWidth, TextHeight = dc.GetTextExtent(text)
-                    text = text + '...'
-            TextWidth, TextHeight = dc.GetTextExtent(text)
-        #
-        # TEXT FLOW = SCALE
-        #
+    def drawTextItem(self, dc, cliWidth, cliHeight, settings, text, extra_vertical_offset=0):
+        layout = self._layout_text_item(dc, cliWidth, cliHeight, settings, text)
+        return self._draw_text_layout(dc, cliWidth, layout, extra_vertical_offset)
 
-        if text_flow == 'Scale':
-            while TextWidth > int(TextSpaceAvailable * 0.95):
-                # 10% Scaling each time
-                Size = int(Size * 0.9)
-                try:
-                    dc.SetFont(wx.Font(Size,
-                                       wx.ROMAN,
-                                       beamSettings.FontStyleDictionary[Settings['Style']],
-                                       beamSettings.FontWeightDictionary[Settings['Weight']],
-                                       False,
-                                       face))
-                except:
-                    dc.SetFont(wx.Font(Size,
-                                       wx.ROMAN,
-                                       beamSettings.FontStyleDictionary[Settings['Style']],
-                                       beamSettings.FontWeightDictionary[Settings['Weight']],
-                                       False,
-                                       "Liberation Sans"))
-                TextWidth, TextHeight = dc.GetTextExtent(text)
+    def _fit_layouts_vertically(self, dc, layouts, cliWidth, cliHeight):
+        """Shrink the centered text block until it fits the vertical safe area.
 
-        if text_flow == 'Wrap':
-            wrapped_lines = self._wrap_text_lines(dc, text, TextSpaceAvailable)
-            line_height = dc.GetTextExtent('Ag')[1]
-            line_spacing = max(line_height, int(line_height * 1.1))
-            for line_index, line in enumerate(wrapped_lines):
-                line_width, _ = dc.GetTextExtent(line)
-                width_position = self._get_text_width_position(
-                    Settings['Alignment'],
-                    Settings['Position'][1],
-                    cliWidth,
-                    line_width,
-                )
-                dc.DrawText(line, int(width_position), int(HeightPosition + (line_index * line_spacing)))
-            return max(0, (len(wrapped_lines) - 1) * line_spacing)
+        Only center-aligned items with adaptive sizing participate; left/right
+        items keep their size (they still benefit because a smaller centered
+        block reduces the cumulative offset pushing rows down).
+        """
+        safe_bottom = int(cliHeight * self.VERTICAL_SAFE_BOTTOM_RATIO)
+        if textfit.block_overflow_px(layouts, safe_bottom) <= 0:
+            return layouts
 
-        # Alignment position
-        WidthPosition = self._get_text_width_position(
-            Settings['Alignment'],
-            Settings['Position'][1],
-            cliWidth,
-            TextWidth,
+        def is_candidate(layout):
+            settings = layout['settings']
+            return (settings['Alignment'] == 'Center'
+                    and settings.get('AdaptiveSize', 'yes') == 'yes'
+                    and any(line.strip() for line in layout['text_lines']))
+
+        candidate_indexes = [i for i, layout in enumerate(layouts) if is_candidate(layout)]
+        if not candidate_indexes:
+            return layouts
+
+        # Multi-line (title-like) items shrink first, largest font first.
+        candidate_indexes.sort(
+            key=lambda i: (len(layouts[i]['text_lines']) <= 1, -layouts[i]['size_px'])
         )
+        title_index = candidate_indexes[0]
 
-        # Draw the text
-        # PRS integered argument
-        dc.DrawText(text, int(WidthPosition), int(HeightPosition))
-        return 0
+        min_sizes = {}
+        for i in candidate_indexes:
+            _, min_size_px, _, _ = self._resolve_fit_settings(layouts[i]['settings'], cliHeight)
+            min_sizes[i] = min_size_px
 
+        overrides = {i: {} for i in candidate_indexes}
+
+        def relayout(index):
+            opts = overrides[index]
+            layouts[index] = self._layout_text_item(
+                dc, cliWidth, cliHeight,
+                layouts[index]['settings'],
+                layouts[index]['text'],
+                forced_size_px=opts.get('forced_size_px'),
+                forced_max_lines=opts.get('forced_max_lines'),
+                tight_spacing=opts.get('tight_spacing', False),
+            )
+
+        for _ in range(self._BLOCK_FIT_MAX_ITERATIONS):
+            if textfit.block_overflow_px(layouts, safe_bottom) <= 0:
+                return layouts
+
+            # Stage 1: step the first candidate still above its minimum size.
+            target = None
+            for i in candidate_indexes:
+                if layouts[i]['size_px'] > min_sizes[i]:
+                    target = i
+                    break
+            if target is not None:
+                overrides[target]['forced_size_px'] = textfit.next_size_step(
+                    layouts[target]['size_px'], min_sizes[target])
+                relayout(target)
+                continue
+
+            # Stage 2: tighten line spacing on wrapped centered items.
+            tightened = False
+            for i in candidate_indexes:
+                if not overrides[i].get('tight_spacing') and len(layouts[i]['text_lines']) > 1:
+                    overrides[i]['tight_spacing'] = True
+                    relayout(i)
+                    tightened = True
+            if tightened:
+                continue
+
+            # Stage 3: force non-title candidates to a single ellipsized line.
+            forced = False
+            for i in candidate_indexes:
+                if i == title_index:
+                    continue
+                if len(layouts[i]['text_lines']) > 1 and overrides[i].get('forced_max_lines') != 1:
+                    overrides[i]['forced_max_lines'] = 1
+                    relayout(i)
+                    forced = True
+            if forced:
+                continue
+
+            # Stage 4: reduce the title's line count one line at a time.
+            title_lines = len(layouts[title_index]['text_lines'])
+            if title_lines > 1:
+                overrides[title_index]['forced_max_lines'] = title_lines - 1
+                relayout(title_index)
+                continue
+
+            break
+
+        return layouts
 
     def drawItems(self, dc):
 
@@ -863,7 +918,9 @@ class DisplayPanel(wx.Panel):
             if field.strip() == "%CoverArt" and display_rows[j] != "":
                 self.drawCoverArt(dc, cliWidth, cliHeight, settings)
 
-        # Draw text after/over image. Wrapped rows reserve extra vertical space for later rows.
+        # Draw text after/over image. Wrapped rows reserve extra vertical space
+        # for later rows; the block pre-pass keeps the whole centered group
+        # inside the vertical safe area.
         text_row_indexes = []
         for j, settings in enumerate(display_settings):
             field = settings["Field"]
@@ -878,28 +935,16 @@ class DisplayPanel(wx.Panel):
             )
         )
 
-        cumulative_vertical_offset = 0
-        current_row_position = None
-        current_row_extra_height = 0
-        for j in text_row_indexes:
-            settings = display_settings[j]
-            row_position = settings['Position'][0]
-            if current_row_position is None:
-                current_row_position = row_position
-            elif row_position > current_row_position:
-                cumulative_vertical_offset += current_row_extra_height
-                current_row_extra_height = 0
-                current_row_position = row_position
+        layouts = [
+            self._layout_text_item(dc, cliWidth, cliHeight,
+                                   display_settings[j], display_rows[j])
+            for j in text_row_indexes
+        ]
+        layouts = self._fit_layouts_vertically(dc, layouts, cliWidth, cliHeight)
 
-            row_extra_height = self.drawTextItem(
-                dc,
-                cliWidth,
-                cliHeight,
-                settings,
-                display_rows[j],
-                cumulative_vertical_offset,
-            )
-            current_row_extra_height = max(current_row_extra_height, row_extra_height)
+        offsets = textfit.compute_row_offsets(layouts)
+        for layout, offset in zip(layouts, offsets):
+            self._draw_text_layout(dc, cliWidth, layout, offset)
 
 
 ########################################################

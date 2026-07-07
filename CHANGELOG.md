@@ -2,6 +2,27 @@
 
 All notable changes in this fork are documented in this file.
 
+## Unreleased
+
+### Added
+
+- Safer text margins and adaptive text fitting: centered text now stays inside a
+  safe area (85% of the display width by default) and automatically shrinks
+  (down to 75% of the configured size) before wrapping or ellipsizing, so long
+  titles remain readable on projector displays. Layout items gain optional
+  properties `MaxLines` (Auto/1/2/3), `AdaptiveSize`, `MinSize` and
+  `MaxWidthPercent`; the default layout caps the title at 2 lines and metadata
+  lines at 1. Block-level vertical fitting keeps the whole centered text group
+  (artist / title / year) inside the screen instead of letting a wrapped title
+  push lower fields off-screen. Applies to both the native display and the
+  browser/network display.
+
+### Fixed
+
+- Left/Right-aligned layout items now compute their available text width
+  correctly; long corner text (previous song, next tanda, clock) shrinks and
+  truncates instead of running off the edge of the screen.
+
 ## v0.9.4 - 2026-06-22
 
 ### Added

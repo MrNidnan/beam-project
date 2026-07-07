@@ -226,7 +226,8 @@
           "Font": "",
           "Alignment": "Center",
           "Size": 10,
-          "TextFlow": "Cut"
+          "TextFlow": "Cut",
+          "MaxLines": 1
         },
         {
           "Style": "Italic",
@@ -239,7 +240,8 @@
           "Font": "",
           "Alignment": "Center",
           "Size": 8,
-          "TextFlow": "Cut"
+          "TextFlow": "Cut",
+          "MaxLines": 1
         },
         {
           "Field": "%Title",
@@ -252,7 +254,8 @@
           "Position": [48, 50],
           "Alignment": "Center",
           "Active": "yes",
-          "TextFlow": "Wrap"
+          "TextFlow": "Wrap",
+          "MaxLines": 2
         },
         {
           "Field": "%Genre %Year",
@@ -265,7 +268,8 @@
           "Position": [64, 50],
           "Alignment": "Center",
           "Active": "yes",
-          "TextFlow": "Cut"
+          "TextFlow": "Cut",
+          "MaxLines": 1
         },
         {
           "Style": "Italic",

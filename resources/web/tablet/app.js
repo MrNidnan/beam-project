@@ -8,6 +8,7 @@ const tempMessagePanelEl = document.getElementById("temp-message-panel");
 const COVER_ART_URL = "/media/cover-art/current";
 const ABSOLUTE_MIN_TEXT_SIZE_PX = 10;
 const ABSOLUTE_MAX_TEXT_SIZE_PX = 420;
+const DEFAULT_CENTER_MAX_WIDTH_PERCENT = 85;
 const GENERIC_FONT_FAMILIES = new Set([
   "serif",
   "sans-serif",
@@ -522,11 +523,31 @@ function wrapTextLines(text, item, fontSizePx, maxWidthPx) {
 }
 
 function getItemMaxWidth(canvasWidth, item, alignment) {
+  const maxWidthPercent = Number(item?.maxWidthPercent ?? 0);
+  if (maxWidthPercent > 0) {
+    return Math.max(0, (maxWidthPercent / 100) * canvasWidth);
+  }
   const positionX = Number(item?.position?.[1] ?? 0);
   if (alignment === "center") {
-    return canvasWidth;
+    return (DEFAULT_CENTER_MAX_WIDTH_PERCENT / 100) * canvasWidth;
   }
   return Math.max(0, ((100 - positionX) / 100) * canvasWidth);
+}
+
+function resolveFitSettings(item, baseFontSizePx, canvasHeight) {
+  const adaptive = String(item?.adaptiveSize ?? "yes") !== "no";
+  const minSizeSetting = Number(item?.minSize ?? 0);
+  const minFontPx = Math.max(
+    ABSOLUTE_MIN_TEXT_SIZE_PX,
+    minSizeSetting > 0
+      ? Math.round((minSizeSetting / 100) * canvasHeight)
+      : Math.max(1, Math.round(baseFontSizePx * 0.75)),
+  );
+  return {
+    adaptive,
+    minFontPx: Math.min(minFontPx, baseFontSizePx),
+    maxLines: Math.max(0, Number(item?.maxLines ?? 0) || 0),
+  };
 }
 
 function applyHorizontalPosition(element, alignment, item, canvasWidth) {
@@ -699,36 +720,67 @@ function createTextItemElement(
   const alignment = normalizeAlignment(item.alignment);
   const textFlow = normalizeTextFlow(item.textFlow);
   const itemEl = document.createElement("p");
-  const baseFontSizePx = getBaseItemFontSizePx(item, canvasHeight);
   let fontSizePx = getItemFontSizePx(item, canvasHeight);
-  const { lineHeightPx, lineSpacingPx } = getMeasuredLineSpacing(
+  const { adaptive, minFontPx, maxLines } = resolveFitSettings(
     item,
     fontSizePx,
+    canvasHeight,
   );
   const maxWidthPx = getItemMaxWidth(canvasWidth, item, alignment);
   let renderedText = text;
-  let extraHeightPx = 0;
+  let wrappedLineCount = 1;
 
   if (textFlow === "scale") {
     let measurement = measureSingleLineText(text, item, fontSizePx);
-    while (
-      fontSizePx > baseFontSizePx &&
-      measurement.width > maxWidthPx * 0.95
-    ) {
-      fontSizePx = Math.max(baseFontSizePx, Math.floor(fontSizePx * 0.9));
+    while (fontSizePx > minFontPx && measurement.width > maxWidthPx * 0.95) {
+      fontSizePx = Math.max(minFontPx, Math.floor(fontSizePx * 0.92));
       measurement = measureSingleLineText(text, item, fontSizePx);
+    }
+    if (measurement.width > maxWidthPx) {
+      renderedText = trimCutText(text, item, maxWidthPx, fontSizePx);
     }
   }
 
   if (textFlow === "cut") {
+    if (adaptive) {
+      while (
+        fontSizePx > minFontPx &&
+        measureSingleLineText(text, item, fontSizePx).width > maxWidthPx
+      ) {
+        fontSizePx = Math.max(minFontPx, Math.floor(fontSizePx * 0.92));
+      }
+    }
     renderedText = trimCutText(text, item, maxWidthPx, fontSizePx);
   }
 
   if (textFlow === "wrap") {
-    const wrappedLines = wrapTextLines(text, item, fontSizePx, maxWidthPx);
+    let wrappedLines = wrapTextLines(text, item, fontSizePx, maxWidthPx);
+    if (maxLines > 0 && wrappedLines.length > maxLines) {
+      if (adaptive) {
+        while (fontSizePx > minFontPx && wrappedLines.length > maxLines) {
+          fontSizePx = Math.max(minFontPx, Math.floor(fontSizePx * 0.92));
+          wrappedLines = wrapTextLines(text, item, fontSizePx, maxWidthPx);
+        }
+      }
+      if (wrappedLines.length > maxLines) {
+        const lastLine = wrappedLines
+          .slice(maxLines - 1)
+          .filter(Boolean)
+          .join(" ");
+        wrappedLines = wrappedLines
+          .slice(0, maxLines - 1)
+          .concat(trimCutText(lastLine, item, maxWidthPx, fontSizePx));
+      }
+    }
     renderedText = wrappedLines.join("\n");
-    extraHeightPx = Math.max(0, (wrappedLines.length - 1) * lineSpacingPx);
+    wrappedLineCount = wrappedLines.length;
   }
+
+  const { lineHeightPx, lineSpacingPx } = getMeasuredLineSpacing(
+    item,
+    fontSizePx,
+  );
+  const extraHeightPx = Math.max(0, (wrappedLineCount - 1) * lineSpacingPx);
 
   itemEl.className = `layout-item align-${alignment} flow-${textFlow}`;
   itemEl.dataset.field = String(item.field || "").replaceAll("%", "") || "text";

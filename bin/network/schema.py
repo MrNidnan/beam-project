@@ -105,6 +105,10 @@ def build_display_items(rows, settings):
             'hideControlOperator': setting.get('HideControlOperator', 'is'),
             'hideControlValue': setting.get('HideControlValue', 'empty'),
             'textFlow': setting.get('TextFlow', 'Cut'),
+            'adaptiveSize': setting.get('AdaptiveSize', 'yes'),
+            'minSize': setting.get('MinSize', 0),
+            'maxLines': setting.get('MaxLines', 0),
+            'maxWidthPercent': setting.get('MaxWidthPercent', 0),
         })
 
     return items

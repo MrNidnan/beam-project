@@ -119,6 +119,18 @@ Layout `Position` values are percentages:
 
 If you want to know which text tags you can place in the layout, see [Display Tags.md](Display%20Tags.md).
 
+### Adaptive Text Fitting
+
+Beam keeps long text readable automatically:
+
+- Centered text stays inside a safe area (85% of the display width by default), so long titles never touch the screen edges.
+- When text does not fit, Beam first shrinks the font (down to 75% of the configured size) before wrapping or ellipsizing.
+- Each layout item can set **Max lines** (Auto / 1 / 2 / 3) in the layout item editor. In the default layout the title wraps to at most 2 lines and metadata lines stay on 1 line, ellipsized with `...` if still too long.
+- The whole centered text group (artist / title / year) is kept inside the screen: if a wrapped title would push the year or clock off-screen, Beam shrinks the group until everything fits.
+- Uncheck **Auto-fit text size** in the layout item editor to disable shrinking for an item. Advanced per-item properties `MinSize` (shrink floor, in the same percent unit as `Size`) and `MaxWidthPercent` (text box width as percent of the display width, e.g. `100` for edge-to-edge) can be set directly in the profile JSON.
+
+The same rules apply on the browser/network display.
+
 `Next Tanda` tags are calculated from the playlist by looking ahead to the next cortina, then taking the first non-cortina song after it. This is not the same as the current song position inside the tanda. For current tanda progress, use `%SongsSinceLastCortina`, `%CurrentTandaSongsRemaining`, and `%CurrentTandaLength`.
 
 ## Artist or Orchestra Overlays

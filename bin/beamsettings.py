@@ -743,6 +743,23 @@ class BeamSettings:
                     display_index,
                 )
 
+    def _migrate_display_item_fitting_defaults_in_memory(self):
+        for mood_index, mood in enumerate(self._beamConfigData.get('Moods', [])):
+            for display_index, display_item in enumerate(mood.get('Display', [])):
+                field_name = str(display_item.get('Field', '')).strip()
+                alignment = str(display_item.get('Alignment', '')).strip()
+                text_flow = str(display_item.get('TextFlow', 'Cut')).strip()
+                if (field_name != '%Title' or alignment != 'Center'
+                        or text_flow != 'Wrap' or 'MaxLines' in display_item):
+                    continue
+
+                display_item['MaxLines'] = 2
+                logging.info(
+                    "BeamSettings: migrated mood[%s] display[%s] title MaxLines to 2",
+                    mood_index,
+                    display_index,
+                )
+
     def _migrate_background_config_in_memory(self, defaultConfigData):
         for mood_index, mood in enumerate(self._beamConfigData.get('Moods', [])):
             mood['Background'] = self._migrate_background_reference_value(
@@ -759,6 +776,7 @@ class BeamSettings:
             )
 
         self._migrate_title_text_flow_in_memory()
+        self._migrate_display_item_fitting_defaults_in_memory()
 
 
     #

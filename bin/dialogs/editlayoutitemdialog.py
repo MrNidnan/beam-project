@@ -66,6 +66,7 @@ class EditLayoutItemDialog(wx.Dialog):
         alignments = ["Left","Center","Right"]
         text_flow_choices = ["Cut","Scale","Wrap"]
         hide_operator_choices = ["is", "is not", "contains"]
+        max_lines_choices = ["Auto", "1", "2", "3"]
         
         hide_layout_tags = [
             '', '%Artist', '%Album', '%Title', '%Genre', '%Comment', '%Composer',
@@ -98,12 +99,16 @@ class EditLayoutItemDialog(wx.Dialog):
                 "Alignment": "Center",
                 "Active": "yes",
                 "TextFlow": "Wrap",
+                "MaxLines": 0,
+                "AdaptiveSize": "yes",
             })
 
         if 'HideControlOperator' not in self.Settings:
             self.Settings['HideControlOperator'] = "is"
         if 'HideControlValue' not in self.Settings:
             self.Settings['HideControlValue'] = "empty"
+        self.Settings.setdefault('MaxLines', 0)
+        self.Settings.setdefault('AdaptiveSize', "yes")
 
         # Define fields
         self.LabelText          = wx.TextCtrl(self.EditLayoutPanel, size=(250,-1), value=self.Settings['Field'])
@@ -119,6 +124,12 @@ class EditLayoutItemDialog(wx.Dialog):
         self.HorizontalPos      = wx.SpinCtrl(self.EditLayoutPanel, size=(125,-1), value=str(self.Settings['Position'][1]), min=1, max=99)
         self.Alignment          = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['Alignment'], choices=alignments, style=wx.CB_READONLY)
         self.TextFlow           = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=self.Settings['TextFlow'], choices=text_flow_choices, style=wx.CB_READONLY)
+        max_lines_value = "Auto" if not int(self.Settings.get('MaxLines', 0) or 0) else str(self.Settings['MaxLines'])
+        self.MaxLines           = wx.ComboBox(self.EditLayoutPanel, size=(125,-1), value=max_lines_value, choices=max_lines_choices, style=wx.CB_READONLY)
+        self.AdaptiveSize       = wx.CheckBox(self.EditLayoutPanel, label="Auto-fit text size")
+        self.AdaptiveSize.SetValue(self.Settings.get('AdaptiveSize', 'yes') == 'yes')
+        self.AdaptiveSize.SetToolTip("Shrink the text automatically (down to 75% of the configured size) when it does not fit.")
+        self.MaxLines.SetToolTip("Maximum number of wrapped lines. Auto keeps the existing behavior.")
         self.ColorField.SetColour(eval(self.Settings['FontColor']))
 
         self.HorizontalPosLabel = wx.StaticText(self.EditLayoutPanel, label="Horizontal position")
@@ -138,6 +149,8 @@ class EditLayoutItemDialog(wx.Dialog):
         self.VerticalPos.Bind(wx.EVT_SPINCTRL, self.OnImmediatePreviewChange)
         self.HorizontalPos.Bind(wx.EVT_SPINCTRL, self.OnImmediatePreviewChange)
         self.TextFlow.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
+        self.MaxLines.Bind(wx.EVT_COMBOBOX, self.OnImmediatePreviewChange)
+        self.AdaptiveSize.Bind(wx.EVT_CHECKBOX, self.OnImmediatePreviewChange)
         self.ColorField.Bind(wx.EVT_COLOURPICKER_CHANGED, self.OnImmediatePreviewChange)
 
         content_box = wx.StaticBoxSizer(wx.VERTICAL, self.EditLayoutPanel, "Content")
@@ -169,7 +182,7 @@ class EditLayoutItemDialog(wx.Dialog):
         typography_box.Add(self.ColorField, 0, flag=wx.ALL, border=10)
 
         placement_box = wx.StaticBoxSizer(wx.VERTICAL, self.EditLayoutPanel, "Placement")
-        placement_grid = wx.FlexGridSizer(4, 2, 5, 12)
+        placement_grid = wx.FlexGridSizer(6, 2, 5, 12)
         placement_grid.AddGrowableCol(0, 1)
         placement_grid.AddGrowableCol(1, 1)
         placement_grid.AddMany([
@@ -181,6 +194,10 @@ class EditLayoutItemDialog(wx.Dialog):
             (self.HorizontalPosLabel, 0, wx.EXPAND),
             (self.VerticalPos, 0, wx.EXPAND),
             (self.HorizontalPos, 0, wx.EXPAND),
+            (wx.StaticText(self.EditLayoutPanel, label="Max lines"), 0, wx.EXPAND),
+            (wx.StaticText(self.EditLayoutPanel, label=""), 0, wx.EXPAND),
+            (self.MaxLines, 0, wx.EXPAND),
+            (self.AdaptiveSize, 0, wx.ALIGN_CENTER_VERTICAL),
         ])
         placement_box.Add(placement_grid, 0, flag=wx.ALL | wx.EXPAND, border=10)
 
@@ -249,6 +266,9 @@ class EditLayoutItemDialog(wx.Dialog):
         settings['Position'] = [int(self.VerticalPos.GetValue()), int(self.HorizontalPos.GetValue())]
         settings['Alignment'] = self.Alignment.GetValue()
         settings['TextFlow'] = self.TextFlow.GetValue()
+        max_lines_value = self.MaxLines.GetValue()
+        settings['MaxLines'] = 0 if max_lines_value == "Auto" else int(max_lines_value)
+        settings['AdaptiveSize'] = "yes" if self.AdaptiveSize.GetValue() else "no"
         return settings
 
     def _build_layout_list_with_settings(self, settings):
