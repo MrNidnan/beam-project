@@ -137,6 +137,7 @@ If you want to know which text tags you can place in the layout, see [Display Ta
 Beam keeps long text readable automatically:
 
 - Centered text stays inside a safe area (85% of the display width by default), so long titles never touch the screen edges.
+- Text always keeps a minimum 5% margin at the top and bottom of the screen: items positioned above the top margin are pushed down to it, and the centered group shrinks until it clears the bottom margin.
 - When text does not fit, Beam first shrinks the font (down to 75% of the configured size) before wrapping or ellipsizing.
 - Each layout item can set **Max lines** (Auto / 1 / 2 / 3) in the layout item editor. In the default layout the title wraps to at most 2 lines and metadata lines stay on 1 line, ellipsized with `...` if still too long.
 - The whole centered text group (artist / title / year) is kept inside the screen: if a wrapped title would push the year or clock off-screen, Beam shrinks the group until everything fits.

@@ -27,6 +27,8 @@
 
 
 
+import ast
+
 import wx, wx.html
 from copy import deepcopy
 from bin.beamsettings import beamSettings
@@ -131,7 +133,10 @@ class EditLayoutItemDialog(wx.Dialog):
         self.AdaptiveSize.SetValue(self.Settings.get('AdaptiveSize', 'yes') == 'yes')
         self.AdaptiveSize.SetToolTip("Shrink the text automatically (down to 75% of the configured size) when it does not fit.")
         self.MaxLines.SetToolTip("Maximum number of wrapped lines. Auto keeps the existing behavior.")
-        self.ColorField.SetColour(eval(self.Settings['FontColor']))
+        try:
+            self.ColorField.SetColour(ast.literal_eval(self.Settings['FontColor']))
+        except (ValueError, SyntaxError):
+            self.ColorField.SetColour((255, 255, 255, 255))
 
         self.HorizontalPosLabel = wx.StaticText(self.EditLayoutPanel, label="Horizontal position")
         self._horizontal_position_disabled_tooltip = "Horizontal position is only used for left and right alignment."

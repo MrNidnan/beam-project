@@ -24,6 +24,7 @@
 #       - Initial release
 #
 # This Python file uses the following encoding: utf-8
+import ast
 import logging
 from collections import OrderedDict
 
@@ -49,7 +50,9 @@ class DisplayPanel(wx.Panel):
     _cover_art_outline_alpha = 56
     _cover_art_outline_width = 1
     DEFAULT_CENTER_MAX_WIDTH_PERCENT = 85
-    VERTICAL_SAFE_BOTTOM_RATIO = 0.92
+    # Text must keep at least a 5% margin at the top and bottom of the screen.
+    VERTICAL_SAFE_TOP_RATIO = 0.05
+    VERTICAL_SAFE_BOTTOM_RATIO = 0.95
     _BLOCK_FIT_MAX_ITERATIONS = 60
 
     def _log_background_debug(self, message, *args):
@@ -702,7 +705,8 @@ class DisplayPanel(wx.Panel):
                           forced_size_px=None, forced_max_lines=None,
                           tight_spacing=False):
         base_size = int(settings['Size'] * cliHeight / 100)
-        top_px = int(settings['Position'][0] * cliHeight / 100)
+        top_px = max(int(settings['Position'][0] * cliHeight / 100),
+                     int(cliHeight * self.VERTICAL_SAFE_TOP_RATIO))
         adaptive, min_size_px, max_lines, max_width_percent = \
             self._resolve_fit_settings(settings, cliHeight)
         if forced_max_lines is not None:
@@ -777,8 +781,12 @@ class DisplayPanel(wx.Panel):
 
         # Set font color. Apply the transition text opacity (requires GCDC for
         # alpha text; plain DC ignores the alpha channel and just draws the
-        # text fully opaque).
-        text_colour = wx.Colour(eval(settings['FontColor']))
+        # text fully opaque). literal_eval only accepts plain tuples/numbers,
+        # so a malformed profile value cannot execute code.
+        try:
+            text_colour = wx.Colour(ast.literal_eval(settings['FontColor']))
+        except (ValueError, SyntaxError):
+            text_colour = wx.Colour(255, 255, 255, 255)
         text_alpha = max(0.0, min(1.0, float(getattr(self.displayData, 'textAlpha', 1.0))))
         if text_alpha < 1.0:
             text_colour = wx.Colour(

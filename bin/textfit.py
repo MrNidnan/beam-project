@@ -16,19 +16,21 @@ def wrap_long_token(measure, token, max_width):
     wrapped_parts = []
     remaining = token
     while remaining:
-        split_index = 1
-        while split_index <= len(remaining):
-            candidate = remaining[:split_index]
-            candidate_width, _ = measure(candidate)
-            if candidate_width > max_width:
-                split_index -= 1
-                break
-            split_index += 1
-
+        # Binary search for the longest prefix that still fits (prefix width
+        # grows monotonically with its length). Always take at least one char
+        # so a too-narrow box cannot loop forever.
+        low, high = 1, len(remaining)
+        split_index = 0
+        while low <= high:
+            mid = (low + high) // 2
+            candidate_width, _ = measure(remaining[:mid])
+            if candidate_width <= max_width:
+                split_index = mid
+                low = mid + 1
+            else:
+                high = mid - 1
         if split_index <= 0:
             split_index = 1
-        if split_index > len(remaining):
-            split_index = len(remaining)
 
         wrapped_parts.append(remaining[:split_index])
         remaining = remaining[split_index:]

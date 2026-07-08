@@ -14,8 +14,10 @@ All notable changes in this fork are documented in this file.
   `MaxWidthPercent`; the default layout caps the title at 2 lines and metadata
   lines at 1. Block-level vertical fitting keeps the whole centered text group
   (artist / title / year) inside the screen instead of letting a wrapped title
-  push lower fields off-screen. Applies to both the native display and the
-  browser/network display.
+  push lower fields off-screen. Text always keeps a minimum 5% margin at the
+  top and bottom of the screen: items positioned above the top margin are
+  pushed down to it, and the centered block shrinks until it clears the bottom
+  margin. Applies to both the native display and the browser/network display.
 
 ### Changed
 
@@ -33,6 +35,19 @@ All notable changes in this fork are documented in this file.
 
 ### Fixed
 
+- Layout font colors are now parsed with `ast.literal_eval` instead of
+  `eval`, so a malformed or malicious `FontColor` value in a profile JSON can
+  no longer execute code; invalid values fall back to white.
+- Hard-splitting very long unbreakable words (e.g. long URLs in a title) now
+  uses a binary search per line instead of growing the prefix one character at
+  a time, on both the native and browser display.
+- The browser display's minimum text size floor (10px) no longer overrides
+  per-item shrink limits, and text is measured at the exact size that renders;
+  both displays now shrink identically.
+- Browser/network display no longer shows the "Waiting for Beam" placeholder
+  when an active layout renders no text (e.g. a cortina at the end of the
+  playlist with no next tanda); it now shows just the background, matching the
+  native display. The placeholder only appears when no layout is configured.
 - Edit Mood dialog: the "On-screen Text Layout" list now grows with its rows
   (up to a cap) when layout items are added, instead of keeping its initial
   height and forcing a scrollbar; the dialog re-fits and stays within the

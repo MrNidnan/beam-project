@@ -9,6 +9,11 @@ const COVER_ART_URL = "/media/cover-art/current";
 const ABSOLUTE_MIN_TEXT_SIZE_PX = 10;
 const ABSOLUTE_MAX_TEXT_SIZE_PX = 420;
 const DEFAULT_CENTER_MAX_WIDTH_PERCENT = 85;
+// Text must keep at least a 5% margin at the top and bottom of the screen
+// (kept in sync with the native display's VERTICAL_SAFE_*_RATIO constants).
+const VERTICAL_SAFE_TOP_RATIO = 0.05;
+const VERTICAL_SAFE_BOTTOM_RATIO = 0.95;
+const BLOCK_FIT_MAX_ITERATIONS = 60;
 const GENERIC_FONT_FAMILIES = new Set([
   "serif",
   "sans-serif",
@@ -375,7 +380,9 @@ function configureTextMeasurer(item, fontSizePx, options = {}) {
     ? `${Math.max(0, maxWidthPx)}px`
     : "auto";
   textMeasurerEl.style.fontFamily = getFontFamily(item);
-  textMeasurerEl.style.fontSize = `${Math.max(ABSOLUTE_MIN_TEXT_SIZE_PX, fontSizePx)}px`;
+  // Measure at the exact size that will render, or wrapping decisions made
+  // below the old 10px clamp would disagree with the drawn text.
+  textMeasurerEl.style.fontSize = `${Math.max(1, fontSizePx)}px`;
   textMeasurerEl.style.fontStyle = normalizeStyle(item.style);
   textMeasurerEl.style.fontWeight = normalizeWeight(item.weight);
   textMeasurerEl.style.lineHeight = lineHeight;
@@ -438,23 +445,28 @@ function wrapLongToken(token, item, fontSizePx, maxWidthPx) {
   let remaining = token;
 
   while (remaining) {
-    let splitIndex = 1;
-    while (splitIndex <= remaining.length) {
-      const candidate = remaining.slice(0, splitIndex);
+    // Binary search for the longest prefix that still fits (prefix width
+    // grows monotonically with its length). Always take at least one char
+    // so a too-narrow box cannot loop forever.
+    let low = 1;
+    let high = remaining.length;
+    let splitIndex = 0;
+    while (low <= high) {
+      const mid = (low + high) >> 1;
       const candidateWidth = measureSingleLineText(
-        candidate,
+        remaining.slice(0, mid),
         item,
         fontSizePx,
       ).width;
-      if (candidateWidth > maxWidthPx) {
-        splitIndex = Math.max(1, splitIndex - 1);
-        break;
+      if (candidateWidth <= maxWidthPx) {
+        splitIndex = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
       }
-      splitIndex += 1;
     }
-
-    if (splitIndex > remaining.length) {
-      splitIndex = remaining.length;
+    if (splitIndex <= 0) {
+      splitIndex = 1;
     }
 
     wrappedParts.push(remaining.slice(0, splitIndex));
@@ -537,11 +549,12 @@ function getItemMaxWidth(canvasWidth, item, alignment) {
 function resolveFitSettings(item, baseFontSizePx, canvasHeight) {
   const adaptive = String(item?.adaptiveSize ?? "yes") !== "no";
   const minSizeSetting = Number(item?.minSize ?? 0);
+  // Floor at 1px like the native display so both displays shrink identically.
   const minFontPx = Math.max(
-    ABSOLUTE_MIN_TEXT_SIZE_PX,
+    1,
     minSizeSetting > 0
       ? Math.round((minSizeSetting / 100) * canvasHeight)
-      : Math.max(1, Math.round(baseFontSizePx * 0.75)),
+      : Math.round(baseFontSizePx * 0.75),
   );
   return {
     adaptive,
@@ -710,22 +723,24 @@ function applyCoverArtStyle(coverArtEl, style, sizePx) {
   }
 }
 
-function createTextItemElement(
-  item,
-  text,
-  canvasWidth,
-  canvasHeight,
-  extraVerticalOffset,
-) {
+function layoutTextItem(item, text, canvasWidth, canvasHeight, overrides = {}) {
   const alignment = normalizeAlignment(item.alignment);
   const textFlow = normalizeTextFlow(item.textFlow);
-  const itemEl = document.createElement("p");
   let fontSizePx = getItemFontSizePx(item, canvasHeight);
-  const { adaptive, minFontPx, maxLines } = resolveFitSettings(
-    item,
-    fontSizePx,
-    canvasHeight,
-  );
+  // Resolve the minimum from the configured size before applying any forced
+  // cap, so repeated block-fit steps cannot drag the minimum down with them.
+  const fitSettings = resolveFitSettings(item, fontSizePx, canvasHeight);
+  if (Number.isFinite(overrides.forcedFontPx)) {
+    fontSizePx = Math.max(
+      1,
+      Math.min(fontSizePx, Math.floor(overrides.forcedFontPx)),
+    );
+  }
+  const { adaptive } = fitSettings;
+  const minFontPx = Math.min(fitSettings.minFontPx, fontSizePx);
+  const maxLines = Number.isFinite(overrides.forcedMaxLines)
+    ? overrides.forcedMaxLines
+    : fitSettings.maxLines;
   const maxWidthPx = getItemMaxWidth(canvasWidth, item, alignment);
   let renderedText = text;
   let wrappedLineCount = 1;
@@ -780,32 +795,223 @@ function createTextItemElement(
     item,
     fontSizePx,
   );
-  const extraHeightPx = Math.max(0, (wrappedLineCount - 1) * lineSpacingPx);
+  const effectiveLineSpacingPx = overrides.tightSpacing
+    ? lineHeightPx
+    : lineSpacingPx;
+  const extraHeightPx = Math.max(
+    0,
+    (wrappedLineCount - 1) * effectiveLineSpacingPx,
+  );
+  // Text keeps at least the top safe margin regardless of the configured
+  // vertical position (mirrors the native display's VERTICAL_SAFE_TOP_RATIO).
+  const topPx = Math.max(
+    Math.round((Number(item?.position?.[0] ?? 0) / 100) * canvasHeight),
+    Math.round(canvasHeight * VERTICAL_SAFE_TOP_RATIO),
+  );
+
+  return {
+    item,
+    text,
+    alignment,
+    textFlow,
+    renderedText,
+    wrappedLineCount,
+    fontSizePx,
+    minFontPx,
+    adaptive,
+    maxWidthPx,
+    lineHeightPx,
+    lineSpacingPx: effectiveLineSpacingPx,
+    extraHeightPx,
+    topPx,
+    totalHeightPx: lineHeightPx + extraHeightPx,
+  };
+}
+
+function buildTextItemElement(layout, canvasWidth, extraVerticalOffset) {
+  const { item, alignment, textFlow } = layout;
+  const itemEl = document.createElement("p");
 
   itemEl.className = `layout-item align-${alignment} flow-${textFlow}`;
   itemEl.dataset.field = String(item.field || "").replaceAll("%", "") || "text";
-  itemEl.innerHTML = escapeHtml(renderedText).replaceAll("\n", "<br>");
-  itemEl.style.top = `${Math.round((Number(item?.position?.[0] ?? 0) / 100) * canvasHeight) + extraVerticalOffset}px`;
+  itemEl.innerHTML = escapeHtml(layout.renderedText).replaceAll("\n", "<br>");
+  itemEl.style.top = `${layout.topPx + extraVerticalOffset}px`;
   itemEl.style.color = parseFontColor(item.fontColor);
   itemEl.style.fontFamily = getFontFamily(item);
-  itemEl.style.fontSize = `${fontSizePx}px`;
+  itemEl.style.fontSize = `${layout.fontSizePx}px`;
   itemEl.style.fontStyle = normalizeStyle(item.style);
   itemEl.style.fontWeight = normalizeWeight(item.weight);
-  itemEl.style.width = `${Math.max(0, maxWidthPx)}px`;
+  itemEl.style.width = `${Math.max(0, layout.maxWidthPx)}px`;
   itemEl.style.lineHeight =
-    textFlow === "wrap" ? `${lineSpacingPx}px` : `${lineHeightPx}px`;
+    textFlow === "wrap"
+      ? `${layout.lineSpacingPx}px`
+      : `${layout.lineHeightPx}px`;
 
   applyHorizontalPosition(itemEl, alignment, item, canvasWidth);
 
-  return { element: itemEl, extraHeightPx };
+  return itemEl;
+}
+
+// Cumulative vertical offsets replicating the native reflow rules: items in
+// the same Position row reserve the tallest extra height in that row; later
+// rows are pushed down by the accumulated total.
+function computeRowOffsets(layouts) {
+  const offsets = [];
+  let cumulativeVerticalOffset = 0;
+  let currentRowPosition = null;
+  let currentRowExtraHeight = 0;
+
+  layouts.forEach((layout) => {
+    const rowPosition = Number(layout.item?.position?.[0] ?? 0);
+    if (currentRowPosition === null) {
+      currentRowPosition = rowPosition;
+    } else if (rowPosition > currentRowPosition) {
+      cumulativeVerticalOffset += currentRowExtraHeight;
+      currentRowExtraHeight = 0;
+      currentRowPosition = rowPosition;
+    }
+
+    offsets.push(cumulativeVerticalOffset);
+    currentRowExtraHeight = Math.max(
+      currentRowExtraHeight,
+      layout.extraHeightPx,
+    );
+  });
+
+  return offsets;
+}
+
+function blockOverflowPx(layouts, safeBottom) {
+  const offsets = computeRowOffsets(layouts);
+  let worst = 0;
+  layouts.forEach((layout, index) => {
+    if (!String(layout.renderedText || "").trim()) {
+      return;
+    }
+    const bottom = layout.topPx + offsets[index] + layout.totalHeightPx;
+    worst = Math.max(worst, bottom - safeBottom);
+  });
+  return worst;
+}
+
+// Shrink the centered text block until it fits the vertical safe area,
+// mirroring the native display's staged strategy: font size first, then
+// tighter line spacing, then fewer lines on non-title items, then fewer
+// lines on the title itself.
+function fitLayoutsVertically(layouts, canvasWidth, canvasHeight) {
+  const safeBottom = Math.round(canvasHeight * VERTICAL_SAFE_BOTTOM_RATIO);
+  if (blockOverflowPx(layouts, safeBottom) <= 0) {
+    return layouts;
+  }
+
+  const candidateIndexes = layouts
+    .map((layout, index) => ({ layout, index }))
+    .filter(
+      ({ layout }) =>
+        layout.alignment === "center" &&
+        layout.adaptive &&
+        String(layout.renderedText || "").trim(),
+    )
+    .map(({ index }) => index);
+  if (!candidateIndexes.length) {
+    return layouts;
+  }
+
+  // Multi-line (title-like) items shrink first, largest font first.
+  candidateIndexes.sort((leftIndex, rightIndex) => {
+    const leftMultiLine = layouts[leftIndex].wrappedLineCount > 1 ? 0 : 1;
+    const rightMultiLine = layouts[rightIndex].wrappedLineCount > 1 ? 0 : 1;
+    if (leftMultiLine !== rightMultiLine) {
+      return leftMultiLine - rightMultiLine;
+    }
+    return layouts[rightIndex].fontSizePx - layouts[leftIndex].fontSizePx;
+  });
+  const titleIndex = candidateIndexes[0];
+
+  const overrides = new Map(candidateIndexes.map((index) => [index, {}]));
+  const relayout = (index) => {
+    layouts[index] = layoutTextItem(
+      layouts[index].item,
+      layouts[index].text,
+      canvasWidth,
+      canvasHeight,
+      overrides.get(index),
+    );
+  };
+
+  for (let step = 0; step < BLOCK_FIT_MAX_ITERATIONS; step += 1) {
+    if (blockOverflowPx(layouts, safeBottom) <= 0) {
+      return layouts;
+    }
+
+    // Stage 1: step the first candidate still above its minimum size.
+    const target = candidateIndexes.find(
+      (index) => layouts[index].fontSizePx > layouts[index].minFontPx,
+    );
+    if (target !== undefined) {
+      overrides.get(target).forcedFontPx = Math.max(
+        layouts[target].minFontPx,
+        Math.floor(layouts[target].fontSizePx * 0.92),
+      );
+      relayout(target);
+      continue;
+    }
+
+    // Stage 2: tighten line spacing on wrapped centered items.
+    let tightened = false;
+    candidateIndexes.forEach((index) => {
+      if (
+        !overrides.get(index).tightSpacing &&
+        layouts[index].wrappedLineCount > 1
+      ) {
+        overrides.get(index).tightSpacing = true;
+        relayout(index);
+        tightened = true;
+      }
+    });
+    if (tightened) {
+      continue;
+    }
+
+    // Stage 3: force non-title candidates to a single trimmed line.
+    let forced = false;
+    candidateIndexes.forEach((index) => {
+      if (
+        index !== titleIndex &&
+        layouts[index].wrappedLineCount > 1 &&
+        overrides.get(index).forcedMaxLines !== 1
+      ) {
+        overrides.get(index).forcedMaxLines = 1;
+        relayout(index);
+        forced = true;
+      }
+    });
+    if (forced) {
+      continue;
+    }
+
+    // Stage 4: reduce the title's line count one line at a time.
+    const titleLines = layouts[titleIndex].wrappedLineCount;
+    if (titleLines > 1) {
+      overrides.get(titleIndex).forcedMaxLines = titleLines - 1;
+      relayout(titleIndex);
+      continue;
+    }
+
+    break;
+  }
+
+  return layouts;
 }
 
 function getRenderableItems(snapshot) {
-  const configuredItems = getDisplayItems(snapshot).filter((item) =>
-    isItemActive(item),
-  );
-  if (configuredItems.length > 0) {
-    return configuredItems;
+  // Any layout at all (even with every item inactive or hidden) means a mood
+  // is in charge of the screen: render exactly what it says, like the native
+  // display. The fallback layout only covers a snapshot with no layout items
+  // (server idle / no display data yet).
+  const displayItems = getDisplayItems(snapshot);
+  if (displayItems.length > 0) {
+    return displayItems.filter((item) => isItemActive(item));
   }
   return buildFallbackDisplayItems(snapshot);
 }
@@ -862,39 +1068,25 @@ function renderLayout(snapshot) {
     return Number(leftItem?.index ?? 0) - Number(rightItem?.index ?? 0);
   });
 
-  let cumulativeVerticalOffset = 0;
-  let currentRowPosition = null;
-  let currentRowExtraHeight = 0;
+  let layouts = textItems.map((item) =>
+    layoutTextItem(item, String(item.text || "").trim(), canvasWidth, canvasHeight),
+  );
+  layouts = fitLayoutsVertically(layouts, canvasWidth, canvasHeight);
 
-  textItems.forEach((item) => {
-    const rowPosition = Number(item?.position?.[0] ?? 0);
-    if (currentRowPosition === null) {
-      currentRowPosition = rowPosition;
-    } else if (rowPosition > currentRowPosition) {
-      cumulativeVerticalOffset += currentRowExtraHeight;
-      currentRowExtraHeight = 0;
-      currentRowPosition = rowPosition;
-    }
-
-    const text = String(item.text || "").trim();
-    const renderedTextItem = createTextItemElement(
-      item,
-      text,
-      canvasWidth,
-      canvasHeight,
-      cumulativeVerticalOffset,
-    );
-    fragment.append(renderedTextItem.element);
-    currentRowExtraHeight = Math.max(
-      currentRowExtraHeight,
-      renderedTextItem.extraHeightPx,
-    );
+  const rowOffsets = computeRowOffsets(layouts);
+  layouts.forEach((layout, index) => {
+    fragment.append(buildTextItemElement(layout, canvasWidth, rowOffsets[index]));
   });
 
   layoutCanvasEl.append(fragment);
+  // The "Waiting for Beam" placeholder is setup guidance only: keep it hidden
+  // whenever a mood layout exists, even if every item is inactive, hidden or
+  // empty (e.g. a cortina at the end of the playlist with no next tanda) —
+  // the native display shows just the background in that case.
   emptyStateEl.hidden =
+    getDisplayItems(snapshot).length > 0 ||
     layoutCanvasEl.querySelectorAll(".layout-item, .layout-cover-art").length >
-    0;
+      0;
 }
 
 function buildBackgroundRenderKey(snapshot) {

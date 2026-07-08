@@ -47,6 +47,14 @@ def test_wrap_parity():
     check(all(make_measure(10)(line)[0] <= 60 for line in lines),
           'long token hard-split lines all fit')
 
+    # Each hard-split part takes the longest fitting prefix (greedy), and a
+    # box narrower than one character still advances one char per line.
+    parts = textfit.wrap_long_token(measure, 'x' * 100, 60)
+    check(parts == ['x' * 10] * 10, 'hard-split is greedy per part')
+    parts = textfit.wrap_long_token(measure, 'abc', 1)
+    check(parts == ['a', 'b', 'c'],
+          'too-narrow box still advances one char per part')
+
 
 def test_fit_no_shrink_when_it_fits():
     fitted = textfit.fit_text(measure_at_size, 'hello', 10000, 20, 10,
