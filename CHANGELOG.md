@@ -2,7 +2,7 @@
 
 All notable changes in this fork are documented in this file.
 
-## Unreleased
+## v0.9.5-beta - 2026-07-08
 
 ### Added
 
