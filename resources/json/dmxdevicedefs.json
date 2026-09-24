@@ -2,7 +2,21 @@
 
     "None": {
        "Palette": {
-         "None": []
+         "None": [],
+         "Red":      [],
+         "Green":    [],
+         "Blue":     [],
+         "White":    [],
+         "Amber":    [],
+         "Purple":   [],
+         "Daylight": [],
+         "Black":    [],
+         "Sound1":   [],
+         "Sound2":   [],
+         "Auto0":    [],
+         "Auto1":    [],
+         "Auto2":    [],
+         "Strobe":   []
          }
        },
     "Generic: BasicRGB": {

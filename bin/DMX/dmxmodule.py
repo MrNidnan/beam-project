@@ -29,14 +29,18 @@
 import os
 import json
 import logging
-from bin.beamutils import getBeamResourcesPath
+from bin.beamutils import getBeamResourcesPath, getBeamConfigPath
 from copy import deepcopy
 
 class DMXlibrary:
 
-    def __init__(self, dmxdevdefsfilename):
+    def __init__(self, dmxdevdefsfilename, dmxdevcustfilename):
+        self._dmxdefaultfilename = dmxdevdefsfilename
+        self._dmxcustomfilename = dmxdevcustfilename
+        self._dmxdevDict = self.loadDMXdevDefinitions()
 
-        self._dmxdevDict = self.loadDMXdevDefinitions(dmxdevdefsfilename)
+    def getDictionary(self):
+        return self._dmxdevDict
 
     def getDeviceList(self):
         return list(self._dmxdevDict.keys())
@@ -45,8 +49,13 @@ class DMXlibrary:
         if '' == dmxfixture: dmxfixture = 'None'
         return self._dmxdevDict[dmxfixture]
 
-    def loadDMXdevDefinitions(self, dmxdevdefsfilename):
-        dmxdevdefsFile = open(dmxdevdefsfilename, 'r', encoding='utf-8')
+    def loadDMXdevDefinitions(self):
+        if os.path.isfile(self._dmxcustomfilename):
+            dmxdevfilename = self._dmxcustomfilename
+        else:
+            dmxdevfilename = self._dmxdefaultfilename
+
+        dmxdevdefsFile = open(dmxdevfilename, 'r', encoding='utf-8')
         try:
             dmxdevDict = json.load(dmxdevdefsFile)
         finally:
@@ -54,13 +63,39 @@ class DMXlibrary:
 
         return dmxdevDict
 
+    def addDeviceToLibrary(self, newdmxfixture, newpalette):
+        self._dmxdevDict[newdmxfixture] = newpalette
+        with open(self._dmxcustomfilename, "w", encoding="utf-8") as dmxdevdefsFile:
+            try:
+                json.dump(self._dmxdevDict, dmxdevdefsFile, indent=4)
+            finally:
+                dmxdevdefsFile.close()
+
+    def delDeviceFromLibrary(self, dmxfixture):
+        self._dmxdevDict.pop(dmxfixture)
+        with open(self._dmxcustomfilename, "w", encoding="utf-8") as dmxdevdefsFile:
+            try:
+                json.dump(self._dmxdevDict, dmxdevdefsFile, indent=4)
+            finally:
+                dmxdevdefsFile.close()
+
+    def libraryIsModified(self):
+        return os.path.isfile(self._dmxcustomfilename)
+
+    def restoreDefaultLibrary(self):
+        os.remove(self._dmxcustomfilename)
+        self._dmxdevDict = self.loadDMXdevDefinitions()
 
 class DMXdevice:
 
     def __init__(self, dmxfixture):
 
         dmxdevdefsfilename = os.path.join(getBeamResourcesPath(), 'json', 'dmxdevicedefs.json')
-        self._dmxDefinitions = DMXlibrary(dmxdevdefsfilename)
+        dmxdevcustfilename = os.path.join(getBeamConfigPath(), 'dmxdevicedefs.json')
+
+        self._dmxDefinitions = DMXlibrary(dmxdevdefsfilename, dmxdevcustfilename )
+        #self._dmxDefinitions = dmxdictionary
+
         if '' == dmxfixture: dmxfixture = 'None'
         self.palette = deepcopy(self._dmxDefinitions.getDMXdeviceDict(dmxfixture)['Palette'])
         self.name = dmxfixture
