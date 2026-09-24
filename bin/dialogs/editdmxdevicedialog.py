@@ -49,15 +49,15 @@ class EditDMXdeviceDialog(wx.Dialog):
         wx.Dialog.__init__(self, dmxcontrolsPanel, title=mode, pos=(xpos + 50, ypos + 50),
         #                           size=moodsPanel.BeamSettings._moodSize, style=wx.RESIZE_BORDER)
         #                   )
-        size=(300,800),
+        #size=(300,800),
         # #        wx.Frame.__init__(self, moodsPanel, title=mode, pos=(xpos + 50, ypos + 50),
         #                          size=self.moodsPanel.BeamSettings._moodSize,
-                                  style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP |  (wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+                                  style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP | wx.RESIZE_BORDER)
         # self.beamSettings = beamSettings
 
         # DMXdevicePanel
         self.dmxcontrolsPanel = dmxcontrolsPanel
-        self.ColorField = wx.ColourPickerCtrl(self.dmxcontrolsPanel, size=(100,-1))
+
         self.InputError = false
         self.RowSelected = RowSelected
         self.mode = mode
@@ -113,14 +113,19 @@ class EditDMXdeviceDialog(wx.Dialog):
 
         PaletteGridLabel = wx.StaticText(self.panel, label="Palette")
         self.vbox.Add(PaletteGridLabel, flag=wx.ALL | wx.EXPAND, border=10 )
+
         self.paletteGrid = self.CreatePaletteGrid()
         self.vbox.Add(self.paletteGrid, 1, flag=wx.EXPAND | wx.ALL, border=10)
-
+        self.panel.SetSizer(self.vbox)
 
         self.vbox.Add(self.hbox, flag=wx.ALIGN_RIGHT)
 
         self.panel.SetSizer(self.vbox)
+        self.vbox.Fit(self)
 
+        self.paletteGrid.InvalidateBestSize()
+        self.SetClientSize(self.paletteGrid.GetBestSize())
+        self.Center()
 
     # Crates fields and sets values
     #
@@ -154,7 +159,8 @@ class EditDMXdeviceDialog(wx.Dialog):
 
         #paletteGrid.SetCellValue(0, 0, str(self.mode))
         self.Bind(gridlib.EVT_GRID_CELL_CHANGED, self.OnCellChange)
-        #paletteGrid.AutoSize()
+        paletteGrid.AutoSizeColumns()
+        paletteGrid.AutoSizeRows()
         return paletteGrid
 
     def OnCellChange(self, evt):

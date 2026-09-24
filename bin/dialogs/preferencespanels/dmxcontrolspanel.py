@@ -388,8 +388,8 @@ class DMXcontrolsPanel(wx.Panel):
                 self.EditDMXdeviceButton.Destroy()
                 logging.debug("... modified dictionary: " + str(beamSettings.getDMXdeviceList()))
                 self.refreshDeviceList()
-        self.update_DvcDelete_state()
-        self.update_DvcRestore_state()
+            self.update_DvcDelete_state()
+            self.update_DvcRestore_state()
 
     def onDvcAdd(self, event):
         self.AddDMXdeviceButton = AddDMXdeviceDialog(self, self.DMXdeviceSelectorDropdown.GetCount() + 1, "Add",
