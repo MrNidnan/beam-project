@@ -69,7 +69,8 @@ class BeamSettings:
 
         # load dmx device definitions from dmxdevicedefs.json
         dmxdevdefsfilename = os.path.join(getBeamResourcesPath(), 'json', 'dmxdevicedefs.json')
-        self._dmxDefinitions = DMXlibrary(dmxdevdefsfilename)
+        dmxdevcustfilename = os.path.join(getBeamConfigPath(), 'dmxdevicedefs.json')
+        self._dmxDefinitions = DMXlibrary(dmxdevdefsfilename,dmxdevcustfilename)
         self._profileSettings = ProfileSettingsStore(
             self.getString("configfilename"),
             self.getDefaultConfigFilePath,
